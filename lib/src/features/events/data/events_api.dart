@@ -1,0 +1,52 @@
+import 'dart:convert';
+
+import 'package:fiestaaa_front/src/core/config.dart';
+import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
+import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
+import 'package:http/http.dart' as http;
+
+class EventsApi {
+  EventsApi({http.Client? client}) : _client = client ?? http.Client();
+
+  final http.Client _client;
+
+  Future<List<EventModel>> fetchEvents() async {
+    final response = await _client.get(Uri.parse('$apiBaseUrl/events'));
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body) as List<dynamic>;
+      return decoded
+          .map((e) => EventModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    throw ApiException('Impossible de récupérer les événements',
+        statusCode: response.statusCode);
+  }
+
+  Future<EventModel> createEvent({
+    required String token,
+    required EventPayload payload,
+  }) async {
+    final response = await _client.post(
+      Uri.parse('$apiBaseUrl/events'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(payload.toJson()),
+    );
+
+    if (response.statusCode == 201) {
+      return EventModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    }
+
+    throw ApiException(
+      'Création impossible (${response.statusCode})',
+      statusCode: response.statusCode,
+    );
+  }
+
+  void dispose() {
+    _client.close();
+  }
+}
