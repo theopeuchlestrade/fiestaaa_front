@@ -1,4 +1,5 @@
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
+import 'package:fiestaaa_front/src/features/invitations/presentation/pages/my_invitations_page.dart';
 import 'package:fiestaaa_front/src/features/profile/data/profile_api.dart';
 import 'package:fiestaaa_front/src/features/profile/domain/profile_info.dart';
 import 'package:flutter/material.dart';
@@ -74,38 +75,59 @@ class _ProfilePageState extends State<ProfilePage> {
                 return const Text('Profil introuvable');
               }
 
-              return Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.deepOrange.shade100,
-                          child: Text(
-                            profile.email.substring(0, 1).toUpperCase(),
-                            style: const TextStyle(color: Colors.deepOrange),
+              return Column(
+                children: [
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.deepOrange.shade100,
+                              child: Text(
+                                profile.email.substring(0, 1).toUpperCase(),
+                                style:
+                                    const TextStyle(color: Colors.deepOrange),
+                              ),
+                            ),
+                            title: Text(profile.email),
+                            subtitle: Text(
+                              'Token valide jusqu’au ${DateFormat.yMMMMd('fr_FR').format(profile.expiration)} ${DateFormat.Hm().format(profile.expiration)}',
+                            ),
                           ),
-                        ),
-                        title: Text(profile.email),
-                        subtitle: Text(
-                          'Token valide jusqu’au ${DateFormat.yMMMMd('fr_FR').format(profile.expiration)} ${DateFormat.Hm().format(profile.expiration)}',
-                        ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: widget.onLogout,
+                              icon: const Icon(Icons.logout),
+                              label: const Text('Se déconnecter'),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: widget.onLogout,
-                          icon: const Icon(Icons.logout),
-                          label: const Text('Se déconnecter'),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                MyInvitationsPage(session: widget.session),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.mail_outline),
+                      label: const Text('Mes invitations'),
+                    ),
+                  ),
+                ],
               );
             },
           ),

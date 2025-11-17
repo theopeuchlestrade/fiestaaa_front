@@ -10,6 +10,7 @@ class EventModel {
     required this.address,
     required this.paymentProviderId,
     required this.paymentIdentifier,
+    required this.ownerEmail,
   });
 
   final int id;
@@ -20,6 +21,7 @@ class EventModel {
   final String address;
   final int? paymentProviderId;
   final String? paymentIdentifier;
+  final String ownerEmail;
 
   DateTime get startDateTime => DateTime(
         date.year,
@@ -48,6 +50,7 @@ class EventModel {
       address: json['address'] as String,
       paymentProviderId: (json['payment_provider_id'] as num?)?.toInt(),
       paymentIdentifier: json['payment_identifier'] as String?,
+      ownerEmail: json['owner_email'] as String? ?? '',
     );
   }
 

@@ -163,7 +163,12 @@ class _EventBubble extends StatelessWidget {
                       const Icon(Icons.event,
                           size: 18, color: Colors.deepOrange),
                       const SizedBox(width: 8),
-                      Text('${event.formattedDate} • ${event.formattedTime}'),
+                      Expanded(
+                        child: Text(
+                          '${event.formattedDate} • ${event.formattedTime}',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 4),

@@ -33,7 +33,11 @@ class _HomePageState extends State<HomePage> {
   void _openEvent(EventModel event) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => EventDetailPage(event: event),
+        builder: (_) => EventDetailPage(
+          event: event,
+          session: widget.session,
+          onEventUpdated: () => _eventsKey.currentState?.reload(),
+        ),
       ),
     );
   }
