@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:flutter/material.dart';
@@ -8,9 +9,11 @@ class EventsListPage extends StatefulWidget {
   const EventsListPage({
     super.key,
     required this.onEventSelected,
+    required this.session,
   });
 
   final EventSelected onEventSelected;
+  final SessionData session;
 
   @override
   State<EventsListPage> createState() => EventsListPageState();
@@ -30,13 +33,21 @@ class EventsListPageState extends State<EventsListPage> {
 
   Future<void> reload() => _loadEvents();
 
+  void removeEvent(int eventId) {
+    final events = _events;
+    if (events == null) return;
+    setState(() {
+      _events = events.where((event) => event.id != eventId).toList();
+    });
+  }
+
   Future<void> _loadEvents() async {
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final events = await _api.fetchEvents();
+      final events = await _api.fetchEvents(token: widget.session.token);
       if (!mounted) return;
       setState(() {
         _events = events;

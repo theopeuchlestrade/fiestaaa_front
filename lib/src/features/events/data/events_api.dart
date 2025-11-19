@@ -11,8 +11,13 @@ class EventsApi {
 
   final http.Client _client;
 
-  Future<List<EventModel>> fetchEvents() async {
-    final response = await _client.get(Uri.parse('$apiBaseUrl/events'));
+  Future<List<EventModel>> fetchEvents({required String token}) async {
+    final response = await _client.get(
+      Uri.parse('$apiBaseUrl/events'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body) as List<dynamic>;
       return decoded

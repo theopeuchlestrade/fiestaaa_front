@@ -117,7 +117,7 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
               ..._invitations.map(
                 (inv) => Card(
                   child: ListTile(
-                    title: Text('Évènement #${inv.eventId}'),
+                    title: Text(inv.eventName ?? 'Évènement #${inv.eventId}'),
                     subtitle: Text(
                       'Statut : ${inv.status}\nReçu le ${DateFormat.yMMMMd('fr_FR').format(inv.dateInvi)}',
                     ),

@@ -4,12 +4,14 @@ class InvitationModel {
     required this.email,
     required this.status,
     required this.dateInvi,
+    this.eventName,
   });
 
   final int eventId;
   final String email;
   final String status;
   final DateTime dateInvi;
+  final String? eventName;
 
   factory InvitationModel.fromJson(Map<String, dynamic> json) {
     return InvitationModel(
@@ -17,6 +19,7 @@ class InvitationModel {
       email: json['email'] as String,
       status: json['status'] as String,
       dateInvi: DateTime.parse(json['date_invi'] as String),
+      eventName: json['event_name'] as String?,
     );
   }
 }

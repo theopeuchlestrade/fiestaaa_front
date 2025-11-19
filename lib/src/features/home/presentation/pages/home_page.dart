@@ -37,6 +37,7 @@ class _HomePageState extends State<HomePage> {
           event: event,
           session: widget.session,
           onEventUpdated: () => _eventsKey.currentState?.reload(),
+          onEventRemoved: _handleEventRemoved,
         ),
       ),
     );
@@ -49,12 +50,19 @@ class _HomePageState extends State<HomePage> {
     _eventsKey.currentState?.reload();
   }
 
+  void _handleEventRemoved(int eventId) {
+    if (_eventsKey.currentState != null) {
+      _eventsKey.currentState!.removeEvent(eventId);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final pages = [
       EventsListPage(
         key: _eventsKey,
         onEventSelected: _openEvent,
+        session: widget.session,
       ),
       EventCreatePage(
         session: widget.session,

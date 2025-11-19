@@ -64,6 +64,7 @@ class InvitationsApi {
         'Authorization': 'Bearer $token',
       },
       body: jsonEncode({
+        'event_id': eventId,
         'email': email,
       }),
     );

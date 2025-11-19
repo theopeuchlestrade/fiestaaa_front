@@ -2,8 +2,8 @@ import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
+import 'package:fiestaaa_front/src/features/invitations/presentation/widgets/invitation_status_section.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class EventInvitationsPage extends StatefulWidget {
   const EventInvitationsPage({
@@ -159,25 +159,52 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
                     'Aucune invitation pour le moment. Ajoutez-en plus haut.'),
               )
             else
-              ..._invitations.map(
-                (inv) => Card(
-                  child: ListTile(
-                    title: Text(inv.email),
-                    subtitle: Text(
-                      'Statut : ${inv.status}\nEnvoyée le ${DateFormat.yMMMMd('fr_FR').format(inv.dateInvi)}',
-                    ),
-                    trailing: IconButton(
-                      onPressed: () => _deleteInvitation(inv),
-                      icon: const Icon(Icons.delete),
-                      tooltip: 'Supprimer',
-                    ),
-                  ),
-                ),
-              ),
+              ..._buildInvitationSections(),
           ],
         ),
       ),
     );
+  }
+
+  List<Widget> _buildInvitationSections() {
+    const sections = [
+      (
+        status: 'Waiting',
+        title: 'En attente',
+        emptyLabel: 'Aucun invité en attente de réponse.',
+        icon: Icons.hourglass_bottom,
+        color: Colors.amber,
+      ),
+      (
+        status: 'Accepted',
+        title: 'Acceptées',
+        emptyLabel: 'Personne n’a encore accepté.',
+        icon: Icons.check_circle,
+        color: Colors.green,
+      ),
+      (
+        status: 'Declined',
+        title: 'Refusées',
+        emptyLabel: 'Aucun refus enregistré.',
+        icon: Icons.cancel,
+        color: Colors.redAccent,
+      ),
+    ];
+
+    return sections
+        .map(
+          (section) => InvitationStatusSection(
+            title: section.title,
+            icon: section.icon,
+            accentColor: section.color,
+            invitations: _invitations
+                .where((inv) => inv.status == section.status)
+                .toList(),
+            emptyLabel: section.emptyLabel,
+            onDelete: _deleteInvitation,
+          ),
+        )
+        .toList();
   }
 }
 

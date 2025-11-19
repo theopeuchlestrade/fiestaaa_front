@@ -17,11 +17,13 @@ class EventDetailPage extends StatefulWidget {
     required this.event,
     required this.session,
     this.onEventUpdated,
+    this.onEventRemoved,
   });
 
   final EventModel event;
   final SessionData session;
   final VoidCallback? onEventUpdated;
+  final ValueChanged<int>? onEventRemoved;
 
   @override
   State<EventDetailPage> createState() => _EventDetailPageState();
@@ -132,6 +134,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
       _showSnack(
         status == 'Accepted' ? 'Invitation acceptée' : 'Invitation refusée',
       );
+      if (status == 'Declined') {
+        widget.onEventRemoved?.call(_currentEvent.id);
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+        return;
+      }
       await _loadMyInvitation();
     } on ApiException catch (e) {
       if (!mounted) return;
