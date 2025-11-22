@@ -61,8 +61,8 @@ class _HomePageState extends State<HomePage> {
     final pages = [
       EventsListPage(
         key: _eventsKey,
-        onEventSelected: _openEvent,
         session: widget.session,
+        onEventSelected: _openEvent,
       ),
       EventCreatePage(
         session: widget.session,

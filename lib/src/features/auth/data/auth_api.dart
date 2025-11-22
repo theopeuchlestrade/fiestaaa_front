@@ -62,6 +62,24 @@ class AuthApi {
     throw _apiError(response);
   }
 
+  Future<bool> validateSession(String token) async {
+    final response = await _client.get(
+      Uri.parse('$apiBaseUrl/me'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    }
+    if (response.statusCode == 401) {
+      return false;
+    }
+
+    throw _apiError(response);
+  }
+
   Future<http.Response> _post(
     String path, {
     required Map<String, dynamic> body,

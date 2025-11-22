@@ -9,7 +9,11 @@ import 'package:fiestaaa_front/src/features/events/presentation/pages/event_edit
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_invitations_page.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
+import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
+import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_provider_model.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class EventDetailPage extends StatefulWidget {
   const EventDetailPage({
@@ -32,6 +36,7 @@ class EventDetailPage extends StatefulWidget {
 class _EventDetailPageState extends State<EventDetailPage> {
   final _eventsApi = EventsApi();
   final _invitationsApi = InvitationsApi();
+  final _paymentProvidersApi = PaymentProvidersApi();
   late EventModel _currentEvent;
   List<EventItemModel>? _eventItems;
   bool _loadingItems = true;
@@ -39,6 +44,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
   int? _reservingItemId;
   InvitationModel? _myInvitation;
   bool _loadingMyInvitation = false;
+  bool _loadingPaymentProviders = true;
+  String? _paymentProvidersError;
+  Map<int, PaymentProviderModel> _providersById = {};
 
   @override
   void initState() {
@@ -46,12 +54,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
     _currentEvent = widget.event;
     _loadItems();
     _loadMyInvitation();
+    _loadPaymentProviders();
   }
 
   @override
   void dispose() {
     _eventsApi.dispose();
     _invitationsApi.dispose();
+    _paymentProvidersApi.dispose();
     super.dispose();
   }
 
@@ -119,6 +129,36 @@ class _EventDetailPageState extends State<EventDetailPage> {
       if (!mounted) return;
       setState(() {
         _loadingMyInvitation = false;
+      });
+    }
+  }
+
+  Future<void> _loadPaymentProviders() async {
+    setState(() {
+      _loadingPaymentProviders = true;
+      _paymentProvidersError = null;
+    });
+    try {
+      final providers = await _paymentProvidersApi.fetchProviders();
+      if (!mounted) return;
+      setState(() {
+        _providersById = {
+          for (final provider in providers) provider.id: provider,
+        };
+        _loadingPaymentProviders = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _paymentProvidersError = e.message;
+        _loadingPaymentProviders = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _paymentProvidersError =
+            'Impossible de charger les cagnottes disponibles';
+        _loadingPaymentProviders = false;
       });
     }
   }
@@ -287,6 +327,15 @@ class _EventDetailPageState extends State<EventDetailPage> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            if (!_isOwner)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _InvitationStatusCard(
+                  invitation: _myInvitation,
+                  loading: _loadingMyInvitation,
+                  onRespond: _respondInvitation,
+                ),
+              ),
             _DetailTile(
               icon: Icons.event,
               label: 'Date & heure',
@@ -303,19 +352,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
               label: 'Description',
               value: _currentEvent.description,
             ),
-            _DetailTile(
-              icon: Icons.payment,
-              label: 'Paiement',
-              value: _paymentInfo(),
-            ),
+            _buildPaymentSection(),
             const SizedBox(height: 16),
-            if (!_isOwner)
-              _InvitationStatusCard(
-                invitation: _myInvitation,
-                loading: _loadingMyInvitation,
-                onRespond: _respondInvitation,
-              ),
-            if (!_isOwner) const SizedBox(height: 16),
             Text(
               'Items disponibles',
               style: Theme.of(context).textTheme.titleLarge,
@@ -354,14 +392,136 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  String _paymentInfo() {
+  Widget _buildPaymentSection() {
     if (_currentEvent.paymentProviderId == null) {
-      return 'Aucun fournisseur renseigné';
+      return const _DetailTile(
+        icon: Icons.payment,
+        label: 'Paiement',
+        value: 'Aucune cagnotte renseignée',
+      );
     }
-    final identifier = _currentEvent.paymentIdentifier == null
-        ? ''
-        : ' • ${_currentEvent.paymentIdentifier}';
-    return 'Provider ${_currentEvent.paymentProviderId}$identifier';
+
+    if (_loadingPaymentProviders) {
+      return const _DetailTile(
+        icon: Icons.payment,
+        label: 'Paiement',
+        value: 'Chargement des informations...',
+      );
+    }
+
+    if (_providersById.isEmpty && _paymentProvidersError != null) {
+      return _DetailTile(
+        icon: Icons.payment,
+        label: 'Paiement',
+        value: _paymentProvidersError!,
+      );
+    }
+
+    final provider =
+        _providersById[_currentEvent.paymentProviderId ?? -1];
+    final providerName = provider?.name ??
+        'Fournisseur #${_currentEvent.paymentProviderId}';
+    final amount = _currentEvent.paymentRequestedAmount;
+    final amountText = amount != null
+        ? NumberFormat.currency(locale: 'fr_FR', symbol: '€')
+            .format(amount)
+        : 'Montant non précisé';
+    final identifier = _currentEvent.paymentIdentifier?.trim();
+    final paymentUri = _buildPaymentUri(provider);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.payment, color: Colors.deepOrange),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Paiement',
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelLarge
+                            ?.copyWith(color: Colors.grey.shade600),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        providerName,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text('Montant visé : $amountText'),
+            const SizedBox(height: 4),
+            Text(
+              'Identifiant : ${identifier == null || identifier.isEmpty ? 'non renseigné' : identifier}',
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: paymentUri == null
+                        ? null
+                        : () => _openPaymentLink(paymentUri),
+                    icon: const Icon(Icons.open_in_new),
+                    label: Text(
+                      paymentUri == null
+                          ? 'Lien indisponible'
+                          : 'Ouvrir la cagnotte',
+                    ),
+                  ),
+                ),
+                if (_paymentProvidersError != null)
+                  IconButton(
+                    onPressed: _loadPaymentProviders,
+                    tooltip: 'Recharger les cagnottes',
+                    icon: const Icon(Icons.refresh),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Uri? _buildPaymentUri(PaymentProviderModel? provider) {
+    final identifier = _currentEvent.paymentIdentifier?.trim();
+    if (provider == null || identifier == null || identifier.isEmpty) {
+      return null;
+    }
+    final encoded = Uri.encodeComponent(identifier);
+    final url =
+        provider.urlTemplate.replaceAll('{identifier}', encoded);
+    return Uri.tryParse(url);
+  }
+
+  Future<void> _openPaymentLink(Uri uri) async {
+    try {
+      final success = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!success && mounted) {
+        _showSnack('Impossible d\'ouvrir la cagnotte', isError: true);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Impossible d\'ouvrir la cagnotte', isError: true);
+    }
   }
 
   Future<void> _openEditEvent() async {
@@ -417,26 +577,60 @@ class _InvitationStatusCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final waiting = invitation!.status == 'Waiting';
+    final accepted = invitation!.status == 'Accepted';
+    final background = waiting
+        ? Colors.orange.shade50
+        : accepted
+            ? Colors.green.shade50
+            : Colors.grey.shade200;
+    final accent = waiting
+        ? Colors.orange.shade800
+        : accepted
+            ? Colors.green.shade800
+            : Colors.grey.shade700;
+    final icon = waiting
+        ? Icons.mark_email_unread
+        : accepted
+            ? Icons.check_circle
+            : Icons.cancel_outlined;
+    final statusLabel = waiting
+        ? 'Invitation en attente'
+        : accepted
+            ? 'Participation confirmée'
+            : 'Invitation refusée';
+
     return Card(
-      color: Colors.white,
+      color: background,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Votre invitation',
-              style: Theme.of(context).textTheme.titleMedium,
+            Row(
+              children: [
+                Icon(icon, color: accent),
+                const SizedBox(width: 12),
+                Text(
+                  statusLabel,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: accent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text('Statut actuel : ${invitation!.status}'),
             const SizedBox(height: 12),
-            if (invitation!.status == 'Waiting')
+            if (waiting) ...[
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => onRespond('Declined'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red.shade700,
+                        side: BorderSide(color: Colors.red.shade200),
+                      ),
                       child: const Text('Refuser'),
                     ),
                   ),
@@ -444,17 +638,29 @@ class _InvitationStatusCard extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () => onRespond('Accepted'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade600,
+                        foregroundColor: Colors.white,
+                      ),
                       child: const Text('Accepter'),
                     ),
                   ),
                 ],
-              )
-            else
+              ),
+              const SizedBox(height: 12),
               Text(
-                invitation!.status == 'Accepted'
-                    ? 'Vous participez à cet événement.'
-                    : 'Invitation refusée.',
+                'Confirmez votre présence pour apparaître comme participant.',
                 style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ] else
+              Text(
+                accepted
+                    ? 'Merci ! Vous êtes compté parmi les participants.'
+                    : 'Vous avez décliné cette invitation.',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: accent),
               ),
           ],
         ),

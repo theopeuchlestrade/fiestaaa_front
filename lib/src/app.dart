@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/data/session_storage.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/auth/presentation/pages/auth_page.dart';
@@ -13,6 +14,7 @@ class FiestaaaApp extends StatefulWidget {
 }
 
 class _FiestaaaAppState extends State<FiestaaaApp> {
+  final _authApi = AuthApi();
   SessionData? _session;
   bool _loadingSession = true;
 
@@ -24,9 +26,29 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
 
   Future<void> _restoreSession() async {
     final session = await SessionStorage.load();
+    if (session == null) {
+      if (!mounted) return;
+      setState(() {
+        _session = null;
+        _loadingSession = false;
+      });
+      return;
+    }
+
+    var valid = false;
+    try {
+      valid = await _authApi.validateSession(session.token);
+    } catch (_) {
+      valid = false;
+    }
+
+    if (!valid) {
+      await SessionStorage.clear();
+    }
+
     if (!mounted) return;
     setState(() {
-      _session = session;
+      _session = valid ? session : null;
       _loadingSession = false;
     });
   }
@@ -45,6 +67,12 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     setState(() {
       _session = null;
     });
+  }
+
+  @override
+  void dispose() {
+    _authApi.dispose();
+    super.dispose();
   }
 
   @override

@@ -2,6 +2,8 @@ import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
+import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
+import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_provider_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -24,13 +26,18 @@ class _EventEditPageState extends State<EventEditPage> {
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _addressController;
-  late final TextEditingController _paymentProviderController;
   late final TextEditingController _paymentIdentifierController;
+  late final TextEditingController _paymentAmountController;
   final _api = EventsApi();
+  final _paymentProvidersApi = PaymentProvidersApi();
 
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
   bool _submitting = false;
+  bool _loadingProviders = true;
+  String? _providersError;
+  List<PaymentProviderModel> _providers = [];
+  int? _selectedProviderId;
 
   @override
   void initState() {
@@ -39,11 +46,12 @@ class _EventEditPageState extends State<EventEditPage> {
     _nameController = TextEditingController(text: event.name);
     _descriptionController = TextEditingController(text: event.description);
     _addressController = TextEditingController(text: event.address);
-    _paymentProviderController = TextEditingController(
-      text: event.paymentProviderId?.toString() ?? '',
-    );
+    _selectedProviderId = event.paymentProviderId;
     _paymentIdentifierController = TextEditingController(
       text: event.paymentIdentifier ?? '',
+    );
+    _paymentAmountController = TextEditingController(
+      text: event.paymentRequestedAmount?.toString() ?? '',
     );
     _selectedDate = event.date;
     final startDate = event.startDateTime;
@@ -51,6 +59,7 @@ class _EventEditPageState extends State<EventEditPage> {
       hour: startDate.hour,
       minute: startDate.minute,
     );
+    _loadPaymentProviders();
   }
 
   @override
@@ -58,10 +67,39 @@ class _EventEditPageState extends State<EventEditPage> {
     _nameController.dispose();
     _descriptionController.dispose();
     _addressController.dispose();
-    _paymentProviderController.dispose();
     _paymentIdentifierController.dispose();
+    _paymentAmountController.dispose();
     _api.dispose();
+    _paymentProvidersApi.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadPaymentProviders() async {
+    setState(() {
+      _loadingProviders = true;
+      _providersError = null;
+    });
+    try {
+      final providers = await _paymentProvidersApi.fetchProviders();
+      if (!mounted) return;
+      setState(() {
+        _providers =
+            providers.where((provider) => provider.isActive).toList();
+        _loadingProviders = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _providersError = e.message;
+        _loadingProviders = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _providersError = 'Impossible de charger les cagnottes disponibles';
+        _loadingProviders = false;
+      });
+    }
   }
 
   Future<void> _pickDate() async {
@@ -99,12 +137,11 @@ class _EventEditPageState extends State<EventEditPage> {
         minutes: _selectedTime.minute,
       ),
       address: _addressController.text.trim(),
-      paymentProviderId: _paymentProviderController.text.isEmpty
-          ? null
-          : int.tryParse(_paymentProviderController.text),
+      paymentProviderId: _selectedProviderId,
       paymentIdentifier: _paymentIdentifierController.text.isEmpty
           ? null
           : _paymentIdentifierController.text.trim(),
+      paymentRequestedAmount: _requestedAmountValue(),
     );
 
     try {
@@ -133,6 +170,78 @@ class _EventEditPageState extends State<EventEditPage> {
         content: Text(text),
         backgroundColor: isError ? Colors.red.shade400 : null,
       ),
+    );
+  }
+
+  double? _requestedAmountValue() {
+    final raw = _paymentAmountController.text.trim().replaceAll(',', '.');
+    if (raw.isEmpty) {
+      return null;
+    }
+    return double.tryParse(raw);
+  }
+
+  Widget _buildPaymentProviderField() {
+    if (_loadingProviders) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+    if (_providersError != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _providersError!,
+            style: TextStyle(color: Colors.red.shade400),
+          ),
+          TextButton.icon(
+            onPressed: _loadPaymentProviders,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Recharger les cagnottes'),
+          ),
+        ],
+      );
+    }
+
+    final items = <DropdownMenuItem<int?>>[
+      const DropdownMenuItem<int?>(
+        value: null,
+        child: Text('Aucune cagnotte'),
+      ),
+      ..._providers.map(
+        (provider) => DropdownMenuItem<int?>(
+          value: provider.id,
+          child: Text(provider.name),
+        ),
+      ),
+    ];
+
+    return DropdownButtonFormField<int?>(
+      value: _selectedProviderId,
+      items: items,
+      decoration: const InputDecoration(
+        labelText: 'Cagnotte associée',
+        prefixIcon: Icon(Icons.payment),
+        helperText: 'Choisissez Lydia, Leetchi, Lyf Pay...',
+      ),
+      onChanged: (value) {
+        setState(() {
+          _selectedProviderId = value;
+          if (value == null) {
+            _paymentIdentifierController.clear();
+            _paymentAmountController.clear();
+          }
+        });
+      },
     );
   }
 
@@ -206,14 +315,7 @@ class _EventEditPageState extends State<EventEditPage> {
                 ],
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _paymentProviderController,
-                decoration: const InputDecoration(
-                  labelText: 'ID fournisseur de paiement (optionnel)',
-                  prefixIcon: Icon(Icons.payment),
-                ),
-                keyboardType: TextInputType.number,
-              ),
+              _buildPaymentProviderField(),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _paymentIdentifierController,
@@ -221,6 +323,44 @@ class _EventEditPageState extends State<EventEditPage> {
                   labelText: 'Identifiant de paiement (optionnel)',
                   prefixIcon: Icon(Icons.confirmation_number),
                 ),
+                enabled: _selectedProviderId != null,
+                validator: (value) {
+                  if (_selectedProviderId == null) {
+                    return null;
+                  }
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Identifiant requis pour la cagnotte';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _paymentAmountController,
+                decoration: const InputDecoration(
+                  labelText: 'Montant souhaité (€)',
+                  prefixIcon: Icon(Icons.euro),
+                  helperText:
+                      'Indiquez le total que vous espérez collecter (optionnel)',
+                ),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                enabled: _selectedProviderId != null,
+                validator: (value) {
+                  if (_selectedProviderId == null) {
+                    return null;
+                  }
+                  final raw = value?.trim() ?? '';
+                  if (raw.isEmpty) {
+                    return null;
+                  }
+                  final parsed =
+                      double.tryParse(raw.replaceAll(',', '.'));
+                  if (parsed == null || parsed < 0) {
+                    return 'Entrez un montant positif';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 24),
               SizedBox(
