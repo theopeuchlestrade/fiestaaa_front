@@ -120,6 +120,60 @@ class EventsApi {
     );
   }
 
+  Future<EventItemModel> createCustomEventItem({
+    required String token,
+    required int eventId,
+    required String name,
+    required int maxQuantity,
+    required String unitLabel,
+  }) async {
+    final response = await _client.post(
+      Uri.parse('$apiBaseUrl/events/$eventId/items/custom'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'name_item': name,
+        'max_quantity': maxQuantity,
+        'unit_label': unitLabel,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return EventItemModel.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    }
+
+    throw ApiException(
+      'Impossible d’ajouter l’item (${response.statusCode})',
+      statusCode: response.statusCode,
+    );
+  }
+
+  Future<void> deleteEventItem({
+    required String token,
+    required int eventId,
+    required int itemId,
+  }) async {
+    final response = await _client.delete(
+      Uri.parse('$apiBaseUrl/events/$eventId/items/$itemId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return;
+    }
+
+    throw ApiException(
+      'Suppression impossible (${response.statusCode})',
+      statusCode: response.statusCode,
+    );
+  }
+
   void dispose() {
     _client.close();
   }

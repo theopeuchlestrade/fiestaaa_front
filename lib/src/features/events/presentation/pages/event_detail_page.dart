@@ -42,8 +42,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
   bool _loadingItems = true;
   String? _itemsError;
   int? _reservingItemId;
+  int? _deletingItemId;
   InvitationModel? _myInvitation;
   bool _loadingMyInvitation = false;
+  bool _creatingCustomItem = false;
   bool _loadingPaymentProviders = true;
   String? _paymentProvidersError;
   Map<int, PaymentProviderModel> _providersById = {};
@@ -130,6 +132,161 @@ class _EventDetailPageState extends State<EventDetailPage> {
       setState(() {
         _loadingMyInvitation = false;
       });
+    }
+  }
+
+  Future<void> _openAddItemDialog() async {
+    final nameController = TextEditingController();
+    final quantityController = TextEditingController();
+    final unitController = TextEditingController(text: 'pièce');
+    final formKey = GlobalKey<FormState>();
+
+    final result = await showDialog<_NewEventItemData>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Nouvel item'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Nom de l’item',
+                    prefixIcon: Icon(Icons.shopping_bag),
+                  ),
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'Champ requis' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: quantityController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Quantité souhaitée',
+                    helperText: 'Nombre total à répartir entre les invités',
+                    prefixIcon: Icon(Icons.format_list_numbered),
+                  ),
+                  validator: (value) {
+                    final text = value?.trim() ?? '';
+                    if (text.isEmpty) {
+                      return 'Champ requis';
+                    }
+                    final parsed = int.tryParse(text);
+                    if (parsed == null || parsed <= 0) {
+                      return 'Nombre positif requis';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: unitController,
+                  decoration: const InputDecoration(
+                    labelText: 'Unité (ex: pièce, gramme...)',
+                    prefixIcon: Icon(Icons.straighten),
+                  ),
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'Champ requis' : null,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState?.validate() != true) return;
+                final name = nameController.text.trim();
+                final qty = int.parse(quantityController.text.trim());
+                final unit = unitController.text.trim();
+                Navigator.of(context).pop(_NewEventItemData(name, qty, unit));
+              },
+              child: const Text('Ajouter'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != null) {
+      await _createCustomItem(result.name, result.quantity, result.unit);
+    }
+  }
+
+  Future<void> _createCustomItem(String name, int quantity, String unit) async {
+    setState(() => _creatingCustomItem = true);
+    try {
+      await _eventsApi.createCustomEventItem(
+        token: widget.session.token,
+        eventId: _currentEvent.id,
+        name: name,
+        maxQuantity: quantity,
+        unitLabel: unit,
+      );
+      if (!mounted) return;
+      _showSnack('Item ajouté');
+      await _loadItems();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Impossible d’ajouter l’item', isError: true);
+    } finally {
+      if (!mounted) return;
+      setState(() => _creatingCustomItem = false);
+    }
+  }
+
+  Future<void> _deleteEventItem(EventItemModel item) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Supprimer ${item.name} ?'),
+        content: const Text(
+          'Cette action supprimera l’item et toutes les contributions associées.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _deletingItemId = item.itemId);
+    try {
+      await _eventsApi.deleteEventItem(
+        token: widget.session.token,
+        eventId: _currentEvent.id,
+        itemId: item.itemId,
+      );
+      if (!mounted) return;
+      _showSnack('Item supprimé');
+      await _loadItems();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Suppression impossible', isError: true);
+    } finally {
+      if (!mounted) return;
+      setState(() => _deletingItemId = null);
     }
   }
 
@@ -246,7 +403,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Promis : ${item.reservedQuantity}/${item.maxQuantity}',
+                  'Promis : ${item.reservedQuantity}/${item.maxQuantity} ${item.unitLabel}',
                   style: Theme.of(context)
                       .textTheme
                       .bodyMedium
@@ -257,9 +414,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   controller: controller,
                   autofocus: true,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Quantité souhaitée',
                     helperText: 'Entrez 0 pour annuler votre contribution.',
+                    suffixText: item.unitLabel,
                   ),
                   validator: (value) {
                     final text = value?.trim() ?? '';
@@ -354,6 +512,23 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
             _buildPaymentSection(),
             const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ElevatedButton.icon(
+                onPressed: _creatingCustomItem ? null : _openAddItemDialog,
+                icon: _creatingCustomItem
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.add),
+                label: Text(
+                  _creatingCustomItem ? 'Ajout en cours...' : 'Ajouter un item',
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             Text(
               'Items disponibles',
               style: Theme.of(context).textTheme.titleLarge,
@@ -384,7 +559,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
               _EventItemsList(
                 items: _eventItems ?? const [],
                 reservingItemId: _reservingItemId,
+                deletingItemId: _deletingItemId,
                 onReserve: _openQuantityDialog,
+                onDelete: _deleteEventItem,
+                isOwner: _isOwner,
+                currentUserEmail: widget.session.email,
               ),
           ],
         ),
@@ -669,16 +848,32 @@ class _InvitationStatusCard extends StatelessWidget {
   }
 }
 
+class _NewEventItemData {
+  const _NewEventItemData(this.name, this.quantity, this.unit);
+
+  final String name;
+  final int quantity;
+  final String unit;
+}
+
 class _EventItemsList extends StatelessWidget {
   const _EventItemsList({
     required this.items,
     required this.reservingItemId,
+    required this.deletingItemId,
     required this.onReserve,
+    required this.onDelete,
+    required this.isOwner,
+    required this.currentUserEmail,
   });
 
   final List<EventItemModel> items;
   final int? reservingItemId;
+  final int? deletingItemId;
   final void Function(EventItemModel item) onReserve;
+  final void Function(EventItemModel item) onDelete;
+  final bool isOwner;
+  final String currentUserEmail;
 
   @override
   Widget build(BuildContext context) {
@@ -711,7 +906,11 @@ class _EventItemsList extends StatelessWidget {
                   (item) => _EventItemTile(
                     item: item,
                     isLoading: reservingItemId == item.itemId,
+                    isDeleting: deletingItemId == item.itemId,
                     onTap: () => onReserve(item),
+                    onDelete: (isOwner || item.isCreatedBy(currentUserEmail))
+                        ? () => onDelete(item)
+                        : null,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -728,11 +927,15 @@ class _EventItemTile extends StatelessWidget {
     required this.item,
     required this.isLoading,
     required this.onTap,
+    this.onDelete,
+    this.isDeleting = false,
   });
 
   final EventItemModel item;
   final bool isLoading;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
+  final bool isDeleting;
 
   @override
   Widget build(BuildContext context) {
@@ -755,7 +958,7 @@ class _EventItemTile extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${item.reservedQuantity}/${item.maxQuantity}',
+                  '${item.reservedQuantity}/${item.maxQuantity} ${item.unitLabel}',
                   style: Theme.of(context)
                       .textTheme
                       .labelLarge
@@ -774,7 +977,7 @@ class _EventItemTile extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               available > 0
-                  ? '$available unité(s) encore disponibles.'
+                  ? '$available ${item.unitLabel} encore disponible${available > 1 ? 's' : ''}.'
                   : 'Quota rempli – vous pouvez remplacer une contribution existante.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -795,6 +998,26 @@ class _EventItemTile extends StatelessWidget {
                 ),
               ),
             ),
+            if (onDelete != null) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: isDeleting ? null : onDelete,
+                  icon: isDeleting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.delete_outline),
+                  label: Text(isDeleting ? 'Suppression...' : 'Supprimer'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red.shade700,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
