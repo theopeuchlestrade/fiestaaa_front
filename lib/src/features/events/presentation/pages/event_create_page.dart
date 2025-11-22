@@ -66,8 +66,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
       final providers = await _paymentProvidersApi.fetchProviders();
       if (!mounted) return;
       setState(() {
-        _providers =
-            providers.where((provider) => provider.isActive).toList();
+        _providers = providers.where((provider) => provider.isActive).toList();
         _loadingProviders = false;
       });
     } on ApiException catch (e) {
@@ -163,6 +162,31 @@ class _EventCreatePageState extends State<EventCreatePage> {
       return null;
     }
     return double.tryParse(raw);
+  }
+
+  PaymentProviderModel? _providerById(int? id) {
+    if (id == null) return null;
+    for (final provider in _providers) {
+      if (provider.id == id) return provider;
+    }
+    return null;
+  }
+
+  String? _validatePaymentLink(String? value) {
+    if (_selectedProviderId == null) {
+      return null;
+    }
+    final text = value?.trim() ?? '';
+    if (text.isEmpty) {
+      return 'Lien requis pour la cagnotte';
+    }
+    final provider = _providerById(_selectedProviderId);
+    final regExp = provider?.compiledValidationRegex ??
+        RegExp(PaymentProviderModel.defaultValidationRegex);
+    if (!regExp.hasMatch(text)) {
+      return 'Le lien ne correspond pas au format ${provider?.name ?? 'attendu'}';
+    }
+    return null;
   }
 
   void _showSnack(String text, {bool isError = false}) {
@@ -306,19 +330,11 @@ class _EventCreatePageState extends State<EventCreatePage> {
             TextFormField(
               controller: _paymentIdentifierController,
               decoration: const InputDecoration(
-                labelText: 'Identifiant de paiement (optionnel)',
-                prefixIcon: Icon(Icons.confirmation_number),
+                labelText: 'Lien de la cagnotte',
+                prefixIcon: Icon(Icons.link),
               ),
               enabled: _selectedProviderId != null,
-              validator: (value) {
-                if (_selectedProviderId == null) {
-                  return null;
-                }
-                if (value == null || value.trim().isEmpty) {
-                  return 'Identifiant requis pour la cagnotte';
-                }
-                return null;
-              },
+              validator: _validatePaymentLink,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -340,8 +356,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
                 if (raw.isEmpty) {
                   return null;
                 }
-                final parsed =
-                    double.tryParse(raw.replaceAll(',', '.'));
+                final parsed = double.tryParse(raw.replaceAll(',', '.'));
                 if (parsed == null || parsed < 0) {
                   return 'Entrez un montant positif';
                 }

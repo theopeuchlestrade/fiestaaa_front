@@ -158,8 +158,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     labelText: 'Nom de l’item',
                     prefixIcon: Icon(Icons.shopping_bag),
                   ),
-                  validator: (value) =>
-                      value == null || value.trim().isEmpty ? 'Champ requis' : null,
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Champ requis'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -189,8 +190,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     labelText: 'Unité (ex: pièce, gramme...)',
                     prefixIcon: Icon(Icons.straighten),
                   ),
-                  validator: (value) =>
-                      value == null || value.trim().isEmpty ? 'Champ requis' : null,
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Champ requis'
+                      : null,
                 ),
               ],
             ),
@@ -596,17 +598,19 @@ class _EventDetailPageState extends State<EventDetailPage> {
       );
     }
 
-    final provider =
-        _providersById[_currentEvent.paymentProviderId ?? -1];
-    final providerName = provider?.name ??
-        'Fournisseur #${_currentEvent.paymentProviderId}';
+    final provider = _providersById[_currentEvent.paymentProviderId ?? -1];
+    final providerName =
+        provider?.name ?? 'Fournisseur #${_currentEvent.paymentProviderId}';
     final amount = _currentEvent.paymentRequestedAmount;
     final amountText = amount != null
-        ? NumberFormat.currency(locale: 'fr_FR', symbol: '€')
-            .format(amount)
+        ? NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(amount)
         : 'Montant non précisé';
     final identifier = _currentEvent.paymentIdentifier?.trim();
     final paymentUri = _buildPaymentUri(provider);
+    final linkLabel = paymentUri?.toString() ??
+        (identifier == null || identifier.isEmpty
+            ? 'non renseigné'
+            : identifier);
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 10),
@@ -645,7 +649,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             Text('Montant visé : $amountText'),
             const SizedBox(height: 4),
             Text(
-              'Identifiant : ${identifier == null || identifier.isEmpty ? 'non renseigné' : identifier}',
+              'Lien : $linkLabel',
             ),
             const SizedBox(height: 12),
             Row(
@@ -679,12 +683,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   Uri? _buildPaymentUri(PaymentProviderModel? provider) {
     final identifier = _currentEvent.paymentIdentifier?.trim();
-    if (provider == null || identifier == null || identifier.isEmpty) {
+    if (identifier == null || identifier.isEmpty) {
+      return null;
+    }
+    final direct = Uri.tryParse(identifier);
+    if (direct != null && direct.hasScheme) {
+      return direct;
+    }
+    if (provider == null) {
       return null;
     }
     final encoded = Uri.encodeComponent(identifier);
-    final url =
-        provider.urlTemplate.replaceAll('{identifier}', encoded);
+    final url = provider.urlTemplate.replaceAll('{identifier}', encoded);
     return Uri.tryParse(url);
   }
 
