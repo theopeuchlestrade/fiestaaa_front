@@ -14,6 +14,7 @@ import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_pro
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:intl/intl.dart';
@@ -55,6 +56,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   String? _paymentProvidersError;
   Map<int, PaymentProviderModel> _providersById = {};
   bool _deletingEvent = false;
+  bool _sharingLink = false;
 
   @override
   void initState() {
@@ -542,6 +544,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
           if (_isOwner)
             IconButton(
+              onPressed: _sharingLink ? null : _shareEvent,
+              icon: _sharingLink
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.ios_share),
+              tooltip: 'Partager l’événement',
+            ),
+          if (_isOwner)
+            IconButton(
               onPressed: _deletingEvent ? null : _confirmDeleteEvent,
               icon: _deletingEvent
                   ? const SizedBox(
@@ -878,6 +892,35 @@ class _EventDetailPageState extends State<EventDetailPage> {
       if (!mounted) return;
       _showSnack('Impossible d\'ouvrir la cagnotte', isError: true);
     }
+  }
+
+  Future<void> _shareEvent() async {
+    setState(() => _sharingLink = true);
+    try {
+      final token = await _eventsApi.createShareLink(
+        token: widget.session.token,
+        eventId: _currentEvent.id,
+      );
+      final link = _buildShareUrl(token);
+      await Clipboard.setData(ClipboardData(text: link));
+      _showSnack('Lien copié dans le presse-papiers');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Impossible de générer le lien', isError: true);
+    } finally {
+      if (!mounted) return;
+      setState(() => _sharingLink = false);
+    }
+  }
+
+  String _buildShareUrl(String token) {
+    final base = Uri.base;
+    final params = Map<String, String>.from(base.queryParameters);
+    params['shareToken'] = token;
+    return base.replace(queryParameters: params).toString();
   }
 
   Future<void> _openMap(LatLng target) async {

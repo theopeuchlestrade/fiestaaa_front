@@ -203,6 +203,53 @@ class EventsApi {
     );
   }
 
+  Future<String> createShareLink({
+    required String token,
+    required int eventId,
+  }) async {
+    final response = await _client.post(
+      Uri.parse('$apiBaseUrl/events/$eventId/share'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 201) {
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      return decoded['token'] as String;
+    }
+
+    throw ApiException(
+      'Impossible de générer le lien (${response.statusCode})',
+      statusCode: response.statusCode,
+    );
+  }
+
+  Future<EventModel> claimShareToken({
+    required String token,
+    required String shareToken,
+  }) async {
+    final response = await _client.post(
+      Uri.parse('$apiBaseUrl/share/claim'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'token': shareToken}),
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final eventJson = decoded['event'] as Map<String, dynamic>;
+      return EventModel.fromJson(eventJson);
+    }
+
+    throw ApiException(
+      'Lien invalide (${response.statusCode})',
+      statusCode: response.statusCode,
+    );
+  }
+
   Future<void> deleteEvent({
     required String token,
     required int eventId,

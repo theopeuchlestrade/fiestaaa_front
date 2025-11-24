@@ -1,4 +1,6 @@
+import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
+import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_create_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_detail_page.dart';
@@ -11,10 +13,14 @@ class HomePage extends StatefulWidget {
     super.key,
     required this.session,
     required this.onLogout,
+    this.initialShareToken,
+    this.onShareTokenConsumed,
   });
 
   final SessionData session;
   final VoidCallback onLogout;
+  final String? initialShareToken;
+  final VoidCallback? onShareTokenConsumed;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -22,7 +28,10 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final GlobalKey<EventsListPageState> _eventsKey = GlobalKey();
+  final _shareApi = EventsApi();
   int _selectedIndex = 0;
+  bool _claimingShare = false;
+  bool _shareHandled = false;
 
   void _onItemTapped(int index) {
     setState(() {
@@ -54,6 +63,67 @@ class _HomePageState extends State<HomePage> {
     if (_eventsKey.currentState != null) {
       _eventsKey.currentState!.removeEvent(eventId);
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialShareToken != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _claimShareIfNeeded());
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant HomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialShareToken != oldWidget.initialShareToken &&
+        widget.initialShareToken != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _claimShareIfNeeded());
+    }
+  }
+
+  @override
+  void dispose() {
+    _shareApi.dispose();
+    super.dispose();
+  }
+
+  Future<void> _claimShareIfNeeded() async {
+    if (_shareHandled || widget.initialShareToken == null || _claimingShare) {
+      return;
+    }
+    setState(() {
+      _claimingShare = true;
+    });
+    try {
+      final event = await _shareApi.claimShareToken(
+        token: widget.session.token,
+        shareToken: widget.initialShareToken!,
+      );
+      _shareHandled = true;
+      widget.onShareTokenConsumed?.call();
+      _eventsKey.currentState?.reload();
+      _openEvent(event);
+    } on ApiException catch (e) {
+      _shareHandled = true;
+      widget.onShareTokenConsumed?.call();
+      _showSnack(e.message);
+    } catch (_) {
+      _shareHandled = true;
+      widget.onShareTokenConsumed?.call();
+      _showSnack('Lien de partage invalide ou expiré.');
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _claimingShare = false;
+      });
+    }
+  }
+
+  void _showSnack(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(text)),
+    );
   }
 
   @override
