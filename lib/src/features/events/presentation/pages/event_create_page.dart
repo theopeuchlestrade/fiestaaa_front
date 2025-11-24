@@ -1,6 +1,7 @@
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
+import 'package:fiestaaa_front/src/features/events/domain/address_suggestion.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_provider_model.dart';
@@ -28,6 +29,11 @@ class _EventCreatePageState extends State<EventCreatePage> {
   final _addressController = TextEditingController();
   final _paymentIdentifierController = TextEditingController();
   final _paymentAmountController = TextEditingController();
+  final _addressFocus = FocusNode();
+  List<AddressSuggestion> _addressSuggestions = [];
+  AddressSuggestion? _selectedSuggestion;
+  bool _searchingAddress = false;
+  String? _addressSearchError;
   final _api = EventsApi();
   final _paymentProvidersApi = PaymentProvidersApi();
 
@@ -42,16 +48,19 @@ class _EventCreatePageState extends State<EventCreatePage> {
   @override
   void initState() {
     super.initState();
+    _addressController.addListener(_onAddressChanged);
     _loadPaymentProviders();
   }
 
   @override
   void dispose() {
+    _addressController.removeListener(_onAddressChanged);
     _nameController.dispose();
     _descriptionController.dispose();
     _addressController.dispose();
     _paymentIdentifierController.dispose();
     _paymentAmountController.dispose();
+    _addressFocus.dispose();
     _api.dispose();
     _paymentProvidersApi.dispose();
     super.dispose();
@@ -84,6 +93,21 @@ class _EventCreatePageState extends State<EventCreatePage> {
     }
   }
 
+  void _onAddressChanged() {
+    final text = _addressController.text.trim();
+    final selected = _selectedSuggestion;
+    if (selected != null && text != selected.label) {
+      setState(() {
+        _selectedSuggestion = null;
+      });
+    }
+    if (_addressSearchError != null) {
+      setState(() {
+        _addressSearchError = null;
+      });
+    }
+  }
+
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -107,10 +131,74 @@ class _EventCreatePageState extends State<EventCreatePage> {
     }
   }
 
+  Future<void> _searchAddress() async {
+    final query = _addressController.text.trim();
+    if (query.length < 3) {
+      setState(() {
+        _addressSearchError = 'Saisissez au moins 3 caractères';
+        _addressSuggestions = [];
+        _selectedSuggestion = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _searchingAddress = true;
+      _addressSearchError = null;
+    });
+
+    try {
+      final results = await _api.searchAddresses(
+        token: widget.session.token,
+        query: query,
+      );
+      if (!mounted) return;
+      setState(() {
+        _addressSuggestions = results;
+        if (results.isEmpty) {
+          _addressSearchError = 'Aucune adresse trouvée';
+        }
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _addressSuggestions = [];
+        _addressSearchError = e.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _addressSuggestions = [];
+        _addressSearchError = 'Recherche impossible pour le moment';
+      });
+    } finally {
+      if (!mounted) return;
+      setState(() => _searchingAddress = false);
+    }
+  }
+
+  void _selectSuggestion(AddressSuggestion suggestion) {
+    setState(() {
+      _selectedSuggestion = suggestion;
+      _addressController.text = suggestion.label;
+      _addressSuggestions = [];
+      _addressSearchError = null;
+    });
+    _addressFocus.unfocus();
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedSuggestion == null) {
+      setState(() {
+        _addressSearchError = 'Validez l’adresse depuis la recherche';
+      });
+      _showSnack('Merci de choisir une adresse suggérée', isError: true);
+      return;
+    }
     setState(() => _submitting = true);
     final requestedAmount = _requestedAmountValue();
+    final selectedAddress = _selectedSuggestion!;
     final payload = EventPayload(
       name: _nameController.text.trim(),
       description: _descriptionController.text.trim(),
@@ -119,7 +207,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
         hours: _selectedTime.hour,
         minutes: _selectedTime.minute,
       ),
-      address: _addressController.text.trim(),
+      address: selectedAddress.label,
+      latitude: selectedAddress.latitude,
+      longitude: selectedAddress.longitude,
       paymentProviderId: _selectedProviderId,
       paymentIdentifier: _paymentIdentifierController.text.isEmpty
           ? null
@@ -143,6 +233,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
       _paymentAmountController.clear();
       setState(() {
         _selectedProviderId = null;
+        _selectedSuggestion = null;
+        _addressSuggestions = [];
+        _addressSearchError = null;
       });
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -263,6 +356,85 @@ class _EventCreatePageState extends State<EventCreatePage> {
     );
   }
 
+  Widget _buildAddressField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: _addressController,
+          focusNode: _addressFocus,
+          decoration: InputDecoration(
+            labelText: 'Adresse',
+            prefixIcon: const Icon(Icons.place),
+            helperText: _selectedSuggestion == null
+                ? 'Recherchez puis sélectionnez une suggestion validée'
+                : 'Adresse validée',
+            suffixIcon: IconButton(
+              onPressed: _searchingAddress ? null : _searchAddress,
+              icon: _searchingAddress
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.search),
+              tooltip: 'Rechercher',
+            ),
+          ),
+          validator: (value) =>
+              value == null || value.trim().isEmpty ? 'Champ requis' : null,
+          onFieldSubmitted: (_) => _searchAddress(),
+        ),
+        if (_addressSearchError != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            _addressSearchError!,
+            style: TextStyle(color: Colors.red.shade700),
+          ),
+        ],
+        if (_addressSuggestions.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 240),
+            child: ListView.separated(
+              shrinkWrap: true,
+              physics: const ClampingScrollPhysics(),
+              itemCount: _addressSuggestions.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final suggestion = _addressSuggestions[index];
+                return ListTile(
+                  leading: const Icon(Icons.location_on_outlined),
+                  title: Text(
+                    suggestion.label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onTap: () => _selectSuggestion(suggestion),
+                );
+              },
+            ),
+          ),
+        ],
+        if (_selectedSuggestion != null && _addressSuggestions.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  size: 18,
+                  color: Colors.green.shade600,
+                ),
+                const SizedBox(width: 6),
+                const Text('Adresse validée'),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -294,15 +466,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
                   value == null || value.trim().isEmpty ? 'Champ requis' : null,
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _addressController,
-              decoration: const InputDecoration(
-                labelText: 'Adresse',
-                prefixIcon: Icon(Icons.place),
-              ),
-              validator: (value) =>
-                  value == null || value.trim().isEmpty ? 'Champ requis' : null,
-            ),
+            _buildAddressField(),
             const SizedBox(height: 16),
             Row(
               children: [

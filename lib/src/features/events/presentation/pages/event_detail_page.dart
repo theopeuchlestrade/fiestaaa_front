@@ -11,8 +11,10 @@ import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dar
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_provider_model.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class EventDetailPage extends StatefulWidget {
@@ -502,11 +504,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               value:
                   '${_currentEvent.formattedDate} à ${_currentEvent.formattedTime}',
             ),
-            _DetailTile(
-              icon: Icons.place,
-              label: 'Adresse',
-              value: _currentEvent.address,
-            ),
+            _buildLocationSection(),
             _DetailTile(
               icon: Icons.description,
               label: 'Description',
@@ -567,6 +565,105 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 isOwner: _isOwner,
                 currentUserEmail: widget.session.email,
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationSection() {
+    if (!_currentEvent.hasCoordinates) {
+      return _DetailTile(
+        icon: Icons.place,
+        label: 'Adresse',
+        value: _currentEvent.address,
+      );
+    }
+
+    final target =
+        LatLng(_currentEvent.latitude ?? 0, _currentEvent.longitude ?? 0);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.place, color: Colors.deepOrange),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Adresse',
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelLarge
+                            ?.copyWith(color: Colors.grey.shade600),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _currentEvent.address,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                height: 220,
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: target,
+                    initialZoom: 15,
+                    interactionOptions: const InteractionOptions(
+                      flags: InteractiveFlag.drag |
+                          InteractiveFlag.pinchZoom |
+                          InteractiveFlag.doubleTapZoom |
+                          InteractiveFlag.scrollWheelZoom,
+                    ),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      subdomains: const ['a', 'b', 'c'],
+                      userAgentPackageName: 'fiestaaa_front',
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: target,
+                          width: 40,
+                          height: 40,
+                          alignment: Alignment.topCenter,
+                          child: const Icon(
+                            Icons.location_on,
+                            color: Colors.red,
+                            size: 36,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: () => _openMap(target),
+              icon: const Icon(Icons.map),
+              label: const Text('Ouvrir dans Maps / OpenStreetMap'),
+            ),
           ],
         ),
       ),
@@ -710,6 +807,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
     } catch (_) {
       if (!mounted) return;
       _showSnack('Impossible d\'ouvrir la cagnotte', isError: true);
+    }
+  }
+
+  Future<void> _openMap(LatLng target) async {
+    final uri = Uri.parse(
+        'https://www.openstreetmap.org/?mlat=${target.latitude}&mlon=${target.longitude}#map=17/${target.latitude}/${target.longitude}');
+    try {
+      final success =
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!success && mounted) {
+        _showSnack('Impossible d\'ouvrir la carte', isError: true);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Impossible d\'ouvrir la carte', isError: true);
     }
   }
 

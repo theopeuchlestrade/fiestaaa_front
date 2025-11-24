@@ -8,6 +8,8 @@ class EventModel {
     required this.date,
     required this.startTime,
     required this.address,
+    required this.latitude,
+    required this.longitude,
     required this.paymentProviderId,
     required this.paymentIdentifier,
     required this.paymentRequestedAmount,
@@ -20,6 +22,8 @@ class EventModel {
   final DateTime date;
   final Duration startTime;
   final String address;
+  final double? latitude;
+  final double? longitude;
   final int? paymentProviderId;
   final String? paymentIdentifier;
   final double? paymentRequestedAmount;
@@ -40,6 +44,8 @@ class EventModel {
     return '$hours:$minutes';
   }
 
+  bool get hasCoordinates => latitude != null && longitude != null;
+
   factory EventModel.fromJson(Map<String, dynamic> json) {
     final date = DateTime.parse(json['date_event'] as String);
     final startTime = _parseTime(json['start_time'] as String);
@@ -50,6 +56,8 @@ class EventModel {
       date: date,
       startTime: startTime,
       address: json['address'] as String,
+      latitude: _parseNullableDouble(json['latitude']),
+      longitude: _parseNullableDouble(json['longitude']),
       paymentProviderId: (json['payment_provider_id'] as num?)?.toInt(),
       paymentIdentifier: json['payment_identifier'] as String?,
       paymentRequestedAmount:
@@ -64,6 +72,13 @@ class EventModel {
     final minutes = parts.length > 1 ? parts[1] : 0;
     return Duration(hours: hours, minutes: minutes);
   }
+
+  static double? _parseNullableDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    final parsed = double.tryParse(value.toString());
+    return parsed;
+  }
 }
 
 class EventPayload {
@@ -73,6 +88,8 @@ class EventPayload {
     required this.date,
     required this.startTime,
     required this.address,
+    this.latitude,
+    this.longitude,
     this.paymentProviderId,
     this.paymentIdentifier,
     this.paymentRequestedAmount,
@@ -83,6 +100,8 @@ class EventPayload {
   final DateTime date;
   final Duration startTime;
   final String address;
+  final double? latitude;
+  final double? longitude;
   final int? paymentProviderId;
   final String? paymentIdentifier;
   final double? paymentRequestedAmount;
@@ -94,6 +113,8 @@ class EventPayload {
       'date_event': DateFormat('yyyy-MM-dd').format(date),
       'start_time': _formatDuration(startTime),
       'address': address,
+      'latitude': latitude,
+      'longitude': longitude,
       'payment_provider_id': paymentProviderId,
       'payment_identifier': paymentIdentifier,
       'payment_requested_amount': paymentRequestedAmount,
