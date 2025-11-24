@@ -12,8 +12,10 @@ import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_provider_model.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -704,8 +706,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   children: [
                     TileLayer(
                       urlTemplate:
-                          'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      subdomains: const ['a', 'b', 'c'],
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      tileProvider: CancellableNetworkTileProvider(),
                       userAgentPackageName: 'fiestaaa_front',
                     ),
                     MarkerLayer(
@@ -728,10 +730,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ),
             ),
             const SizedBox(height: 8),
-            TextButton.icon(
+            OutlinedButton.icon(
               onPressed: () => _openMap(target),
-              icon: const Icon(Icons.map),
-              label: const Text('Ouvrir dans Maps / OpenStreetMap'),
+              icon: const Icon(Icons.map_outlined),
+              label: const Text('Ouvrir dans votre app de cartes'),
             ),
           ],
         ),
@@ -880,8 +882,24 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _openMap(LatLng target) async {
-    final uri = Uri.parse(
-        'https://www.openstreetmap.org/?mlat=${target.latitude}&mlon=${target.longitude}#map=17/${target.latitude}/${target.longitude}');
+    // On Android, try geo: scheme to let the OS/app chooser handle it directly.
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      final geo = Uri.parse(
+          'geo:${target.latitude},${target.longitude}?q=${target.latitude},${target.longitude}');
+      try {
+        final opened = await launchUrl(
+          geo,
+          mode: LaunchMode.externalApplication,
+        );
+        if (opened) return;
+      } catch (_) {
+        // fallback to manual choice below
+      }
+    }
+
+    final provider = await _pickMapProvider();
+    if (provider == null) return;
+    final uri = _uriForProvider(provider, target);
     try {
       final success =
           await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -891,6 +909,48 @@ class _EventDetailPageState extends State<EventDetailPage> {
     } catch (_) {
       if (!mounted) return;
       _showSnack('Impossible d\'ouvrir la carte', isError: true);
+    }
+  }
+
+  Future<String?> _pickMapProvider() {
+    return showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.explore),
+            title: const Text('Google Maps'),
+            onTap: () => Navigator.of(context).pop('google'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.apple),
+            title: const Text('Apple Plans'),
+            onTap: () => Navigator.of(context).pop('apple'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.map),
+            title: const Text('OpenStreetMap'),
+            onTap: () => Navigator.of(context).pop('osm'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Uri _uriForProvider(String provider, LatLng target) {
+    final lat = target.latitude;
+    final lon = target.longitude;
+    switch (provider) {
+      case 'google':
+        return Uri.parse(
+            'https://www.google.com/maps/search/?api=1&query=$lat,$lon');
+      case 'apple':
+        return Uri.parse('https://maps.apple.com/?ll=$lat,$lon');
+      default:
+        return Uri.parse(
+            'https://www.openstreetmap.org/?mlat=$lat&mlon=$lon#map=17/$lat/$lon');
     }
   }
 
