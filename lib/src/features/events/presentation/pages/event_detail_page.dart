@@ -144,7 +144,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   Future<void> _openAddItemDialog() async {
     final nameController = TextEditingController();
     final quantityController = TextEditingController();
-    final unitController = TextEditingController(text: 'pièce');
+    final unitController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
     final result = await showDialog<_NewEventItemData>(
@@ -174,7 +174,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'Quantité souhaitée',
-                    helperText: 'Nombre total à répartir entre les invités',
                     prefixIcon: Icon(Icons.format_list_numbered),
                   ),
                   validator: (value) {
