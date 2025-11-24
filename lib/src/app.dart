@@ -18,10 +18,12 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   final _authApi = AuthApi();
   SessionData? _session;
   bool _loadingSession = true;
+  String? _pendingShareToken;
 
   @override
   void initState() {
     super.initState();
+    _pendingShareToken = Uri.base.queryParameters['shareToken'];
     _restoreSession();
   }
 
@@ -100,6 +102,12 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
               : HomePage(
                   session: _session!,
                   onLogout: _handleLogout,
+                  initialShareToken: _pendingShareToken,
+                  onShareTokenConsumed: () {
+                    setState(() {
+                      _pendingShareToken = null;
+                    });
+                  },
                 ),
     );
   }
