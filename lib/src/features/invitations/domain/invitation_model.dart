@@ -23,3 +23,17 @@ class InvitationModel {
     );
   }
 }
+
+class InvitationSuggestionModel {
+  InvitationSuggestionModel({required this.email, required this.lastInvitedAt});
+
+  final String email;
+  final DateTime lastInvitedAt;
+
+  factory InvitationSuggestionModel.fromJson(Map<String, dynamic> json) {
+    return InvitationSuggestionModel(
+      email: json['email'] as String,
+      lastInvitedAt: DateTime.parse(json['last_invited_at'] as String),
+    );
+  }
+}
