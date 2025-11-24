@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/features/invitations/presentation/widgets/invitation_status_section.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class EventInvitationsPage extends StatefulWidget {
   const EventInvitationsPage({
@@ -27,18 +30,66 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
 
   final _emailController = TextEditingController();
   bool _submitting = false;
+  Timer? _suggestionDebounce;
+  List<InvitationSuggestionModel> _suggestions = [];
+  bool _suggestionsLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _emailController.addListener(_onEmailChanged);
     _fetch();
   }
 
   @override
   void dispose() {
+    _suggestionDebounce?.cancel();
     _api.dispose();
     _emailController.dispose();
     super.dispose();
+  }
+
+  void _onEmailChanged() {
+    _suggestionDebounce?.cancel();
+    final query = _emailController.text.trim();
+    if (query.length < 2) {
+      setState(() {
+        _suggestions = [];
+        _suggestionsLoading = false;
+      });
+      return;
+    }
+
+    _suggestionDebounce = Timer(const Duration(milliseconds: 300), () {
+      _loadSuggestions(query);
+    });
+  }
+
+  Future<void> _loadSuggestions(String query) async {
+    setState(() {
+      _suggestionsLoading = true;
+    });
+    try {
+      final results = await _api.fetchInvitationSuggestions(
+        token: widget.session.token,
+        eventId: widget.eventId,
+        query: query,
+      );
+      if (!mounted) return;
+      setState(() {
+        _suggestions = results;
+      });
+    } on ApiException catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _suggestions = [];
+      });
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _suggestionsLoading = false;
+      });
+    }
   }
 
   Future<void> _fetch() async {
@@ -64,6 +115,15 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       if (!mounted) return;
       setState(() => _loading = false);
     }
+  }
+
+  void _applySuggestion(String email) {
+    _emailController
+      ..text = email
+      ..selection = TextSelection.collapsed(offset: email.length);
+    setState(() {
+      _suggestions = [];
+    });
   }
 
   Future<void> _createInvitation() async {
@@ -138,6 +198,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
               emailController: _emailController,
               onSubmit: _submitting ? null : _createInvitation,
               submitting: _submitting,
+              suggestions: _suggestions,
+              suggestionsLoading: _suggestionsLoading,
+              onSuggestionSelected: _applySuggestion,
             ),
             const SizedBox(height: 24),
             if (_loading)
@@ -213,14 +276,21 @@ class _InviteForm extends StatelessWidget {
     required this.emailController,
     required this.onSubmit,
     required this.submitting,
+    required this.suggestions,
+    required this.suggestionsLoading,
+    required this.onSuggestionSelected,
   });
 
   final TextEditingController emailController;
   final VoidCallback? onSubmit;
   final bool submitting;
+  final List<InvitationSuggestionModel> suggestions;
+  final bool suggestionsLoading;
+  final ValueChanged<String> onSuggestionSelected;
 
   @override
   Widget build(BuildContext context) {
+    final formatter = DateFormat.yMMMMd('fr_FR');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -237,6 +307,36 @@ class _InviteForm extends StatelessWidget {
             prefixIcon: Icon(Icons.email),
           ),
         ),
+        if (suggestionsLoading)
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: LinearProgressIndicator(minHeight: 2),
+          )
+        else if (suggestions.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Material(
+              elevation: 2,
+              borderRadius: BorderRadius.circular(12),
+              child: ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: suggestions.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final suggestion = suggestions[index];
+                  return ListTile(
+                    leading: const Icon(Icons.person_add_alt_1_outlined),
+                    title: Text(suggestion.email),
+                    subtitle: Text(
+                      'Invité le ${formatter.format(suggestion.lastInvitedAt.toLocal())}',
+                    ),
+                    onTap: () => onSuggestionSelected(suggestion.email),
+                  );
+                },
+              ),
+            ),
+          ),
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
