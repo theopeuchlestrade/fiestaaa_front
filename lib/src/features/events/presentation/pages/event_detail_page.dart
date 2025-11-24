@@ -52,6 +52,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   bool _loadingPaymentProviders = true;
   String? _paymentProvidersError;
   Map<int, PaymentProviderModel> _providersById = {};
+  bool _deletingEvent = false;
 
   @override
   void initState() {
@@ -353,6 +354,61 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
+  Future<void> _confirmDeleteEvent() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer cet événement ?'),
+        content: const Text(
+          'Cette action supprimera l’événement pour tous les participants. Les invités ne le verront plus lors de leur prochaine actualisation.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.of(context).pop(true),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Supprimer'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _deleteEvent();
+    }
+  }
+
+  Future<void> _deleteEvent() async {
+    setState(() => _deletingEvent = true);
+    try {
+      await _eventsApi.deleteEvent(
+        token: widget.session.token,
+        eventId: _currentEvent.id,
+      );
+      if (!mounted) return;
+      widget.onEventRemoved?.call(_currentEvent.id);
+      _showSnack('Événement supprimé');
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Suppression impossible', isError: true);
+    } finally {
+      if (!mounted) return;
+      setState(() => _deletingEvent = false);
+    }
+  }
+
   void _showSnack(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -482,6 +538,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
               onPressed: _openInvitations,
               icon: const Icon(Icons.people_alt),
               tooltip: 'Gérer les invitations',
+            ),
+          if (_isOwner)
+            IconButton(
+              onPressed: _deletingEvent ? null : _confirmDeleteEvent,
+              icon: _deletingEvent
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.delete_outline),
+              tooltip: 'Supprimer l’événement',
             ),
         ],
       ),

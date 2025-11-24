@@ -203,6 +203,27 @@ class EventsApi {
     );
   }
 
+  Future<void> deleteEvent({
+    required String token,
+    required int eventId,
+  }) async {
+    final response = await _client.delete(
+      Uri.parse('$apiBaseUrl/events/$eventId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return;
+    }
+
+    throw ApiException(
+      'Suppression impossible (${response.statusCode})',
+      statusCode: response.statusCode,
+    );
+  }
+
   void dispose() {
     _client.close();
   }
