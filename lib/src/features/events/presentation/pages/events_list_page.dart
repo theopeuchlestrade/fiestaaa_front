@@ -3,6 +3,7 @@ import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
+import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 
 typedef EventSelected = void Function(EventModel event);
@@ -89,55 +90,158 @@ class EventsListPageState extends State<EventsListPage> {
 
   @override
   Widget build(BuildContext context) {
+    Widget content;
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_error != null) {
-      return Center(
+      content = const Center(child: CircularProgressIndicator());
+    } else if (_error != null) {
+      content = Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Icon(Icons.wifi_off, color: Colors.grey.shade500, size: 40),
+            const SizedBox(height: 12),
             Text(_error!, textAlign: TextAlign.center),
             const SizedBox(height: 12),
-            ElevatedButton(
+            ElevatedButton.icon(
               onPressed: _loadEvents,
-              child: const Text('Réessayer'),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Réessayer'),
             ),
           ],
         ),
       );
+    } else {
+      final events = _events ?? [];
+      if (events.isEmpty) {
+        content = Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.celebration, color: Colors.grey.shade500, size: 40),
+              const SizedBox(height: 12),
+              const Text('Aucun événement pour le moment.'),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: _loadEvents,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Actualiser'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        content = _EventsGrid(
+          events: events,
+          onEventSelected: widget.onEventSelected,
+          sessionEmail: widget.session.email,
+          invitations: _myInvitations,
+          onRefresh: _loadEvents,
+        );
+      }
     }
 
-    final events = _events ?? [];
-    if (events.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Aucun événement pour le moment.'),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: _loadEvents,
-              child: const Text('Actualiser'),
-            ),
-          ],
-        ),
-      );
-    }
+    return FiestaaaBackground(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: SafeArea(child: content),
+    );
+  }
+}
 
+class _EventsGrid extends StatelessWidget {
+  const _EventsGrid({
+    required this.events,
+    required this.onEventSelected,
+    required this.sessionEmail,
+    required this.invitations,
+    required this.onRefresh,
+  });
+
+  final List<EventModel> events;
+  final EventSelected onEventSelected;
+  final String sessionEmail;
+  final Map<int, InvitationModel> invitations;
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: _loadEvents,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        itemCount: events.length,
-        itemBuilder: (context, index) {
-          final event = events[index];
-          return _EventBubble(
-            event: event,
-            sessionEmail: widget.session.email,
-            invitation: _myInvitations[event.id],
-            onTap: () => widget.onEventSelected(event),
+      onRefresh: onRefresh,
+      displacement: 32,
+      edgeOffset: 12,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isTablet = constraints.maxWidth > 720;
+          final crossAxisCount = constraints.maxWidth > 1080
+              ? 3
+              : constraints.maxWidth > 720
+                  ? 2
+                  : 1;
+          final childAspectRatio = isTablet ? 1.9 : 1.3;
+          return CustomScrollView(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                sliver: SliverToBoxAdapter(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: FiestaaaPalette.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.auto_awesome, color: FiestaaaPalette.primary.withOpacity(0.8)),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Vos événements',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: FiestaaaPalette.text,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: onRefresh,
+                        tooltip: 'Actualiser',
+                        icon: const Icon(Icons.refresh),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                sliver: SliverGrid(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: childAspectRatio,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final event = events[index];
+                      return _EventBubble(
+                        event: event,
+                        sessionEmail: sessionEmail,
+                        invitation: invitations[event.id],
+                        onTap: () => onEventSelected(event),
+                      );
+                    },
+                    childCount: events.length,
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -162,27 +266,41 @@ class _EventBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final badge = _badgeData(context);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(28),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: FiestaaaPalette.cardGradient,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: FiestaaaPalette.primary.withOpacity(0.14),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              top: -30,
+              right: -18,
+              child: _DecorativeWave(
+                color: Colors.white.withOpacity(0.18),
+                size: 120,
               ),
+            ),
+            Positioned(
+              bottom: -22,
+              left: -10,
+              child: _DecorativeWave(
+                color: Colors.white.withOpacity(0.12),
+                size: 140,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -192,20 +310,20 @@ class _EventBubble extends StatelessWidget {
                       Expanded(
                         child: Text(
                           event.name,
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
                         ),
                       ),
                       if (badge != null)
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
-                            vertical: 4,
+                            vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: badge.background,
+                            color: Colors.white.withOpacity(0.9),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Row(
@@ -224,7 +342,7 @@ class _EventBubble extends StatelessWidget {
                                     .labelSmall
                                     ?.copyWith(
                                       color: badge.color,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w700,
                                     ),
                               ),
                             ],
@@ -232,27 +350,36 @@ class _EventBubble extends StatelessWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
-                      const Icon(Icons.event,
-                          size: 18, color: Colors.deepOrange),
+                      const Icon(Icons.event, size: 18, color: Colors.white),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           '${event.formattedDate} • ${event.formattedTime}',
                           overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Colors.white.withOpacity(0.92),
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.place,
-                          size: 18, color: Colors.deepOrange),
+                      const Icon(Icons.place, size: 18, color: Colors.white),
                       const SizedBox(width: 8),
-                      Expanded(child: Text(event.address)),
+                      Expanded(
+                        child: Text(
+                          event.address,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -260,12 +387,14 @@ class _EventBubble extends StatelessWidget {
                     event.description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.white.withOpacity(0.9),
+                        ),
                   ),
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -277,8 +406,8 @@ class _EventBubble extends StatelessWidget {
     if (isOwner) {
       return _EventBadgeData(
         label: 'Organisateur',
-        color: Colors.deepOrange,
-        background: Colors.deepOrange.withOpacity(0.12),
+        color: FiestaaaPalette.primary,
+        background: FiestaaaPalette.primary.withOpacity(0.12),
         icon: Icons.emoji_events,
       );
     }
@@ -327,4 +456,29 @@ class _EventBadgeData {
   final Color color;
   final Color background;
   final IconData icon;
+}
+
+class _DecorativeWave extends StatelessWidget {
+  const _DecorativeWave({
+    required this.color,
+    required this.size,
+  });
+
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform.rotate(
+      angle: -0.6,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(size),
+        ),
+      ),
+    );
+  }
 }

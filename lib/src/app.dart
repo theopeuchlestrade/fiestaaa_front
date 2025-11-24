@@ -3,6 +3,7 @@ import 'package:fiestaaa_front/src/features/auth/data/session_storage.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/auth/presentation/pages/auth_page.dart';
 import 'package:fiestaaa_front/src/features/home/presentation/pages/home_page.dart';
+import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -80,10 +81,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     return MaterialApp(
       title: 'Fiestaaa',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
-        useMaterial3: true,
-      ),
+      theme: buildFiestaaaTheme(),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

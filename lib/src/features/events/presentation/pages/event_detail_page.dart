@@ -11,6 +11,7 @@ import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dar
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_provider_model.dart';
+import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -593,7 +594,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.place, color: Colors.deepOrange),
+                const Icon(Icons.place, color: FiestaaaPalette.primary),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -719,7 +720,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.payment, color: Colors.deepOrange),
+                const Icon(Icons.payment, color: FiestaaaPalette.primary),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -1093,7 +1094,7 @@ class _EventItemTile extends StatelessWidget {
               value: ratio.clamp(0, 1),
               backgroundColor: Colors.grey.shade200,
               valueColor: AlwaysStoppedAnimation(
-                available > 0 ? Colors.deepOrange : Colors.redAccent,
+                available > 0 ? FiestaaaPalette.primary : Colors.redAccent,
               ),
             ),
             const SizedBox(height: 8),
@@ -1167,7 +1168,7 @@ class _DetailTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: Colors.deepOrange),
+            Icon(icon, color: FiestaaaPalette.primary),
             const SizedBox(width: 16),
             Expanded(
               child: Column(

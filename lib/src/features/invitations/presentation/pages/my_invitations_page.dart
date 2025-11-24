@@ -2,6 +2,7 @@ import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
+import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -91,62 +92,94 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
       appBar: AppBar(
         title: const Text('Mes invitations'),
       ),
-      body: RefreshIndicator(
-        onRefresh: _fetch,
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            if (_loading)
-              const Center(child: CircularProgressIndicator())
-            else if (_error != null)
-              Column(
-                children: [
-                  Text(_error!),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: _fetch,
-                    child: const Text('Réessayer'),
-                  ),
-                ],
-              )
-            else if (_invitations.isEmpty)
-              const Center(
-                child: Text('Aucune invitation en attente.'),
-              )
-            else
-              ..._invitations.map(
-                (inv) => Card(
-                  child: ListTile(
-                    title: Text(inv.eventName ?? 'Évènement #${inv.eventId}'),
-                    subtitle: Text(
-                      'Statut : ${inv.status}\nReçu le ${DateFormat.yMMMMd('fr_FR').format(inv.dateInvi)}',
+      body: FiestaaaBackground(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+        child: RefreshIndicator(
+          onRefresh: _fetch,
+          displacement: 28,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 32),
+            children: [
+              if (_loading)
+                const SizedBox(
+                  height: 220,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_error != null)
+                Column(
+                  children: [
+                    Text(_error!),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: _fetch,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Réessayer'),
                     ),
-                    trailing: inv.status == 'Waiting'
-                        ? Wrap(
-                            spacing: 8,
-                            children: [
-                              TextButton(
-                                onPressed: () => _respond(inv, 'Declined'),
-                                child: const Text('Refuser'),
+                  ],
+                )
+              else if (_invitations.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: Text('Aucune invitation en attente.'),
+                  ),
+                )
+              else
+                ..._invitations.map(
+                  (inv) => Card(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: ListTile(
+                        title: Text(inv.eventName ?? 'Évènement #${inv.eventId}'),
+                        subtitle: Text(
+                          'Reçu le ${DateFormat.yMMMMd('fr_FR').format(inv.dateInvi)}',
+                        ),
+                        leading: Icon(
+                          Icons.mail_outline,
+                          color: inv.status == 'Accepted'
+                              ? Colors.green
+                              : inv.status == 'Declined'
+                                  ? Colors.redAccent
+                                  : FiestaaaPalette.primary,
+                        ),
+                        trailing: inv.status == 'Waiting'
+                            ? Wrap(
+                                spacing: 8,
+                                children: [
+                                  TextButton(
+                                    onPressed: () => _respond(inv, 'Declined'),
+                                    child: const Text('Refuser'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => _respond(inv, 'Accepted'),
+                                    child: const Text('Accepter'),
+                                  ),
+                                ],
+                              )
+                            : Chip(
+                                label: Text(
+                                  inv.status,
+                                  style: TextStyle(
+                                    color: inv.status == 'Accepted'
+                                        ? Colors.green.shade800
+                                        : inv.status == 'Declined'
+                                            ? Colors.grey.shade800
+                                            : Colors.orange.shade800,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                backgroundColor: inv.status == 'Accepted'
+                                    ? Colors.green.shade100
+                                    : inv.status == 'Declined'
+                                        ? Colors.grey.shade200
+                                        : Colors.orange.shade100,
                               ),
-                              ElevatedButton(
-                                onPressed: () => _respond(inv, 'Accepted'),
-                                child: const Text('Accepter'),
-                              ),
-                            ],
-                          )
-                        : Text(
-                            inv.status,
-                            style: TextStyle(
-                              color: inv.status == 'Accepted'
-                                  ? Colors.green
-                                  : Colors.orange,
-                            ),
-                          ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

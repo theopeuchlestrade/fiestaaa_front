@@ -5,6 +5,7 @@ import 'package:fiestaaa_front/src/features/events/domain/address_suggestion.dar
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_provider_model.dart';
+import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -437,111 +438,138 @@ class _EventCreatePageState extends State<EventCreatePage> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Nom de l’événement',
-                prefixIcon: Icon(Icons.celebration),
+    return FiestaaaBackground(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Créer une nouvelle fête',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
               ),
-              validator: (value) =>
-                  value == null || value.trim().isEmpty ? 'Champ requis' : null,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _descriptionController,
-              minLines: 3,
-              maxLines: 5,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                alignLabelWithHint: true,
-                prefixIcon: Icon(Icons.description),
+              const SizedBox(height: 6),
+              Text(
+                'Partagez une ambiance : date, lieu, cagnotte, tout est là.',
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
-              validator: (value) =>
-                  value == null || value.trim().isEmpty ? 'Champ requis' : null,
-            ),
-            const SizedBox(height: 16),
-            _buildAddressField(),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _pickDate,
-                    icon: const Icon(Icons.event),
-                    label:
-                        Text(DateFormat.yMMMMd('fr_FR').format(_selectedDate)),
+              const SizedBox(height: 20),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Nom de l’événement',
+                            prefixIcon: Icon(Icons.celebration),
+                          ),
+                          validator: (value) => value == null || value.trim().isEmpty
+                              ? 'Champ requis'
+                              : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _descriptionController,
+                          minLines: 3,
+                          maxLines: 5,
+                          decoration: const InputDecoration(
+                            labelText: 'Description',
+                            alignLabelWithHint: true,
+                            prefixIcon: Icon(Icons.description),
+                          ),
+                          validator: (value) => value == null || value.trim().isEmpty
+                              ? 'Champ requis'
+                              : null,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildAddressField(),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _pickDate,
+                                icon: const Icon(Icons.event),
+                                label: Text(DateFormat.yMMMMd('fr_FR').format(_selectedDate)),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _pickTime,
+                                icon: const Icon(Icons.access_time),
+                                label: Text(_selectedTime.format(context)),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        _buildPaymentProviderField(),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _paymentIdentifierController,
+                          decoration: const InputDecoration(
+                            labelText: 'Lien de la cagnotte',
+                            prefixIcon: Icon(Icons.link),
+                          ),
+                          enabled: _selectedProviderId != null,
+                          validator: _validatePaymentLink,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _paymentAmountController,
+                          decoration: const InputDecoration(
+                            labelText: 'Montant souhaité (€)',
+                            prefixIcon: Icon(Icons.euro),
+                            helperText:
+                                'Indiquez le total que vous espérez collecter (optionnel)',
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          enabled: _selectedProviderId != null,
+                          validator: (value) {
+                            if (_selectedProviderId == null) {
+                              return null;
+                            }
+                            final raw = value?.trim() ?? '';
+                            if (raw.isEmpty) {
+                              return null;
+                            }
+                            final parsed = double.tryParse(raw.replaceAll(',', '.'));
+                            if (parsed == null || parsed < 0) {
+                              return 'Entrez un montant positif';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _submitting ? null : _submit,
+                            child: _submitting
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Text('Créer l’événement'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _pickTime,
-                    icon: const Icon(Icons.access_time),
-                    label: Text(_selectedTime.format(context)),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildPaymentProviderField(),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _paymentIdentifierController,
-              decoration: const InputDecoration(
-                labelText: 'Lien de la cagnotte',
-                prefixIcon: Icon(Icons.link),
               ),
-              enabled: _selectedProviderId != null,
-              validator: _validatePaymentLink,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _paymentAmountController,
-              decoration: const InputDecoration(
-                labelText: 'Montant souhaité (€)',
-                prefixIcon: Icon(Icons.euro),
-                helperText:
-                    'Indiquez le total que vous espérez collecter (optionnel)',
-              ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              enabled: _selectedProviderId != null,
-              validator: (value) {
-                if (_selectedProviderId == null) {
-                  return null;
-                }
-                final raw = value?.trim() ?? '';
-                if (raw.isEmpty) {
-                  return null;
-                }
-                final parsed = double.tryParse(raw.replaceAll(',', '.'));
-                if (parsed == null || parsed < 0) {
-                  return 'Entrez un montant positif';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _submitting ? null : _submit,
-                child: _submitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Créer l’événement'),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
