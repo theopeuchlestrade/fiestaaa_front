@@ -77,6 +77,31 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
     }
   }
 
+  Future<void> _confirmLeave(InvitationModel invitation) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Quitter cet événement ?'),
+        content: Text(
+          'Vous êtes actuellement inscrit. Quitter l’événement retirera vos engagements pour ${invitation.eventName ?? 'cet évènement'}.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Quitter'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await _respond(invitation, 'Declined');
+    }
+  }
+
   void _showSnack(String text, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -156,24 +181,33 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
                                   ),
                                 ],
                               )
-                            : Chip(
-                                label: Text(
-                                  inv.status,
-                                  style: TextStyle(
-                                    color: inv.status == 'Accepted'
-                                        ? Colors.green.shade800
+                            : inv.status == 'Accepted'
+                                ? TextButton.icon(
+                                    onPressed: () => _confirmLeave(inv),
+                                    icon: const Icon(Icons.logout),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.red.shade700,
+                                    ),
+                                    label: const Text('Quitter'),
+                                  )
+                                : Chip(
+                                    label: Text(
+                                      inv.status,
+                                      style: TextStyle(
+                                        color: inv.status == 'Accepted'
+                                            ? Colors.green.shade800
+                                            : inv.status == 'Declined'
+                                                ? Colors.grey.shade800
+                                                : Colors.orange.shade800,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    backgroundColor: inv.status == 'Accepted'
+                                        ? Colors.green.shade100
                                         : inv.status == 'Declined'
-                                            ? Colors.grey.shade800
-                                            : Colors.orange.shade800,
-                                    fontWeight: FontWeight.w700,
+                                            ? Colors.grey.shade200
+                                            : Colors.orange.shade100,
                                   ),
-                                ),
-                                backgroundColor: inv.status == 'Accepted'
-                                    ? Colors.green.shade100
-                                    : inv.status == 'Declined'
-                                        ? Colors.grey.shade200
-                                        : Colors.orange.shade100,
-                              ),
                       ),
                     ),
                   ),
