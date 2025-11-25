@@ -45,6 +45,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
   String? _providersError;
   List<PaymentProviderModel> _providers = [];
   int? _selectedProviderId;
+  bool _paymentPerPerson = false;
 
   @override
   void initState() {
@@ -216,6 +217,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
           ? null
           : _paymentIdentifierController.text.trim(),
       paymentRequestedAmount: requestedAmount,
+      paymentPerPerson:
+          _selectedProviderId != null ? _paymentPerPerson : false,
     );
 
     try {
@@ -348,12 +351,44 @@ class _EventCreatePageState extends State<EventCreatePage> {
       onChanged: (value) {
         setState(() {
           _selectedProviderId = value;
+          _paymentPerPerson = false;
           if (value == null) {
             _paymentIdentifierController.clear();
             _paymentAmountController.clear();
           }
         });
       },
+    );
+  }
+
+  Widget _buildPaymentModeToggle() {
+    if (_selectedProviderId == null) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Type de contribution',
+          style: Theme.of(context)
+              .textTheme
+              .labelLarge
+              ?.copyWith(color: Colors.grey.shade700),
+        ),
+        const SizedBox(height: 8),
+        SegmentedButton<bool>(
+          segments: const [
+            ButtonSegment(value: false, label: Text('Objectif global')),
+            ButtonSegment(value: true, label: Text('Par personne')),
+          ],
+          selected: {_paymentPerPerson},
+          onSelectionChanged: (value) {
+            setState(() {
+              _paymentPerPerson = value.first;
+            });
+          },
+        ),
+      ],
     );
   }
 
@@ -514,6 +549,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
                         const SizedBox(height: 16),
                         _buildPaymentProviderField(),
                         const SizedBox(height: 16),
+                        _buildPaymentModeToggle(),
+                        if (_selectedProviderId != null) const SizedBox(height: 12),
                         TextFormField(
                           controller: _paymentIdentifierController,
                           decoration: const InputDecoration(
@@ -526,11 +563,14 @@ class _EventCreatePageState extends State<EventCreatePage> {
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _paymentAmountController,
-                          decoration: const InputDecoration(
-                            labelText: 'Montant souhaité (€)',
-                            prefixIcon: Icon(Icons.euro),
-                            helperText:
-                                'Indiquez le total que vous espérez collecter (optionnel)',
+                          decoration: InputDecoration(
+                            labelText: _paymentPerPerson
+                                ? 'Montant demandé par personne (€)'
+                                : 'Montant total souhaité (€)',
+                            prefixIcon: const Icon(Icons.euro),
+                            helperText: _paymentPerPerson
+                                ? 'Chaque invité est invité à verser ce montant'
+                                : 'Indiquez le total que vous espérez collecter (optionnel)',
                           ),
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           enabled: _selectedProviderId != null,

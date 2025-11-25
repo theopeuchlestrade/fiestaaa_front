@@ -13,6 +13,7 @@ class EventModel {
     required this.paymentProviderId,
     required this.paymentIdentifier,
     required this.paymentRequestedAmount,
+    required this.paymentPerPerson,
     required this.ownerEmail,
   });
 
@@ -27,6 +28,7 @@ class EventModel {
   final int? paymentProviderId;
   final String? paymentIdentifier;
   final double? paymentRequestedAmount;
+  final bool paymentPerPerson;
   final String ownerEmail;
 
   DateTime get startDateTime => DateTime(
@@ -62,6 +64,7 @@ class EventModel {
       paymentIdentifier: json['payment_identifier'] as String?,
       paymentRequestedAmount:
           (json['payment_requested_amount'] as num?)?.toDouble(),
+      paymentPerPerson: (json['payment_per_person'] as bool?) ?? false,
       ownerEmail: json['owner_email'] as String? ?? '',
     );
   }
@@ -93,6 +96,7 @@ class EventPayload {
     this.paymentProviderId,
     this.paymentIdentifier,
     this.paymentRequestedAmount,
+    this.paymentPerPerson = false,
   });
 
   final String name;
@@ -105,6 +109,7 @@ class EventPayload {
   final int? paymentProviderId;
   final String? paymentIdentifier;
   final double? paymentRequestedAmount;
+  final bool paymentPerPerson;
 
   Map<String, dynamic> toJson() {
     return {
@@ -118,6 +123,7 @@ class EventPayload {
       'payment_provider_id': paymentProviderId,
       'payment_identifier': paymentIdentifier,
       'payment_requested_amount': paymentRequestedAmount,
+      'payment_per_person': paymentPerPerson,
     };
   }
 
