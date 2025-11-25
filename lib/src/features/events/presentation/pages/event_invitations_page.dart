@@ -263,6 +263,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
             invitations: _invitations
                 .where((inv) => inv.status == section.status)
                 .toList(),
+            ownerEmail: widget.session.email,
             emptyLabel: section.emptyLabel,
             onDelete: _deleteInvitation,
           ),

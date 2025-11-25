@@ -10,6 +10,7 @@ class InvitationStatusSection extends StatelessWidget {
     required this.accentColor,
     required this.invitations,
     required this.emptyLabel,
+    required this.ownerEmail,
     this.onDelete,
   });
 
@@ -18,6 +19,7 @@ class InvitationStatusSection extends StatelessWidget {
   final Color accentColor;
   final List<InvitationModel> invitations;
   final String emptyLabel;
+  final String ownerEmail;
   final void Function(InvitationModel invitation)? onDelete;
 
   @override
@@ -67,13 +69,15 @@ class InvitationStatusSection extends StatelessWidget {
   }
 
   Widget _buildTile(InvitationModel invitation) {
+    final isOwner =
+        invitation.email.toLowerCase() == ownerEmail.toLowerCase();
     return ListTile(
       contentPadding: EdgeInsets.zero,
       title: Text(invitation.email),
       subtitle: Text(
         'Envoyée le ${DateFormat.yMMMMd('fr_FR').format(invitation.dateInvi)}',
       ),
-      trailing: onDelete == null
+      trailing: onDelete == null || isOwner
           ? null
           : IconButton(
               onPressed: () => onDelete!(invitation),
