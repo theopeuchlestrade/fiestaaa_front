@@ -1134,6 +1134,48 @@ class _InvitationStatusCard extends StatelessWidget {
                     .bodyMedium
                     ?.copyWith(color: accent),
               ),
+            if (accepted) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Vous ne venez plus finalement ? Vous pouvez quitter l’événement, vos réservations seront libérées.',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: Colors.grey.shade800),
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Quitter l’événement ?'),
+                      content: const Text(
+                        'Vous ne serez plus compté comme participant et vos engagements seront retirés.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Annuler'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Quitter'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    onRespond('Declined');
+                  }
+                },
+                icon: const Icon(Icons.logout),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.red.shade700,
+                ),
+                label: const Text('Quitter cet événement'),
+              ),
+            ],
           ],
         ),
       ),
