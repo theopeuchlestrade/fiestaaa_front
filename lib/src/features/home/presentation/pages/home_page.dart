@@ -39,17 +39,20 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _openEvent(EventModel event) {
-    Navigator.of(context).push(
+  Future<void> _openEvent(EventModel event) async {
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => EventDetailPage(
           event: event,
           session: widget.session,
           onEventUpdated: () => _eventsKey.currentState?.reload(),
           onEventRemoved: _handleEventRemoved,
+          onInvitationStatusChanged: _updateInvitationStatus,
         ),
       ),
     );
+    if (!mounted) return;
+    _eventsKey.currentState?.reload();
   }
 
   void _handleEventCreated() {
@@ -63,6 +66,10 @@ class _HomePageState extends State<HomePage> {
     if (_eventsKey.currentState != null) {
       _eventsKey.currentState!.removeEvent(eventId);
     }
+  }
+
+  void _updateInvitationStatus(int eventId, String status) {
+    _eventsKey.currentState?.updateInvitationStatus(eventId, status);
   }
 
   @override
@@ -102,8 +109,7 @@ class _HomePageState extends State<HomePage> {
       );
       _shareHandled = true;
       widget.onShareTokenConsumed?.call();
-      _eventsKey.currentState?.reload();
-      _openEvent(event);
+      await _openEvent(event);
     } on ApiException catch (e) {
       _shareHandled = true;
       widget.onShareTokenConsumed?.call();
