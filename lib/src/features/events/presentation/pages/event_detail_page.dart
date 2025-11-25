@@ -28,12 +28,14 @@ class EventDetailPage extends StatefulWidget {
     required this.session,
     this.onEventUpdated,
     this.onEventRemoved,
+    this.onInvitationStatusChanged,
   });
 
   final EventModel event;
   final SessionData session;
   final VoidCallback? onEventUpdated;
   final ValueChanged<int>? onEventRemoved;
+  final void Function(int eventId, String status)? onInvitationStatusChanged;
 
   @override
   State<EventDetailPage> createState() => _EventDetailPageState();
@@ -337,6 +339,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         status: status,
       );
       if (!mounted) return;
+      _notifyInvitationStatus(status);
       _showSnack(
         status == 'Accepted' ? 'Invitation acceptée' : 'Invitation refusée',
       );
@@ -410,6 +413,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
       if (!mounted) return;
       setState(() => _deletingEvent = false);
     }
+  }
+
+  void _notifyInvitationStatus(String status) {
+    widget.onInvitationStatusChanged?.call(_currentEvent.id, status);
   }
 
   void _showSnack(String message, {bool isError = false}) {

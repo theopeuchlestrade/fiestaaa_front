@@ -6,7 +6,7 @@ import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 
-typedef EventSelected = void Function(EventModel event);
+typedef EventSelected = Future<void> Function(EventModel event);
 
 class EventsListPage extends StatefulWidget {
   const EventsListPage({
@@ -44,6 +44,20 @@ class EventsListPageState extends State<EventsListPage> {
     setState(() {
       _events = events.where((event) => event.id != eventId).toList();
       _myInvitations.remove(eventId);
+    });
+  }
+
+  void updateInvitationStatus(int eventId, String status) {
+    final current = _myInvitations[eventId];
+    if (current == null) return;
+    setState(() {
+      _myInvitations[eventId] = InvitationModel(
+        eventId: current.eventId,
+        email: current.email,
+        status: status,
+        dateInvi: current.dateInvi,
+        eventName: current.eventName,
+      );
     });
   }
 
@@ -234,7 +248,9 @@ class _EventsGrid extends StatelessWidget {
                         event: event,
                         sessionEmail: sessionEmail,
                         invitation: invitations[event.id],
-                        onTap: () => onEventSelected(event),
+                        onTap: () {
+                          onEventSelected(event);
+                        },
                       );
                     },
                     childCount: events.length,
