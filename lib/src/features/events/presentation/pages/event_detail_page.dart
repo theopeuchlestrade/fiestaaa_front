@@ -536,12 +536,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
               icon: const Icon(Icons.edit),
               tooltip: 'Modifier l’événement',
             ),
-          if (_isOwner)
-            IconButton(
-              onPressed: _openInvitations,
-              icon: const Icon(Icons.people_alt),
-              tooltip: 'Gérer les invitations',
-            ),
+          IconButton(
+            onPressed: _openInvitations,
+            icon: const Icon(Icons.people_alt),
+            tooltip: _isOwner
+                ? 'Gérer les invitations'
+                : 'Voir les participants',
+          ),
           if (_isOwner)
             IconButton(
               onPressed: _sharingLink ? null : _shareEvent,
@@ -1018,12 +1019,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _openInvitations() async {
-    if (!_isOwner) return;
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => EventInvitationsPage(
           session: widget.session,
           eventId: _currentEvent.id,
+          ownerEmail: _currentEvent.ownerEmail,
         ),
       ),
     );
