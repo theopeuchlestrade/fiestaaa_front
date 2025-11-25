@@ -71,9 +71,26 @@ class InvitationStatusSection extends StatelessWidget {
   Widget _buildTile(InvitationModel invitation) {
     final isOwner =
         invitation.email.toLowerCase() == ownerEmail.toLowerCase();
+    final title = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(invitation.email),
+        if (isOwner) ...[
+          const SizedBox(width: 8),
+          Tooltip(
+            message: 'Créateur de l’événement',
+            child: Icon(
+              Icons.emoji_events,
+              color: Colors.amber.shade700,
+              size: 18,
+            ),
+          ),
+        ],
+      ],
+    );
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      title: Text(invitation.email),
+      title: title,
       subtitle: Text(
         'Envoyée le ${DateFormat.yMMMMd('fr_FR').format(invitation.dateInvi)}',
       ),

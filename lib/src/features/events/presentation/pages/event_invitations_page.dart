@@ -13,10 +13,12 @@ class EventInvitationsPage extends StatefulWidget {
     super.key,
     required this.session,
     required this.eventId,
+    required this.ownerEmail,
   });
 
   final SessionData session;
   final int eventId;
+  final String ownerEmail;
 
   @override
   State<EventInvitationsPage> createState() => _EventInvitationsPageState();
@@ -34,10 +36,15 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   List<InvitationSuggestionModel> _suggestions = [];
   bool _suggestionsLoading = false;
 
+  bool get _isOwner =>
+      widget.session.email.toLowerCase() == widget.ownerEmail.toLowerCase();
+
   @override
   void initState() {
     super.initState();
-    _emailController.addListener(_onEmailChanged);
+    if (_isOwner) {
+      _emailController.addListener(_onEmailChanged);
+    }
     _fetch();
   }
 
@@ -50,6 +57,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   }
 
   void _onEmailChanged() {
+    if (!_isOwner) return;
     _suggestionDebounce?.cancel();
     final query = _emailController.text.trim();
     if (query.length < 2) {
@@ -127,6 +135,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   }
 
   Future<void> _createInvitation() async {
+    if (!_isOwner) return;
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.contains('@')) {
       _showSnack('Email invalide', isError: true);
@@ -156,6 +165,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   }
 
   Future<void> _deleteInvitation(InvitationModel invitation) async {
+    if (!_isOwner) return;
     try {
       await _api.deleteInvitation(
         token: widget.session.token,
@@ -194,15 +204,17 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            _InviteForm(
-              emailController: _emailController,
-              onSubmit: _submitting ? null : _createInvitation,
-              submitting: _submitting,
-              suggestions: _suggestions,
-              suggestionsLoading: _suggestionsLoading,
-              onSuggestionSelected: _applySuggestion,
-            ),
-            const SizedBox(height: 24),
+            if (_isOwner) ...[
+              _InviteForm(
+                emailController: _emailController,
+                onSubmit: _submitting ? null : _createInvitation,
+                submitting: _submitting,
+                suggestions: _suggestions,
+                suggestionsLoading: _suggestionsLoading,
+                onSuggestionSelected: _applySuggestion,
+              ),
+              const SizedBox(height: 24),
+            ],
             if (_loading)
               const Center(child: CircularProgressIndicator())
             else if (_error != null)
@@ -263,9 +275,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
             invitations: _invitations
                 .where((inv) => inv.status == section.status)
                 .toList(),
-            ownerEmail: widget.session.email,
+            ownerEmail: widget.ownerEmail,
             emptyLabel: section.emptyLabel,
-            onDelete: _deleteInvitation,
+            onDelete: _isOwner ? _deleteInvitation : null,
           ),
         )
         .toList();
