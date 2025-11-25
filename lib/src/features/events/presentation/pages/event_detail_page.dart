@@ -827,7 +827,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ],
             ),
             const SizedBox(height: 12),
-            Text('Montant visé : $amountText'),
+            Text(_currentEvent.paymentPerPerson
+                ? 'Contribution demandée par personne : $amountText'
+                : 'Montant visé : $amountText'),
             const SizedBox(height: 4),
             Text(
               'Lien : $linkLabel',
