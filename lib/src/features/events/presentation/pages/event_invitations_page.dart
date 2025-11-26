@@ -143,7 +143,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     }
     setState(() => _submitting = true);
     try {
-      await _api.createInvitation(
+      final result = await _api.createInvitation(
         token: widget.session.token,
         eventId: widget.eventId,
         email: email,
@@ -151,7 +151,10 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       if (!mounted) return;
       _emailController.clear();
       await _fetch();
-      _showSnack('Invitation créée');
+      final successMessage = result.emailSent
+          ? (result.message ?? 'Invitation envoyée par email')
+          : 'Invitation créée';
+      _showSnack(successMessage);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);

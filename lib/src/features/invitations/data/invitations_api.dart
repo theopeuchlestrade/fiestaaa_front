@@ -52,7 +52,7 @@ class InvitationsApi {
     );
   }
 
-  Future<InvitationModel> createInvitation({
+  Future<InvitationCreationResult> createInvitation({
     required String token,
     required int eventId,
     required String email,
@@ -69,8 +69,21 @@ class InvitationsApi {
       }),
     );
     if (response.statusCode == 201) {
-      return InvitationModel.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
+      return InvitationCreationResult.invitation(
+        InvitationModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        ),
+      );
+    }
+    if (response.statusCode == 202) {
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final status = decoded['status'] as String?;
+      return InvitationCreationResult.emailSent(
+        message: status == null
+            ? null
+            : (status == 'email_sent'
+                ? 'Invitation envoyée par email'
+                : status),
       );
     }
     throw ApiException('Impossible de créer l’invitation',
