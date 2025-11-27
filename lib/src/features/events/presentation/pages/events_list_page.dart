@@ -13,10 +13,12 @@ class EventsListPage extends StatefulWidget {
     super.key,
     required this.onEventSelected,
     required this.session,
+    this.onPendingInvitesChanged,
   });
 
   final SessionData session;
   final EventSelected onEventSelected;
+  final ValueChanged<int>? onPendingInvitesChanged;
 
   @override
   State<EventsListPage> createState() => EventsListPageState();
@@ -58,6 +60,7 @@ class EventsListPageState extends State<EventsListPage> {
         dateInvi: current.dateInvi,
         eventName: current.eventName,
       );
+      _notifyPendingInvites();
     });
   }
 
@@ -81,6 +84,7 @@ class EventsListPageState extends State<EventsListPage> {
         _myInvitations = {
           for (final invitation in invitations) invitation.eventId: invitation
         };
+        _notifyPendingInvites();
       });
     } catch (e) {
       if (!mounted) return;
@@ -93,6 +97,14 @@ class EventsListPageState extends State<EventsListPage> {
         _loading = false;
       });
     }
+  }
+
+  void _notifyPendingInvites() {
+    if (widget.onPendingInvitesChanged == null) return;
+    final pending = _myInvitations.values
+        .where((inv) => inv.status == 'Waiting')
+        .length;
+    widget.onPendingInvitesChanged!(pending);
   }
 
   @override
