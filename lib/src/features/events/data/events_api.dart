@@ -107,6 +107,29 @@ class EventsApi {
     );
   }
 
+  Future<EventModel> fetchEventById({
+    required String token,
+    required int eventId,
+  }) async {
+    final response = await _client.get(
+      Uri.parse('$apiBaseUrl/events/$eventId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return EventModel.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    }
+
+    throw ApiException(
+      'Événement introuvable (${response.statusCode})',
+      statusCode: response.statusCode,
+    );
+  }
+
   Future<List<EventItemModel>> fetchEventItems(int eventId) async {
     final response =
         await _client.get(Uri.parse('$apiBaseUrl/events/$eventId/items'));
