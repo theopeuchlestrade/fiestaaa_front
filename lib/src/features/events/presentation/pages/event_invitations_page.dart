@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
+import 'package:fiestaaa_front/src/features/friends/data/friends_api.dart';
+import 'package:fiestaaa_front/src/features/friends/domain/friend_model.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/features/invitations/presentation/widgets/invitation_status_section.dart';
@@ -26,6 +28,7 @@ class EventInvitationsPage extends StatefulWidget {
 
 class _EventInvitationsPageState extends State<EventInvitationsPage> {
   final _api = InvitationsApi();
+  final _friendsApi = FriendsApi();
   List<InvitationModel> _invitations = [];
   bool _loading = true;
   String? _error;
@@ -35,6 +38,14 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   Timer? _suggestionDebounce;
   List<InvitationSuggestionModel> _suggestions = [];
   bool _suggestionsLoading = false;
+  List<FriendModel> _friends = [];
+  List<FriendRequestModel> _friendRequests = [];
+  bool _loadingFriends = true;
+  String? _friendsError;
+  final _friendFilterController = TextEditingController();
+  Set<String> _selectedFriendHandles = {};
+  bool _invitingFriends = false;
+  bool _sendingFriendAsk = false;
 
   bool get _isOwner =>
       widget.session.email.toLowerCase() == widget.ownerEmail.toLowerCase();
@@ -45,7 +56,11 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     if (_isOwner) {
       _emailController.addListener(_onEmailChanged);
     }
+    _friendFilterController.addListener(() {
+      setState(() {});
+    });
     _fetch();
+    _loadFriendsAndRequests();
   }
 
   @override
@@ -53,6 +68,8 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     _suggestionDebounce?.cancel();
     _api.dispose();
     _emailController.dispose();
+    _friendFilterController.dispose();
+    _friendsApi.dispose();
     super.dispose();
   }
 
@@ -97,6 +114,33 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       setState(() {
         _suggestionsLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadFriendsAndRequests() async {
+    setState(() {
+      _loadingFriends = true;
+      _friendsError = null;
+    });
+    try {
+      final results = await Future.wait([
+        _friendsApi.fetchFriends(widget.session.token),
+        _friendsApi.fetchRequests(widget.session.token),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _friends = results[0] as List<FriendModel>;
+        _friendRequests = results[1] as List<FriendRequestModel>;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _friendsError = e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _friendsError = 'Impossible de charger vos amis.');
+    } finally {
+      if (!mounted) return;
+      setState(() => _loadingFriends = false);
     }
   }
 
@@ -194,6 +238,157 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     }
   }
 
+  List<FriendModel> get _filteredFriends {
+    final query = _friendFilterController.text.trim().toLowerCase();
+    if (query.isEmpty) return _friends;
+    return _friends
+        .where((f) =>
+            f.handle.toLowerCase().contains(query) ||
+            f.email.toLowerCase().contains(query))
+        .toList();
+  }
+
+  bool _identifierMatches(String identifier, String handle, String email) {
+    final normalized = identifier.toLowerCase();
+    return handle.toLowerCase() == normalized || email.toLowerCase() == normalized;
+  }
+
+  bool _isFriendWith(String identifier) {
+    return _friends.any(
+        (f) => _identifierMatches(identifier, f.handle, f.email));
+  }
+
+  bool _hasPendingFriendRequestWith(String identifier) {
+    return _friendRequests.any((req) {
+      if (req.status != 'Pending') return false;
+      final incoming = req.isIncoming(widget.session.email);
+      final handle =
+          incoming ? req.senderHandle : req.receiverHandle;
+      final email =
+          incoming ? req.senderEmail : req.receiverEmail;
+      return _identifierMatches(identifier, handle, email);
+    });
+  }
+
+  void _toggleFriendSelection(String handle) {
+    setState(() {
+      if (_selectedFriendHandles.contains(handle)) {
+        _selectedFriendHandles.remove(handle);
+      } else {
+        _selectedFriendHandles.add(handle);
+      }
+    });
+  }
+
+  Future<void> _inviteSelectedFriends() async {
+    if (_selectedFriendHandles.isEmpty || !_isOwner) return;
+    setState(() => _invitingFriends = true);
+    var successCount = 0;
+    try {
+      for (final handle in _selectedFriendHandles) {
+        try {
+          await _api.createInvitation(
+            token: widget.session.token,
+            eventId: widget.eventId,
+            identifier: handle,
+          );
+          successCount++;
+        } catch (_) {
+          // Ignore individual failures, we report a summary below.
+        }
+      }
+      if (!mounted) return;
+      await _fetch();
+      setState(() {
+        _selectedFriendHandles.clear();
+      });
+      if (successCount > 0) {
+        _showSnack(
+          successCount == 1
+              ? 'Invitation envoyée à votre ami.'
+              : 'Invitations envoyées à $successCount amis.',
+        );
+      } else {
+        _showSnack('Aucune invitation envoyée', isError: true);
+      }
+    } finally {
+      if (!mounted) return;
+      setState(() => _invitingFriends = false);
+    }
+  }
+
+  Future<void> _sendFriendRequestForInvitation(InvitationModel invitation) async {
+    final identifier = (invitation.handle?.isNotEmpty == true
+            ? invitation.handle!
+            : invitation.email)
+        .trim();
+    if (identifier.isEmpty || _isFriendWith(identifier)) return;
+
+    setState(() => _sendingFriendAsk = true);
+    try {
+      await _friendsApi.sendRequest(
+        token: widget.session.token,
+        identifier: identifier,
+      );
+      if (!mounted) return;
+      await _loadFriendsAndRequests();
+      _showSnack('Demande d’ami envoyée');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Impossible d’envoyer la demande', isError: true);
+    } finally {
+      if (!mounted) return;
+      setState(() => _sendingFriendAsk = false);
+    }
+  }
+
+  Widget? _invitationActions(InvitationModel invitation) {
+    final identifier = invitation.handle?.isNotEmpty == true
+        ? invitation.handle!
+        : invitation.email;
+    final isSelf =
+        invitation.email.toLowerCase() == widget.session.email.toLowerCase();
+    final isEventOwner =
+        invitation.email.toLowerCase() == widget.ownerEmail.toLowerCase();
+
+    final actions = <Widget>[];
+
+    if (!isSelf) {
+      if (_isFriendWith(identifier)) {
+        actions.add(const Icon(Icons.verified, color: Colors.teal));
+      } else if (_hasPendingFriendRequestWith(identifier)) {
+        actions.add(const Icon(Icons.hourglass_top, color: Colors.orange));
+      } else {
+        actions.add(IconButton(
+          onPressed: _sendingFriendAsk
+              ? null
+              : () => _sendFriendRequestForInvitation(invitation),
+          icon: const Icon(Icons.person_add_alt_1),
+          tooltip: 'Ajouter en ami',
+        ));
+      }
+    }
+
+    if (_isOwner && !isEventOwner) {
+      actions.add(
+        IconButton(
+          onPressed: () => _deleteInvitation(invitation),
+          icon: const Icon(Icons.delete),
+          tooltip: 'Supprimer',
+        ),
+      );
+    }
+
+    if (actions.isEmpty) return null;
+    return Wrap(
+      spacing: 4,
+      children: actions,
+    );
+  }
+
   void _showSnack(String text, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -205,13 +400,17 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final filteredFriends = _filteredFriends;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Invitations'),
       ),
       body: RefreshIndicator(
-        onRefresh: _fetch,
+        onRefresh: () async {
+          await Future.wait([_fetch(), _loadFriendsAndRequests()]);
+        },
         child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(24),
           children: [
             if (_isOwner) ...[
@@ -222,6 +421,20 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
                 suggestions: _suggestions,
                 suggestionsLoading: _suggestionsLoading,
                 onSuggestionSelected: _applySuggestion,
+              ),
+              const SizedBox(height: 16),
+              _FriendsInviteCard(
+                loading: _loadingFriends,
+                error: _friendsError,
+                friends: filteredFriends,
+                selectedHandles: _selectedFriendHandles,
+                filterController: _friendFilterController,
+                onToggle: _toggleFriendSelection,
+                onInvite: _selectedFriendHandles.isEmpty || _invitingFriends
+                    ? null
+                    : _inviteSelectedFriends,
+                inviting: _invitingFriends,
+                onRefresh: _loadFriendsAndRequests,
               ),
               const SizedBox(height: 24),
             ],
@@ -287,7 +500,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
                 .toList(),
             ownerEmail: widget.ownerEmail,
             emptyLabel: section.emptyLabel,
-            onDelete: _isOwner ? _deleteInvitation : null,
+            trailingBuilder: _invitationActions,
           ),
         )
         .toList();
@@ -380,6 +593,148 @@ class _InviteForm extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _FriendsInviteCard extends StatelessWidget {
+  const _FriendsInviteCard({
+    required this.loading,
+    required this.error,
+    required this.friends,
+    required this.selectedHandles,
+    required this.filterController,
+    required this.onToggle,
+    required this.onInvite,
+    required this.inviting,
+    required this.onRefresh,
+  });
+
+  final bool loading;
+  final String? error;
+  final List<FriendModel> friends;
+  final Set<String> selectedHandles;
+  final TextEditingController filterController;
+  final ValueChanged<String> onToggle;
+  final Future<void> Function()? onInvite;
+  final bool inviting;
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final selectionLabel = selectedHandles.isEmpty
+        ? ''
+        : selectedHandles.length == 1
+            ? 'cet ami'
+            : '${selectedHandles.length} amis';
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.people_outline, color: Colors.teal),
+                const SizedBox(width: 8),
+                Text(
+                  'Inviter depuis mes amis',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: loading ? null : () => onRefresh(),
+                  tooltip: 'Rafraîchir',
+                  icon: const Icon(Icons.refresh),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Recherchez et sélectionnez plusieurs amis, puis envoyez une invitation groupée.',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: Colors.grey.shade700),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: filterController,
+              decoration: const InputDecoration(
+                labelText: 'Filtrer vos amis',
+                prefixIcon: Icon(Icons.search),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (loading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (error != null)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    error!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: onRefresh,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Réessayer'),
+                  ),
+                ],
+              )
+            else if (friends.isEmpty)
+              const Text(
+                'Aucun ami disponible pour le moment.',
+                style: TextStyle(color: Colors.grey),
+              )
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: friends
+                    .map(
+                      (friend) => FilterChip(
+                        label: Text('@${friend.handle}'),
+                        selected: selectedHandles.contains(friend.handle),
+                        onSelected: (_) => onToggle(friend.handle),
+                      ),
+                    )
+                    .toList(),
+              ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onInvite == null ? null : () => onInvite!(),
+                icon: inviting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.send),
+                label: Text(
+                  inviting
+                      ? 'Envoi...'
+                      : (selectionLabel.isEmpty
+                          ? 'Inviter'
+                          : 'Inviter $selectionLabel'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
