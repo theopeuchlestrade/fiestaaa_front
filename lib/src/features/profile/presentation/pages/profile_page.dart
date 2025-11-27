@@ -1,6 +1,5 @@
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
-import 'package:fiestaaa_front/src/features/invitations/presentation/pages/my_invitations_page.dart';
 import 'package:fiestaaa_front/src/features/profile/data/profile_api.dart';
 import 'package:fiestaaa_front/src/features/profile/domain/profile_info.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
@@ -345,22 +344,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => MyInvitationsPage(
-                                session: widget.session,
-                              ),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.mail_outline),
-                        label: const Text('Mes invitations'),
-                      ),
-                    ),
                   ],
                 );
               },
