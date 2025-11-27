@@ -55,7 +55,7 @@ class InvitationsApi {
   Future<InvitationCreationResult> createInvitation({
     required String token,
     required int eventId,
-    required String email,
+    required String identifier,
   }) async {
     final response = await _client.post(
       Uri.parse('$apiBaseUrl/events/$eventId/invitations'),
@@ -65,7 +65,7 @@ class InvitationsApi {
       },
       body: jsonEncode({
         'event_id': eventId,
-        'email': email,
+        'identifier': identifier,
       }),
     );
     if (response.statusCode == 201) {

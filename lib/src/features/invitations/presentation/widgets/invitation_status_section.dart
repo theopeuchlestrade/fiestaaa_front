@@ -69,12 +69,15 @@ class InvitationStatusSection extends StatelessWidget {
   }
 
   Widget _buildTile(InvitationModel invitation) {
-    final isOwner =
-        invitation.email.toLowerCase() == ownerEmail.toLowerCase();
+    final isOwner = invitation.email.toLowerCase() == ownerEmail.toLowerCase();
+    final handle = invitation.handle?.isNotEmpty == true
+        ? invitation.handle!
+        : 'compte-a-creer';
+    final display = '@$handle';
     final title = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(invitation.email),
+        Text(display),
         if (isOwner) ...[
           const SizedBox(width: 8),
           Tooltip(

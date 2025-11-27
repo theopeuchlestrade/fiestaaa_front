@@ -240,8 +240,7 @@ class _EventEditPageState extends State<EventEditPage> {
           ? null
           : _paymentIdentifierController.text.trim(),
       paymentRequestedAmount: _requestedAmountValue(),
-      paymentPerPerson:
-          _selectedProviderId != null ? _paymentPerPerson : false,
+      paymentPerPerson: _selectedProviderId != null ? _paymentPerPerson : false,
     );
 
     try {
@@ -513,17 +512,17 @@ class _EventEditPageState extends State<EventEditPage> {
                   alignLabelWithHint: true,
                   prefixIcon: Icon(Icons.description),
                 ),
-              validator: (value) => value == null || value.trim().isEmpty
-                  ? 'Champ requis'
-                  : null,
-            ),
-            const SizedBox(height: 16),
-            _buildAddressField(),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? 'Champ requis'
+                    : null,
+              ),
+              const SizedBox(height: 16),
+              _buildAddressField(),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
                       onPressed: _pickDate,
                       icon: const Icon(Icons.event),
                       label: Text(

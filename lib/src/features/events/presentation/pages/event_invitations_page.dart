@@ -125,10 +125,12 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     }
   }
 
-  void _applySuggestion(String email) {
+  void _applySuggestion(InvitationSuggestionModel suggestion) {
+    final value =
+        suggestion.handle.isNotEmpty ? suggestion.handle : suggestion.email;
     _emailController
-      ..text = email
-      ..selection = TextSelection.collapsed(offset: email.length);
+      ..text = value
+      ..selection = TextSelection.collapsed(offset: value.length);
     setState(() {
       _suggestions = [];
     });
@@ -137,8 +139,13 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   Future<void> _createInvitation() async {
     if (!_isOwner) return;
     final email = _emailController.text.trim();
-    if (email.isEmpty || !email.contains('@')) {
-      _showSnack('Email invalide', isError: true);
+    if (email.isEmpty) {
+      _showSnack('Identifiant requis', isError: true);
+      return;
+    }
+    if (!email.contains('@') &&
+        !RegExp(r'^[a-z0-9._-]{4,32}$').hasMatch(email)) {
+      _showSnack('Identifiant invalide', isError: true);
       return;
     }
     setState(() => _submitting = true);
@@ -146,7 +153,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       final result = await _api.createInvitation(
         token: widget.session.token,
         eventId: widget.eventId,
-        email: email,
+        identifier: email,
       );
       if (!mounted) return;
       _emailController.clear();
@@ -302,7 +309,7 @@ class _InviteForm extends StatelessWidget {
   final bool submitting;
   final List<InvitationSuggestionModel> suggestions;
   final bool suggestionsLoading;
-  final ValueChanged<String> onSuggestionSelected;
+  final ValueChanged<InvitationSuggestionModel> onSuggestionSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -319,8 +326,8 @@ class _InviteForm extends StatelessWidget {
           controller: emailController,
           keyboardType: TextInputType.emailAddress,
           decoration: const InputDecoration(
-            labelText: 'Email',
-            prefixIcon: Icon(Icons.email),
+            labelText: 'Email ou identifiant',
+            prefixIcon: Icon(Icons.alternate_email),
           ),
         ),
         if (suggestionsLoading)
@@ -341,13 +348,17 @@ class _InviteForm extends StatelessWidget {
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, index) {
                   final suggestion = suggestions[index];
+                  final handle = suggestion.handle.isNotEmpty
+                      ? suggestion.handle
+                      : 'compte-a-creer';
+                  final title = '@$handle';
                   return ListTile(
                     leading: const Icon(Icons.person_add_alt_1_outlined),
-                    title: Text(suggestion.email),
+                    title: Text(title),
                     subtitle: Text(
                       'Invité le ${formatter.format(suggestion.lastInvitedAt.toLocal())}',
                     ),
-                    onTap: () => onSuggestionSelected(suggestion.email),
+                    onTap: () => onSuggestionSelected(suggestion),
                   );
                 },
               ),

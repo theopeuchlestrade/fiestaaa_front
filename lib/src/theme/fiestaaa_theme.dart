@@ -100,7 +100,8 @@ ThemeData buildFiestaaaTheme() {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: FiestaaaPalette.primary, width: 1.6),
+        borderSide:
+            const BorderSide(color: FiestaaaPalette.primary, width: 1.6),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -162,9 +163,11 @@ class FiestaaaBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final paddedChild = padding != null ? Padding(padding: padding!, child: child) : child;
+    final paddedChild =
+        padding != null ? Padding(padding: padding!, child: child) : child;
     return Container(
-      decoration: const BoxDecoration(gradient: FiestaaaPalette.backgroundGradient),
+      decoration:
+          const BoxDecoration(gradient: FiestaaaPalette.backgroundGradient),
       child: Stack(
         children: [
           Positioned(

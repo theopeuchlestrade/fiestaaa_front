@@ -155,7 +155,8 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: ListTile(
-                        title: Text(inv.eventName ?? 'Évènement #${inv.eventId}'),
+                        title:
+                            Text(inv.eventName ?? 'Évènement #${inv.eventId}'),
                         subtitle: Text(
                           'Reçu le ${DateFormat.yMMMMd('fr_FR').format(inv.dateInvi)}',
                         ),

@@ -19,6 +19,7 @@ class _AuthPageState extends State<AuthPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _handleController = TextEditingController();
   final _api = AuthApi();
   AuthMode _mode = AuthMode.login;
   bool _obscurePassword = true;
@@ -30,6 +31,7 @@ class _AuthPageState extends State<AuthPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _handleController.dispose();
     _api.dispose();
     super.dispose();
   }
@@ -53,16 +55,20 @@ class _AuthPageState extends State<AuthPage> {
         await _api.register(
           email: _emailController.text.trim(),
           password: _passwordController.text,
+          handle: _handleController.text.trim().isEmpty
+              ? null
+              : _handleController.text.trim(),
         );
         if (!mounted) return;
         _showSnack('Compte créé ! Connectez-vous maintenant.');
         setState(() {
           _mode = AuthMode.login;
           _confirmPasswordController.clear();
+          _handleController.clear();
         });
       } else {
         final session = await _api.login(
-          email: _emailController.text.trim(),
+          identifier: _emailController.text.trim(),
           password: _passwordController.text,
         );
         await widget.onAuthenticated(session);
@@ -118,15 +124,20 @@ class _AuthPageState extends State<AuthPage> {
                         children: [
                           Text(
                             'Fiestaaa',
-                            style:
-                                Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                      color: Colors.white,
-                                    ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                  color: Colors.white,
+                                ),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             'Rejoignez et organisez vos fêtes en deux minutes.',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
                                   color: Colors.white.withOpacity(0.9),
                                 ),
                           ),
@@ -159,8 +170,10 @@ class _AuthPageState extends State<AuthPage> {
                                 _toggleMode(newSelection.first),
                             showSelectedIcon: false,
                             style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.resolveWith(
-                                (states) => states.contains(MaterialState.selected)
+                              backgroundColor:
+                                  MaterialStateProperty.resolveWith(
+                                (states) => states
+                                        .contains(MaterialState.selected)
                                     ? FiestaaaPalette.primary.withOpacity(0.12)
                                     : Colors.grey.shade100,
                               ),
@@ -185,14 +198,22 @@ class _AuthPageState extends State<AuthPage> {
                                 TextFormField(
                                   controller: _emailController,
                                   keyboardType: TextInputType.emailAddress,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Email',
-                                    prefixIcon: Icon(Icons.email_outlined),
+                                  decoration: InputDecoration(
+                                    labelText: _mode == AuthMode.login
+                                        ? 'Email ou identifiant'
+                                        : 'Email',
+                                    prefixIcon:
+                                        const Icon(Icons.email_outlined),
                                   ),
                                   validator: (value) {
                                     final email = value?.trim() ?? '';
                                     if (email.isEmpty) {
-                                      return 'Merci de renseigner votre email';
+                                      return _mode == AuthMode.login
+                                          ? 'Merci de renseigner votre identifiant'
+                                          : 'Merci de renseigner votre email';
+                                    }
+                                    if (_mode == AuthMode.login) {
+                                      return null;
                                     }
                                     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
                                         .hasMatch(email)) {
@@ -201,6 +222,28 @@ class _AuthPageState extends State<AuthPage> {
                                     return null;
                                   },
                                 ),
+                                if (_mode == AuthMode.register) ...[
+                                  const SizedBox(height: 16),
+                                  TextFormField(
+                                    controller: _handleController,
+                                    decoration: const InputDecoration(
+                                      labelText:
+                                          'Identifiant public (optionnel)',
+                                      helperText:
+                                          'Auto-généré si vide. 4-32 caractères a-z 0-9 . _ -',
+                                      prefixIcon: Icon(Icons.tag),
+                                    ),
+                                    validator: (value) {
+                                      final handle = value?.trim() ?? '';
+                                      if (handle.isEmpty) return null;
+                                      if (!RegExp(r'^[a-z0-9._-]{4,32}$')
+                                          .hasMatch(handle)) {
+                                        return '4-32 caractères a-z 0-9 . _ -';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ],
                                 const SizedBox(height: 16),
                                 TextFormField(
                                   controller: _passwordController,
@@ -235,7 +278,8 @@ class _AuthPageState extends State<AuthPage> {
                                     obscureText: _obscureConfirm,
                                     decoration: InputDecoration(
                                       labelText: 'Confirmez le mot de passe',
-                                      prefixIcon: const Icon(Icons.lock_outline),
+                                      prefixIcon:
+                                          const Icon(Icons.lock_outline),
                                       suffixIcon: IconButton(
                                         icon: Icon(
                                           _obscureConfirm
@@ -268,7 +312,8 @@ class _AuthPageState extends State<AuthPage> {
                                             width: 20,
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2,
-                                              valueColor: AlwaysStoppedAnimation(
+                                              valueColor:
+                                                  AlwaysStoppedAnimation(
                                                 Colors.white,
                                               ),
                                             ),

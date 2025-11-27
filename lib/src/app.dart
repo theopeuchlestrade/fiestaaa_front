@@ -38,22 +38,26 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       return;
     }
 
-    var valid = false;
+    SessionData? refreshed;
     try {
-      valid = await _authApi.validateSession(session.token);
+      refreshed = await _authApi.validateSession(session.token);
     } catch (_) {
-      valid = false;
+      refreshed = null;
     }
 
-    if (!valid) {
+    if (refreshed == null) {
       await SessionStorage.clear();
     }
 
     if (!mounted) return;
     setState(() {
-      _session = valid ? session : null;
+      _session = refreshed;
       _loadingSession = false;
     });
+
+    if (refreshed != null) {
+      await SessionStorage.save(refreshed);
+    }
   }
 
   Future<void> _handleAuthenticated(SessionData session) async {
@@ -102,6 +106,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
               : HomePage(
                   session: _session!,
                   onLogout: _handleLogout,
+                  onSessionUpdated: _handleAuthenticated,
                   initialShareToken: _pendingShareToken,
                   onShareTokenConsumed: () {
                     setState(() {

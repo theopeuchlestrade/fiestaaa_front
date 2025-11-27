@@ -197,12 +197,14 @@ class _EventsGrid extends StatelessWidget {
             ),
             slivers: [
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
                 sliver: SliverToBoxAdapter(
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
                           color: FiestaaaPalette.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(14),
@@ -210,11 +212,16 @@ class _EventsGrid extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.auto_awesome, color: FiestaaaPalette.primary.withOpacity(0.8)),
+                            Icon(Icons.auto_awesome,
+                                color:
+                                    FiestaaaPalette.primary.withOpacity(0.8)),
                             const SizedBox(width: 8),
                             Text(
                               'Vos événements',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
                                     color: FiestaaaPalette.text,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -233,7 +240,8 @@ class _EventsGrid extends StatelessWidget {
                 ),
               ),
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 sliver: SliverGrid(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
@@ -326,10 +334,11 @@ class _EventBubble extends StatelessWidget {
                       Expanded(
                         child: Text(
                           event.name,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
                         ),
                       ),
                       if (badge != null)
@@ -375,10 +384,11 @@ class _EventBubble extends StatelessWidget {
                         child: Text(
                           '${event.formattedDate} • ${event.formattedTime}',
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Colors.white.withOpacity(0.92),
-                                fontWeight: FontWeight.w700,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.white.withOpacity(0.92),
+                                    fontWeight: FontWeight.w700,
+                                  ),
                         ),
                       ),
                     ],
@@ -391,9 +401,10 @@ class _EventBubble extends StatelessWidget {
                       Expanded(
                         child: Text(
                           event.address,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Colors.white.withOpacity(0.9),
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.white.withOpacity(0.9),
+                                  ),
                         ),
                       ),
                     ],
