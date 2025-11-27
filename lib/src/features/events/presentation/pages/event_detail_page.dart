@@ -4,6 +4,7 @@ import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_item_model.dart';
+import 'package:fiestaaa_front/src/features/events/domain/item_contribution_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_edit_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_invitations_page.dart';
@@ -47,6 +48,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   final _paymentProvidersApi = PaymentProvidersApi();
   late EventModel _currentEvent;
   List<EventItemModel>? _eventItems;
+  Map<int, List<ItemContributionModel>> _contributions = {};
   bool _loadingItems = true;
   String? _itemsError;
   int? _reservingItemId;
@@ -96,6 +98,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       setState(() {
         _eventItems = data;
       });
+      await _loadContributions();
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -111,6 +114,23 @@ class _EventDetailPageState extends State<EventDetailPage> {
       setState(() {
         _loadingItems = false;
       });
+    }
+  }
+
+  Future<void> _loadContributions() async {
+    try {
+      final data = await _eventsApi.fetchEventItemContributions(
+        token: widget.session.token,
+        eventId: widget.event.id,
+      );
+      if (!mounted) return;
+      final map = <int, List<ItemContributionModel>>{};
+      for (final c in data) {
+        map.putIfAbsent(c.itemId, () => []).add(c);
+      }
+      setState(() => _contributions = map);
+    } catch (_) {
+      // silently ignore; UI will just not show avatars
     }
   }
 
@@ -624,7 +644,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         )
                       : const Icon(Icons.add),
                   label: Text(
-                    _creatingCustomItem ? 'Ajout en cours...' : 'Ajouter un item',
+                    _creatingCustomItem
+                        ? 'Ajout en cours...'
+                        : 'Ajouter un item',
                   ),
                 ),
               ),
@@ -677,6 +699,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 isOwner: _isOwner,
                 currentUserEmail: widget.session.email,
                 canReserveItems: _canContributeItems,
+                contributions: _contributions,
               ),
           ],
         ),
@@ -1232,6 +1255,7 @@ class _EventItemsList extends StatelessWidget {
     required this.isOwner,
     required this.currentUserEmail,
     required this.canReserveItems,
+    required this.contributions,
   });
 
   final List<EventItemModel> items;
@@ -1242,6 +1266,7 @@ class _EventItemsList extends StatelessWidget {
   final bool isOwner;
   final String currentUserEmail;
   final bool canReserveItems;
+  final Map<int, List<ItemContributionModel>> contributions;
 
   @override
   Widget build(BuildContext context) {
@@ -1280,6 +1305,8 @@ class _EventItemsList extends StatelessWidget {
                     onDelete: (isOwner || item.isCreatedBy(currentUserEmail))
                         ? () => onDelete(item)
                         : null,
+                    contributions: contributions[item.itemId] ?? const [],
+                    currentUserEmail: currentUserEmail,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -1299,6 +1326,8 @@ class _EventItemTile extends StatelessWidget {
     this.onDelete,
     this.isDeleting = false,
     this.canReserve = true,
+    this.contributions = const [],
+    required this.currentUserEmail,
   });
 
   final EventItemModel item;
@@ -1307,12 +1336,77 @@ class _EventItemTile extends StatelessWidget {
   final VoidCallback? onDelete;
   final bool isDeleting;
   final bool canReserve;
+  final List<ItemContributionModel> contributions;
+  final String currentUserEmail;
+
+  void _showContributors(
+      BuildContext context, List<ItemContributionModel> list) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.people_alt),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Participations',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (list.isEmpty)
+                  const Text('Personne n’a contribué pour le moment.')
+                else
+                  ...list.map(
+                    (c) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.grey.shade200,
+                        backgroundImage: c.avatarUrl == null
+                            ? null
+                            : NetworkImage(c.avatarUrl!),
+                        child: c.avatarUrl == null
+                            ? Text(
+                                (c.handle ?? c.email)
+                                    .substring(0, 1)
+                                    .toUpperCase(),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700),
+                              )
+                            : null,
+                      ),
+                      title: Text(c.handle ?? c.email),
+                      subtitle: Text('${c.quantity} ${item.unitLabel}'),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final ratio =
         item.maxQuantity == 0 ? 0.0 : item.reservedQuantity / item.maxQuantity;
     final available = item.remaining;
+    final contributors = contributions;
+    final myContribution = contributors
+        .where((c) => c.email.toLowerCase() == currentUserEmail.toLowerCase())
+        .toList();
 
     return Card(
       child: Padding(
@@ -1353,6 +1447,54 @@ class _EventItemTile extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
+            if (contributors.isNotEmpty)
+              Row(
+                children: [
+                  const Text('Participants:'),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SizedBox(
+                      height: 32,
+                      child: Stack(
+                        children: contributors
+                            .take(5)
+                            .toList()
+                            .asMap()
+                            .entries
+                            .map((entry) {
+                          final idx = entry.key;
+                          final c = entry.value;
+                          final left = idx * 22.0;
+                          return Positioned(
+                            left: left,
+                            child: CircleAvatar(
+                              radius: 16,
+                              backgroundColor: Colors.grey.shade200,
+                              backgroundImage: c.avatarUrl == null
+                                  ? null
+                                  : NetworkImage(c.avatarUrl!),
+                              child: c.avatarUrl == null
+                                  ? Text(
+                                      (c.handle ?? c.email)
+                                          .substring(0, 1)
+                                          .toUpperCase(),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w700),
+                                    )
+                                  : null,
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => _showContributors(context, contributors),
+                    child: const Text('Voir la participation'),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 12),
             if (canReserve)
               SizedBox(
                 width: double.infinity,
@@ -1364,8 +1506,12 @@ class _EventItemTile extends StatelessWidget {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.add),
-                  label: Text(isLoading ? 'Envoi...' : 'Je contribue'),
+                      : const Icon(Icons.check_circle_outline),
+                  label: Text(isLoading
+                      ? 'Envoi...'
+                      : (myContribution.isNotEmpty
+                          ? 'Modifier ma contribution'
+                          : 'Je contribue')),
                 ),
               ),
             if (onDelete != null) ...[

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
+import 'package:fiestaaa_front/src/features/events/domain/item_contribution_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/address_suggestion.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_item_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
@@ -143,6 +144,24 @@ class EventsApi {
       'Impossible de récupérer les items (${response.statusCode})',
       statusCode: response.statusCode,
     );
+  }
+
+  Future<List<ItemContributionModel>> fetchEventItemContributions({
+    required String token,
+    required int eventId,
+  }) async {
+    final response = await _client.get(
+      Uri.parse('$apiBaseUrl/events/$eventId/items/contributions'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body) as List<dynamic>;
+      return decoded
+          .map((e) => ItemContributionModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    throw ApiException('Impossible de charger les contributions',
+        statusCode: response.statusCode);
   }
 
   Future<EventItemModel> reserveEventItem({

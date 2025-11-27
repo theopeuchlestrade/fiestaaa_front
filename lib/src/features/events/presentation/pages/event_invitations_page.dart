@@ -250,22 +250,21 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
 
   bool _identifierMatches(String identifier, String handle, String email) {
     final normalized = identifier.toLowerCase();
-    return handle.toLowerCase() == normalized || email.toLowerCase() == normalized;
+    return handle.toLowerCase() == normalized ||
+        email.toLowerCase() == normalized;
   }
 
   bool _isFriendWith(String identifier) {
-    return _friends.any(
-        (f) => _identifierMatches(identifier, f.handle, f.email));
+    return _friends
+        .any((f) => _identifierMatches(identifier, f.handle, f.email));
   }
 
   bool _hasPendingFriendRequestWith(String identifier) {
     return _friendRequests.any((req) {
       if (req.status != 'Pending') return false;
       final incoming = req.isIncoming(widget.session.email);
-      final handle =
-          incoming ? req.senderHandle : req.receiverHandle;
-      final email =
-          incoming ? req.senderEmail : req.receiverEmail;
+      final handle = incoming ? req.senderHandle : req.receiverHandle;
+      final email = incoming ? req.senderEmail : req.receiverEmail;
       return _identifierMatches(identifier, handle, email);
     });
   }
@@ -317,7 +316,8 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     }
   }
 
-  Future<void> _sendFriendRequestForInvitation(InvitationModel invitation) async {
+  Future<void> _sendFriendRequestForInvitation(
+      InvitationModel invitation) async {
     final identifier = (invitation.handle?.isNotEmpty == true
             ? invitation.handle!
             : invitation.email)

@@ -3,17 +3,20 @@ class FriendModel {
     required this.email,
     required this.handle,
     required this.since,
+    this.avatarUrl,
   });
 
   final String email;
   final String handle;
   final DateTime since;
+  final String? avatarUrl;
 
   factory FriendModel.fromJson(Map<String, dynamic> json) {
     return FriendModel(
       email: json['email'] as String,
       handle: json['handle'] as String,
       since: DateTime.parse(json['since'] as String),
+      avatarUrl: json['avatar_url'] as String?,
     );
   }
 }
@@ -22,15 +25,18 @@ class FriendSearchResult {
   FriendSearchResult({
     required this.email,
     required this.handle,
+    this.avatarUrl,
   });
 
   final String email;
   final String handle;
+  final String? avatarUrl;
 
   factory FriendSearchResult.fromJson(Map<String, dynamic> json) {
     return FriendSearchResult(
       email: json['email'] as String,
       handle: json['handle'] as String,
+      avatarUrl: json['avatar_url'] as String?,
     );
   }
 }
@@ -40,8 +46,10 @@ class FriendRequestModel {
     required this.id,
     required this.senderEmail,
     required this.senderHandle,
+    this.senderAvatarUrl,
     required this.receiverEmail,
     required this.receiverHandle,
+    this.receiverAvatarUrl,
     required this.status,
     required this.createdAt,
   });
@@ -49,8 +57,10 @@ class FriendRequestModel {
   final int id;
   final String senderEmail;
   final String senderHandle;
+  final String? senderAvatarUrl;
   final String receiverEmail;
   final String receiverHandle;
+  final String? receiverAvatarUrl;
   final String status;
   final DateTime createdAt;
 
@@ -62,8 +72,10 @@ class FriendRequestModel {
       id: (json['id'] as num).toInt(),
       senderEmail: json['sender_email'] as String,
       senderHandle: json['sender_handle'] as String,
+      senderAvatarUrl: json['sender_avatar_url'] as String?,
       receiverEmail: json['receiver_email'] as String,
       receiverHandle: json['receiver_handle'] as String,
+      receiverAvatarUrl: json['receiver_avatar_url'] as String?,
       status: json['status'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
     );

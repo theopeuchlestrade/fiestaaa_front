@@ -101,9 +101,8 @@ class EventsListPageState extends State<EventsListPage> {
 
   void _notifyPendingInvites() {
     if (widget.onPendingInvitesChanged == null) return;
-    final pending = _myInvitations.values
-        .where((inv) => inv.status == 'Waiting')
-        .length;
+    final pending =
+        _myInvitations.values.where((inv) => inv.status == 'Waiting').length;
     widget.onPendingInvitesChanged!(pending);
   }
 
@@ -190,11 +189,9 @@ class _EventsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pendingInvites = invitations.values
-        .where((inv) => inv.status == 'Waiting')
-        .length;
-    final sortedEvents = [...events]
-      ..sort((a, b) {
+    final pendingInvites =
+        invitations.values.where((inv) => inv.status == 'Waiting').length;
+    final sortedEvents = [...events]..sort((a, b) {
         final waitingA = invitations[a.id]?.status == 'Waiting';
         final waitingB = invitations[b.id]?.status == 'Waiting';
         if (waitingA == waitingB) return 0;

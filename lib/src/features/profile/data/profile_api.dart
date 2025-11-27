@@ -66,6 +66,34 @@ class ProfileApi {
     throw _apiError(response);
   }
 
+  Future<ProfileInfo> uploadAvatar({
+    required String token,
+    required String filename,
+    required List<int> bytes,
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$apiBaseUrl/me/avatar'),
+    )
+      ..headers['Authorization'] = 'Bearer $token'
+      ..files.add(
+        http.MultipartFile.fromBytes(
+          'avatar',
+          bytes,
+          filename: filename,
+        ),
+      );
+
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    if (response.statusCode == 200) {
+      return ProfileInfo.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    }
+    throw _apiError(response);
+  }
+
   ApiException _apiError(http.Response response) {
     try {
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
