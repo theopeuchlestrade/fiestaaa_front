@@ -5,6 +5,7 @@ import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_create_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_detail_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/events_list_page.dart';
+import 'package:fiestaaa_front/src/features/invitations/presentation/pages/my_invitations_page.dart';
 import 'package:fiestaaa_front/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:flutter/material.dart';
 
@@ -153,6 +154,9 @@ class _HomePageState extends State<HomePage> {
         session: _session,
         onEventCreated: _handleEventCreated,
       ),
+      MyInvitationsPage(
+        session: _session,
+      ),
       ProfilePage(
         session: _session,
         onLogout: widget.onLogout,
@@ -183,6 +187,10 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.add_circle_outline),
             label: 'Créer',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.mail_outline),
+            label: 'Invitations',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
