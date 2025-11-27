@@ -105,8 +105,8 @@ class _FriendsPageState extends State<FriendsPage> {
   void _notifyPendingRequests(List<FriendRequestModel> list) {
     if (widget.onPendingRequestsChanged == null) return;
     final pending = list
-        .where((r) =>
-            r.status == 'Pending' && r.isIncoming(widget.session.email))
+        .where(
+            (r) => r.status == 'Pending' && r.isIncoming(widget.session.email))
         .length;
     widget.onPendingRequestsChanged!(pending);
   }
@@ -121,8 +121,7 @@ class _FriendsPageState extends State<FriendsPage> {
       });
       return;
     }
-    _debounce =
-        Timer(const Duration(milliseconds: 250), () => _search(query));
+    _debounce = Timer(const Duration(milliseconds: 250), () => _search(query));
   }
 
   Future<void> _search(String query) async {
@@ -180,9 +179,8 @@ class _FriendsPageState extends State<FriendsPage> {
       if (!mounted) return;
       await _fetchRequests();
       await _fetchFriends();
-      _showSnack(status == 'Accepted'
-          ? 'Demande acceptée'
-          : 'Demande d’ami refusée');
+      _showSnack(
+          status == 'Accepted' ? 'Demande acceptée' : 'Demande d’ami refusée');
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
@@ -246,12 +244,10 @@ class _FriendsPageState extends State<FriendsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final incoming = _requests
-        .where((r) => r.isIncoming(widget.session.email))
-        .toList();
-    final outgoing = _requests
-        .where((r) => !r.isIncoming(widget.session.email))
-        .toList();
+    final incoming =
+        _requests.where((r) => r.isIncoming(widget.session.email)).toList();
+    final outgoing =
+        _requests.where((r) => !r.isIncoming(widget.session.email)).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -319,8 +315,7 @@ class _SearchCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.person_add_alt_1_outlined,
-                    color: Colors.teal),
+                const Icon(Icons.person_add_alt_1_outlined, color: Colors.teal),
                 const SizedBox(width: 8),
                 Text(
                   'Ajouter un ami',
@@ -361,7 +356,7 @@ class _SearchCard extends StatelessWidget {
                           ? '@${suggestion.handle}'
                           : suggestion.email;
                       return ListTile(
-                        leading: const Icon(Icons.person_outline),
+                        leading: _AvatarCircle(url: suggestion.avatarUrl),
                         title: Text(label),
                         subtitle: Text(suggestion.email),
                         onTap: () => onSend(suggestion.handle.isNotEmpty
@@ -527,12 +522,13 @@ class _RequestSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         ...requests.map((req) {
-          final counterpartHandle = req.isIncoming(userEmail)
-              ? req.senderHandle
-              : req.receiverHandle;
-          final counterpartEmail = req.isIncoming(userEmail)
-              ? req.senderEmail
-              : req.receiverEmail;
+          final counterpartHandle =
+              req.isIncoming(userEmail) ? req.senderHandle : req.receiverHandle;
+          final counterpartEmail =
+              req.isIncoming(userEmail) ? req.senderEmail : req.receiverEmail;
+          final avatarUrl = req.isIncoming(userEmail)
+              ? req.senderAvatarUrl
+              : req.receiverAvatarUrl;
           final label = counterpartHandle.isNotEmpty
               ? '@$counterpartHandle'
               : counterpartEmail;
@@ -542,7 +538,8 @@ class _RequestSection extends StatelessWidget {
 
           return ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.person_add_alt_1),
+            leading:
+                _AvatarCircle(url: avatarUrl, fallbackText: counterpartHandle),
             title: Text(label),
             subtitle: Text(subtitle),
             trailing: isPending && onAccept != null && onDecline != null
@@ -656,13 +653,9 @@ class _FriendsList extends StatelessWidget {
               ...friends.map(
                 (friend) => ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.teal.shade50,
-                    foregroundColor: Colors.teal.shade800,
-                    child: Text(
-                      friend.handle.substring(0, 1).toUpperCase(),
-                      style: const TextStyle(fontWeight: FontWeight.w800),
-                    ),
+                  leading: _AvatarCircle(
+                    url: friend.avatarUrl,
+                    fallbackText: friend.handle,
                   ),
                   title: Text('@${friend.handle}'),
                   subtitle: Text(
@@ -676,6 +669,49 @@ class _FriendsList extends StatelessWidget {
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AvatarCircle extends StatelessWidget {
+  const _AvatarCircle({this.url, this.fallbackText, this.size = 32});
+
+  final String? url;
+  final String? fallbackText;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final letter = (fallbackText ?? '')
+        .trim()
+        .characters
+        .take(1)
+        .toString()
+        .toUpperCase();
+    Widget placeholder() => CircleAvatar(
+          radius: size / 2,
+          backgroundColor: Colors.grey.shade200,
+          foregroundColor: Colors.grey.shade800,
+          child: Text(
+            letter.isNotEmpty ? letter : '?',
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+        );
+
+    if (url == null || url!.isEmpty) {
+      return placeholder();
+    }
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: ClipOval(
+        child: Image.network(
+          url!,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => placeholder(),
         ),
       ),
     );

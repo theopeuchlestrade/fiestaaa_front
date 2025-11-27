@@ -1,3 +1,4 @@
+import 'package:file_selector/file_selector.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/profile/data/profile_api.dart';
@@ -142,6 +143,50 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Future<void> _pickAndUploadAvatar(ProfileInfo profile) async {
+    final typeGroup = const XTypeGroup(
+      label: 'images',
+      extensions: ['jpg', 'jpeg', 'png', 'webp'],
+    );
+    final file = await openFile(acceptedTypeGroups: [typeGroup]);
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    final sizeMb = bytes.length / (1024 * 1024);
+    if (sizeMb > 1.5) {
+      _showSnack('Image trop lourde (max 1.5 Mo)', isError: true);
+      return;
+    }
+    setState(() => _updatingHandle = true);
+    try {
+      final updated = await _api.uploadAvatar(
+        token: widget.session.token,
+        filename: file.name.isNotEmpty ? file.name : 'avatar.jpg',
+        bytes: bytes,
+      );
+      if (!mounted) return;
+      setState(() {
+        _future = Future.value(updated);
+      });
+      if (widget.onSessionUpdated != null) {
+        await widget.onSessionUpdated!(
+          widget.session.copyWith(
+            handle: updated.handle,
+          ),
+        );
+      }
+      _showSnack('Photo mise à jour');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Upload impossible', isError: true);
+    } finally {
+      if (!mounted) return;
+      setState(() => _updatingHandle = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FiestaaaBackground(
@@ -211,15 +256,23 @@ class _ProfilePageState extends State<ProfilePage> {
                               ListTile(
                                 contentPadding: EdgeInsets.zero,
                                 leading: CircleAvatar(
+                                  radius: 26,
                                   backgroundColor:
                                       FiestaaaPalette.primary.withOpacity(0.14),
-                                foregroundColor: FiestaaaPalette.primary,
-                                  child: Text(
-                                    profile.email.substring(0, 1).toUpperCase(),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
+                                  foregroundColor: FiestaaaPalette.primary,
+                                  backgroundImage: profile.avatarUrl == null
+                                      ? null
+                                      : NetworkImage(profile.avatarUrl!),
+                                  child: profile.avatarUrl == null
+                                      ? Text(
+                                          profile.email
+                                              .substring(0, 1)
+                                              .toUpperCase(),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        )
+                                      : null,
                                 ),
                                 title: Text(
                                   profile.email,
@@ -250,6 +303,23 @@ class _ProfilePageState extends State<ProfilePage> {
                                     avatar: const Icon(Icons.tag, size: 18),
                                     label: Text(profile.handle),
                                   ),
+                                  const SizedBox(width: 8),
+                                  OutlinedButton.icon(
+                                    onPressed: _updatingHandle
+                                        ? null
+                                        : () => _pickAndUploadAvatar(profile),
+                                    icon: _updatingHandle
+                                        ? const SizedBox(
+                                            width: 14,
+                                            height: 14,
+                                            child: CircularProgressIndicator(
+                                                strokeWidth: 2),
+                                          )
+                                        : const Icon(Icons.image),
+                                    label: Text(_updatingHandle
+                                        ? 'Envoi...'
+                                        : 'Changer la photo'),
+                                  ),
                                   const Spacer(),
                                   OutlinedButton.icon(
                                     onPressed: widget.onLogout,
@@ -260,9 +330,9 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             ],
                           ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       Card(
                         child: Padding(
                           padding: const EdgeInsets.all(16),

@@ -68,7 +68,8 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
       setState(() => _invitationError = e.message);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _invitationError = 'Impossible de charger vos invitations.');
+      setState(
+          () => _invitationError = 'Impossible de charger vos invitations.');
     } finally {
       if (!mounted) return;
       setState(() => _loadingInvitations = false);
@@ -133,9 +134,7 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
       if (!mounted) return;
       await _fetchFriendRequests();
       _showSnack(
-        status == 'Accepted'
-            ? 'Demande acceptée'
-            : 'Demande d’ami refusée',
+        status == 'Accepted' ? 'Demande acceptée' : 'Demande d’ami refusée',
       );
     } on ApiException catch (e) {
       if (!mounted) return;

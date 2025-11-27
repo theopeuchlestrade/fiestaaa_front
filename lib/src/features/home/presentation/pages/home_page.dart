@@ -117,11 +117,9 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadPendingBadges() async {
     try {
-      final invites =
-          await _invitesApi.fetchMyInvitations(_session.token);
+      final invites = await _invitesApi.fetchMyInvitations(_session.token);
       if (!mounted) return;
-      final waiting =
-          invites.where((inv) => inv.status == 'Waiting').length;
+      final waiting = invites.where((inv) => inv.status == 'Waiting').length;
       setState(() => _pendingEventInvites = waiting);
     } catch (_) {
       // ignore badge failures
@@ -131,8 +129,7 @@ class _HomePageState extends State<HomePage> {
       final requests = await _friendsApi.fetchRequests(_session.token);
       if (!mounted) return;
       final pending = requests
-          .where((r) =>
-              r.status == 'Pending' && r.isIncoming(_session.email))
+          .where((r) => r.status == 'Pending' && r.isIncoming(_session.email))
           .length;
       setState(() => _pendingFriendRequests = pending);
     } catch (_) {
