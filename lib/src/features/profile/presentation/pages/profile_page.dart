@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/invitations/presentation/pages/my_invitations_page.dart';
 import 'package:fiestaaa_front/src/features/profile/data/profile_api.dart';
@@ -11,10 +12,12 @@ class ProfilePage extends StatefulWidget {
     super.key,
     required this.session,
     required this.onLogout,
+    this.onSessionUpdated,
   });
 
   final SessionData session;
   final VoidCallback onLogout;
+  final Future<void> Function(SessionData session)? onSessionUpdated;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -23,6 +26,11 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final _api = ProfileApi();
   Future<ProfileInfo>? _future;
+  final _handleController = TextEditingController();
+  bool _checkingHandle = false;
+  bool? _handleAvailable;
+  bool _updatingHandle = false;
+  String? _handleStatus;
 
   @override
   void initState() {
@@ -32,8 +40,107 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   void dispose() {
+    _handleController.dispose();
     _api.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkHandleAvailability() async {
+    final handle = _handleController.text.trim();
+    if (handle.isEmpty) {
+      setState(() {
+        _handleStatus = 'Renseignez un identifiant pour vérifier';
+        _handleAvailable = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _checkingHandle = true;
+      _handleStatus = null;
+    });
+    try {
+      final available = await _api.checkHandleAvailability(handle);
+      if (!mounted) return;
+      setState(() {
+        _handleAvailable = available;
+        _handleStatus =
+            available ? 'Identifiant disponible' : 'Identifiant déjà pris';
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _handleAvailable = false;
+        _handleStatus = e.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _handleAvailable = null;
+        _handleStatus = 'Vérification impossible';
+      });
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _checkingHandle = false;
+      });
+    }
+  }
+
+  Future<void> _updateHandle(ProfileInfo profile) async {
+    final handle = _handleController.text.trim();
+    if (handle.isEmpty) {
+      _showSnack('Merci de renseigner un identifiant', isError: true);
+      return;
+    }
+
+    setState(() {
+      _updatingHandle = true;
+      _handleStatus = null;
+    });
+    try {
+      final updated = await _api.updateHandle(
+        token: widget.session.token,
+        handle: handle,
+      );
+      if (!mounted) return;
+      _handleController.text = updated.handle;
+      setState(() {
+        _future = Future.value(updated);
+        _handleAvailable = null;
+        _handleStatus = 'Identifiant mis à jour';
+      });
+      if (widget.onSessionUpdated != null) {
+        await widget.onSessionUpdated!(
+          widget.session.copyWith(handle: updated.handle),
+        );
+      }
+      _showSnack('Identifiant mis à jour');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+      setState(() {
+        _handleAvailable = false;
+        _handleStatus = e.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Mise à jour impossible', isError: true);
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _updatingHandle = false;
+      });
+    }
+  }
+
+  void _showSnack(String text, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(text),
+        backgroundColor: isError ? Colors.red.shade400 : null,
+      ),
+    );
   }
 
   @override
@@ -88,6 +195,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   return const Text('Profil introuvable');
                 }
 
+                if (_handleController.text.isEmpty) {
+                  _handleController.text = profile.handle;
+                }
+
                 return Column(
                   children: [
                     Card(
@@ -132,19 +243,108 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: widget.onLogout,
-                                icon: const Icon(Icons.logout),
-                                label: const Text('Se déconnecter'),
-                              ),
+                            Row(
+                              children: [
+                                Chip(
+                                  avatar: const Icon(Icons.tag, size: 18),
+                                  label: Text(profile.handle),
+                                ),
+                                const Spacer(),
+                                OutlinedButton.icon(
+                                  onPressed: widget.onLogout,
+                                  icon: const Icon(Icons.logout),
+                                  label: const Text('Se déconnecter'),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.edit_outlined,
+                                    color: Colors.deepPurple),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Modifier mon identifiant',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                                const Spacer(),
+                                if (_checkingHandle || _updatingHandle)
+                                  const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _handleController,
+                              enabled: !_updatingHandle,
+                              decoration: InputDecoration(
+                                labelText: 'Ex: mango-forest-4832',
+                                helperText:
+                                    'Utilisable à la connexion et pour les invitations.',
+                                prefixIcon: const Icon(Icons.alternate_email),
+                                suffixIcon: _handleAvailable == true
+                                    ? const Icon(Icons.check_circle,
+                                        color: Colors.green)
+                                    : null,
+                              ),
+                            ),
+                            if (_handleStatus != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  _handleStatus!,
+                                  style: TextStyle(
+                                    color: _handleAvailable == false
+                                        ? Colors.red.shade700
+                                        : Colors.green.shade700,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                OutlinedButton.icon(
+                                  onPressed: _checkingHandle
+                                      ? null
+                                      : _checkHandleAvailability,
+                                  icon: const Icon(Icons.search),
+                                  label: const Text('Vérifier'),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton.icon(
+                                  onPressed: _updatingHandle
+                                      ? null
+                                      : () => _updateHandle(profile),
+                                  icon: const Icon(Icons.save_outlined),
+                                  label: Text(_updatingHandle
+                                      ? 'En cours...'
+                                      : 'Mettre à jour'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(

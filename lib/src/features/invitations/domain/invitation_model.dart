@@ -2,6 +2,7 @@ class InvitationModel {
   InvitationModel({
     required this.eventId,
     required this.email,
+    this.handle,
     required this.status,
     required this.dateInvi,
     this.eventName,
@@ -9,6 +10,7 @@ class InvitationModel {
 
   final int eventId;
   final String email;
+  final String? handle;
   final String status;
   final DateTime dateInvi;
   final String? eventName;
@@ -17,6 +19,7 @@ class InvitationModel {
     return InvitationModel(
       eventId: (json['event_id'] as num).toInt(),
       email: json['email'] as String,
+      handle: json['handle'] as String?,
       status: json['status'] as String,
       dateInvi: DateTime.parse(json['date_invi'] as String),
       eventName: json['event_name'] as String?,
@@ -25,14 +28,20 @@ class InvitationModel {
 }
 
 class InvitationSuggestionModel {
-  InvitationSuggestionModel({required this.email, required this.lastInvitedAt});
+  InvitationSuggestionModel({
+    required this.email,
+    required this.handle,
+    required this.lastInvitedAt,
+  });
 
   final String email;
+  final String handle;
   final DateTime lastInvitedAt;
 
   factory InvitationSuggestionModel.fromJson(Map<String, dynamic> json) {
     return InvitationSuggestionModel(
       email: json['email'] as String,
+      handle: json['handle'] as String,
       lastInvitedAt: DateTime.parse(json['last_invited_at'] as String),
     );
   }

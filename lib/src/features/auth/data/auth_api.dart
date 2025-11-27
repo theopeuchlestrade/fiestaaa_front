@@ -22,12 +22,14 @@ class AuthApi {
   Future<void> register({
     required String email,
     required String password,
+    String? handle,
   }) async {
     final response = await _post(
       '/auth/register',
       body: {
         'email': email,
         'password': password,
+        if (handle != null && handle.trim().isNotEmpty) 'handle': handle.trim(),
       },
     );
 
@@ -39,13 +41,13 @@ class AuthApi {
   }
 
   Future<SessionData> login({
-    required String email,
+    required String identifier,
     required String password,
   }) async {
     final response = await _post(
       '/auth/login',
       body: {
-        'email': email,
+        'identifier': identifier,
         'password': password,
       },
     );
@@ -53,16 +55,22 @@ class AuthApi {
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
       final token = decoded['token'] as String?;
+      final email = decoded['email'] as String?;
+      final handle = decoded['handle'] as String?;
       if (token == null || token.isEmpty) {
         throw ApiException('Réponse invalide du serveur', statusCode: 200);
       }
-      return SessionData(token: token, email: email);
+      return SessionData(
+        token: token,
+        email: email ?? identifier,
+        handle: handle,
+      );
     }
 
     throw _apiError(response);
   }
 
-  Future<bool> validateSession(String token) async {
+  Future<SessionData?> validateSession(String token) async {
     final response = await _client.get(
       Uri.parse('$apiBaseUrl/me'),
       headers: {
@@ -71,10 +79,14 @@ class AuthApi {
     );
 
     if (response.statusCode == 200) {
-      return true;
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final email = decoded['email'] as String?;
+      final handle = decoded['handle'] as String?;
+      if (email == null) return null;
+      return SessionData(token: token, email: email, handle: handle);
     }
     if (response.statusCode == 401) {
-      return false;
+      return null;
     }
 
     throw _apiError(response);

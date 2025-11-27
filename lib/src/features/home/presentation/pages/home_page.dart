@@ -15,12 +15,14 @@ class HomePage extends StatefulWidget {
     required this.onLogout,
     this.initialShareToken,
     this.onShareTokenConsumed,
+    this.onSessionUpdated,
   });
 
   final SessionData session;
   final VoidCallback onLogout;
   final String? initialShareToken;
   final VoidCallback? onShareTokenConsumed;
+  final Future<void> Function(SessionData session)? onSessionUpdated;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -32,6 +34,7 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   bool _claimingShare = false;
   bool _shareHandled = false;
+  late SessionData _session;
 
   void _onItemTapped(int index) {
     setState(() {
@@ -44,7 +47,7 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(
         builder: (_) => EventDetailPage(
           event: event,
-          session: widget.session,
+          session: _session,
           onEventUpdated: () => _eventsKey.currentState?.reload(),
           onEventRemoved: _handleEventRemoved,
           onInvitationStatusChanged: _updateInvitationStatus,
@@ -75,17 +78,23 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _session = widget.session;
     if (widget.initialShareToken != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _claimShareIfNeeded());
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _claimShareIfNeeded());
     }
   }
 
   @override
   void didUpdateWidget(covariant HomePage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.session.token != oldWidget.session.token) {
+      _session = widget.session;
+    }
     if (widget.initialShareToken != oldWidget.initialShareToken &&
         widget.initialShareToken != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _claimShareIfNeeded());
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _claimShareIfNeeded());
     }
   }
 
@@ -104,7 +113,7 @@ class _HomePageState extends State<HomePage> {
     });
     try {
       final event = await _shareApi.claimShareToken(
-        token: widget.session.token,
+        token: _session.token,
         shareToken: widget.initialShareToken!,
       );
       _shareHandled = true;
@@ -137,16 +146,24 @@ class _HomePageState extends State<HomePage> {
     final pages = [
       EventsListPage(
         key: _eventsKey,
-        session: widget.session,
+        session: _session,
         onEventSelected: _openEvent,
       ),
       EventCreatePage(
-        session: widget.session,
+        session: _session,
         onEventCreated: _handleEventCreated,
       ),
       ProfilePage(
-        session: widget.session,
+        session: _session,
         onLogout: widget.onLogout,
+        onSessionUpdated: (session) async {
+          setState(() {
+            _session = session;
+          });
+          if (widget.onSessionUpdated != null) {
+            await widget.onSessionUpdated!(session);
+          }
+        },
       ),
     ];
 

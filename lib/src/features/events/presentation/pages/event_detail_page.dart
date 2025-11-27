@@ -546,9 +546,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
           IconButton(
             onPressed: _openInvitations,
             icon: const Icon(Icons.people_alt),
-            tooltip: _isOwner
-                ? 'Gérer les invitations'
-                : 'Voir les participants',
+            tooltip:
+                _isOwner ? 'Gérer les invitations' : 'Voir les participants',
           ),
           if (_isOwner)
             IconButton(

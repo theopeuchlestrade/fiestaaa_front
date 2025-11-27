@@ -217,8 +217,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
           ? null
           : _paymentIdentifierController.text.trim(),
       paymentRequestedAmount: requestedAmount,
-      paymentPerPerson:
-          _selectedProviderId != null ? _paymentPerPerson : false,
+      paymentPerPerson: _selectedProviderId != null ? _paymentPerPerson : false,
     );
 
     try {
@@ -506,9 +505,10 @@ class _EventCreatePageState extends State<EventCreatePage> {
                             labelText: 'Nom de l’événement',
                             prefixIcon: Icon(Icons.celebration),
                           ),
-                          validator: (value) => value == null || value.trim().isEmpty
-                              ? 'Champ requis'
-                              : null,
+                          validator: (value) =>
+                              value == null || value.trim().isEmpty
+                                  ? 'Champ requis'
+                                  : null,
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
@@ -520,9 +520,10 @@ class _EventCreatePageState extends State<EventCreatePage> {
                             alignLabelWithHint: true,
                             prefixIcon: Icon(Icons.description),
                           ),
-                          validator: (value) => value == null || value.trim().isEmpty
-                              ? 'Champ requis'
-                              : null,
+                          validator: (value) =>
+                              value == null || value.trim().isEmpty
+                                  ? 'Champ requis'
+                                  : null,
                         ),
                         const SizedBox(height: 16),
                         _buildAddressField(),
@@ -533,7 +534,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
                               child: OutlinedButton.icon(
                                 onPressed: _pickDate,
                                 icon: const Icon(Icons.event),
-                                label: Text(DateFormat.yMMMMd('fr_FR').format(_selectedDate)),
+                                label: Text(DateFormat.yMMMMd('fr_FR')
+                                    .format(_selectedDate)),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -550,7 +552,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
                         _buildPaymentProviderField(),
                         const SizedBox(height: 16),
                         _buildPaymentModeToggle(),
-                        if (_selectedProviderId != null) const SizedBox(height: 12),
+                        if (_selectedProviderId != null)
+                          const SizedBox(height: 12),
                         TextFormField(
                           controller: _paymentIdentifierController,
                           decoration: const InputDecoration(
@@ -572,7 +575,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
                                 ? 'Chaque invité est invité à verser ce montant'
                                 : 'Indiquez le total que vous espérez collecter (optionnel)',
                           ),
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
                           enabled: _selectedProviderId != null,
                           validator: (value) {
                             if (_selectedProviderId == null) {
@@ -582,7 +586,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
                             if (raw.isEmpty) {
                               return null;
                             }
-                            final parsed = double.tryParse(raw.replaceAll(',', '.'));
+                            final parsed =
+                                double.tryParse(raw.replaceAll(',', '.'));
                             if (parsed == null || parsed < 0) {
                               return 'Entrez un montant positif';
                             }
@@ -598,7 +603,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
                                 ? const SizedBox(
                                     width: 18,
                                     height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
                                   )
                                 : const Text('Créer l’événement'),
                           ),
