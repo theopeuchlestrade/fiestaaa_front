@@ -81,6 +81,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
       widget.session.email.toLowerCase() ==
       _currentEvent.ownerEmail.toLowerCase();
 
+  bool get _hasAcceptedInvitation => _myInvitation?.status == 'Accepted';
+  bool get _isWaitingInvitation => _myInvitation?.status == 'Waiting';
+  bool get _canContributeItems => _isOwner || _hasAcceptedInvitation;
+
   Future<void> _loadItems() async {
     setState(() {
       _loadingItems = true;
@@ -460,6 +464,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _openQuantityDialog(EventItemModel item) async {
+    if (!_canContributeItems) {
+      _showSnack('Acceptez l\'invitation avant de contribuer.', isError: true);
+      return;
+    }
     final controller = TextEditingController();
     final formKey = GlobalKey<FormState>();
     final picked = await showDialog<int>(
@@ -603,23 +611,25 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
             _buildPaymentSection(),
             const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: ElevatedButton.icon(
-                onPressed: _creatingCustomItem ? null : _openAddItemDialog,
-                icon: _creatingCustomItem
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.add),
-                label: Text(
-                  _creatingCustomItem ? 'Ajout en cours...' : 'Ajouter un item',
+            if (_canContributeItems) ...[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: ElevatedButton.icon(
+                  onPressed: _creatingCustomItem ? null : _openAddItemDialog,
+                  icon: _creatingCustomItem
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.add),
+                  label: Text(
+                    _creatingCustomItem ? 'Ajout en cours...' : 'Ajouter un item',
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
+            ],
             Text(
               'Items disponibles',
               style: Theme.of(context).textTheme.titleLarge,
@@ -632,6 +642,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   .bodySmall
                   ?.copyWith(color: Colors.grey.shade700),
             ),
+            if (!_isOwner && _isWaitingInvitation)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Acceptez l\'invitation avant de pouvoir contribuer aux items.',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: Colors.red.shade700),
+                ),
+              ),
             const SizedBox(height: 16),
             if (_loadingItems)
               const Center(child: CircularProgressIndicator())
@@ -655,6 +676,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 onDelete: _deleteEventItem,
                 isOwner: _isOwner,
                 currentUserEmail: widget.session.email,
+                canReserveItems: _canContributeItems,
               ),
           ],
         ),
@@ -1209,6 +1231,7 @@ class _EventItemsList extends StatelessWidget {
     required this.onDelete,
     required this.isOwner,
     required this.currentUserEmail,
+    required this.canReserveItems,
   });
 
   final List<EventItemModel> items;
@@ -1218,6 +1241,7 @@ class _EventItemsList extends StatelessWidget {
   final void Function(EventItemModel item) onDelete;
   final bool isOwner;
   final String currentUserEmail;
+  final bool canReserveItems;
 
   @override
   Widget build(BuildContext context) {
@@ -1251,6 +1275,7 @@ class _EventItemsList extends StatelessWidget {
                     item: item,
                     isLoading: reservingItemId == item.itemId,
                     isDeleting: deletingItemId == item.itemId,
+                    canReserve: canReserveItems,
                     onTap: () => onReserve(item),
                     onDelete: (isOwner || item.isCreatedBy(currentUserEmail))
                         ? () => onDelete(item)
@@ -1273,6 +1298,7 @@ class _EventItemTile extends StatelessWidget {
     required this.onTap,
     this.onDelete,
     this.isDeleting = false,
+    this.canReserve = true,
   });
 
   final EventItemModel item;
@@ -1280,6 +1306,7 @@ class _EventItemTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onDelete;
   final bool isDeleting;
+  final bool canReserve;
 
   @override
   Widget build(BuildContext context) {
@@ -1326,22 +1353,21 @@ class _EventItemTile extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: isLoading ? null : onTap,
-                icon: isLoading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.add),
-                label: Text(
-                  isLoading ? 'Envoi...' : 'Je contribue',
+            if (canReserve)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: isLoading ? null : onTap,
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.add),
+                  label: Text(isLoading ? 'Envoi...' : 'Je contribue'),
                 ),
               ),
-            ),
             if (onDelete != null) ...[
               const SizedBox(height: 8),
               SizedBox(
