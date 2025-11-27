@@ -190,6 +190,17 @@ class _EventsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final pendingInvites = invitations.values
+        .where((inv) => inv.status == 'Waiting')
+        .length;
+    final sortedEvents = [...events]
+      ..sort((a, b) {
+        final waitingA = invitations[a.id]?.status == 'Waiting';
+        final waitingB = invitations[b.id]?.status == 'Waiting';
+        if (waitingA == waitingB) return 0;
+        return waitingA ? -1 : 1; // waiting first
+      });
+
     return RefreshIndicator(
       onRefresh: onRefresh,
       displacement: 32,
@@ -208,6 +219,26 @@ class _EventsGrid extends StatelessWidget {
               parent: AlwaysScrollableScrollPhysics(),
             ),
             slivers: [
+              if (pendingInvites > 0)
+                SliverPadding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  sliver: SliverToBoxAdapter(
+                    child: Card(
+                      color: Colors.orange.shade50,
+                      child: ListTile(
+                        leading: const Icon(Icons.mark_email_unread,
+                            color: Colors.orange),
+                        title: Text(
+                          pendingInvites == 1
+                              ? '1 invitation attend votre réponse'
+                              : '$pendingInvites invitations attendent votre réponse',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               SliverPadding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -263,7 +294,7 @@ class _EventsGrid extends StatelessWidget {
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      final event = events[index];
+                      final event = sortedEvents[index];
                       return _EventBubble(
                         event: event,
                         sessionEmail: sessionEmail,
@@ -273,7 +304,7 @@ class _EventsGrid extends StatelessWidget {
                         },
                       );
                     },
-                    childCount: events.length,
+                    childCount: sortedEvents.length,
                   ),
                 ),
               ),
