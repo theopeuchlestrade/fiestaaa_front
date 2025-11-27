@@ -12,6 +12,7 @@ class InvitationStatusSection extends StatelessWidget {
     required this.emptyLabel,
     required this.ownerEmail,
     this.onDelete,
+    this.trailingBuilder,
   });
 
   final String title;
@@ -21,6 +22,7 @@ class InvitationStatusSection extends StatelessWidget {
   final String emptyLabel;
   final String ownerEmail;
   final void Function(InvitationModel invitation)? onDelete;
+  final Widget? Function(InvitationModel invitation)? trailingBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -91,19 +93,23 @@ class InvitationStatusSection extends StatelessWidget {
         ],
       ],
     );
+    Widget? trailing;
+    if (trailingBuilder != null) {
+      trailing = trailingBuilder!(invitation);
+    } else if (onDelete != null && !isOwner) {
+      trailing = IconButton(
+        onPressed: () => onDelete!(invitation),
+        icon: const Icon(Icons.delete),
+        tooltip: 'Supprimer',
+      );
+    }
     return ListTile(
       contentPadding: EdgeInsets.zero,
       title: title,
       subtitle: Text(
         'Envoyée le ${DateFormat.yMMMMd('fr_FR').format(invitation.dateInvi)}',
       ),
-      trailing: onDelete == null || isOwner
-          ? null
-          : IconButton(
-              onPressed: () => onDelete!(invitation),
-              icon: const Icon(Icons.delete),
-              tooltip: 'Supprimer',
-            ),
+      trailing: trailing,
     );
   }
 }
