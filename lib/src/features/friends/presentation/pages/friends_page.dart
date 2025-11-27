@@ -87,8 +87,9 @@ class _FriendsPageState extends State<FriendsPage> {
     try {
       final data = await _api.fetchRequests(widget.session.token);
       if (!mounted) return;
-      setState(() => _requests = data);
-      _notifyPendingRequests(data);
+      final pending = data.where((r) => r.status == 'Pending').toList();
+      setState(() => _requests = pending);
+      _notifyPendingRequests(pending);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _requestError = e.message);
