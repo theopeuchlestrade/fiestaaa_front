@@ -7,9 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class MyInvitationsPage extends StatefulWidget {
-  const MyInvitationsPage({super.key, required this.session});
+  const MyInvitationsPage({
+    super.key,
+    required this.session,
+    this.onOpenEvent,
+  });
 
   final SessionData session;
+  final void Function(int eventId)? onOpenEvent;
 
   @override
   State<MyInvitationsPage> createState() => _MyInvitationsPageState();
@@ -152,63 +157,76 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
               else
                 ..._invitations.map(
                   (inv) => Card(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: ListTile(
-                        title:
-                            Text(inv.eventName ?? 'Évènement #${inv.eventId}'),
-                        subtitle: Text(
-                          'Reçu le ${DateFormat.yMMMMd('fr_FR').format(inv.dateInvi)}',
-                        ),
-                        leading: Icon(
-                          Icons.mail_outline,
-                          color: inv.status == 'Accepted'
-                              ? Colors.green
-                              : inv.status == 'Declined'
-                                  ? Colors.redAccent
-                                  : FiestaaaPalette.primary,
-                        ),
-                        trailing: inv.status == 'Waiting'
-                            ? Wrap(
-                                spacing: 8,
-                                children: [
-                                  TextButton(
-                                    onPressed: () => _respond(inv, 'Declined'),
-                                    child: const Text('Refuser'),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () => _respond(inv, 'Accepted'),
-                                    child: const Text('Accepter'),
-                                  ),
-                                ],
-                              )
-                            : inv.status == 'Accepted'
-                                ? TextButton.icon(
-                                    onPressed: () => _confirmLeave(inv),
-                                    icon: const Icon(Icons.logout),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: Colors.red.shade700,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: widget.onOpenEvent == null
+                          ? null
+                          : () => widget.onOpenEvent!(inv.eventId),
+                      splashColor: FiestaaaPalette.primary.withOpacity(0.12),
+                      highlightColor: Colors.transparent,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: ListTile(
+                          title: Text(
+                              inv.eventName ?? 'Évènement #${inv.eventId}'),
+                          subtitle: Text(
+                            'Reçu le ${DateFormat.yMMMMd('fr_FR').format(inv.dateInvi)}',
+                          ),
+                          leading: Icon(
+                            Icons.mail_outline,
+                            color: inv.status == 'Accepted'
+                                ? Colors.green
+                                : inv.status == 'Declined'
+                                    ? Colors.redAccent
+                                    : FiestaaaPalette.primary,
+                          ),
+                          trailing: inv.status == 'Waiting'
+                              ? Wrap(
+                                  spacing: 8,
+                                  children: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          _respond(inv, 'Declined'),
+                                      child: const Text('Refuser'),
                                     ),
-                                    label: const Text('Quitter'),
-                                  )
-                                : Chip(
-                                    label: Text(
-                                      inv.status,
-                                      style: TextStyle(
-                                        color: inv.status == 'Accepted'
-                                            ? Colors.green.shade800
-                                            : inv.status == 'Declined'
-                                                ? Colors.grey.shade800
-                                                : Colors.orange.shade800,
-                                        fontWeight: FontWeight.w700,
+                                    ElevatedButton(
+                                      onPressed: () =>
+                                          _respond(inv, 'Accepted'),
+                                      child: const Text('Accepter'),
+                                    ),
+                                  ],
+                                )
+                              : inv.status == 'Accepted'
+                                  ? TextButton.icon(
+                                      onPressed: () => _confirmLeave(inv),
+                                      icon: const Icon(Icons.logout),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.red.shade700,
                                       ),
+                                      label: const Text('Quitter'),
+                                    )
+                                  : Chip(
+                                      label: Text(
+                                        inv.status,
+                                        style: TextStyle(
+                                          color: inv.status == 'Accepted'
+                                              ? Colors.green.shade800
+                                              : inv.status == 'Declined'
+                                                  ? Colors.grey.shade800
+                                                  : Colors.orange.shade800,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      backgroundColor: inv.status == 'Accepted'
+                                          ? Colors.green.shade100
+                                          : inv.status == 'Declined'
+                                              ? Colors.grey.shade200
+                                              : Colors.orange.shade100,
                                     ),
-                                    backgroundColor: inv.status == 'Accepted'
-                                        ? Colors.green.shade100
-                                        : inv.status == 'Declined'
-                                            ? Colors.grey.shade200
-                                            : Colors.orange.shade100,
-                                  ),
+                        ),
                       ),
                     ),
                   ),

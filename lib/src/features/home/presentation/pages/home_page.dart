@@ -156,6 +156,14 @@ class _HomePageState extends State<HomePage> {
       ),
       MyInvitationsPage(
         session: _session,
+        onOpenEvent: (id) async {
+          final event = await _shareApi.fetchEventById(
+            token: _session.token,
+            eventId: id,
+          );
+          if (!mounted) return;
+          await _openEvent(event);
+        },
       ),
       ProfilePage(
         session: _session,
