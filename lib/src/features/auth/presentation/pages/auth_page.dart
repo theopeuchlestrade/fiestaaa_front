@@ -152,40 +152,43 @@ class _AuthPageState extends State<AuthPage> {
                         children: [
                           if (_isSubmitting) const LinearProgressIndicator(),
                           if (_isSubmitting) const SizedBox(height: 12),
-                          SegmentedButton<AuthMode>(
-                            segments: const [
-                              ButtonSegment<AuthMode>(
-                                value: AuthMode.login,
-                                label: Text('Connexion'),
-                                icon: Icon(Icons.login),
-                              ),
-                              ButtonSegment<AuthMode>(
-                                value: AuthMode.register,
-                                label: Text('Inscription'),
-                                icon: Icon(Icons.person_add_alt_1),
-                              ),
-                            ],
-                            selected: <AuthMode>{_mode},
-                            onSelectionChanged: (newSelection) =>
-                                _toggleMode(newSelection.first),
-                            showSelectedIcon: false,
-                            style: ButtonStyle(
-                              backgroundColor:
-                                  MaterialStateProperty.resolveWith(
-                                (states) => states
-                                        .contains(MaterialState.selected)
-                                    ? FiestaaaPalette.primary.withOpacity(0.12)
-                                    : Colors.grey.shade100,
-                              ),
-                              side: MaterialStateProperty.all(
-                                BorderSide(color: Colors.grey.shade300),
-                              ),
-                              padding: MaterialStateProperty.all(
-                                const EdgeInsets.symmetric(vertical: 14),
-                              ),
-                              shape: MaterialStateProperty.all(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SegmentedButton<AuthMode>(
+                              segments: const [
+                                ButtonSegment<AuthMode>(
+                                  value: AuthMode.login,
+                                  label: Text('Connexion'),
+                                  icon: Icon(Icons.login),
+                                ),
+                                ButtonSegment<AuthMode>(
+                                  value: AuthMode.register,
+                                  label: Text('Inscription'),
+                                  icon: Icon(Icons.person_add_alt_1),
+                                ),
+                              ],
+                              selected: <AuthMode>{_mode},
+                              onSelectionChanged: (newSelection) =>
+                                  _toggleMode(newSelection.first),
+                              showSelectedIcon: false,
+                              style: ButtonStyle(
+                                backgroundColor:
+                                    MaterialStateProperty.resolveWith(
+                                  (states) => states
+                                          .contains(MaterialState.selected)
+                                      ? FiestaaaPalette.primary.withOpacity(0.12)
+                                      : Colors.grey.shade100,
+                                ),
+                                side: MaterialStateProperty.all(
+                                  BorderSide(color: Colors.grey.shade300),
+                                ),
+                                padding: MaterialStateProperty.all(
+                                  const EdgeInsets.symmetric(vertical: 14),
+                                ),
+                                shape: MaterialStateProperty.all(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
                                 ),
                               ),
                             ),
