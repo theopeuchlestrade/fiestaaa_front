@@ -105,11 +105,47 @@ class InvitationStatusSection extends StatelessWidget {
     }
     return ListTile(
       contentPadding: EdgeInsets.zero,
+      leading: _AvatarCircle(
+        url: invitation.avatarUrl,
+        fallbackText: invitation.handle ?? invitation.email,
+      ),
       title: title,
       subtitle: Text(
         'Envoyée le ${DateFormat.yMMMMd('fr_FR').format(invitation.dateInvi)}',
       ),
       trailing: trailing,
+    );
+  }
+}
+
+class _AvatarCircle extends StatelessWidget {
+  const _AvatarCircle({this.url, this.fallbackText});
+
+  final String? url;
+  final String? fallbackText;
+
+  @override
+  Widget build(BuildContext context) {
+    final letter = (fallbackText ?? '')
+        .trim()
+        .characters
+        .take(1)
+        .toString()
+        .toUpperCase();
+    Widget placeholder() => CircleAvatar(
+          backgroundColor: Colors.grey.shade200,
+          foregroundColor: Colors.grey.shade800,
+          child: Text(
+            letter.isNotEmpty ? letter : '?',
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+        );
+    if (url == null || url!.isEmpty) return placeholder();
+    return CircleAvatar(
+      backgroundColor: Colors.grey.shade200,
+      backgroundImage: NetworkImage(url!),
+      onBackgroundImageError: (_, __) {},
+      child: null,
     );
   }
 }

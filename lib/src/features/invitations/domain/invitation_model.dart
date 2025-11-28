@@ -3,6 +3,7 @@ class InvitationModel {
     required this.eventId,
     required this.email,
     this.handle,
+    this.avatarUrl,
     required this.status,
     required this.dateInvi,
     this.eventName,
@@ -11,6 +12,7 @@ class InvitationModel {
   final int eventId;
   final String email;
   final String? handle;
+  final String? avatarUrl;
   final String status;
   final DateTime dateInvi;
   final String? eventName;
@@ -20,6 +22,7 @@ class InvitationModel {
       eventId: (json['event_id'] as num).toInt(),
       email: json['email'] as String,
       handle: json['handle'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
       status: json['status'] as String,
       dateInvi: DateTime.parse(json['date_invi'] as String),
       eventName: json['event_name'] as String?,
