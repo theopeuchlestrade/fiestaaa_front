@@ -1012,25 +1012,27 @@ class _EventDetailPageState extends State<EventDetailPage> {
     return showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.explore),
-            title: const Text('Google Maps'),
-            onTap: () => Navigator.of(context).pop('google'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.apple),
-            title: const Text('Apple Plans'),
-            onTap: () => Navigator.of(context).pop('apple'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.map),
-            title: const Text('OpenStreetMap'),
-            onTap: () => Navigator.of(context).pop('osm'),
-          ),
-        ],
+      builder: (context) => SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.explore),
+              title: const Text('Google Maps'),
+              onTap: () => Navigator.of(context).pop('google'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.apple),
+              title: const Text('Apple Plans'),
+              onTap: () => Navigator.of(context).pop('apple'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.map),
+              title: const Text('OpenStreetMap'),
+              onTap: () => Navigator.of(context).pop('osm'),
+            ),
+          ],
+        ),
       ),
     );
   }
