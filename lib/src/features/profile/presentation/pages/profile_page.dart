@@ -297,13 +297,15 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              Row(
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
                                   Chip(
                                     avatar: const Icon(Icons.tag, size: 18),
                                     label: Text(profile.handle),
                                   ),
-                                  const SizedBox(width: 8),
                                   OutlinedButton.icon(
                                     onPressed: _updatingHandle
                                         ? null
@@ -320,7 +322,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                         ? 'Envoi...'
                                         : 'Changer la photo'),
                                   ),
-                                  const Spacer(),
                                   OutlinedButton.icon(
                                     onPressed: widget.onLogout,
                                     icon: const Icon(Icons.logout),
