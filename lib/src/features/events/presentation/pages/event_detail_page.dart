@@ -87,9 +87,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
   bool get _isWaitingInvitation => _myInvitation?.status == 'Waiting';
   bool get _canContributeItems => _isOwner || _hasAcceptedInvitation;
 
-  Future<void> _loadItems() async {
+  Future<void> _loadItems({bool showLoading = true}) async {
     setState(() {
-      _loadingItems = true;
+      if (showLoading) _loadingItems = true;
       _itemsError = null;
     });
     try {
@@ -111,9 +111,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
       });
     } finally {
       if (!mounted) return;
-      setState(() {
-        _loadingItems = false;
-      });
+      if (showLoading) {
+        setState(() {
+          _loadingItems = false;
+        });
+      }
     }
   }
 
@@ -267,7 +269,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       );
       if (!mounted) return;
       _showSnack('Item ajouté');
-      await _loadItems();
+      await _loadItems(showLoading: false);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
@@ -312,7 +314,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       );
       if (!mounted) return;
       _showSnack('Item supprimé');
-      await _loadItems();
+      await _loadItems(showLoading: false);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
@@ -468,7 +470,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       );
       if (!mounted) return;
       _showSnack('Merci pour votre contribution !');
-      await _loadItems();
+      await _loadItems(showLoading: false);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
@@ -604,7 +606,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _loadItems,
+        onRefresh: () => _loadItems(showLoading: false),
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
@@ -1407,133 +1409,227 @@ class _EventItemTile extends StatelessWidget {
     final myContribution = contributors
         .where((c) => c.email.toLowerCase() == currentUserEmail.toLowerCase())
         .toList();
+    final isFull = available <= 0;
+    final hasContributed = myContribution.isNotEmpty;
+    final accentGreen = Colors.green.shade500;
+    final mutedText = Colors.grey.shade600;
 
-    return Card(
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromARGB(30, 0, 0, 0),
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: hasContributed ? accentGreen : Colors.transparent,
+                    border: Border.all(
+                      color: (hasContributed || isFull)
+                          ? accentGreen
+                          : Colors.grey.shade400,
+                      width: 2,
+                    ),
+                  ),
+                  child: hasContributed
+                      ? const Icon(Icons.check, color: Colors.white, size: 18)
+                      : null,
+                ),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    item.name,
-                    style: Theme.of(context).textTheme.titleMedium,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.name,
+                        style: TextStyle(
+                          color: Colors.grey.shade900,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          if (contributors.isNotEmpty)
+                            SizedBox(
+                              height: 28,
+                              width: 110,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: contributors
+                                    .take(4)
+                                    .toList()
+                                    .asMap()
+                                    .entries
+                                    .map((entry) {
+                                  final idx = entry.key;
+                                  final c = entry.value;
+                                  final left = idx * 22.0;
+                                  return Positioned(
+                                    left: left,
+                                    child: CircleAvatar(
+                                      radius: 14,
+                                      backgroundColor: Colors.grey.shade200,
+                                      backgroundImage: c.avatarUrl == null
+                                          ? null
+                                          : NetworkImage(c.avatarUrl!),
+                                      child: c.avatarUrl == null
+                                          ? Text(
+                                              (c.handle ?? c.email)
+                                                  .substring(0, 1)
+                                                  .toUpperCase(),
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.grey.shade800,
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          Text(
+                            '${item.reservedQuantity}/${item.maxQuantity} ${item.unitLabel}',
+                            style: TextStyle(
+                              color: mutedText,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                Text(
-                  '${item.reservedQuantity}/${item.maxQuantity} ${item.unitLabel}',
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelLarge
-                      ?.copyWith(color: Colors.grey.shade600),
+                TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.grey.shade700,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 8),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  onPressed: contributors.isEmpty
+                      ? null
+                      : () => _showContributors(context, contributors),
+                  icon: const Icon(Icons.visibility_outlined, size: 18),
+                  label: const Text('Voir'),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: ratio.clamp(0, 1),
-              backgroundColor: Colors.grey.shade200,
-              valueColor: AlwaysStoppedAnimation(
-                available > 0 ? FiestaaaPalette.primary : Colors.redAccent,
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                minHeight: 10,
+                value: ratio.clamp(0, 1),
+                backgroundColor: Colors.grey.shade200,
+                valueColor: AlwaysStoppedAnimation(
+                  ratio <= 0 ? Colors.grey.shade400 : accentGreen,
+                ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               available > 0
                   ? '$available ${item.unitLabel} encore disponible${available > 1 ? 's' : ''}.'
                   : 'Quota rempli – vous pouvez remplacer une contribution existante.',
-              style: Theme.of(context).textTheme.bodySmall,
+              style: TextStyle(
+                color: isFull ? accentGreen : mutedText,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            const SizedBox(height: 12),
-            if (contributors.isNotEmpty)
+            const SizedBox(height: 14),
+            if (canReserve)
               Row(
                 children: [
-                  const Text('Participants:'),
-                  const SizedBox(width: 8),
                   Expanded(
-                    child: SizedBox(
-                      height: 32,
-                      child: Stack(
-                        children: contributors
-                            .take(5)
-                            .toList()
-                            .asMap()
-                            .entries
-                            .map((entry) {
-                          final idx = entry.key;
-                          final c = entry.value;
-                          final left = idx * 22.0;
-                          return Positioned(
-                            left: left,
-                            child: CircleAvatar(
-                              radius: 16,
-                              backgroundColor: Colors.grey.shade200,
-                              backgroundImage: c.avatarUrl == null
-                                  ? null
-                                  : NetworkImage(c.avatarUrl!),
-                              child: c.avatarUrl == null
-                                  ? Text(
-                                      (c.handle ?? c.email)
-                                          .substring(0, 1)
-                                          .toUpperCase(),
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w700),
-                                    )
-                                  : null,
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.grey.shade100,
+                        foregroundColor: Colors.grey.shade900,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: isLoading ? null : onTap,
+                      icon: isLoading
+                          ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation(
+                                    Colors.grey.shade800),
+                              ),
+                            )
+                          : Icon(
+                              hasContributed
+                                  ? Icons.check_circle
+                                  : Icons.radio_button_unchecked,
+                              color: hasContributed
+                                  ? accentGreen
+                                  : Colors.grey.shade800,
                             ),
-                          );
-                        }).toList(),
+                      label: Text(
+                        isLoading
+                            ? 'Envoi...'
+                            : (hasContributed
+                                ? 'Modifier ma contribution'
+                                : 'Je contribue'),
                       ),
                     ),
                   ),
-                  TextButton(
-                    onPressed: () => _showContributors(context, contributors),
-                    child: const Text('Voir la participation'),
-                  ),
+                  if (onDelete != null) ...[
+                    const SizedBox(width: 10),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.red.withOpacity(0.08),
+                        foregroundColor: Colors.red.shade400,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: isDeleting ? null : onDelete,
+                      child: isDeleting
+                          ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation(Colors.white),
+                              ),
+                            )
+                          : const Icon(Icons.delete_outline),
+                    ),
+                  ],
                 ],
               ),
-            const SizedBox(height: 12),
-            if (canReserve)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: isLoading ? null : onTap,
-                  icon: isLoading
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.check_circle_outline),
-                  label: Text(isLoading
-                      ? 'Envoi...'
-                      : (myContribution.isNotEmpty
-                          ? 'Modifier ma contribution'
-                          : 'Je contribue')),
-                ),
-              ),
-            if (onDelete != null) ...[
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: isDeleting ? null : onDelete,
-                  icon: isDeleting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.delete_outline),
-                  label: Text(isDeleting ? 'Suppression...' : 'Supprimer'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red.shade700,
-                  ),
-                ),
-              ),
-            ],
           ],
         ),
       ),
