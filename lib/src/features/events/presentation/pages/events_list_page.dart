@@ -231,6 +231,7 @@ class _EventsGrid extends StatelessWidget {
                               ? '1 invitation attend votre réponse'
                               : '$pendingInvites invitations attendent votre réponse',
                           style: const TextStyle(fontWeight: FontWeight.w700),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
@@ -367,6 +368,7 @@ class _EventBubble extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,43 +381,50 @@ class _EventBubble extends StatelessWidget {
                                     fontWeight: FontWeight.w800,
                                     color: Colors.white,
                                   ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (badge != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                badge.icon,
-                                size: 16,
-                                color: badge.color,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                badge.label,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelSmall
-                                    ?.copyWith(
-                                      color: badge.color,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                              ),
-                            ],
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  badge.icon,
+                                  size: 16,
+                                  color: badge.color,
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    badge.label,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          color: badge.color,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       const Icon(Icons.event, size: 18, color: Colors.white),
@@ -433,7 +442,7 @@ class _EventBubble extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Row(
                     children: [
                       const Icon(Icons.place, size: 18, color: Colors.white),
@@ -445,18 +454,22 @@ class _EventBubble extends StatelessWidget {
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: Colors.white.withOpacity(0.9),
                                   ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    event.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withOpacity(0.9),
-                        ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Text(
+                      event.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                    ),
                   ),
                 ],
               ),
