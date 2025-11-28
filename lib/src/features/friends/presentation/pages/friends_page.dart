@@ -4,6 +4,7 @@ import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/friends/data/friends_api.dart';
 import 'package:fiestaaa_front/src/features/friends/domain/friend_model.dart';
+import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -249,41 +250,72 @@ class _FriendsPageState extends State<FriendsPage> {
     final outgoing =
         _requests.where((r) => !r.isIncoming(widget.session.email)).toList();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Amis'),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refreshAll,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _SearchCard(
-              controller: _searchController,
-              searching: _searching,
-              suggestions: _suggestions,
-              sending: _sending,
-              onSend: _sendRequest,
+    return FiestaaaBackground(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      child: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: _refreshAll,
+          displacement: 28,
+          edgeOffset: 12,
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
             ),
-            const SizedBox(height: 16),
-            _RequestsCard(
-              incoming: incoming,
-              outgoing: outgoing,
-              loading: _loadingRequests,
-              error: _requestError,
-              userEmail: widget.session.email,
-              onAccept: (req) => _respondRequest(req, 'Accepted'),
-              onDecline: (req) => _respondRequest(req, 'Declined'),
-            ),
-            const SizedBox(height: 16),
-            _FriendsList(
-              friends: _friends,
-              loading: _loading,
-              error: _error,
-              onRefresh: _fetchFriends,
-              onRemove: _removeFriend,
-            ),
-          ],
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Mes amis',
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Ajoutez des contacts et gérez vos demandes.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _SearchCard(
+                  controller: _searchController,
+                  searching: _searching,
+                  suggestions: _suggestions,
+                  sending: _sending,
+                  onSend: _sendRequest,
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              SliverToBoxAdapter(
+                child: _RequestsCard(
+                  incoming: incoming,
+                  outgoing: outgoing,
+                  loading: _loadingRequests,
+                  error: _requestError,
+                  userEmail: widget.session.email,
+                  onAccept: (req) => _respondRequest(req, 'Accepted'),
+                  onDecline: (req) => _respondRequest(req, 'Declined'),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              SliverToBoxAdapter(
+                child: _FriendsList(
+                  friends: _friends,
+                  loading: _loading,
+                  error: _error,
+                  onRefresh: _fetchFriends,
+                  onRemove: _removeFriend,
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            ],
+          ),
         ),
       ),
     );
@@ -313,18 +345,10 @@ class _SearchCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.person_add_alt_1_outlined, color: Colors.teal),
-                const SizedBox(width: 8),
-                Text(
-                  'Ajouter un ami',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
-                ),
-              ],
+            _SectionHeader(
+              icon: Icons.person_add_alt_1_outlined,
+              iconColor: FiestaaaPalette.primary,
+              title: 'Ajouter un ami',
             ),
             const SizedBox(height: 12),
             TextField(
@@ -417,18 +441,17 @@ class _RequestsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.mail_outline, color: Colors.deepPurple),
-                const SizedBox(width: 8),
-                Text(
-                  'Demandes d’amis',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
-                ),
-              ],
+            _SectionHeader(
+              icon: Icons.mail_outline,
+              iconColor: Colors.deepPurple,
+              title: 'Demandes d’amis',
+              trailing: loading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : null,
             ),
             const SizedBox(height: 12),
             if (loading)
@@ -457,6 +480,9 @@ class _RequestsCard extends StatelessWidget {
                 requests: incoming,
                 userEmail: userEmail,
                 formatter: formatter,
+                backgroundColor: Colors.green.shade50,
+                icon: Icons.move_to_inbox_outlined,
+                iconColor: Colors.green.shade800,
                 onAccept: onAccept,
                 onDecline: onDecline,
               ),
@@ -466,6 +492,9 @@ class _RequestsCard extends StatelessWidget {
                 requests: outgoing,
                 userEmail: userEmail,
                 formatter: formatter,
+                backgroundColor: Colors.blue.shade50,
+                icon: Icons.outbox_outlined,
+                iconColor: Colors.blue.shade700,
               ),
             ],
           ],
@@ -481,6 +510,9 @@ class _RequestSection extends StatelessWidget {
     required this.requests,
     required this.formatter,
     required this.userEmail,
+    required this.backgroundColor,
+    required this.icon,
+    required this.iconColor,
     this.onAccept,
     this.onDecline,
   });
@@ -489,39 +521,42 @@ class _RequestSection extends StatelessWidget {
   final List<FriendRequestModel> requests;
   final DateFormat formatter;
   final String userEmail;
+  final Color backgroundColor;
+  final IconData icon;
+  final Color iconColor;
   final ValueChanged<FriendRequestModel>? onAccept;
   final ValueChanged<FriendRequestModel>? onDecline;
 
   @override
   Widget build(BuildContext context) {
-    if (requests.isEmpty) {
-      return Row(
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: iconColor.withAlpha(40)),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: Theme.of(context)
-                .textTheme
-                .titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700),
+          Row(
+            children: [
+              Icon(icon, size: 18, color: iconColor),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(width: 8),
+              if (requests.isEmpty)
+                const Text('Aucune', style: TextStyle(color: Colors.grey)),
+            ],
           ),
-          const SizedBox(width: 8),
-          const Text('Aucune', style: TextStyle(color: Colors.grey)),
-        ],
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: Theme.of(context)
-              .textTheme
-              .titleSmall
-              ?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 8),
-        ...requests.map((req) {
+          if (requests.isNotEmpty) const SizedBox(height: 10),
+          ...requests.map((req) {
           final counterpartHandle =
               req.isIncoming(userEmail) ? req.senderHandle : req.receiverHandle;
           final counterpartEmail =
@@ -536,47 +571,58 @@ class _RequestSection extends StatelessWidget {
               '${req.isIncoming(userEmail) ? 'Reçue' : 'Envoyée'} le ${formatter.format(req.createdAt.toLocal())}';
           final isPending = req.status == 'Pending';
 
-          return ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading:
-                _AvatarCircle(url: avatarUrl, fallbackText: counterpartHandle),
-            title: Text(label),
-            subtitle: Text(subtitle),
-            trailing: isPending && onAccept != null && onDecline != null
-                ? Wrap(
-                    spacing: 8,
-                    children: [
-                      TextButton(
-                        onPressed: () => onDecline!(req),
-                        child: const Text('Refuser'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () => onAccept!(req),
-                        child: const Text('Accepter'),
-                      ),
-                    ],
-                  )
-                : Chip(
-                    label: Text(
-                      req.status,
-                      style: TextStyle(
-                        color: req.status == 'Accepted'
-                            ? Colors.green.shade800
-                            : req.status == 'Declined'
-                                ? Colors.grey.shade800
-                                : Colors.orange.shade800,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    backgroundColor: req.status == 'Accepted'
-                        ? Colors.green.shade100
-                        : req.status == 'Declined'
-                            ? Colors.grey.shade200
-                            : Colors.orange.shade100,
+          return Column(
+            children: [
+              _BubbleTile(
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 4,
                   ),
+                  leading: _AvatarCircle(
+                      url: avatarUrl, fallbackText: counterpartHandle),
+                  title: Text(label),
+                  subtitle: Text(subtitle),
+                  trailing: isPending && onAccept != null && onDecline != null
+                      ? Wrap(
+                          spacing: 8,
+                          children: [
+                            TextButton(
+                              onPressed: () => onDecline!(req),
+                              child: const Text('Refuser'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => onAccept!(req),
+                              child: const Text('Accepter'),
+                            ),
+                          ],
+                        )
+                      : Chip(
+                          label: Text(
+                            req.status,
+                            style: TextStyle(
+                              color: req.status == 'Accepted'
+                                  ? Colors.green.shade800
+                                  : req.status == 'Declined'
+                                      ? Colors.grey.shade800
+                                      : Colors.orange.shade800,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          backgroundColor: req.status == 'Accepted'
+                              ? Colors.green.shade100
+                              : req.status == 'Declined'
+                                  ? Colors.grey.shade200
+                                  : Colors.orange.shade100,
+                        ),
+                ),
+              ),
+              if (req != requests.last) const SizedBox(height: 10),
+            ],
           );
         }),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -604,24 +650,15 @@ class _FriendsList extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.group, color: Colors.blueGrey),
-                const SizedBox(width: 8),
-                Text(
-                  'Mes amis',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: loading ? null : () => onRefresh(),
-                  icon: const Icon(Icons.refresh),
-                  tooltip: 'Actualiser',
-                ),
-              ],
+            _SectionHeader(
+              icon: Icons.group,
+              iconColor: Colors.blueGrey,
+              title: 'Mes amis',
+              trailing: IconButton(
+                onPressed: loading ? null : () => onRefresh(),
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Actualiser',
+              ),
             ),
             const SizedBox(height: 12),
             if (loading)
@@ -651,20 +688,28 @@ class _FriendsList extends StatelessWidget {
               )
             else
               ...friends.map(
-                (friend) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: _AvatarCircle(
-                    url: friend.avatarUrl,
-                    fallbackText: friend.handle,
-                  ),
-                  title: Text('@${friend.handle}'),
-                  subtitle: Text(
-                    'Ami depuis ${DateFormat.yMMMMd('fr_FR').format(friend.since)}',
-                  ),
-                  trailing: IconButton(
-                    onPressed: () => onRemove(friend),
-                    icon: const Icon(Icons.remove_circle_outline,
-                        color: Colors.redAccent),
+                (friend) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _BubbleTile(
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 6,
+                        horizontal: 4,
+                      ),
+                      leading: _AvatarCircle(
+                        url: friend.avatarUrl,
+                        fallbackText: friend.handle,
+                      ),
+                      title: Text('@${friend.handle}'),
+                      subtitle: Text(
+                        'Ami depuis ${DateFormat.yMMMMd('fr_FR').format(friend.since)}',
+                      ),
+                      trailing: IconButton(
+                        onPressed: () => onRemove(friend),
+                        icon: const Icon(Icons.remove_circle_outline,
+                            color: Colors.redAccent),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -675,8 +720,84 @@ class _FriendsList extends StatelessWidget {
   }
 }
 
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    this.trailing,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: iconColor.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, color: iconColor, size: 20),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            title,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.w800),
+          ),
+        ),
+        if (trailing != null) trailing!,
+      ],
+    );
+  }
+}
+
+class _BubbleTile extends StatelessWidget {
+  const _BubbleTile({
+    required this.child,
+    this.accentColor,
+    this.backgroundColor,
+  });
+
+  final Widget child;
+  final Color? accentColor;
+  final Color? backgroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor ?? Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: accentColor?.withAlpha(90) ?? Colors.grey.shade200,
+          width: accentColor != null ? 1.1 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
 class _AvatarCircle extends StatelessWidget {
-  const _AvatarCircle({this.url, this.fallbackText, this.size = 32});
+  const _AvatarCircle({this.url, this.fallbackText}) : size = 32;
 
   final String? url;
   final String? fallbackText;
