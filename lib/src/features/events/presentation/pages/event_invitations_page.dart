@@ -43,7 +43,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   bool _loadingFriends = true;
   String? _friendsError;
   final _friendFilterController = TextEditingController();
-  Set<String> _selectedFriendHandles = {};
+  final Set<String> _selectedFriendHandles = {};
   bool _invitingFriends = false;
   bool _sendingFriendAsk = false;
 
@@ -110,10 +110,11 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
         _suggestions = [];
       });
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _suggestionsLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _suggestionsLoading = false;
+        });
+      }
     }
   }
 
@@ -139,8 +140,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       if (!mounted) return;
       setState(() => _friendsError = 'Impossible de charger vos amis.');
     } finally {
-      if (!mounted) return;
-      setState(() => _loadingFriends = false);
+      if (mounted) {
+        setState(() => _loadingFriends = false);
+      }
     }
   }
 
@@ -164,8 +166,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     } catch (_) {
       setState(() => _error = 'Impossible de charger les invitations.');
     } finally {
-      if (!mounted) return;
-      setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -213,8 +216,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       if (!mounted) return;
       _showSnack('Erreur lors de la création', isError: true);
     } finally {
-      if (!mounted) return;
-      setState(() => _submitting = false);
+      if (mounted) {
+        setState(() => _submitting = false);
+      }
     }
   }
 
@@ -311,8 +315,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
         _showSnack('Aucune invitation envoyée', isError: true);
       }
     } finally {
-      if (!mounted) return;
-      setState(() => _invitingFriends = false);
+      if (mounted) {
+        setState(() => _invitingFriends = false);
+      }
     }
   }
 
@@ -340,8 +345,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       if (!mounted) return;
       _showSnack('Impossible d’envoyer la demande', isError: true);
     } finally {
-      if (!mounted) return;
-      setState(() => _sendingFriendAsk = false);
+      if (mounted) {
+        setState(() => _sendingFriendAsk = false);
+      }
     }
   }
 
