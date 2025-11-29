@@ -80,10 +80,11 @@ class _ProfilePageState extends State<ProfilePage> {
         _handleStatus = 'Vérification impossible';
       });
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _checkingHandle = false;
-      });
+      if (mounted) {
+        setState(() {
+          _checkingHandle = false;
+        });
+      }
     }
   }
 
@@ -127,10 +128,11 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       _showSnack('Mise à jour impossible', isError: true);
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _updatingHandle = false;
-      });
+      if (mounted) {
+        setState(() {
+          _updatingHandle = false;
+        });
+      }
     }
   }
 
@@ -144,7 +146,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _pickAndUploadAvatar(ProfileInfo profile) async {
-    final typeGroup = const XTypeGroup(
+    const typeGroup = XTypeGroup(
       label: 'images',
       extensions: ['jpg', 'jpeg', 'png', 'webp'],
     );
@@ -182,8 +184,9 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       _showSnack('Upload impossible', isError: true);
     } finally {
-      if (!mounted) return;
-      setState(() => _updatingHandle = false);
+      if (mounted) {
+        setState(() => _updatingHandle = false);
+      }
     }
   }
 
@@ -257,8 +260,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 contentPadding: EdgeInsets.zero,
                                 leading: CircleAvatar(
                                   radius: 26,
-                                  backgroundColor:
-                                      FiestaaaPalette.primary.withOpacity(0.14),
+                                  backgroundColor: FiestaaaPalette.primary
+                                      .withValues(alpha: 0.14),
                                   foregroundColor: FiestaaaPalette.primary,
                                   backgroundImage: profile.avatarUrl == null
                                       ? null
@@ -285,7 +288,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   'Token valide jusqu’au ${DateFormat.yMMMMd('fr_FR').format(profile.expiration)} ${DateFormat.Hm().format(profile.expiration)}',
                                 ),
                                 trailing: Chip(
-                                  label: Text(
+                                  label: const Text(
                                     'Connecté',
                                     style: TextStyle(
                                       color: FiestaaaPalette.primary,
@@ -293,7 +296,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                     ),
                                   ),
                                   backgroundColor:
-                                      FiestaaaPalette.primary.withOpacity(0.12),
+                                      FiestaaaPalette.primary
+                                          .withValues(alpha: 0.12),
                                 ),
                               ),
                               const SizedBox(height: 12),

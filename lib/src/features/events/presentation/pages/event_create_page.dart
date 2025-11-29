@@ -154,28 +154,32 @@ class _EventCreatePageState extends State<EventCreatePage> {
         token: widget.session.token,
         query: query,
       );
-      if (!mounted) return;
-      setState(() {
-        _addressSuggestions = results;
-        if (results.isEmpty) {
-          _addressSearchError = 'Aucune adresse trouvée';
-        }
-      });
+      if (mounted) {
+        setState(() {
+          _addressSuggestions = results;
+          if (results.isEmpty) {
+            _addressSearchError = 'Aucune adresse trouvée';
+          }
+        });
+      }
     } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _addressSuggestions = [];
-        _addressSearchError = e.message;
-      });
+      if (mounted) {
+        setState(() {
+          _addressSuggestions = [];
+          _addressSearchError = e.message;
+        });
+      }
     } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _addressSuggestions = [];
-        _addressSearchError = 'Recherche impossible pour le moment';
-      });
+      if (mounted) {
+        setState(() {
+          _addressSuggestions = [];
+          _addressSearchError = 'Recherche impossible pour le moment';
+        });
+      }
     } finally {
-      if (!mounted) return;
-      setState(() => _searchingAddress = false);
+      if (mounted) {
+        setState(() => _searchingAddress = false);
+      }
     }
   }
 
@@ -225,30 +229,34 @@ class _EventCreatePageState extends State<EventCreatePage> {
         token: widget.session.token,
         payload: payload,
       );
-      if (!mounted) return;
-      _showSnack('Événement créé !');
-      widget.onEventCreated();
-      _formKey.currentState?.reset();
-      _nameController.clear();
-      _descriptionController.clear();
-      _addressController.clear();
-      _paymentIdentifierController.clear();
-      _paymentAmountController.clear();
-      setState(() {
-        _selectedProviderId = null;
-        _selectedSuggestion = null;
-        _addressSuggestions = [];
-        _addressSearchError = null;
-      });
+      if (mounted) {
+        _showSnack('Événement créé !');
+        widget.onEventCreated();
+        _formKey.currentState?.reset();
+        _nameController.clear();
+        _descriptionController.clear();
+        _addressController.clear();
+        _paymentIdentifierController.clear();
+        _paymentAmountController.clear();
+        setState(() {
+          _selectedProviderId = null;
+          _selectedSuggestion = null;
+          _addressSuggestions = [];
+          _addressSearchError = null;
+        });
+      }
     } on ApiException catch (e) {
-      if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      if (mounted) {
+        _showSnack(e.message, isError: true);
+      }
     } catch (_) {
-      if (!mounted) return;
-      _showSnack('Erreur lors de la création', isError: true);
+      if (mounted) {
+        _showSnack('Erreur lors de la création', isError: true);
+      }
     } finally {
-      if (!mounted) return;
-      setState(() => _submitting = false);
+      if (mounted) {
+        setState(() => _submitting = false);
+      }
     }
   }
 
@@ -340,7 +348,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
     ];
 
     return DropdownButtonFormField<int?>(
-      value: _selectedProviderId,
+      initialValue: _selectedProviderId,
       items: items,
       decoration: const InputDecoration(
         labelText: 'Cagnotte associée',

@@ -161,10 +161,11 @@ class _HomePageState extends State<HomePage> {
       widget.onShareTokenConsumed?.call();
       _showSnack('Lien de partage invalide ou expiré.');
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _claimingShare = false;
-      });
+      if (mounted) {
+        setState(() {
+          _claimingShare = false;
+        });
+      }
     }
   }
 
@@ -220,7 +221,7 @@ class _HomePageState extends State<HomePage> {
             icon: _iconWithBadge(Icons.event_note, _pendingEventInvites),
             label: 'Événements',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.add_circle_outline),
             label: 'Créer',
           ),
@@ -228,7 +229,7 @@ class _HomePageState extends State<HomePage> {
             icon: _iconWithBadge(Icons.group, _pendingFriendRequests),
             label: 'Amis',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profil',
           ),
