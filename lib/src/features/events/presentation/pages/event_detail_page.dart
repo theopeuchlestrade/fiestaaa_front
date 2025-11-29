@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
@@ -108,7 +110,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         _itemsError = 'Impossible de charger les items.';
       });
     } finally {
-      if (mounted && showLoading) {
+      if (!mounted) return;
+      if (showLoading) {
         setState(() {
           _loadingItems = false;
         });
@@ -161,11 +164,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
         _myInvitation = null;
       });
     } finally {
-      if (mounted) {
-        setState(() {
-          _loadingMyInvitation = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _loadingMyInvitation = false;
+      });
     }
   }
 
@@ -275,9 +277,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
       if (!mounted) return;
       _showSnack('Impossible d’ajouter l’item', isError: true);
     } finally {
-      if (mounted) {
-        setState(() => _creatingCustomItem = false);
-      }
+      if (!mounted) return;
+      setState(() => _creatingCustomItem = false);
     }
   }
 
@@ -321,9 +322,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
       if (!mounted) return;
       _showSnack('Suppression impossible', isError: true);
     } finally {
-      if (mounted) {
-        setState(() => _deletingItemId = null);
-      }
+      if (!mounted) return;
+      setState(() => _deletingItemId = null);
     }
   }
 
@@ -436,9 +436,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
       if (!mounted) return;
       _showSnack('Suppression impossible', isError: true);
     } finally {
-      if (mounted) {
-        setState(() => _deletingEvent = false);
-      }
+      if (!mounted) return;
+      setState(() => _deletingEvent = false);
     }
   }
 
@@ -479,11 +478,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
       if (!mounted) return;
       _showSnack('Erreur réseau, merci de réessayer.', isError: true);
     } finally {
-      if (mounted) {
-        setState(() {
-          _reservingItemId = null;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _reservingItemId = null;
+      });
     }
   }
 
@@ -969,9 +967,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
       if (!mounted) return;
       _showSnack('Impossible de générer le lien', isError: true);
     } finally {
-      if (mounted) {
-        setState(() => _sharingLink = false);
-      }
+      if (!mounted) return;
+      setState(() => _sharingLink = false);
     }
   }
 
@@ -1283,9 +1280,9 @@ class _EventItemsList extends StatelessWidget {
       );
     }
 
-    final grouped = <String, List<EventItemModel>>{};
+    final grouped = LinkedHashMap<String, List<EventItemModel>>();
     for (final item in items) {
-      grouped.putIfAbsent(item.typeName, () => <EventItemModel>[]).add(item);
+      grouped.putIfAbsent(item.typeName, () => []).add(item);
     }
 
     return Column(
@@ -1611,7 +1608,7 @@ class _EventItemTile extends StatelessWidget {
                     const SizedBox(width: 10),
                     TextButton(
                       style: TextButton.styleFrom(
-                        backgroundColor: Colors.red.withValues(alpha: 0.08),
+                        backgroundColor: Colors.red.withOpacity(0.08),
                         foregroundColor: Colors.red.shade400,
                         padding: const EdgeInsets.symmetric(
                             vertical: 12, horizontal: 14),
@@ -1621,14 +1618,13 @@ class _EventItemTile extends StatelessWidget {
                       ),
                       onPressed: isDeleting ? null : onDelete,
                       child: isDeleting
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 16,
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
+                                valueColor:
+                                    AlwaysStoppedAnimation(Colors.white),
                               ),
                             )
                           : const Icon(Icons.delete_outline),

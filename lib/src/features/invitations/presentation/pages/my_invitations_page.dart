@@ -71,9 +71,8 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
       setState(
           () => _invitationError = 'Impossible de charger vos invitations.');
     } finally {
-      if (mounted) {
-        setState(() => _loadingInvitations = false);
-      }
+      if (!mounted) return;
+      setState(() => _loadingInvitations = false);
     }
   }
 
@@ -96,9 +95,8 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
       setState(() =>
           _friendRequestsError = 'Impossible de charger vos demandes d’ami.');
     } finally {
-      if (mounted) {
-        setState(() => _loadingFriendRequests = false);
-      }
+      if (!mounted) return;
+      setState(() => _loadingFriendRequests = false);
     }
   }
 
@@ -250,8 +248,7 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
                     onTap: widget.onOpenEvent == null
                         ? null
                         : () => widget.onOpenEvent!(inv.eventId),
-                    splashColor:
-                        FiestaaaPalette.primary.withValues(alpha: 0.12),
+                    splashColor: FiestaaaPalette.primary.withOpacity(0.12),
                     highlightColor: Colors.transparent,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),

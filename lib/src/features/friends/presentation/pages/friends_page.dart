@@ -75,9 +75,8 @@ class _FriendsPageState extends State<FriendsPage> {
       if (!mounted) return;
       setState(() => _error = 'Impossible de charger vos amis.');
     } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      if (!mounted) return;
+      setState(() => _loading = false);
     }
   }
 
@@ -99,9 +98,8 @@ class _FriendsPageState extends State<FriendsPage> {
       if (!mounted) return;
       setState(() => _requestError = 'Impossible de charger vos demandes.');
     } finally {
-      if (mounted) {
-        setState(() => _loadingRequests = false);
-      }
+      if (!mounted) return;
+      setState(() => _loadingRequests = false);
     }
   }
 
@@ -137,9 +135,8 @@ class _FriendsPageState extends State<FriendsPage> {
       if (!mounted) return;
       setState(() => _suggestions = []);
     } finally {
-      if (mounted) {
-        setState(() => _searching = false);
-      }
+      if (!mounted) return;
+      setState(() => _searching = false);
     }
   }
 
@@ -164,9 +161,8 @@ class _FriendsPageState extends State<FriendsPage> {
       if (!mounted) return;
       _showSnack('Impossible d’envoyer la demande', isError: true);
     } finally {
-      if (mounted) {
-        setState(() => _sending = false);
-      }
+      if (!mounted) return;
+      setState(() => _sending = false);
     }
   }
 
@@ -193,9 +189,8 @@ class _FriendsPageState extends State<FriendsPage> {
       if (!mounted) return;
       _showSnack('Action impossible', isError: true);
     } finally {
-      if (mounted) {
-        setState(() => _sending = false);
-      }
+      if (!mounted) return;
+      setState(() => _sending = false);
     }
   }
 
@@ -350,7 +345,7 @@ class _SearchCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _SectionHeader(
+            _SectionHeader(
               icon: Icons.person_add_alt_1_outlined,
               iconColor: FiestaaaPalette.primary,
               title: 'Ajouter un ami',
@@ -746,7 +741,7 @@ class _SectionHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: iconColor.withValues(alpha: 0.12),
+            color: iconColor.withOpacity(0.12),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Icon(icon, color: iconColor, size: 20),
@@ -768,20 +763,29 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _BubbleTile extends StatelessWidget {
-  const _BubbleTile({required this.child});
+  const _BubbleTile({
+    required this.child,
+    this.accentColor,
+    this.backgroundColor,
+  });
 
   final Widget child;
+  final Color? accentColor;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor ?? Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200, width: 1),
+        border: Border.all(
+          color: accentColor?.withAlpha(90) ?? Colors.grey.shade200,
+          width: accentColor != null ? 1.1 : 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withOpacity(0.03),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),

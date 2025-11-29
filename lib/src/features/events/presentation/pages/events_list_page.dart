@@ -92,11 +92,10 @@ class EventsListPageState extends State<EventsListPage> {
         _error = 'Impossible de charger les événements';
       });
     } finally {
-      if (mounted) {
-        setState(() {
-          _loading = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+      });
     }
   }
 
@@ -248,16 +247,15 @@ class _EventsGrid extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color:
-                              FiestaaaPalette.primary.withValues(alpha: 0.1),
+                          color: FiestaaaPalette.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.auto_awesome,
-                                color: FiestaaaPalette.primary
-                                    .withValues(alpha: 0.8)),
+                                color:
+                                    FiestaaaPalette.primary.withOpacity(0.8)),
                             const SizedBox(width: 8),
                             Text(
                               'Vos événements',
@@ -342,7 +340,7 @@ class _EventBubble extends StatelessWidget {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: FiestaaaPalette.primary.withValues(alpha: 0.14),
+              color: FiestaaaPalette.primary.withOpacity(0.14),
               blurRadius: 18,
               offset: const Offset(0, 10),
             ),
@@ -354,7 +352,7 @@ class _EventBubble extends StatelessWidget {
               top: -30,
               right: -18,
               child: _DecorativeWave(
-                color: Colors.white.withValues(alpha: 0.18),
+                color: Colors.white.withOpacity(0.18),
                 size: 120,
               ),
             ),
@@ -362,7 +360,7 @@ class _EventBubble extends StatelessWidget {
               bottom: -22,
               left: -10,
               child: _DecorativeWave(
-                color: Colors.white.withValues(alpha: 0.12),
+                color: Colors.white.withOpacity(0.12),
                 size: 140,
               ),
             ),
@@ -395,7 +393,7 @@ class _EventBubble extends StatelessWidget {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.9),
+                              color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
@@ -437,8 +435,7 @@ class _EventBubble extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.92),
+                                    color: Colors.white.withOpacity(0.92),
                                     fontWeight: FontWeight.w700,
                                   ),
                         ),
@@ -455,8 +452,7 @@ class _EventBubble extends StatelessWidget {
                           event.address,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.9),
+                                    color: Colors.white.withOpacity(0.9),
                                   ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -471,7 +467,7 @@ class _EventBubble extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
+                            color: Colors.white.withOpacity(0.9),
                           ),
                     ),
                   ),
@@ -491,7 +487,7 @@ class _EventBubble extends StatelessWidget {
       return _EventBadgeData(
         label: 'Organisateur',
         color: FiestaaaPalette.primary,
-        background: FiestaaaPalette.primary.withValues(alpha: 0.12),
+        background: FiestaaaPalette.primary.withOpacity(0.12),
         icon: Icons.emoji_events,
       );
     }

@@ -59,38 +59,33 @@ class _AuthPageState extends State<AuthPage> {
               ? null
               : _handleController.text.trim(),
         );
-        if (mounted) {
-          _showSnack('Compte créé ! Connectez-vous maintenant.');
-          setState(() {
-            _mode = AuthMode.login;
-            _confirmPasswordController.clear();
-            _handleController.clear();
-          });
-        }
+        if (!mounted) return;
+        _showSnack('Compte créé ! Connectez-vous maintenant.');
+        setState(() {
+          _mode = AuthMode.login;
+          _confirmPasswordController.clear();
+          _handleController.clear();
+        });
       } else {
         final session = await _api.login(
           identifier: _emailController.text.trim(),
           password: _passwordController.text,
         );
         await widget.onAuthenticated(session);
-        if (mounted) {
-          _showSnack('Connexion réussie, bienvenue !');
-        }
+        if (!mounted) return;
+        _showSnack('Connexion réussie, bienvenue !');
       }
     } on ApiException catch (e) {
-      if (mounted) {
-        _showSnack(e.message, isError: true);
-      }
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
     } catch (_) {
-      if (mounted) {
-        _showSnack('Erreur réseau, merci de réessayer.', isError: true);
-      }
+      if (!mounted) return;
+      _showSnack('Erreur réseau, merci de réessayer.', isError: true);
     } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+      });
     }
   }
 
@@ -143,7 +138,7 @@ class _AuthPageState extends State<AuthPage> {
                                 .textTheme
                                 .bodyMedium
                                 ?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.9),
+                                  color: Colors.white.withOpacity(0.9),
                                 ),
                           ),
                         ],
@@ -178,20 +173,19 @@ class _AuthPageState extends State<AuthPage> {
                               showSelectedIcon: false,
                               style: ButtonStyle(
                                 backgroundColor:
-                                    WidgetStateProperty.resolveWith(
+                                    MaterialStateProperty.resolveWith(
                                   (states) => states
-                                          .contains(WidgetState.selected)
-                                      ? FiestaaaPalette.primary
-                                          .withValues(alpha: 0.12)
+                                          .contains(MaterialState.selected)
+                                      ? FiestaaaPalette.primary.withOpacity(0.12)
                                       : Colors.grey.shade100,
                                 ),
-                                side: WidgetStateProperty.all(
+                                side: MaterialStateProperty.all(
                                   BorderSide(color: Colors.grey.shade300),
                                 ),
-                                padding: WidgetStateProperty.all(
+                                padding: MaterialStateProperty.all(
                                   const EdgeInsets.symmetric(vertical: 14),
                                 ),
-                                shape: WidgetStateProperty.all(
+                                shape: MaterialStateProperty.all(
                                   RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14),
                                   ),
