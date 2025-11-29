@@ -50,11 +50,11 @@ ThemeData buildFiestaaaTheme() {
       color: FiestaaaPalette.text,
     ),
     bodyLarge: baseTextTheme.bodyLarge?.copyWith(
-      color: FiestaaaPalette.text.withValues(alpha: 0.82),
+      color: FiestaaaPalette.text.withOpacity(0.82),
       height: 1.4,
     ),
     bodyMedium: baseTextTheme.bodyMedium?.copyWith(
-      color: FiestaaaPalette.text.withValues(alpha: 0.76),
+      color: FiestaaaPalette.text.withOpacity(0.76),
       height: 1.4,
     ),
   );
@@ -69,7 +69,7 @@ ThemeData buildFiestaaaTheme() {
     useMaterial3: true,
     textTheme: textTheme,
     appBarTheme: AppBarTheme(
-      backgroundColor: Colors.white.withValues(alpha: 0.88),
+      backgroundColor: Colors.white.withOpacity(0.88),
       surfaceTintColor: Colors.white,
       foregroundColor: FiestaaaPalette.text,
       elevation: 0,
@@ -133,7 +133,7 @@ ThemeData buildFiestaaaTheme() {
       ),
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
-      backgroundColor: Colors.white.withValues(alpha: 0.94),
+      backgroundColor: Colors.white.withOpacity(0.94),
       selectedItemColor: FiestaaaPalette.primary,
       unselectedItemColor: Colors.grey.shade500,
       elevation: 12,
@@ -175,7 +175,7 @@ class FiestaaaBackground extends StatelessWidget {
             left: -60,
             child: _AccentBlob(
               size: 220,
-              color: FiestaaaPalette.primary.withValues(alpha: 0.16),
+              color: FiestaaaPalette.primary.withOpacity(0.16),
             ),
           ),
           Positioned(
@@ -183,7 +183,7 @@ class FiestaaaBackground extends StatelessWidget {
             right: -40,
             child: _AccentBlob(
               size: 200,
-              color: FiestaaaPalette.secondary.withValues(alpha: 0.22),
+              color: FiestaaaPalette.secondary.withOpacity(0.22),
             ),
           ),
           paddedChild,
@@ -207,7 +207,7 @@ class _AccentBlob extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RadialGradient(
-          colors: [color, color.withValues(alpha: 0.01)],
+          colors: [color, color.withOpacity(0.01)],
         ),
       ),
     );
