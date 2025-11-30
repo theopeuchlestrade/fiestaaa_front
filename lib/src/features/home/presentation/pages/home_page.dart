@@ -9,6 +9,7 @@ import 'package:fiestaaa_front/src/features/friends/data/friends_api.dart';
 import 'package:fiestaaa_front/src/features/friends/presentation/pages/friends_page.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/profile/presentation/pages/profile_page.dart';
+import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -36,6 +37,7 @@ class _HomePageState extends State<HomePage> {
   final _shareApi = EventsApi();
   final _invitesApi = InvitationsApi();
   final _friendsApi = FriendsApi();
+  RealtimeClient? _realtime;
   int _selectedIndex = 0;
   bool _claimingShare = false;
   bool _shareHandled = false;
@@ -82,11 +84,41 @@ class _HomePageState extends State<HomePage> {
     _eventsKey.currentState?.updateInvitationStatus(eventId, status);
   }
 
+  void _startRealtime() {
+    _realtime?.dispose();
+    _realtime = RealtimeClient(token: _session.token)..connect();
+    _realtime?.stream.listen(_handleRealtimeMessage);
+  }
+
+  void _handleRealtimeMessage(Map<String, dynamic> message) {
+    final type = message['type'] as String?;
+    if (type == null) return;
+
+    switch (type) {
+      case 'event_created':
+      case 'event_updated':
+      case 'event_deleted':
+      case 'items_changed':
+        _eventsKey.currentState?.reload();
+        break;
+      case 'invitation_updated':
+        _eventsKey.currentState?.reload();
+        _loadPendingBadges();
+        break;
+      case 'friend_request_updated':
+        _loadPendingBadges();
+        break;
+      default:
+        break;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _session = widget.session;
     _loadPendingBadges();
+    _startRealtime();
     if (widget.initialShareToken != null) {
       WidgetsBinding.instance
           .addPostFrameCallback((_) => _claimShareIfNeeded());
@@ -99,6 +131,7 @@ class _HomePageState extends State<HomePage> {
     if (widget.session.token != oldWidget.session.token) {
       _session = widget.session;
       _loadPendingBadges();
+      _startRealtime();
     }
     if (widget.initialShareToken != oldWidget.initialShareToken &&
         widget.initialShareToken != null) {
@@ -112,6 +145,7 @@ class _HomePageState extends State<HomePage> {
     _shareApi.dispose();
     _invitesApi.dispose();
     _friendsApi.dispose();
+    _realtime?.dispose();
     super.dispose();
   }
 
@@ -193,6 +227,7 @@ class _HomePageState extends State<HomePage> {
         session: _session,
         onPendingRequestsChanged: (count) =>
             setState(() => _pendingFriendRequests = count),
+        realtimeStream: _realtime?.stream,
       ),
       ProfilePage(
         session: _session,

@@ -13,10 +13,12 @@ class FriendsPage extends StatefulWidget {
     super.key,
     required this.session,
     this.onPendingRequestsChanged,
+    this.realtimeStream,
   });
 
   final SessionData session;
   final ValueChanged<int>? onPendingRequestsChanged;
+  final Stream<Map<String, dynamic>>? realtimeStream;
 
   @override
   State<FriendsPage> createState() => _FriendsPageState();
@@ -26,6 +28,7 @@ class _FriendsPageState extends State<FriendsPage> {
   final _api = FriendsApi();
   final _searchController = TextEditingController();
   Timer? _debounce;
+  StreamSubscription<Map<String, dynamic>>? _realtimeSub;
 
   List<FriendModel> _friends = [];
   List<FriendRequestModel> _requests = [];
@@ -42,14 +45,25 @@ class _FriendsPageState extends State<FriendsPage> {
     super.initState();
     _searchController.addListener(_onQueryChanged);
     _refreshAll();
+    _realtimeSub = widget.realtimeStream?.listen(_handleRealtime);
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _realtimeSub?.cancel();
     _searchController.dispose();
     _api.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant FriendsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.realtimeStream != widget.realtimeStream) {
+      _realtimeSub?.cancel();
+      _realtimeSub = widget.realtimeStream?.listen(_handleRealtime);
+    }
   }
 
   Future<void> _refreshAll() async {
@@ -57,6 +71,14 @@ class _FriendsPageState extends State<FriendsPage> {
       _fetchFriends(),
       _fetchRequests(),
     ]);
+  }
+
+  void _handleRealtime(Map<String, dynamic> message) {
+    final type = message['type'] as String?;
+    if (type == null) return;
+    if (type == 'friend_request_updated') {
+      _refreshAll();
+    }
   }
 
   Future<void> _fetchFriends() async {
