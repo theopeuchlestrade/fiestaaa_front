@@ -28,11 +28,13 @@ class _QRScannerPageState extends State<QRScannerPage> {
   QRScanResult? _lastScanResult;
   bool _isScanning = false;
   bool _isLoadingStats = true;
+  bool _awaitingNextScan = false;
 
   @override
   void initState() {
     super.initState();
     _loadStats();
+    _scheduleScannerStart();
   }
 
   @override
@@ -64,8 +66,15 @@ class _QRScannerPageState extends State<QRScannerPage> {
     }
   }
 
+  void _scheduleScannerStart() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await _scannerController.start();
+    });
+  }
+
   Future<void> _handleBarcode(BarcodeCapture capture) async {
-    if (_isScanning) return;
+    if (_isScanning || _awaitingNextScan) return;
 
     final barcode = capture.barcodes.firstOrNull;
     if (barcode == null || barcode.rawValue == null) return;
@@ -73,6 +82,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
     setState(() {
       _isScanning = true;
       _lastScanResult = null;
+      _awaitingNextScan = false;
     });
 
     try {
@@ -86,7 +96,9 @@ class _QRScannerPageState extends State<QRScannerPage> {
         setState(() {
           _lastScanResult = result;
           _isScanning = false;
+          _awaitingNextScan = true;
         });
+        await _scannerController.stop();
 
         // Reload stats after successful scan
         if (result.success) {
@@ -102,7 +114,9 @@ class _QRScannerPageState extends State<QRScannerPage> {
             message: 'Erreur: ${e.toString()}',
           );
           _isScanning = false;
+          _awaitingNextScan = true;
         });
+        await _scannerController.stop();
       }
     }
   }
@@ -153,7 +167,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
             controller: _scannerController,
             onDetect: _handleBarcode,
           ),
-          
+
           // Custom Overlay (Darken area outside scan zone)
           ColorFiltered(
             colorFilter: ColorFilter.mode(
@@ -181,14 +195,15 @@ class _QRScannerPageState extends State<QRScannerPage> {
               ],
             ),
           ),
-          
+
           // Scan Frame Border
           Center(
             child: Container(
               width: 300,
               height: 300,
               decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
+                border: Border.all(
+                    color: Theme.of(context).colorScheme.primary, width: 3),
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
@@ -211,7 +226,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
               alignment: Alignment.bottomCenter,
               child: _buildResultOverlay(),
             ),
-            
+
           if (_isScanning && _lastScanResult == null)
             const Center(
               child: CircularProgressIndicator(color: Colors.white),
@@ -225,53 +240,72 @@ class _QRScannerPageState extends State<QRScannerPage> {
     if (_isLoadingStats) {
       return const SizedBox();
     }
-    
+
     if (_stats == null) return const SizedBox();
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(30),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildStatItem('Invités', '${_stats!.totalInvited}'),
-              Container(height: 20, width: 1, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 16)),
-              _buildStatItem('Présents', '${_stats!.totalCheckedIn}', color: Colors.greenAccent),
-              Container(height: 20, width: 1, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 16)),
-              _buildStatItem('Restants', '${_stats!.totalInvited - _stats!.totalCheckedIn}'),
-            ],
-          ),
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final onPrimaryColor = Theme.of(context).colorScheme.onPrimary;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      decoration: BoxDecoration(
+        color: primaryColor,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: onPrimaryColor.withOpacity(0.2),
+          width: 1,
         ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildStatItem('Invités', '${_stats!.totalInvited}',
+              textColor: onPrimaryColor),
+          Container(
+              height: 24,
+              width: 1,
+              color: onPrimaryColor.withOpacity(0.3),
+              margin: const EdgeInsets.symmetric(horizontal: 20)),
+          _buildStatItem(
+            'Présents',
+            '${_stats!.totalCheckedIn}',
+            textColor: onPrimaryColor,
+            isHighlight: true,
+          ),
+          Container(
+              height: 24,
+              width: 1,
+              color: onPrimaryColor.withOpacity(0.3),
+              margin: const EdgeInsets.symmetric(horizontal: 20)),
+          _buildStatItem('Restants',
+              '${_stats!.totalInvited - _stats!.totalCheckedIn}',
+              textColor: onPrimaryColor),
+        ],
       ),
     );
   }
 
-  Widget _buildStatItem(String label, String value, {Color? color}) {
+  Widget _buildStatItem(String label, String value,
+      {required Color textColor, bool isHighlight = false}) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           value,
           style: TextStyle(
-            color: color ?? Colors.white,
+            color: textColor,
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: isHighlight ? 22 : 18,
           ),
         ),
+        const SizedBox(height: 2),
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 10,
+            color: textColor.withOpacity(0.8),
+            fontSize: 11,
+            letterSpacing: 0.5,
           ),
         ),
       ],
@@ -341,7 +375,8 @@ class _QRScannerPageState extends State<QRScannerPage> {
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 radius: 30,
                 child: Text(
-                  _lastScanResult!.userHandle?.substring(0, 1).toUpperCase() ?? '?',
+                  _lastScanResult!.userHandle?.substring(0, 1).toUpperCase() ??
+                      '?',
                   style: const TextStyle(color: Colors.white, fontSize: 24),
                 ),
               ),
@@ -369,7 +404,9 @@ class _QRScannerPageState extends State<QRScannerPage> {
                 setState(() {
                   _lastScanResult = null;
                   _isScanning = false;
+                  _awaitingNextScan = false;
                 });
+                _scheduleScannerStart();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: color,

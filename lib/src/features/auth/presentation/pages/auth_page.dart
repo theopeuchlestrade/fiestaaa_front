@@ -106,8 +106,7 @@ class _AuthPageState extends State<AuthPage> {
 
     return Scaffold(
       body: FiestaaaBackground(
-        padding:
-            EdgeInsets.zero,
+        padding: EdgeInsets.zero,
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
@@ -290,7 +289,7 @@ class _AuthPageState extends State<AuthPage> {
                                 ),
                                 validator: (value) {
                                   if ((value ?? '').length < 6) {
-                                    return '6 caractères minimum';
+                                    return '8 caractères minimum';
                                   }
                                   return null;
                                 },
@@ -720,7 +719,7 @@ class _AuthPageState extends State<AuthPage> {
                   ),
                   validator: (value) {
                     if ((value ?? '').length < 6) {
-                      return '6 caractères minimum';
+                      return '8 caractères minimum';
                     }
                     return null;
                   },
