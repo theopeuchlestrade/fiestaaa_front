@@ -12,6 +12,8 @@ import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dar
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_provider_model.dart';
+import 'package:fiestaaa_front/src/features/qr_checkin/presentation/pages/my_qr_code_page.dart';
+import 'package:fiestaaa_front/src/features/qr_checkin/presentation/pages/qr_scanner_page.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:flutter/material.dart';
@@ -710,6 +712,35 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
             _buildPaymentSection(),
             const SizedBox(height: 16),
+            // QR Code Check-in buttons
+            if (_isOwner) ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _openQRScanner,
+                  icon: const Icon(Icons.qr_code_scanner),
+                  label: const Text('Scanner les QR Codes'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.all(16),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ] else if (_hasAcceptedInvitation || _isWaitingInvitation) ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _openMyQRCode,
+                  icon: const Icon(Icons.qr_code),
+                  label: const Text('Afficher mon QR Code'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.all(16),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            const SizedBox(height: 8),
             if (_canContributeItems) ...[
               Align(
                 alignment: Alignment.centerLeft,
@@ -1175,6 +1206,30 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
     await _loadItems();
   }
+
+  void _openMyQRCode() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MyQRCodePage(
+          eventId: _currentEvent.id,
+          eventName: _currentEvent.name,
+          token: widget.session.token,
+        ),
+      ),
+    );
+  }
+
+  void _openQRScanner() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => QRScannerPage(
+          eventId: _currentEvent.id,
+          eventName: _currentEvent.name,
+          token: widget.session.token,
+        ),
+      ),
+    );
+  }
 }
 
 class _InvitationStatusCard extends StatefulWidget {
@@ -1350,13 +1405,11 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                           _deadlinePassed
                               ? 'Échéance dépassée'
                               : (_timeRemaining ?? 'Calcul...'),
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelMedium
-                              ?.copyWith(
-                                color: accent.withValues(alpha: 0.9),
-                                fontWeight: FontWeight.w700,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    color: accent.withValues(alpha: 0.9),
+                                    fontWeight: FontWeight.w700,
+                                  ),
                         ),
                       ],
                     ),
@@ -1749,8 +1802,8 @@ class _EventItemTile extends StatelessWidget {
                 TextButton.icon(
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.grey.shade700,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     textStyle: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   onPressed: contributors.isEmpty
@@ -1829,8 +1882,7 @@ class _EventItemTile extends StatelessWidget {
                     const SizedBox(width: 10),
                     TextButton(
                       style: TextButton.styleFrom(
-                        backgroundColor:
-                            Colors.red.withValues(alpha: 0.08),
+                        backgroundColor: Colors.red.withValues(alpha: 0.08),
                         foregroundColor: Colors.red.shade400,
                         padding: const EdgeInsets.symmetric(
                             vertical: 12, horizontal: 14),
