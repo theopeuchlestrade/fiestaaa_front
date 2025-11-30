@@ -13,6 +13,7 @@ import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_provider_model.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
+import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/services.dart';
@@ -61,6 +62,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
   Map<int, PaymentProviderModel> _providersById = {};
   bool _deletingEvent = false;
   bool _sharingLink = false;
+  RealtimeClient? _realtime;
+  StreamSubscription<Map<String, dynamic>>? _realtimeSub;
 
   @override
   void initState() {
@@ -69,6 +72,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     _loadItems();
     _loadMyInvitation();
     _loadPaymentProviders();
+    _startRealtime();
   }
 
   @override
@@ -76,6 +80,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
     _eventsApi.dispose();
     _invitationsApi.dispose();
     _paymentProvidersApi.dispose();
+    _realtimeSub?.cancel();
+    _realtime?.dispose();
     super.dispose();
   }
 
@@ -133,6 +139,56 @@ class _EventDetailPageState extends State<EventDetailPage> {
       setState(() => _contributions = map);
     } catch (_) {
       // silently ignore; UI will just not show avatars
+    }
+  }
+
+  void _startRealtime() {
+    _realtimeSub?.cancel();
+    _realtime?.dispose();
+    _realtime = RealtimeClient(
+      token: widget.session.token,
+      eventId: _currentEvent.id,
+    )..connect();
+    _realtimeSub = _realtime?.stream.listen(_handleRealtimeMessage);
+  }
+
+  void _handleRealtimeMessage(Map<String, dynamic> message) {
+    final type = message['type'] as String?;
+    if (type == null) return;
+    final eventId = message['event_id'] ?? message['eventId'];
+    if (eventId is int && eventId != _currentEvent.id) {
+      return;
+    }
+    switch (type) {
+      case 'event_updated':
+        _refreshEvent();
+        break;
+      case 'event_deleted':
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+        break;
+      case 'items_changed':
+        _loadItems(showLoading: false);
+        break;
+      case 'invitation_updated':
+        _loadMyInvitation();
+        break;
+      default:
+        break;
+    }
+  }
+
+  Future<void> _refreshEvent() async {
+    try {
+      final updated = await _eventsApi.fetchEventById(
+        token: widget.session.token,
+        eventId: _currentEvent.id,
+      );
+      if (!mounted) return;
+      setState(() => _currentEvent = updated);
+    } catch (_) {
+      // ignore refresh failure
     }
   }
 
@@ -1113,6 +1169,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           session: widget.session,
           eventId: _currentEvent.id,
           ownerEmail: _currentEvent.ownerEmail,
+          realtimeStream: _realtime?.stream,
         ),
       ),
     );

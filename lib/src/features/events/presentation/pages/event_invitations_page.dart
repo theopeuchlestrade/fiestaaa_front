@@ -16,11 +16,13 @@ class EventInvitationsPage extends StatefulWidget {
     required this.session,
     required this.eventId,
     required this.ownerEmail,
+    this.realtimeStream,
   });
 
   final SessionData session;
   final int eventId;
   final String ownerEmail;
+  final Stream<Map<String, dynamic>>? realtimeStream;
 
   @override
   State<EventInvitationsPage> createState() => _EventInvitationsPageState();
@@ -46,6 +48,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   final Set<String> _selectedFriendHandles = {};
   bool _invitingFriends = false;
   bool _sendingFriendAsk = false;
+  StreamSubscription<Map<String, dynamic>>? _realtimeSub;
 
   bool get _isOwner =>
       widget.session.email.toLowerCase() == widget.ownerEmail.toLowerCase();
@@ -61,16 +64,27 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     });
     _fetch();
     _loadFriendsAndRequests();
+    _realtimeSub = widget.realtimeStream?.listen(_handleRealtime);
   }
 
   @override
   void dispose() {
     _suggestionDebounce?.cancel();
+    _realtimeSub?.cancel();
     _api.dispose();
     _emailController.dispose();
     _friendFilterController.dispose();
     _friendsApi.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant EventInvitationsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.realtimeStream != widget.realtimeStream) {
+      _realtimeSub?.cancel();
+      _realtimeSub = widget.realtimeStream?.listen(_handleRealtime);
+    }
   }
 
   void _onEmailChanged() {
@@ -88,6 +102,16 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     _suggestionDebounce = Timer(const Duration(milliseconds: 300), () {
       _loadSuggestions(query);
     });
+  }
+
+  void _handleRealtime(Map<String, dynamic> message) {
+    final type = message['type'] as String?;
+    if (type == null) return;
+    final eventId = message['event_id'] ?? message['eventId'];
+    if (eventId is int && eventId != widget.eventId) return;
+    if (type == 'invitation_updated') {
+      _fetch();
+    }
   }
 
   Future<void> _loadSuggestions(String query) async {
