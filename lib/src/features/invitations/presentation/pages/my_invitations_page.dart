@@ -116,6 +116,11 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
       await _fetchEventInvitations();
     } on ApiException catch (e) {
       if (!mounted) return;
+      if (e.statusCode == 410) {
+        _showSnack('Invitation expirée', isError: true);
+        await _fetchEventInvitations();
+        return;
+      }
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
@@ -169,6 +174,51 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
     );
     if (confirm == true) {
       await _respond(invitation, 'Declined');
+    }
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'Accepted':
+        return 'Acceptée';
+      case 'Declined':
+        return 'Refusée';
+      case 'Expired':
+        return 'Expirée';
+      case 'Waiting':
+        return 'En attente';
+      default:
+        return status;
+    }
+  }
+
+  Color _statusTextColor(String status) {
+    switch (status) {
+      case 'Accepted':
+        return Colors.green.shade800;
+      case 'Declined':
+        return Colors.grey.shade800;
+      case 'Expired':
+        return Colors.grey.shade700;
+      case 'Waiting':
+        return Colors.orange.shade800;
+      default:
+        return Colors.grey.shade800;
+    }
+  }
+
+  Color _statusBackgroundColor(String status) {
+    switch (status) {
+      case 'Accepted':
+        return Colors.green.shade100;
+      case 'Declined':
+        return Colors.grey.shade200;
+      case 'Expired':
+        return Colors.grey.shade100;
+      case 'Waiting':
+        return Colors.orange.shade100;
+      default:
+        return Colors.grey.shade200;
     }
   }
 
@@ -247,9 +297,10 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
-                    onTap: widget.onOpenEvent == null
-                        ? null
-                        : () => widget.onOpenEvent!(inv.eventId),
+                    onTap: widget.onOpenEvent != null &&
+                            inv.status == 'Accepted'
+                        ? () => widget.onOpenEvent!(inv.eventId)
+                        : null,
                     splashColor:
                         FiestaaaPalette.primary.withValues(alpha: 0.12),
                     highlightColor: Colors.transparent,
@@ -267,7 +318,9 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
                               ? Colors.green
                               : inv.status == 'Declined'
                                   ? Colors.redAccent
-                                  : FiestaaaPalette.primary,
+                                  : inv.status == 'Expired'
+                                      ? Colors.grey
+                                      : FiestaaaPalette.primary,
                         ),
                         trailing: inv.status == 'Waiting'
                             ? Wrap(
@@ -294,21 +347,14 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
                                   )
                                 : Chip(
                                     label: Text(
-                                      inv.status,
+                                      _statusLabel(inv.status),
                                       style: TextStyle(
-                                        color: inv.status == 'Accepted'
-                                            ? Colors.green.shade800
-                                            : inv.status == 'Declined'
-                                                ? Colors.grey.shade800
-                                                : Colors.orange.shade800,
+                                        color: _statusTextColor(inv.status),
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
-                                    backgroundColor: inv.status == 'Accepted'
-                                        ? Colors.green.shade100
-                                        : inv.status == 'Declined'
-                                            ? Colors.grey.shade200
-                                            : Colors.orange.shade100,
+                                    backgroundColor:
+                                        _statusBackgroundColor(inv.status),
                                   ),
                       ),
                     ),

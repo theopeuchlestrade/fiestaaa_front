@@ -40,6 +40,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
 
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
+  DateTime? _invitationDeadline;
   bool _submitting = false;
   bool _loadingProviders = true;
   String? _providersError;
@@ -119,7 +120,13 @@ class _EventCreatePageState extends State<EventCreatePage> {
       locale: const Locale('fr'),
     );
     if (picked != null) {
-      setState(() => _selectedDate = picked);
+      setState(() {
+        _selectedDate = picked;
+        if (_invitationDeadline != null &&
+            _invitationDeadline!.isAfter(picked)) {
+          _invitationDeadline = picked;
+        }
+      });
     }
   }
 
@@ -130,6 +137,31 @@ class _EventCreatePageState extends State<EventCreatePage> {
     );
     if (picked != null) {
       setState(() => _selectedTime = picked);
+    }
+  }
+
+  Future<void> _pickInvitationDeadline() async {
+    final now = DateTime.now();
+    final lastDate =
+        _selectedDate.isBefore(now) ? now : _selectedDate;
+    var initial = _invitationDeadline ?? lastDate;
+    if (initial.isBefore(now)) {
+        initial = now;
+    }
+    if (initial.isAfter(lastDate)) {
+        initial = lastDate;
+    }
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: now,
+      lastDate: lastDate,
+      locale: const Locale('fr'),
+    );
+
+    if (picked != null) {
+      setState(() => _invitationDeadline = picked);
     }
   }
 
@@ -199,6 +231,14 @@ class _EventCreatePageState extends State<EventCreatePage> {
       _showSnack('Merci de choisir une adresse suggérée', isError: true);
       return;
     }
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    if (_invitationDeadline != null &&
+        (_invitationDeadline!.isBefore(todayDate) ||
+            _invitationDeadline!.isAfter(_selectedDate))) {
+      _showSnack('Choisissez une date limite valide', isError: true);
+      return;
+    }
     setState(() => _submitting = true);
     final requestedAmount = _requestedAmountValue();
     final selectedAddress = _selectedSuggestion!;
@@ -210,6 +250,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
         hours: _selectedTime.hour,
         minutes: _selectedTime.minute,
       ),
+      invitationDeadline: _invitationDeadline,
       address: selectedAddress.label,
       latitude: selectedAddress.latitude,
       longitude: selectedAddress.longitude,
@@ -240,6 +281,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
         _selectedSuggestion = null;
         _addressSuggestions = [];
         _addressSearchError = null;
+        _invitationDeadline = null;
       });
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -391,6 +433,47 @@ class _EventCreatePageState extends State<EventCreatePage> {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildInvitationDeadlineField() {
+    final accent = Theme.of(context).colorScheme.primary;
+    final subtitle = _invitationDeadline == null
+        ? 'Optionnel : l’invitation expirera à cette date'
+        : 'Réponse attendue avant le ${DateFormat.yMMMMd('fr_FR').format(_invitationDeadline!)}';
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(Icons.hourglass_bottom, color: accent),
+      title: Text(
+        'Date limite de réponse',
+        style: Theme.of(context)
+            .textTheme
+            .titleMedium
+            ?.copyWith(color: accent, fontWeight: FontWeight.w700),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(color: Colors.grey.shade700),
+      ),
+      trailing: Wrap(
+        spacing: 8,
+        children: [
+          if (_invitationDeadline != null)
+            IconButton(
+              onPressed: () => setState(() => _invitationDeadline = null),
+              icon: const Icon(Icons.clear),
+              tooltip: 'Retirer',
+          ),
+          OutlinedButton(
+            onPressed: _pickInvitationDeadline,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: accent,
+              side: BorderSide(color: accent.withValues(alpha: 0.4)),
+            ),
+            child: Text(_invitationDeadline == null ? 'Définir' : 'Modifier'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -552,6 +635,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
                           ],
                         ),
                         const SizedBox(height: 16),
+                        _buildInvitationDeadlineField(),
+                        const SizedBox(height: 12),
                         _buildPaymentProviderField(),
                         const SizedBox(height: 16),
                         _buildPaymentModeToggle(),

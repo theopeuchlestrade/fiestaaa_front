@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
@@ -83,6 +85,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   bool get _hasAcceptedInvitation => _myInvitation?.status == 'Accepted';
   bool get _isWaitingInvitation => _myInvitation?.status == 'Waiting';
+  bool get _isExpiredInvitation => _myInvitation?.status == 'Expired';
   bool get _canContributeItems => _isOwner || _hasAcceptedInvitation;
 
   Future<void> _loadItems({bool showLoading = true}) async {
@@ -379,6 +382,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
       await _loadMyInvitation();
     } on ApiException catch (e) {
       if (!mounted) return;
+      if (e.statusCode == 410) {
+        _showSnack('Invitation expirée', isError: true);
+        await _loadMyInvitation();
+        return;
+      }
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
@@ -619,6 +627,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   invitation: _myInvitation,
                   loading: _loadingMyInvitation,
                   onRespond: _respondInvitation,
+                  deadline: _currentEvent.invitationDeadline,
                 ),
               ),
             _DetailTile(
@@ -627,6 +636,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
               value:
                   '${_currentEvent.formattedDate} à ${_currentEvent.formattedTime}',
             ),
+            if (_currentEvent.invitationDeadline != null &&
+                !_isOwner &&
+                _isWaitingInvitation)
+              _DetailTile(
+                icon: Icons.hourglass_bottom,
+                label: 'Réponse avant',
+                value: _currentEvent.formattedInvitationDeadline ??
+                    DateFormat.yMMMMd('fr_FR')
+                        .format(_currentEvent.invitationDeadline!),
+              ),
             _buildLocationSection(),
             _DetailTile(
               icon: Icons.description,
@@ -673,6 +692,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   'Acceptez l\'invitation avant de pouvoir contribuer aux items.',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: Colors.red.shade700),
+                ),
+              ),
+            if (!_isOwner && _isExpiredInvitation)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Invitation expirée : les contributions ne sont plus possibles.',
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall
@@ -1090,48 +1120,141 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 }
 
-class _InvitationStatusCard extends StatelessWidget {
+class _InvitationStatusCard extends StatefulWidget {
   const _InvitationStatusCard({
     required this.invitation,
     required this.loading,
     required this.onRespond,
+    this.deadline,
   });
 
   final InvitationModel? invitation;
   final bool loading;
   final void Function(String status) onRespond;
+  final DateTime? deadline;
+
+  @override
+  State<_InvitationStatusCard> createState() => _InvitationStatusCardState();
+}
+
+class _InvitationStatusCardState extends State<_InvitationStatusCard> {
+  Timer? _timer;
+  String? _timeRemaining;
+  bool _deadlinePassed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshCountdown();
+    _maybeStartTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant _InvitationStatusCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.deadline != widget.deadline ||
+        oldWidget.invitation?.status != widget.invitation?.status) {
+      _refreshCountdown();
+      _maybeStartTimer();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _maybeStartTimer() {
+    _timer?.cancel();
+    final waiting = widget.invitation?.status == 'Waiting';
+    if (widget.deadline == null || !waiting || _deadlinePassed) {
+      return;
+    }
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      _refreshCountdown();
+    });
+  }
+
+  void _refreshCountdown() {
+    final deadline = widget.deadline;
+    final waiting = widget.invitation?.status == 'Waiting';
+    if (deadline == null || !waiting) {
+      setState(() {
+        _timeRemaining = null;
+        _deadlinePassed = false;
+      });
+      return;
+    }
+    final now = DateTime.now();
+    final endOfDay =
+        DateTime(deadline.year, deadline.month, deadline.day, 23, 59, 59);
+    if (now.isAfter(endOfDay)) {
+      setState(() {
+        _timeRemaining = null;
+        _deadlinePassed = true;
+      });
+      return;
+    }
+
+    final diff = endOfDay.difference(now);
+    final days = diff.inDays;
+    final hours = diff.inHours % 24;
+    final minutes = diff.inMinutes % 60;
+    String label;
+    if (days > 0) {
+      label = '$days j ${hours} h';
+    } else if (hours > 0) {
+      label = '$hours h ${minutes} min';
+    } else {
+      label = '$minutes min';
+    }
+    setState(() {
+      _deadlinePassed = false;
+      _timeRemaining = label;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (loading) {
+    final invitation = widget.invitation;
+    if (widget.loading) {
       return const Center(child: CircularProgressIndicator());
     }
     if (invitation == null) {
       return const SizedBox.shrink();
     }
 
-    final waiting = invitation!.status == 'Waiting';
-    final accepted = invitation!.status == 'Accepted';
-    final background = waiting
-        ? Colors.orange.shade50
-        : accepted
-            ? Colors.green.shade50
-            : Colors.grey.shade200;
-    final accent = waiting
-        ? Colors.orange.shade800
-        : accepted
-            ? Colors.green.shade800
-            : Colors.grey.shade700;
-    final icon = waiting
-        ? Icons.mark_email_unread
-        : accepted
-            ? Icons.check_circle
-            : Icons.cancel_outlined;
-    final statusLabel = waiting
-        ? 'Invitation en attente'
-        : accepted
-            ? 'Participation confirmée'
-            : 'Invitation refusée';
+    final waiting = invitation.status == 'Waiting';
+    final accepted = invitation.status == 'Accepted';
+    final expired = invitation.status == 'Expired';
+
+    Color background;
+    Color accent;
+    IconData icon;
+    String statusLabel;
+
+    if (expired) {
+      background = Colors.grey.shade100;
+      accent = Colors.grey.shade700;
+      icon = Icons.hourglass_disabled;
+      statusLabel = 'Invitation expirée';
+    } else if (waiting) {
+      background = Colors.orange.shade50;
+      accent = Colors.orange.shade800;
+      icon = Icons.mark_email_unread;
+      statusLabel = 'Invitation en attente';
+    } else if (accepted) {
+      background = Colors.green.shade50;
+      accent = Colors.green.shade800;
+      icon = Icons.check_circle;
+      statusLabel = 'Participation confirmée';
+    } else {
+      background = Colors.grey.shade200;
+      accent = Colors.grey.shade700;
+      icon = Icons.cancel_outlined;
+      statusLabel = 'Invitation refusée';
+    }
 
     return Card(
       color: background,
@@ -1151,6 +1274,36 @@ class _InvitationStatusCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                 ),
+                const Spacer(),
+                if (waiting && widget.deadline != null)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.timer_outlined,
+                            size: 16, color: accent.withValues(alpha: 0.9)),
+                        const SizedBox(width: 6),
+                        Text(
+                          _deadlinePassed
+                              ? 'Échéance dépassée'
+                              : (_timeRemaining ?? 'Calcul...'),
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelMedium
+                              ?.copyWith(
+                                color: accent.withValues(alpha: 0.9),
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: 12),
@@ -1159,7 +1312,7 @@ class _InvitationStatusCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => onRespond('Declined'),
+                      onPressed: () => widget.onRespond('Declined'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red.shade700,
                         side: BorderSide(color: Colors.red.shade200),
@@ -1170,7 +1323,7 @@ class _InvitationStatusCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () => onRespond('Accepted'),
+                      onPressed: () => widget.onRespond('Accepted'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green.shade600,
                         foregroundColor: Colors.white,
@@ -1184,6 +1337,14 @@ class _InvitationStatusCard extends StatelessWidget {
               Text(
                 'Confirmez votre présence pour apparaître comme participant.',
                 style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ] else if (expired) ...[
+              Text(
+                'La date limite est dépassée, cette invitation n’est plus active.',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: accent),
               ),
             ] else
               Text(
@@ -1227,7 +1388,7 @@ class _InvitationStatusCard extends StatelessWidget {
                     ),
                   );
                   if (confirm == true) {
-                    onRespond('Declined');
+                    widget.onRespond('Declined');
                   }
                 },
                 icon: const Icon(Icons.logout),

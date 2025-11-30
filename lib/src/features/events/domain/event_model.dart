@@ -15,6 +15,7 @@ class EventModel {
     required this.paymentRequestedAmount,
     required this.paymentPerPerson,
     required this.ownerEmail,
+    this.invitationDeadline,
   });
 
   final int id;
@@ -30,6 +31,7 @@ class EventModel {
   final double? paymentRequestedAmount;
   final bool paymentPerPerson;
   final String ownerEmail;
+  final DateTime? invitationDeadline;
 
   DateTime get startDateTime => DateTime(
         date.year,
@@ -47,6 +49,10 @@ class EventModel {
   }
 
   bool get hasCoordinates => latitude != null && longitude != null;
+
+  String? get formattedInvitationDeadline => invitationDeadline == null
+      ? null
+      : DateFormat.yMMMMd('fr_FR').format(invitationDeadline!);
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
     final date = DateTime.parse(json['date_event'] as String);
@@ -66,6 +72,10 @@ class EventModel {
           (json['payment_requested_amount'] as num?)?.toDouble(),
       paymentPerPerson: (json['payment_per_person'] as bool?) ?? false,
       ownerEmail: json['owner_email'] as String? ?? '',
+      invitationDeadline:
+          (json['invitation_deadline'] as String?)?.isEmpty ?? true
+              ? null
+              : DateTime.parse(json['invitation_deadline'] as String),
     );
   }
 
@@ -91,6 +101,7 @@ class EventPayload {
     required this.date,
     required this.startTime,
     required this.address,
+    this.invitationDeadline,
     this.latitude,
     this.longitude,
     this.paymentProviderId,
@@ -104,6 +115,7 @@ class EventPayload {
   final DateTime date;
   final Duration startTime;
   final String address;
+  final DateTime? invitationDeadline;
   final double? latitude;
   final double? longitude;
   final int? paymentProviderId;
@@ -118,6 +130,9 @@ class EventPayload {
       'date_event': DateFormat('yyyy-MM-dd').format(date),
       'start_time': _formatDuration(startTime),
       'address': address,
+      'invitation_deadline': invitationDeadline == null
+          ? null
+          : DateFormat('yyyy-MM-dd').format(invitationDeadline!),
       'latitude': latitude,
       'longitude': longitude,
       'payment_provider_id': paymentProviderId,
