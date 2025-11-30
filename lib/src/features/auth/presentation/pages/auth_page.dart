@@ -102,13 +102,12 @@ class _AuthPageState extends State<AuthPage> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    // On bascule sur le layout desktop (split view) si l'écran est assez large
     final useDesktopLayout = screenWidth >= 1000;
 
     return Scaffold(
       body: FiestaaaBackground(
         padding:
-            EdgeInsets.zero, // Le padding est géré par les layouts internes
+            EdgeInsets.zero,
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
