@@ -82,10 +82,11 @@ class _AuthPageState extends State<AuthPage> {
       if (!mounted) return;
       _showSnack('Erreur réseau, merci de réessayer.', isError: true);
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _isSubmitting = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -138,7 +139,7 @@ class _AuthPageState extends State<AuthPage> {
                                 .textTheme
                                 .bodyMedium
                                 ?.copyWith(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha: 0.9),
                                 ),
                           ),
                         ],
@@ -173,19 +174,20 @@ class _AuthPageState extends State<AuthPage> {
                               showSelectedIcon: false,
                               style: ButtonStyle(
                                 backgroundColor:
-                                    MaterialStateProperty.resolveWith(
+                                    WidgetStateProperty.resolveWith(
                                   (states) => states
-                                          .contains(MaterialState.selected)
-                                      ? FiestaaaPalette.primary.withOpacity(0.12)
+                                          .contains(WidgetState.selected)
+                                      ? FiestaaaPalette.primary
+                                          .withValues(alpha: 0.12)
                                       : Colors.grey.shade100,
                                 ),
-                                side: MaterialStateProperty.all(
+                                side: WidgetStateProperty.all(
                                   BorderSide(color: Colors.grey.shade300),
                                 ),
-                                padding: MaterialStateProperty.all(
+                                padding: WidgetStateProperty.all(
                                   const EdgeInsets.symmetric(vertical: 14),
                                 ),
-                                shape: MaterialStateProperty.all(
+                                shape: WidgetStateProperty.all(
                                   RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14),
                                   ),

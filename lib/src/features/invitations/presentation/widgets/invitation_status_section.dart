@@ -48,8 +48,8 @@ class InvitationStatusSection extends StatelessWidget {
                 if (invitations.isNotEmpty)
                   Chip(
                     label: Text('${invitations.length}'),
-                    backgroundColor: accentColor.withOpacity(0.15),
-                    side: BorderSide(color: accentColor.withOpacity(0.4)),
+                    backgroundColor: accentColor.withValues(alpha: 0.15),
+                    side: BorderSide(color: accentColor.withValues(alpha: 0.4)),
                   ),
               ],
             ),

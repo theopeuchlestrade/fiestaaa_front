@@ -198,8 +198,9 @@ class _EventEditPageState extends State<EventEditPage> {
         _addressSearchError = 'Recherche impossible pour le moment';
       });
     } finally {
-      if (!mounted) return;
-      setState(() => _searchingAddress = false);
+      if (mounted) {
+        setState(() => _searchingAddress = false);
+      }
     }
   }
 
@@ -258,8 +259,9 @@ class _EventEditPageState extends State<EventEditPage> {
       if (!mounted) return;
       _showSnack('Erreur lors de la mise à jour', isError: true);
     } finally {
-      if (!mounted) return;
-      setState(() => _submitting = false);
+      if (mounted) {
+        setState(() => _submitting = false);
+      }
     }
   }
 
@@ -429,7 +431,8 @@ class _EventEditPageState extends State<EventEditPage> {
     ];
 
     return DropdownButtonFormField<int?>(
-      value: _selectedProviderId,
+      key: ValueKey(_selectedProviderId),
+      initialValue: _selectedProviderId,
       items: items,
       decoration: const InputDecoration(
         labelText: 'Cagnotte associée',
