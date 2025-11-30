@@ -39,6 +39,7 @@ class _EventEditPageState extends State<EventEditPage> {
 
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
+  DateTime? _invitationDeadline;
   bool _submitting = false;
   bool _loadingProviders = true;
   String? _providersError;
@@ -62,6 +63,7 @@ class _EventEditPageState extends State<EventEditPage> {
       text: event.paymentRequestedAmount?.toString() ?? '',
     );
     _selectedDate = event.date;
+    _invitationDeadline = event.invitationDeadline;
     final startDate = event.startDateTime;
     _selectedTime = TimeOfDay(
       hour: startDate.hour,
@@ -143,7 +145,13 @@ class _EventEditPageState extends State<EventEditPage> {
       locale: const Locale('fr'),
     );
     if (picked != null) {
-      setState(() => _selectedDate = picked);
+      setState(() {
+        _selectedDate = picked;
+        if (_invitationDeadline != null &&
+            _invitationDeadline!.isAfter(picked)) {
+          _invitationDeadline = picked;
+        }
+      });
     }
   }
 
@@ -154,6 +162,31 @@ class _EventEditPageState extends State<EventEditPage> {
     );
     if (picked != null) {
       setState(() => _selectedTime = picked);
+    }
+  }
+
+  Future<void> _pickInvitationDeadline() async {
+    final now = DateTime.now();
+    final lastDate =
+        _selectedDate.isBefore(now) ? now : _selectedDate;
+    var initial = _invitationDeadline ?? lastDate;
+    if (initial.isBefore(now)) {
+      initial = now;
+    }
+    if (initial.isAfter(lastDate)) {
+      initial = lastDate;
+    }
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: now,
+      lastDate: lastDate,
+      locale: const Locale('fr'),
+    );
+
+    if (picked != null) {
+      setState(() => _invitationDeadline = picked);
     }
   }
 
@@ -223,6 +256,14 @@ class _EventEditPageState extends State<EventEditPage> {
       _showSnack('Merci de choisir une adresse suggérée', isError: true);
       return;
     }
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    if (_invitationDeadline != null &&
+        (_invitationDeadline!.isBefore(todayDate) ||
+            _invitationDeadline!.isAfter(_selectedDate))) {
+      _showSnack('Choisissez une date limite valide', isError: true);
+      return;
+    }
     setState(() => _submitting = true);
     final selectedAddress = _selectedSuggestion!;
     final payload = EventPayload(
@@ -233,6 +274,7 @@ class _EventEditPageState extends State<EventEditPage> {
         hours: _selectedTime.hour,
         minutes: _selectedTime.minute,
       ),
+      invitationDeadline: _invitationDeadline,
       address: selectedAddress.label,
       latitude: selectedAddress.latitude,
       longitude: selectedAddress.longitude,
@@ -483,6 +525,36 @@ class _EventEditPageState extends State<EventEditPage> {
     );
   }
 
+  Widget _buildInvitationDeadlineField() {
+    final subtitle = _invitationDeadline == null
+        ? 'Optionnel : l’invitation expirera à cette date'
+        : 'Réponse attendue avant le ${DateFormat.yMMMMd('fr_FR').format(_invitationDeadline!)}';
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.hourglass_bottom),
+      title: const Text('Date limite de réponse'),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(color: Colors.grey.shade700),
+      ),
+      trailing: Wrap(
+        spacing: 8,
+        children: [
+          if (_invitationDeadline != null)
+            IconButton(
+              onPressed: () => setState(() => _invitationDeadline = null),
+              icon: const Icon(Icons.clear),
+              tooltip: 'Retirer',
+            ),
+          OutlinedButton(
+            onPressed: _pickInvitationDeadline,
+            child: Text(_invitationDeadline == null ? 'Définir' : 'Modifier'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -544,6 +616,8 @@ class _EventEditPageState extends State<EventEditPage> {
                 ],
               ),
               const SizedBox(height: 16),
+              _buildInvitationDeadlineField(),
+              const SizedBox(height: 12),
               _buildPaymentProviderField(),
               const SizedBox(height: 16),
               _buildPaymentModeToggle(),

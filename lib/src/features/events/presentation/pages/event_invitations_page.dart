@@ -211,6 +211,14 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       _showSnack(successMessage);
     } on ApiException catch (e) {
       if (!mounted) return;
+      if (e.statusCode == 410) {
+        _showSnack(
+          'La date limite est dépassée, impossible d’inviter de nouvelles personnes.',
+          isError: true,
+        );
+        await _fetch();
+        return;
+      }
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
