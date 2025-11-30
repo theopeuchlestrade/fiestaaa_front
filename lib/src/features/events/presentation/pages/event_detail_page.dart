@@ -671,6 +671,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   : const Icon(Icons.delete_outline),
               tooltip: 'Supprimer l’événement',
             ),
+          if (_isOwner)
+            IconButton(
+              onPressed: _openQRScanner,
+              icon: const Icon(Icons.qr_code_scanner),
+              tooltip: 'Scanner QR Codes',
+            )
+          else if (_hasAcceptedInvitation || _isWaitingInvitation)
+            IconButton(
+              onPressed: _openMyQRCode,
+              icon: const Icon(Icons.qr_code),
+              tooltip: 'Mon QR Code',
+            ),
         ],
       ),
       body: RefreshIndicator(
@@ -712,35 +724,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
             _buildPaymentSection(),
             const SizedBox(height: 16),
-            // QR Code Check-in buttons
-            if (_isOwner) ...[
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _openQRScanner,
-                  icon: const Icon(Icons.qr_code_scanner),
-                  label: const Text('Scanner les QR Codes'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.all(16),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-            ] else if (_hasAcceptedInvitation || _isWaitingInvitation) ...[
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _openMyQRCode,
-                  icon: const Icon(Icons.qr_code),
-                  label: const Text('Afficher mon QR Code'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.all(16),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-            const SizedBox(height: 8),
             if (_canContributeItems) ...[
               Align(
                 alignment: Alignment.centerLeft,
