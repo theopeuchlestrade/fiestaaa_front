@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:fiestaaa_front/src/features/qr_checkin/data/qr_checkin_api.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/domain/qr_checkin_models.dart';
 import 'package:flutter/material.dart';
@@ -106,235 +107,279 @@ class _QRScannerPageState extends State<QRScannerPage> {
     }
   }
 
-  void _resetScan() {
-    setState(() {
-      _lastScanResult = null;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Scanner QR Code'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Scanner', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          // Torch Button
+          ValueListenableBuilder(
+            valueListenable: _scannerController,
+            builder: (context, state, child) {
+              final isTorchOn = state.torchState == TorchState.on;
+              return IconButton(
+                icon: Icon(
+                  isTorchOn ? Icons.flash_on : Icons.flash_off,
+                  color: isTorchOn ? Colors.yellow : Colors.white,
+                ),
+                onPressed: () => _scannerController.toggleTorch(),
+              );
+            },
+          ),
+          // Camera Switch Button
+          ValueListenableBuilder(
+            valueListenable: _scannerController,
+            builder: (context, state, child) {
+              final isFront = state.cameraDirection == CameraFacing.front;
+              return IconButton(
+                icon: Icon(
+                  isFront ? Icons.camera_front : Icons.camera_rear,
+                  color: Colors.white,
+                ),
+                onPressed: () => _scannerController.switchCamera(),
+              );
+            },
+          ),
+        ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildStatsHeader(),
-            Expanded(
-              child: _lastScanResult == null
-                  ? _buildScannerView()
-                  : _buildResultView(),
+      body: Stack(
+        children: [
+          MobileScanner(
+            controller: _scannerController,
+            onDetect: _handleBarcode,
+          ),
+          
+          // Custom Overlay (Darken area outside scan zone)
+          ColorFiltered(
+            colorFilter: ColorFilter.mode(
+              Colors.black.withOpacity(0.5),
+              BlendMode.srcOut,
             ),
-          ],
+            child: Stack(
+              children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.black,
+                    backgroundBlendMode: BlendMode.dstOut,
+                  ),
+                ),
+                Center(
+                  child: Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Scan Frame Border
+          Center(
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+          ),
+
+          // Stats Overlay
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: _buildStatsOverlay(),
+              ),
+            ),
+          ),
+
+          // Result Overlay
+          if (_lastScanResult != null)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: _buildResultOverlay(),
+            ),
+            
+          if (_isScanning && _lastScanResult == null)
+            const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsOverlay() {
+    if (_isLoadingStats) {
+      return const SizedBox();
+    }
+    
+    if (_stats == null) return const SizedBox();
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(30),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.6),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildStatItem('Invités', '${_stats!.totalInvited}'),
+              Container(height: 20, width: 1, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 16)),
+              _buildStatItem('Présents', '${_stats!.totalCheckedIn}', color: Colors.greenAccent),
+              Container(height: 20, width: 1, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 16)),
+              _buildStatItem('Restants', '${_stats!.totalInvited - _stats!.totalCheckedIn}'),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildStatsHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue[50],
-        border: Border(
-          bottom: BorderSide(color: Colors.blue[200]!),
-        ),
-      ),
-      child: _isLoadingStats
-          ? const Center(child: CircularProgressIndicator())
-          : _stats != null
-              ? Column(
-                  children: [
-                    Text(
-                      widget.eventName,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildStatItem(
-                          icon: Icons.people,
-                          label: 'Invités',
-                          value: '${_stats!.totalInvited}',
-                          color: Colors.blue,
-                        ),
-                        _buildStatItem(
-                          icon: Icons.check_circle,
-                          label: 'Enregistrés',
-                          value: '${_stats!.totalCheckedIn}',
-                          color: Colors.green,
-                        ),
-                        _buildStatItem(
-                          icon: Icons.pending,
-                          label: 'En attente',
-                          value: '${_stats!.pendingCheckins}',
-                          color: Colors.orange,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    LinearProgressIndicator(
-                      value: _stats!.totalInvited > 0
-                          ? _stats!.totalCheckedIn / _stats!.totalInvited
-                          : 0,
-                      backgroundColor: Colors.grey[300],
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.green,
-                      ),
-                    ),
-                  ],
-                )
-              : const Text('Impossible de charger les statistiques'),
-    );
-  }
-
-  Widget _buildStatItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
+  Widget _buildStatItem(String label, String value, {Color? color}) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: color, size: 28),
-        const SizedBox(height: 4),
         Text(
           value,
           style: TextStyle(
-            fontSize: 20,
+            color: color ?? Colors.white,
             fontWeight: FontWeight.bold,
-            color: color,
+            fontSize: 16,
           ),
         ),
         Text(
           label,
           style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
+            color: Colors.white.withOpacity(0.7),
+            fontSize: 10,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildScannerView() {
-    return Column(
-      children: [
-        Expanded(
-          child: Stack(
-            children: [
-              MobileScanner(
-                controller: _scannerController,
-                onDetect: _handleBarcode,
-              ),
-              if (_isScanning)
-                Container(
-                  color: Colors.black54,
-                  child: const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.all(16),
-          color: Colors.black87,
-          child: const Text(
-            'Pointez la caméra vers le QR code d\'un participant',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildResultView() {
-    final result = _lastScanResult!;
-    final isSuccess = result.success;
+  Widget _buildResultOverlay() {
+    final isSuccess = _lastScanResult!.success;
+    final color = isSuccess ? Colors.green : Colors.red;
+    final icon = isSuccess ? Icons.check_circle : Icons.error;
 
     return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.all(24),
       padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            isSuccess ? Icons.check_circle : Icons.error,
-            size: 80,
-            color: isSuccess ? Colors.green : Colors.red,
-          ),
-          const SizedBox(height: 24),
-          Text(
-            isSuccess ? 'Enregistré !' : 'Échec',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: isSuccess ? Colors.green : Colors.red,
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (result.userEmail != null) ...[
-            Text(
-              result.userEmail!,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 4),
-          ],
-          if (result.userHandle != null) ...[
-            Text(
-              '@${result.userHandle!}',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isSuccess ? Colors.green[50] : Colors.red[50],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSuccess ? Colors.green[200]! : Colors.red[200]!,
-              ),
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
             ),
-            child: Text(
-              result.message,
-              style: TextStyle(
-                color: isSuccess ? Colors.green[900] : Colors.red[900],
-                fontSize: 16,
-              ),
-              textAlign: TextAlign.center,
+            child: Icon(icon, color: color, size: 48),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            isSuccess ? 'Accès Autorisé' : 'Accès Refusé',
+            style: TextStyle(
+              color: color,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 8),
+          Text(
+            _lastScanResult!.message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey[800],
+              fontSize: 16,
+            ),
+          ),
+          if (_lastScanResult!.userEmail != null) ...[
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+            if (_lastScanResult!.userAvatarUrl != null)
+              CircleAvatar(
+                backgroundImage: NetworkImage(_lastScanResult!.userAvatarUrl!),
+                radius: 30,
+              )
+            else
+              CircleAvatar(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                radius: 30,
+                child: Text(
+                  _lastScanResult!.userHandle?.substring(0, 1).toUpperCase() ?? '?',
+                  style: const TextStyle(color: Colors.white, fontSize: 24),
+                ),
+              ),
+            const SizedBox(height: 8),
+            Text(
+              _lastScanResult!.userHandle ?? 'Utilisateur inconnu',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            Text(
+              _lastScanResult!.userEmail!,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+              ),
+            ),
+          ],
+          const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _resetScan,
-              icon: const Icon(Icons.qr_code_scanner),
-              label: const Text('Scanner un autre'),
+            child: ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _lastScanResult = null;
+                  _isScanning = false;
+                });
+              },
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.all(16),
-                textStyle: const TextStyle(fontSize: 18),
+                backgroundColor: color,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
+              child: const Text('Scanner le suivant'),
             ),
           ),
         ],
