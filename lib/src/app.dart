@@ -4,6 +4,7 @@ import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/auth/presentation/pages/auth_page.dart';
 import 'package:fiestaaa_front/src/features/home/presentation/pages/home_page.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
+import 'package:fiestaaa_front/src/core/push_notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -56,12 +57,14 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     });
 
     if (refreshed != null) {
+      await PushNotificationService.instance.syncSession(refreshed);
       await SessionStorage.save(refreshed);
     }
   }
 
   Future<void> _handleAuthenticated(SessionData session) async {
     await SessionStorage.save(session);
+    await PushNotificationService.instance.syncSession(session);
     if (!mounted) return;
     setState(() {
       _session = session;
@@ -69,6 +72,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   }
 
   Future<void> _handleLogout() async {
+    await PushNotificationService.instance.clearSession();
     await SessionStorage.clear();
     if (!mounted) return;
     setState(() {
@@ -79,6 +83,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   @override
   void dispose() {
     _authApi.dispose();
+    PushNotificationService.instance.dispose();
     super.dispose();
   }
 
