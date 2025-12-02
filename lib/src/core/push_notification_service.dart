@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:ui';
-
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/notifications/data/notifications_api.dart';
 import 'config.dart';
+import 'web_notification_stub.dart'
+    if (dart.library.html) 'web_notification_html.dart' as web_notif;
 
 class PushNotificationService {
   PushNotificationService._();
@@ -15,6 +17,8 @@ class PushNotificationService {
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final NotificationsApi _api = NotificationsApi();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
 
   bool _initialized = false;
   String? _cachedToken;
@@ -29,11 +33,13 @@ class PushNotificationService {
 
     await FirebaseMessaging.instance.setAutoInitEnabled(true);
     await _requestPermissions();
+    await _initLocalNotifications();
     await _messaging.setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
       sound: true,
     );
+    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
     _cachedToken = await _safeGetToken();
     _tokenStreamSub = _messaging.onTokenRefresh.listen((token) async {
@@ -157,5 +163,43 @@ class PushNotificationService {
   String? _appVersion() {
     // Could be wired later from package_info_plus; keep nullable for now.
     return null;
+  }
+
+  Future<void> _initLocalNotifications() async {
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings();
+    const initSettings =
+        InitializationSettings(android: androidSettings, iOS: iosSettings);
+    await _localNotifications.initialize(initSettings);
+  }
+
+  Future<void> _handleForegroundMessage(RemoteMessage message) async {
+    final notif = message.notification;
+    if (notif == null) return;
+
+    if (kIsWeb) {
+      await web_notif.showWebNotification(
+        notif.title ?? 'Notification',
+        notif.body ?? '',
+      );
+      return;
+    }
+
+    const androidDetails = AndroidNotificationDetails(
+      'fiestaaa_fcm',
+      'Notifications',
+      channelDescription: 'Notifications Fiestaaa en foreground',
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+    );
+    const iosDetails = DarwinNotificationDetails();
+    const details = NotificationDetails(android: androidDetails, iOS: iosDetails);
+    await _localNotifications.show(
+      notif.hashCode,
+      notif.title,
+      notif.body,
+      details,
+    );
   }
 }
