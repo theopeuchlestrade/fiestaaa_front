@@ -455,24 +455,28 @@ class _EventCreatePageState extends State<EventCreatePage> {
         subtitle,
         style: TextStyle(color: Colors.grey.shade700),
       ),
-      trailing: Wrap(
-        spacing: 8,
-        children: [
-          if (_invitationDeadline != null)
-            IconButton(
-              onPressed: () => setState(() => _invitationDeadline = null),
-              icon: const Icon(Icons.clear),
-              tooltip: 'Retirer',
-          ),
-          OutlinedButton(
-            onPressed: _pickInvitationDeadline,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: accent,
-              side: BorderSide(color: accent.withValues(alpha: 0.4)),
+      trailing: SizedBox(
+        width: 180,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            if (_invitationDeadline != null)
+              IconButton(
+                onPressed: () => setState(() => _invitationDeadline = null),
+                icon: const Icon(Icons.clear),
+                tooltip: 'Retirer',
+              ),
+            OutlinedButton(
+              onPressed: _pickInvitationDeadline,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: accent,
+                side: BorderSide(color: accent.withValues(alpha: 0.4)),
+              ),
+              child: Text(_invitationDeadline == null ? 'Définir' : 'Modifier'),
             ),
-            child: Text(_invitationDeadline == null ? 'Définir' : 'Modifier'),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
