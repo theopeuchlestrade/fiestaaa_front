@@ -1,4 +1,4 @@
-package com.example.fiestaaa_front
+package com.fiestaaa.fiestaaa
 
 import io.flutter.embedding.android.FlutterActivity
 
