@@ -89,7 +89,7 @@ class EventsListPageState extends State<EventsListPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Impossible de charger les événements';
+        _error = 'Impossible de charger les fiestaaa';
       });
     } finally {
       if (mounted) {
@@ -145,7 +145,7 @@ class EventsListPageState extends State<EventsListPage> {
             children: [
               Icon(Icons.celebration, color: Colors.grey.shade500, size: 40),
               const SizedBox(height: 12),
-              const Text('Aucun événement pour le moment.'),
+              const Text('Aucune fiestaaa pour le moment.'),
               const SizedBox(height: 12),
               ElevatedButton.icon(
                 onPressed: _loadEvents,
@@ -259,7 +259,7 @@ class _EventsGrid extends StatelessWidget {
                                     .withValues(alpha: 0.8)),
                             const SizedBox(width: 8),
                             Text(
-                              'Vos événements',
+                              'Vos fiestaaa',
                               style: Theme.of(context)
                                   .textTheme
                                   .titleMedium

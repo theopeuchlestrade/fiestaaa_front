@@ -559,7 +559,7 @@ class _EventEditPageState extends State<EventEditPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Modifier l’événement'),
+        title: const Text('Modifier la fiestaaa'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -570,7 +570,7 @@ class _EventEditPageState extends State<EventEditPage> {
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(
-                  labelText: 'Nom de l’événement',
+                  labelText: 'Nom de la fiestaaa',
                   prefixIcon: Icon(Icons.celebration),
                 ),
                 validator: (value) => value == null || value.trim().isEmpty

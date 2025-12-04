@@ -1052,9 +1052,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Supprimer cet événement ?'),
+        title: const Text('Supprimer cette fiestaaa ?'),
         content: const Text(
-          'Cette action supprimera l’événement pour tous les participants. Les invités ne le verront plus lors de leur prochaine actualisation.',
+          'Cette action supprimera la fiestaaa pour tous les participants. Les invités ne la verront plus lors de leur prochaine actualisation.',
         ),
         actions: [
           TextButton(
@@ -1087,7 +1087,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       );
       if (!mounted) return;
       widget.onEventRemoved?.call(_currentEvent.id);
-      _showSnack('Événement supprimé');
+      _showSnack('Fiestaaa supprimée');
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
@@ -1235,7 +1235,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             IconButton(
               onPressed: _openEditEvent,
               icon: const Icon(Icons.edit),
-              tooltip: 'Modifier l’événement',
+              tooltip: 'Modifier la fiestaaa',
             ),
           IconButton(
             onPressed: _openInvitations,
@@ -1253,7 +1253,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.ios_share),
-              tooltip: 'Partager l’événement',
+              tooltip: 'Partager la fiestaaa',
             ),
           if (_isOwner)
             IconButton(
@@ -1265,7 +1265,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.delete_outline),
-              tooltip: 'Supprimer l’événement',
+              tooltip: 'Supprimer la fiestaaa',
             ),
           if (_isOwner)
             IconButton(
@@ -1693,7 +1693,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         _currentEvent = updated;
       });
       widget.onEventUpdated?.call();
-      _showSnack('Événement mis à jour');
+      _showSnack('Fiestaaa mise à jour');
     }
   }
 
@@ -2194,7 +2194,7 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
             if (accepted) ...[
               const SizedBox(height: 12),
               Text(
-                'Vous ne venez plus finalement ? Vous pouvez quitter l’événement, vos réservations seront libérées.',
+                'Vous ne venez plus finalement ? Vous pouvez quitter la fiestaaa, vos réservations seront libérées.',
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall
@@ -2206,7 +2206,7 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: const Text('Quitter l’événement ?'),
+                      title: const Text('Quitter la fiestaaa ?'),
                       content: const Text(
                         'Vous ne serez plus compté comme participant et vos engagements seront retirés.',
                       ),
@@ -2230,7 +2230,7 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.red.shade700,
                 ),
-                label: const Text('Quitter cet événement'),
+                label: const Text('Quitter cette fiestaaa'),
               ),
             ],
           ],
@@ -2626,7 +2626,7 @@ class _EventItemsList extends StatelessWidget {
           border: Border.all(color: Colors.grey.shade200),
         ),
         child: Text(
-          'Aucun item n’a encore été ajouté pour cette soirée.',
+          'Aucun item n’a encore été ajouté pour cette fiestaaa.',
           style: Theme.of(context)
               .textTheme
               .bodyMedium

@@ -254,7 +254,7 @@ class _HomePageState extends State<HomePage> {
         items: [
           BottomNavigationBarItem(
             icon: _iconWithBadge(Icons.event_note, _pendingEventInvites),
-            label: 'Événements',
+            label: 'Fiestaaa',
           ),
           const BottomNavigationBarItem(
             icon: Icon(Icons.add_circle_outline),

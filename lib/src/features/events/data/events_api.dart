@@ -55,7 +55,7 @@ class EventsApi {
           .map((e) => EventModel.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-    throw ApiException('Impossible de récupérer les événements',
+    throw ApiException('Impossible de récupérer les fiestaaa',
         statusCode: response.statusCode);
   }
 
@@ -127,7 +127,7 @@ class EventsApi {
     }
 
     throw ApiException(
-      'Événement introuvable (${response.statusCode})',
+      'Fiestaaa introuvable (${response.statusCode})',
       statusCode: response.statusCode,
     );
   }
