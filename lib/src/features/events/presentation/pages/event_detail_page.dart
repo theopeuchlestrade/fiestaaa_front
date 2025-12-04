@@ -5,6 +5,7 @@ import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_item_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/item_contribution_model.dart';
+import 'package:fiestaaa_front/src/features/events/domain/event_poll_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_edit_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_invitations_page.dart';
@@ -66,11 +67,20 @@ class _EventDetailPageState extends State<EventDetailPage> {
   bool _sharingLink = false;
   RealtimeClient? _realtime;
   StreamSubscription<Map<String, dynamic>>? _realtimeSub;
+  List<PollModel>? _polls;
+  bool _loadingPolls = true;
+  String? _pollsError;
+  int? _votingPollId;
+  bool _creatingPoll = false;
+  bool _pollsExpanded = true;
+  bool _itemsExpanded = true;
+  int? _deletingPollId;
 
   @override
   void initState() {
     super.initState();
     _currentEvent = widget.event;
+    _loadPolls();
     _loadItems();
     _loadMyInvitation();
     _loadPaymentProviders();
@@ -95,6 +105,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   bool get _isWaitingInvitation => _myInvitation?.status == 'Waiting';
   bool get _isExpiredInvitation => _myInvitation?.status == 'Expired';
   bool get _canContributeItems => _isOwner || _hasAcceptedInvitation;
+  bool get _canVotePolls => _isOwner || _hasAcceptedInvitation;
 
   Future<void> _loadItems({bool showLoading = true}) async {
     setState(() {
@@ -127,6 +138,35 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
+  Future<void> _loadPolls({bool showLoading = true}) async {
+    setState(() {
+      if (showLoading) _loadingPolls = true;
+      _pollsError = null;
+    });
+    try {
+      final data = await _eventsApi.fetchEventPolls(
+        token: widget.session.token,
+        eventId: _currentEvent.id,
+      );
+      if (!mounted) return;
+      setState(() => _polls = data);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _pollsError = e.statusCode == 403
+          ? 'Acceptez l\'invitation pour voir et voter aux sondages.'
+          : e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _pollsError = 'Impossible de charger les sondages.');
+    } finally {
+      if (mounted && showLoading) {
+        setState(() {
+          _loadingPolls = false;
+        });
+      }
+    }
+  }
+
   Future<void> _loadContributions() async {
     try {
       final data = await _eventsApi.fetchEventItemContributions(
@@ -142,6 +182,524 @@ class _EventDetailPageState extends State<EventDetailPage> {
     } catch (_) {
       // silently ignore; UI will just not show avatars
     }
+  }
+
+  void _updatePollInState(PollModel poll) {
+    setState(() {
+      final next = List<PollModel>.from(_polls ?? const []);
+      final idx = next.indexWhere((p) => p.id == poll.id);
+      if (idx >= 0) {
+        next[idx] = poll;
+      } else {
+        next.insert(0, poll);
+      }
+      _polls = next;
+    });
+  }
+
+  Future<void> _submitVote(int pollId, List<int> optionIds) async {
+    setState(() => _votingPollId = pollId);
+    try {
+      final updated = await _eventsApi.votePoll(
+        token: widget.session.token,
+        eventId: _currentEvent.id,
+        pollId: pollId,
+        optionIds: optionIds,
+      );
+      if (!mounted) return;
+      _updatePollInState(updated);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Vote non enregistré', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _votingPollId = null);
+      }
+    }
+  }
+
+  Future<void> _toggleVote(PollModel poll, int optionId) async {
+    if (!_canVotePolls) {
+      _showSnack('Acceptez l\'invitation avant de voter.', isError: true);
+      return;
+    }
+    if (poll.isExpired) {
+      _showSnack('Ce sondage est expiré.', isError: true);
+      return;
+    }
+    final selection = {...poll.myVotes};
+    if (selection.contains(optionId)) {
+      selection.remove(optionId);
+    } else {
+      if (!poll.allowMultiple) {
+        selection
+          ..clear()
+          ..add(optionId);
+      } else {
+        selection.add(optionId);
+      }
+    }
+    await _submitVote(poll.id, selection.toList());
+  }
+
+  Future<void> _createPoll(_NewPollData data) async {
+    setState(() => _creatingPoll = true);
+    try {
+      final created = await _eventsApi.createEventPoll(
+        token: widget.session.token,
+        eventId: _currentEvent.id,
+        question: data.question,
+        options: data.options,
+        durationMinutes: data.durationMinutes,
+        allowMultiple: data.allowMultiple,
+      );
+      if (!mounted) return;
+      _updatePollInState(created);
+      setState(() {
+        _pollsExpanded = true;
+      });
+      _showSnack('Sondage créé');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Impossible de créer le sondage', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _creatingPoll = false);
+      }
+    }
+  }
+
+  Future<void> _deletePoll(PollModel poll) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer ce sondage ?'),
+        content: const Text('Cette action supprimera le sondage pour tout le monde.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _deletingPollId = poll.id);
+    try {
+      await _eventsApi.deleteEventPoll(
+        token: widget.session.token,
+        eventId: _currentEvent.id,
+        pollId: poll.id,
+      );
+      if (!mounted) return;
+      setState(() {
+        _polls = (_polls ?? []).where((p) => p.id != poll.id).toList();
+      });
+      _showSnack('Sondage supprimé');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Suppression impossible', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _deletingPollId = null);
+      }
+    }
+  }
+
+  Future<void> _openCreatePollSheet() async {
+    final questionController = TextEditingController();
+    final optionControllers =
+        List.generate(3, (_) => TextEditingController());
+    int selectedDuration = 60;
+    bool useCustomDuration = false;
+    final customDurationController = TextEditingController(text: '48');
+    bool allowMultiple = true;
+
+    final durations = <int>[15, 30, 60, 120, 360, 1440];
+    const maxDurationMinutes = 60 * 24 * 7; // 7 jours
+
+    final result = await showModalBottomSheet<_NewPollData>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: bottomInset + 16,
+                left: 16,
+                right: 16,
+                top: 12,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Nouveau sondage',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: questionController,
+                      maxLength: 120,
+                      decoration: const InputDecoration(
+                        labelText: 'Question',
+                        prefixIcon: Icon(Icons.quiz_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Options',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 6),
+                    ...optionControllers.asMap().entries.map(
+                      (entry) {
+                        final index = entry.key;
+                        final controller = entry.value;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: controller,
+                                  decoration: InputDecoration(
+                                    labelText: 'Option ${index + 1}',
+                                    prefixIcon:
+                                        const Icon(Icons.circle_outlined),
+                                  ),
+                                ),
+                              ),
+                              if (optionControllers.length > 2)
+                                IconButton(
+                                  onPressed: () {
+                                    setModalState(() {
+                                      optionControllers.removeAt(index);
+                                    });
+                                  },
+                                  icon: const Icon(Icons.delete_outline),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    if (optionControllers.length < 8)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: () {
+                            setModalState(() {
+                              optionControllers.add(TextEditingController());
+                            });
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text('Ajouter une option'),
+                        ),
+                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Expiration',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ...durations.map(
+                          (d) => ChoiceChip(
+                            label: Text(
+                                d >= 60 ? '${(d / 60).round()} h' : '$d min'),
+                            selected: !useCustomDuration && selectedDuration == d,
+                            onSelected: (_) => setModalState(() {
+                              useCustomDuration = false;
+                              selectedDuration = d;
+                            }),
+                          ),
+                        ),
+                        ChoiceChip(
+                          label: const Text('Durée personnalisée'),
+                          selected: useCustomDuration,
+                          onSelected: (_) => setModalState(() {
+                            useCustomDuration = true;
+                            selectedDuration = durations.last;
+                          }),
+                        ),
+                      ],
+                    ),
+                    if (useCustomDuration) ...[
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: customDurationController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Durée en heures (max 7 jours)',
+                          prefixIcon: Icon(Icons.schedule),
+                          helperText:
+                              'Renseignez une durée supérieure à 24h si besoin.',
+                        ),
+                      ),
+                    ],
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: allowMultiple,
+                      onChanged: (value) =>
+                          setModalState(() => allowMultiple = value),
+                      title: const Text('Plusieurs réponses autorisées'),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Annuler'),
+                        ),
+                        const Spacer(),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            final question =
+                                questionController.text.trim();
+                            final options = optionControllers
+                                .map((c) => c.text.trim())
+                                .where((txt) => txt.isNotEmpty)
+                                .toList();
+                            if (question.isEmpty || options.length < 2) {
+                              _showSnack(
+                                'Question et au moins deux options requises.',
+                                isError: true,
+                              );
+                              return;
+                            }
+                            int durationMinutes;
+                            if (useCustomDuration) {
+                              final hours = int.tryParse(
+                                      customDurationController.text.trim()) ??
+                                  0;
+                              if (hours <= 24) {
+                                _showSnack(
+                                  'Pour plus de 24h, saisissez un nombre d\'heures supérieur à 24.',
+                                  isError: true,
+                                );
+                                return;
+                              }
+                              durationMinutes = hours * 60;
+                            } else {
+                              durationMinutes = selectedDuration;
+                            }
+                            durationMinutes =
+                                durationMinutes.clamp(15, maxDurationMinutes);
+                            Navigator.of(context).pop(_NewPollData(
+                              question: question,
+                              options: options,
+                              durationMinutes: durationMinutes,
+                              allowMultiple: allowMultiple,
+                            ));
+                          },
+                          icon: const Icon(Icons.send),
+                          label: const Text('Créer le sondage'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (result != null) {
+      await _createPoll(result);
+    }
+  }
+
+  void _showPollVotes(PollModel poll) {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) {
+        return FractionallySizedBox(
+          heightFactor: 0.72,
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Votes pour "${poll.question}"',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: ListView(
+                      children: poll.options.map((option) {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      option.label,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.grey.shade900,
+                                          ),
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                          color: Colors.grey.shade300),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.how_to_vote, size: 16),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '${option.voteCount}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              if (option.voters.isEmpty)
+                                Text(
+                                  'Aucun vote pour le moment.',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(color: Colors.grey.shade600),
+                                )
+                              else
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: option.voters.map((voter) {
+                                    return Chip(
+                                      avatar: CircleAvatar(
+                                        backgroundColor: Colors.grey.shade300,
+                                        backgroundImage: voter.avatarUrl == null
+                                            ? null
+                                            : NetworkImage(voter.avatarUrl!),
+                                        child: voter.avatarUrl == null
+                                            ? Text(
+                                                (voter.handle ?? voter.email)
+                                                    .substring(0, 1)
+                                                    .toUpperCase(),
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.w700),
+                                              )
+                                            : null,
+                                      ),
+                                      label: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            voter.handle ?? voter.email,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.w700),
+                                          ),
+                                          if (voter.handle != null)
+                                            Text(
+                                              voter.email,
+                                              style: TextStyle(
+                                                color: Colors.grey.shade600,
+                                                fontSize: 11,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatRemaining(Duration duration) {
+    if (duration.isNegative) return 'Expiré';
+    if (duration.inMinutes < 60) {
+      return '${duration.inMinutes} min';
+    }
+    if (duration.inHours < 24) {
+      final minutes = duration.inMinutes % 60;
+      return '${duration.inHours} h ${minutes} min';
+    }
+    return '${duration.inDays} j';
   }
 
   void _startRealtime() {
@@ -172,6 +730,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
         break;
       case 'items_changed':
         _loadItems(showLoading: false);
+        break;
+      case 'polls_changed':
+        _loadPolls(showLoading: false);
         break;
       case 'invitation_updated':
         _loadMyInvitation();
@@ -236,77 +797,109 @@ class _EventDetailPageState extends State<EventDetailPage> {
     final unitController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
-    final result = await showDialog<_NewEventItemData>(
+    final result = await showModalBottomSheet<_NewEventItemData>(
       context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Nouvel item'),
-          content: Form(
+        final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            bottom: bottomInset + 16,
+            top: 12,
+          ),
+          child: Form(
             key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  autofocus: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Nom de l’item',
-                    prefixIcon: Icon(Icons.shopping_bag),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Nouvel item',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
                   ),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Champ requis'
-                      : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: quantityController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Quantité souhaitée',
-                    prefixIcon: Icon(Icons.format_list_numbered),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: nameController,
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Nom de l\'item',
+                      prefixIcon: Icon(Icons.shopping_bag),
+                    ),
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Champ requis'
+                        : null,
                   ),
-                  validator: (value) {
-                    final text = value?.trim() ?? '';
-                    if (text.isEmpty) {
-                      return 'Champ requis';
-                    }
-                    final parsed = int.tryParse(text);
-                    if (parsed == null || parsed <= 0) {
-                      return 'Nombre positif requis';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: unitController,
-                  decoration: const InputDecoration(
-                    labelText: 'Unité (ex: pièce, gramme...)',
-                    prefixIcon: Icon(Icons.straighten),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: quantityController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Quantité souhaitée',
+                      prefixIcon: Icon(Icons.format_list_numbered),
+                    ),
+                    validator: (value) {
+                      final text = value?.trim() ?? '';
+                      if (text.isEmpty) {
+                        return 'Champ requis';
+                      }
+                      final parsed = int.tryParse(text);
+                      if (parsed == null || parsed <= 0) {
+                        return 'Nombre positif requis';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Champ requis'
-                      : null,
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: unitController,
+                    decoration: const InputDecoration(
+                      labelText: 'Unité (ex: pièce, gramme...)',
+                      prefixIcon: Icon(Icons.straighten),
+                    ),
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Champ requis'
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Annuler'),
+                      ),
+                      const Spacer(),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          if (formKey.currentState?.validate() != true) return;
+                          final name = nameController.text.trim();
+                          final qty = int.parse(quantityController.text.trim());
+                          final unit = unitController.text.trim();
+                          Navigator.of(context)
+                              .pop(_NewEventItemData(name, qty, unit));
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Ajouter l\'item'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (formKey.currentState?.validate() != true) return;
-                final name = nameController.text.trim();
-                final qty = int.parse(quantityController.text.trim());
-                final unit = unitController.text.trim();
-                Navigator.of(context).pop(_NewEventItemData(name, qty, unit));
-              },
-              child: const Text('Ajouter'),
-            ),
-          ],
         );
       },
     );
@@ -438,6 +1031,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
         return;
       }
       await _loadMyInvitation();
+      if (status == 'Accepted') {
+        await _loadPolls(showLoading: false);
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 410) {
@@ -686,7 +1282,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => _loadItems(showLoading: false),
+        onRefresh: () async {
+          await _loadPolls(showLoading: false);
+          await _loadItems(showLoading: false);
+        },
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
@@ -724,87 +1323,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
             _buildPaymentSection(),
             const SizedBox(height: 16),
-            if (_canContributeItems) ...[
-              Align(
-                alignment: Alignment.centerLeft,
-                child: ElevatedButton.icon(
-                  onPressed: _creatingCustomItem ? null : _openAddItemDialog,
-                  icon: _creatingCustomItem
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.add),
-                  label: Text(
-                    _creatingCustomItem
-                        ? 'Ajout en cours...'
-                        : 'Ajouter un item',
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-            Text(
-              'Items disponibles',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Choisissez ce que vous apportez. Les quantités sont partagées entre tous les participants.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.grey.shade700),
-            ),
-            if (!_isOwner && _isWaitingInvitation)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Acceptez l\'invitation avant de pouvoir contribuer aux items.',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.red.shade700),
-                ),
-              ),
-            if (!_isOwner && _isExpiredInvitation)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Invitation expirée : les contributions ne sont plus possibles.',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.red.shade700),
-                ),
-              ),
-            const SizedBox(height: 16),
-            if (_loadingItems)
-              const Center(child: CircularProgressIndicator())
-            else if (_itemsError != null)
-              Column(
-                children: [
-                  Text(_itemsError!),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: _loadItems,
-                    child: const Text('Réessayer'),
-                  ),
-                ],
-              )
-            else
-              _EventItemsList(
-                items: _eventItems ?? const [],
-                reservingItemId: _reservingItemId,
-                deletingItemId: _deletingItemId,
-                onReserve: _openQuantityDialog,
-                onDelete: _deleteEventItem,
-                isOwner: _isOwner,
-                currentUserEmail: widget.session.email,
-                canReserveItems: _canContributeItems,
-                contributions: _contributions,
-              ),
+            _buildPollsBlock(),
+            const SizedBox(height: 24),
+            _buildItemsBlock(),
           ],
         ),
       ),
@@ -1213,6 +1734,227 @@ class _EventDetailPageState extends State<EventDetailPage> {
       ),
     );
   }
+
+  Widget _buildPollsBlock() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Sondages éphémères',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            if (_isOwner)
+              TextButton.icon(
+                onPressed: _creatingPoll ? null : _openCreatePollSheet,
+                icon: _creatingPoll
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.add_circle_outline),
+                label: Text(_creatingPoll ? 'Création...' : 'Nouveau sondage'),
+              ),
+            IconButton(
+              onPressed: () =>
+                  setState(() => _pollsExpanded = !_pollsExpanded),
+              icon: Icon(
+                _pollsExpanded ? Icons.expand_less : Icons.expand_more,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Collectez un avis rapide auprès des participants. Chaque sondage s\'expire automatiquement.',
+          style: Theme.of(context)
+              .textTheme
+              .bodySmall
+              ?.copyWith(color: Colors.grey.shade700),
+        ),
+        const SizedBox(height: 12),
+        AnimatedCrossFade(
+          duration: const Duration(milliseconds: 200),
+          crossFadeState: _pollsExpanded
+              ? CrossFadeState.showFirst
+              : CrossFadeState.showSecond,
+          firstChild: _buildPollsContent(),
+          secondChild: const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPollsContent() {
+    if (_loadingPolls) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_pollsError != null) {
+      return Column(
+        children: [
+          Text(_pollsError!),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            onPressed: _loadPolls,
+            child: const Text('Réessayer'),
+          ),
+        ],
+      );
+    }
+    final polls = _polls ?? const [];
+    if (polls.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Text(
+          'Aucun sondage pour le moment.',
+          style: Theme.of(context)
+              .textTheme
+              .bodyMedium
+              ?.copyWith(color: Colors.grey.shade700),
+        ),
+      );
+    }
+    return Column(
+      children: polls
+          .map(
+            (poll) => _PollCard(
+              poll: poll,
+              onToggleOption: (optionId) => _toggleVote(poll, optionId),
+              onViewVotes: () => _showPollVotes(poll),
+              isVoting: _votingPollId == poll.id,
+              canVote: _canVotePolls && !_isWaitingInvitation,
+              remainingLabel: poll.isExpired
+                  ? 'Expiré'
+                  : 'Expire dans ${_formatRemaining(poll.timeRemaining)}',
+              onDelete: (_isOwner ||
+                      (poll.createdByEmail != null &&
+                          poll.createdByEmail!.toLowerCase() ==
+                              widget.session.email.toLowerCase()))
+                  ? () => _deletePoll(poll)
+                  : null,
+              isDeleting: _deletingPollId == poll.id,
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget _buildItemsBlock() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Items disponibles',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            if (_canContributeItems)
+              TextButton.icon(
+                onPressed: _creatingCustomItem ? null : _openAddItemDialog,
+                icon: _creatingCustomItem
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.add),
+                label: Text(
+                  _creatingCustomItem ? 'Ajout...' : 'Ajouter',
+                ),
+              ),
+            IconButton(
+              onPressed: () =>
+                  setState(() => _itemsExpanded = !_itemsExpanded),
+              icon: Icon(
+                _itemsExpanded ? Icons.expand_less : Icons.expand_more,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Choisissez ce que vous apportez. Les quantités sont partagées entre tous les participants.',
+          style: Theme.of(context)
+              .textTheme
+              .bodySmall
+              ?.copyWith(color: Colors.grey.shade700),
+        ),
+        if (!_isOwner && _isWaitingInvitation)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Acceptez l\'invitation avant de pouvoir contribuer aux items.',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: Colors.red.shade700),
+            ),
+          ),
+        if (!_isOwner && _isExpiredInvitation)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Invitation expirée : les contributions ne sont plus possibles.',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: Colors.red.shade700),
+            ),
+          ),
+        const SizedBox(height: 12),
+        AnimatedCrossFade(
+          duration: const Duration(milliseconds: 200),
+          crossFadeState: _itemsExpanded
+              ? CrossFadeState.showFirst
+              : CrossFadeState.showSecond,
+          firstChild: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_loadingItems)
+                const Center(child: CircularProgressIndicator())
+              else if (_itemsError != null)
+                Column(
+                  children: [
+                    Text(_itemsError!),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: _loadItems,
+                      child: const Text('Réessayer'),
+                    ),
+                  ],
+                )
+              else
+                _EventItemsList(
+                  items: _eventItems ?? const [],
+                  reservingItemId: _reservingItemId,
+                  deletingItemId: _deletingItemId,
+                  onReserve: _openQuantityDialog,
+                  onDelete: _deleteEventItem,
+                  isOwner: _isOwner,
+                  currentUserEmail: widget.session.email,
+                  canReserveItems: _canContributeItems,
+                  contributions: _contributions,
+                ),
+            ],
+          ),
+          secondChild: const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
 }
 
 class _InvitationStatusCard extends StatefulWidget {
@@ -1498,6 +2240,349 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
   }
 }
 
+class _NewPollData {
+  const _NewPollData({
+    required this.question,
+    required this.options,
+    required this.durationMinutes,
+    required this.allowMultiple,
+  });
+
+  final String question;
+  final List<String> options;
+  final int durationMinutes;
+  final bool allowMultiple;
+}
+
+class _PollCard extends StatelessWidget {
+  const _PollCard({
+    required this.poll,
+    required this.onToggleOption,
+    required this.onViewVotes,
+    required this.isVoting,
+    required this.canVote,
+    required this.remainingLabel,
+    this.onDelete,
+    this.isDeleting = false,
+  });
+
+  final PollModel poll;
+  final void Function(int optionId) onToggleOption;
+  final VoidCallback onViewVotes;
+  final bool isVoting;
+  final bool canVote;
+  final String remainingLabel;
+  final VoidCallback? onDelete;
+  final bool isDeleting;
+
+  @override
+  Widget build(BuildContext context) {
+    final background = Colors.white;
+    final accentGreen = Colors.green.shade500;
+    final fadedText = Colors.grey.shade600;
+    final maxVotes = poll.maxVotes == 0 ? 1 : poll.maxVotes;
+    final timeText = DateFormat.Hm('fr_FR').format(poll.expiresAt);
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromARGB(30, 0, 0, 0),
+            blurRadius: 10,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    poll.question,
+                    style: TextStyle(
+                      color: Colors.grey.shade900,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                if (poll.isExpired)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Expiré',
+                      style: TextStyle(
+                        color: Colors.red.shade600,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  Icons.done_all,
+                  size: 18,
+                  color: fadedText,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    poll.allowMultiple
+                        ? 'Sélectionnez une ou plusieurs options.'
+                        : 'Choisissez une option.',
+                    style: TextStyle(
+                      color: fadedText,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (isVoting)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...poll.options.map(
+              (option) => _PollOptionTile(
+                option: option,
+                selected: poll.myVotes.contains(option.id),
+                maxVotes: maxVotes,
+                accentColor: accentGreen,
+                isDisabled: poll.isExpired || !canVote,
+                isVoting: isVoting,
+                onTap: () => onToggleOption(option.id),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Text(
+                  timeText,
+                  style: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  remainingLabel,
+                  style: TextStyle(
+                    color:
+                        poll.isExpired ? Colors.red.shade400 : Colors.grey.shade700,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.grey.shade100,
+                      foregroundColor: Colors.grey.shade900,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: onViewVotes,
+                    child: const Text('Voir les votes'),
+                  ),
+                ),
+                if (onDelete != null) ...[
+                  const SizedBox(width: 10),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.red.withValues(alpha: 0.08),
+                      foregroundColor: Colors.red.shade500,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: isDeleting ? null : onDelete,
+                    child: isDeleting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation(Colors.white),
+                            ),
+                          )
+                        : const Icon(Icons.delete_outline),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PollOptionTile extends StatelessWidget {
+  const _PollOptionTile({
+    required this.option,
+    required this.selected,
+    required this.maxVotes,
+    required this.accentColor,
+    required this.onTap,
+    required this.isDisabled,
+    required this.isVoting,
+  });
+
+  final PollOptionModel option;
+  final bool selected;
+  final int maxVotes;
+  final Color accentColor;
+  final VoidCallback onTap;
+  final bool isDisabled;
+  final bool isVoting;
+
+  @override
+  Widget build(BuildContext context) {
+    final baseBar = Colors.grey.shade200;
+    final ratio = maxVotes == 0 ? 0.0 : option.voteCount / maxVotes;
+    final fillColor =
+        option.voteCount == 0 ? Colors.grey.shade300 : accentColor;
+    final faded = Colors.grey.shade500;
+    final firstVoter = option.voters.isNotEmpty ? option.voters.first : null;
+
+    return GestureDetector(
+      onTap: isDisabled || isVoting ? null : onTap,
+      child: Opacity(
+        opacity: isDisabled ? 0.65 : 1,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: selected ? accentColor : Colors.transparent,
+                      border: Border.all(
+                        color: selected ? accentColor : faded,
+                        width: 2,
+                      ),
+                    ),
+                    child: selected
+                        ? const Icon(Icons.check,
+                            color: Colors.white, size: 16)
+                        : null,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      option.label,
+                      style: TextStyle(
+                        color: Colors.grey.shade900,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (firstVoter != null)
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor: Colors.grey.shade200,
+                          backgroundImage: firstVoter.avatarUrl == null
+                              ? null
+                              : NetworkImage(firstVoter.avatarUrl!),
+                          child: firstVoter.avatarUrl == null
+                              ? Text(
+                                  (firstVoter.handle ?? firstVoter.email)
+                                      .substring(0, 1)
+                                      .toUpperCase(),
+                                  style: TextStyle(
+                                    color: Colors.grey.shade800,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                )
+                              : null,
+                        ),
+                     const SizedBox(width: 6),
+                      Text(
+                        '${option.voteCount}',
+                        style: TextStyle(
+                          color: Colors.grey.shade900,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth * ratio.clamp(0.0, 1.0);
+                  return Stack(
+                    children: [
+                      Container(
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: baseBar,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        height: 10,
+                        width: width,
+                        decoration: BoxDecoration(
+                          color: fillColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _NewEventItemData {
   const _NewEventItemData(this.name, this.quantity, this.unit);
 
@@ -1532,8 +2617,21 @@ class _EventItemsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return const Text(
-        'Aucun item n’a encore été ajouté pour cette soirée.',
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Text(
+          'Aucun item n’a encore été ajouté pour cette soirée.',
+          style: Theme.of(context)
+              .textTheme
+              .bodyMedium
+              ?.copyWith(color: Colors.grey.shade700),
+        ),
       );
     }
 

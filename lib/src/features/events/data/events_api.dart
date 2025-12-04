@@ -6,6 +6,7 @@ import 'package:fiestaaa_front/src/features/events/domain/item_contribution_mode
 import 'package:fiestaaa_front/src/features/events/domain/address_suggestion.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_item_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
+import 'package:fiestaaa_front/src/features/events/domain/event_poll_model.dart';
 import 'package:http/http.dart' as http;
 
 class EventsApi {
@@ -142,6 +143,114 @@ class EventsApi {
     }
     throw ApiException(
       'Impossible de récupérer les items (${response.statusCode})',
+      statusCode: response.statusCode,
+    );
+  }
+
+  Future<List<PollModel>> fetchEventPolls({
+    required String token,
+    required int eventId,
+  }) async {
+    final response = await _client.get(
+      Uri.parse('$apiBaseUrl/events/$eventId/polls'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body) as List<dynamic>;
+      return decoded
+          .map((e) => PollModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    throw ApiException(
+      'Impossible de charger les sondages (${response.statusCode})',
+      statusCode: response.statusCode,
+    );
+  }
+
+  Future<PollModel> createEventPoll({
+    required String token,
+    required int eventId,
+    required String question,
+    required List<String> options,
+    required int durationMinutes,
+    bool allowMultiple = true,
+  }) async {
+    final response = await _client.post(
+      Uri.parse('$apiBaseUrl/events/$eventId/polls'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'question': question,
+        'options': options,
+        'duration_minutes': durationMinutes,
+        'allow_multiple': allowMultiple,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return PollModel.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    }
+
+    throw ApiException(
+      'Impossible de créer le sondage (${response.statusCode})',
+      statusCode: response.statusCode,
+    );
+  }
+
+  Future<PollModel> votePoll({
+    required String token,
+    required int eventId,
+    required int pollId,
+    required List<int> optionIds,
+  }) async {
+    final response = await _client.post(
+      Uri.parse('$apiBaseUrl/events/$eventId/polls/$pollId/vote'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'option_ids': optionIds}),
+    );
+
+    if (response.statusCode == 200) {
+      return PollModel.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    }
+
+    if (response.statusCode == 410) {
+      throw ApiException(
+        'Ce sondage est expiré.',
+        statusCode: response.statusCode,
+      );
+    }
+
+    throw ApiException(
+      'Impossible d’enregistrer le vote (${response.statusCode})',
+      statusCode: response.statusCode,
+    );
+  }
+
+  Future<void> deleteEventPoll({
+    required String token,
+    required int eventId,
+    required int pollId,
+  }) async {
+    final response = await _client.delete(
+      Uri.parse('$apiBaseUrl/events/$eventId/polls/$pollId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return;
+    }
+
+    throw ApiException(
+      'Impossible de supprimer le sondage (${response.statusCode})',
       statusCode: response.statusCode,
     );
   }
