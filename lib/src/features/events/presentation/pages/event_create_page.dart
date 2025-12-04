@@ -268,7 +268,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
         payload: payload,
       );
       if (!mounted) return;
-      _showSnack('Événement créé !');
+      _showSnack('Fiestaaa créé !');
       widget.onEventCreated();
       _formKey.currentState?.reset();
       _nameController.clear();
@@ -571,7 +571,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Créer une nouvelle fête',
+                'Créer une nouvelle fiestaaa',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -592,7 +592,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
                         TextFormField(
                           controller: _nameController,
                           decoration: const InputDecoration(
-                            labelText: 'Nom de l’événement',
+                            labelText: 'Nom de la fiestaaa',
                             prefixIcon: Icon(Icons.celebration),
                           ),
                           validator: (value) =>
@@ -698,7 +698,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
                                     child: CircularProgressIndicator(
                                         strokeWidth: 2),
                                   )
-                                : const Text('Créer l’événement'),
+                                : const Text('Créer la fiestaaa'),
                           ),
                         ),
                       ],
