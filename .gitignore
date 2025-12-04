@@ -41,3 +41,15 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Generated plugin files (Flutter auto-generates these)
+**/GeneratedPluginRegistrant.*
+**/generated_plugin_registrant.cc
+**/generated_plugins.cmake
+**/generated_plugin_registrant.h
+
+# Other Flutter generated files
+.flutter-plugins
+.flutter-plugins-dependencies
+**/Flutter/Generated.xcconfig
+**/Flutter/flutter_export_environment.sh

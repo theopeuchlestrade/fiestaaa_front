@@ -240,7 +240,7 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
           title: const Text('Mes invitations'),
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'Événements'),
+              Tab(text: 'Fiestaaa'),
               Tab(text: 'Amis'),
             ],
           ),

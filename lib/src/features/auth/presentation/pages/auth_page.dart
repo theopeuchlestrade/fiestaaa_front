@@ -509,7 +509,7 @@ class _AuthPageState extends State<AuthPage> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Créez, partagez et gérez vos événements en toute simplicité.',
+                          'Créez, partagez et gérez vos fiestaaa en toute simplicité.',
                           style:
                               Theme.of(context).textTheme.titleLarge?.copyWith(
                                     color: Colors.white.withValues(alpha: 0.9),
@@ -521,7 +521,7 @@ class _AuthPageState extends State<AuthPage> {
                         _buildFeatureItem(
                           icon: Icons.event,
                           title: 'Organisation facile',
-                          description: 'Créez vos événements en quelques clics',
+                          description: 'Créez vos fiestaaa en quelques clics',
                         ),
                         const SizedBox(height: 20),
                         _buildFeatureItem(
@@ -533,7 +533,7 @@ class _AuthPageState extends State<AuthPage> {
                         _buildFeatureItem(
                           icon: Icons.people,
                           title: 'Gestion collaborative',
-                          description: 'Organisez ensemble vos festivités',
+                          description: 'Organisez ensemble vos fiestaaa',
                         ),
                       ],
                     ),
