@@ -17,16 +17,14 @@ samples, guidance on mobile development, and a full API reference.
 
 ## Run the app
 
-```bash
-flutter run -d chrome --web-port=5001 --dart-define=FIESTAAA_API_BASE_URL=http://127.0.0.1:8080
-```
+### Web
 
 ```bash
-flutter run -d chrome --web-port=5001 --dart-define=FIESTAAA_API_BASE_URL=http://127.0.0.1:8080 --dart-define=FIESTAAA_FCM_VAPID_KEY=BCyVeS1aOKK5gZLD7lKtr6U637mA5c3CZJCKle9jQdNEXsHT8drtq-2cC22vJ67OVHK82Epuefd8nqsV5NfPiKI
+flutter run -d chrome --web-port=5001 --dart-define=FIESTAAA_API_BASE_URL=http://127.0.0.1:8080 --dart-define=FIESTAAA_FCM_VAPID_KEY=your_fcm_vapid_key --dart-define=FIESTAAA_GOOGLE_WEB_CLIENT_ID=your_google_web_client_id
 ```
 
+### Android
+
 ```bash
-flutter run -d emulator-5554 \
-  --dart-define=FIESTAAA_API_BASE_URL=http://10.0.2.2:8080 \
-  --dart-define=FIESTAAA_FCM_VAPID_KEY=BCyVeS1aOKK5gZLD7lKtr6U637mA5c3CZJCKle9jQdNEXsHT8drtq-2cC22vJ67OVHK82Epuefd8nqsV5NfPiKI
+flutter run -d emulator-5554 --dart-define=FIESTAAA_API_BASE_URL=http://10.0.2.2:8080 --dart-define=FIESTAAA_FCM_VAPID_KEY=your_fcm_vapid_key --dart-define=FIESTAAA_GOOGLE_WEB_CLIENT_ID=your_google_web_client_id
 ```

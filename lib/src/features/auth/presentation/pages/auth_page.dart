@@ -1,7 +1,12 @@
+import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
+import 'package:fiestaaa_front/src/features/auth/presentation/widgets/google_web_button.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 enum AuthMode { login, register }
 
@@ -21,10 +26,15 @@ class _AuthPageState extends State<AuthPage> {
   final _confirmPasswordController = TextEditingController();
   final _handleController = TextEditingController();
   final _api = AuthApi();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: const ['email'],
+    clientId: googleWebClientId.isNotEmpty ? googleWebClientId : null,
+  );
   AuthMode _mode = AuthMode.login;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   bool _isSubmitting = false;
+  String? _socialInProgress;
 
   @override
   void dispose() {
@@ -41,6 +51,203 @@ class _AuthPageState extends State<AuthPage> {
     setState(() {
       _mode = mode;
     });
+  }
+
+  bool get _shouldShowAppleButton {
+    if (kIsWeb) {
+      return appleServiceId.isNotEmpty && appleRedirectUri.isNotEmpty;
+    }
+    return defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS;
+  }
+
+  Future<void> _loginWithGoogleToken({
+    String? idToken,
+    String? accessToken,
+    String? email,
+    String? displayName,
+    bool manageState = true,
+  }) async {
+    if (manageState) {
+      setState(() {
+        _isSubmitting = true;
+        _socialInProgress = 'google';
+      });
+    }
+
+    try {
+      final session = await _api.loginWithProvider(
+        provider: 'google',
+        idToken: idToken,
+        accessToken: accessToken,
+        email: email,
+        displayName: displayName,
+      );
+      await widget.onAuthenticated(session);
+      if (!mounted) return;
+      _showSnack('Connexion Google réussie !');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack(
+        'Connexion Google impossible pour le moment.',
+        isError: true,
+      );
+    } finally {
+      if (!mounted) return;
+      if (manageState) {
+        setState(() {
+          _isSubmitting = false;
+          _socialInProgress = null;
+        });
+      }
+    }
+  }
+
+  Future<void> _continueWithGoogle() async {
+    if (_isSubmitting) return;
+
+    if (kIsWeb && googleWebClientId.isEmpty) {
+      _showSnack(
+        'Ajoutez FIESTAAA_GOOGLE_WEB_CLIENT_ID pour activer Google sur le web.',
+        isError: true,
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+      _socialInProgress = 'google';
+    });
+
+    try {
+      final account = await _googleSignIn.signIn();
+      if (account == null) return;
+
+      final auth = await account.authentication;
+      final idToken = auth.idToken;
+      if (idToken == null || idToken.isEmpty) {
+        throw ApiException('Token Google manquant ou invalide');
+      }
+
+      if (idToken != null && idToken.isNotEmpty) {
+        await _loginWithGoogleToken(
+          idToken: idToken,
+          email: account.email,
+          displayName: account.displayName,
+          manageState: false,
+        );
+      } else if (auth.accessToken != null && auth.accessToken!.isNotEmpty) {
+        await _loginWithGoogleToken(
+          accessToken: auth.accessToken!,
+          email: account.email,
+          displayName: account.displayName,
+          manageState: false,
+        );
+      } else {
+        throw ApiException('Token Google manquant ou invalide');
+      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack(
+        'Connexion Google impossible pour le moment.',
+        isError: true,
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _socialInProgress = null;
+      });
+    }
+  }
+
+  Future<void> _continueWithApple() async {
+    if (_isSubmitting) return;
+
+    if (!_shouldShowAppleButton) {
+      _showSnack(
+        'Connexion Apple non disponible sur cette plateforme.',
+        isError: true,
+      );
+      return;
+    }
+
+    if (kIsWeb && (appleServiceId.isEmpty || appleRedirectUri.isEmpty)) {
+      _showSnack(
+        'Configurez FIESTAAA_APPLE_SERVICE_ID et FIESTAAA_APPLE_REDIRECT_URI.',
+        isError: true,
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+      _socialInProgress = 'apple';
+    });
+
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: const [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        webAuthenticationOptions: kIsWeb
+            ? WebAuthenticationOptions(
+                clientId: appleServiceId,
+                redirectUri: Uri.parse(appleRedirectUri),
+              )
+            : null,
+      );
+      final idToken = credential.identityToken;
+      if (idToken == null || idToken.isEmpty) {
+        throw ApiException('Token Apple manquant ou invalide');
+      }
+
+      final fullName = [
+        credential.givenName,
+        credential.familyName,
+      ].where((part) => part != null && part.trim().isNotEmpty).join(' ');
+
+      final session = await _api.loginWithProvider(
+        provider: 'apple',
+        idToken: idToken,
+        email: credential.email,
+        displayName: fullName.trim().isEmpty ? null : fullName.trim(),
+      );
+      await widget.onAuthenticated(session);
+      if (!mounted) return;
+      _showSnack('Connexion Apple réussie !');
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (!mounted) return;
+      if (e.code == AuthorizationErrorCode.canceled) {
+        return;
+      }
+      _showSnack(
+        e.message ?? 'Connexion Apple échouée.',
+        isError: true,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack(
+        'Connexion Apple impossible pour le moment.',
+        isError: true,
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _socialInProgress = null;
+      });
+    }
   }
 
   Future<void> _submit() async {
@@ -362,8 +569,7 @@ class _AuthPageState extends State<AuthPage> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        // Divider
+                        const SizedBox(height: 20),
                         Row(
                           children: [
                             Expanded(
@@ -372,7 +578,7 @@ class _AuthPageState extends State<AuthPage> {
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 12),
                               child: Text(
-                                'ou',
+                                'ou continuez avec',
                                 style: TextStyle(
                                   color: Colors.grey.shade500,
                                   fontSize: 13,
@@ -383,6 +589,8 @@ class _AuthPageState extends State<AuthPage> {
                                 child: Divider(color: Colors.grey.shade300)),
                           ],
                         ),
+                        const SizedBox(height: 16),
+                        _buildSocialButtons(),
                         const SizedBox(height: 16),
                         // Switch Mode Button
                         TextButton(
@@ -602,6 +810,88 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
+  Widget _buildSocialButtons() {
+    final shape =
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(14));
+    final googleWebButton = buildGoogleWebButton(
+      disabled: _isSubmitting,
+      onError: (error) {
+        if (!mounted) return;
+        _showSnack(
+          'Connexion Google impossible pour le moment.',
+          isError: true,
+        );
+      },
+      onSuccess: ({
+        required String idToken,
+        String? email,
+        String? displayName,
+      }) async {
+        await _loginWithGoogleToken(
+          idToken: idToken,
+          email: email,
+          displayName: displayName,
+        );
+      },
+    );
+    Widget spinner(Color color) {
+      return SizedBox(
+        height: 18,
+        width: 18,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation(color),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        googleWebButton ??
+            OutlinedButton.icon(
+              onPressed: _isSubmitting ? null : _continueWithGoogle,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black87,
+                side: BorderSide(color: Colors.grey.shade300),
+                shape: shape,
+              ),
+              icon: _socialInProgress == 'google'
+                  ? spinner(FiestaaaPalette.primary)
+                  : const Icon(Icons.g_translate),
+              label: const Text(
+                'Continuer avec Google',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+        const SizedBox(height: 12),
+        if (_shouldShowAppleButton)
+          OutlinedButton.icon(
+            onPressed: _isSubmitting ? null : _continueWithApple,
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              shape: shape,
+            ),
+            icon: _socialInProgress == 'apple'
+                ? spinner(Colors.white)
+                : const Icon(Icons.ios_share),
+            label: const Text(
+              'Continuer avec Apple',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   Widget _buildAuthForm(BuildContext context, double padding) {
     return Padding(
       padding: EdgeInsets.all(padding),
@@ -783,7 +1073,26 @@ class _AuthPageState extends State<AuthPage> {
               ],
             ),
           ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(child: Divider(color: Colors.grey.shade300)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  'ou continuez avec',
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              Expanded(child: Divider(color: Colors.grey.shade300)),
+            ],
+          ),
           const SizedBox(height: 16),
+          _buildSocialButtons(),
+          const SizedBox(height: 12),
           Center(
             child: TextButton(
               onPressed: _isSubmitting
