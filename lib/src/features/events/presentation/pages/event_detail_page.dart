@@ -26,6 +26,16 @@ import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+String _displayName(String? handle) {
+  final trimmed = handle?.trim() ?? '';
+  return trimmed.isEmpty ? 'Invité' : trimmed;
+}
+
+String _displayInitial(String? handle) {
+  final name = _displayName(handle);
+  return name.isEmpty ? '?' : name[0].toUpperCase();
+}
+
 class EventDetailPage extends StatefulWidget {
   const EventDetailPage({
     super.key,
@@ -635,6 +645,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                   spacing: 8,
                                   runSpacing: 8,
                                   children: option.voters.map((voter) {
+                                    final displayName =
+                                        _displayName(voter.handle);
                                     return Chip(
                                       avatar: CircleAvatar(
                                         backgroundColor: Colors.grey.shade300,
@@ -643,34 +655,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                             : NetworkImage(voter.avatarUrl!),
                                         child: voter.avatarUrl == null
                                             ? Text(
-                                                (voter.handle ?? voter.email)
-                                                    .substring(0, 1)
-                                                    .toUpperCase(),
+                                                _displayInitial(voter.handle),
                                                 style: const TextStyle(
                                                     fontWeight:
                                                         FontWeight.w700),
                                               )
                                             : null,
                                       ),
-                                      label: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            voter.handle ?? voter.email,
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.w700),
-                                          ),
-                                          if (voter.handle != null)
-                                            Text(
-                                              voter.email,
-                                              style: TextStyle(
-                                                color: Colors.grey.shade600,
-                                                fontSize: 11,
-                                              ),
-                                            ),
-                                        ],
+                                      label: Text(
+                                        displayName,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w700),
                                       ),
                                     );
                                   }).toList(),
@@ -2527,9 +2522,7 @@ class _PollOptionTile extends StatelessWidget {
                               : NetworkImage(firstVoter.avatarUrl!),
                           child: firstVoter.avatarUrl == null
                               ? Text(
-                                  (firstVoter.handle ?? firstVoter.email)
-                                      .substring(0, 1)
-                                      .toUpperCase(),
+                                  _displayInitial(firstVoter.handle),
                                   style: TextStyle(
                                     color: Colors.grey.shade800,
                                     fontWeight: FontWeight.w700,
@@ -2537,7 +2530,7 @@ class _PollOptionTile extends StatelessWidget {
                                 )
                               : null,
                         ),
-                     const SizedBox(width: 6),
+                      const SizedBox(width: 6),
                       Text(
                         '${option.voteCount}',
                         style: TextStyle(
@@ -2729,6 +2722,7 @@ class _EventItemTile extends StatelessWidget {
                 else
                   ...list.map(
                     (c) => ListTile(
+                      title: Text(_displayName(c.handle)),
                       contentPadding: EdgeInsets.zero,
                       leading: CircleAvatar(
                         backgroundColor: Colors.grey.shade200,
@@ -2737,15 +2731,12 @@ class _EventItemTile extends StatelessWidget {
                             : NetworkImage(c.avatarUrl!),
                         child: c.avatarUrl == null
                             ? Text(
-                                (c.handle ?? c.email)
-                                    .substring(0, 1)
-                                    .toUpperCase(),
+                                _displayInitial(c.handle),
                                 style: const TextStyle(
                                     fontWeight: FontWeight.w700),
                               )
                             : null,
                       ),
-                      title: Text(c.handle ?? c.email),
                       subtitle: Text('${c.quantity} ${item.unitLabel}'),
                     ),
                   ),
@@ -2854,9 +2845,7 @@ class _EventItemTile extends StatelessWidget {
                                           : NetworkImage(c.avatarUrl!),
                                       child: c.avatarUrl == null
                                           ? Text(
-                                              (c.handle ?? c.email)
-                                                  .substring(0, 1)
-                                                  .toUpperCase(),
+                                              _displayInitial(c.handle),
                                               style: TextStyle(
                                                 fontWeight: FontWeight.w700,
                                                 color: Colors.grey.shade800,
