@@ -53,17 +53,42 @@ class AuthApi {
     );
 
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-      final token = decoded['token'] as String?;
-      final email = decoded['email'] as String?;
-      final handle = decoded['handle'] as String?;
-      if (token == null || token.isEmpty) {
-        throw ApiException('Réponse invalide du serveur', statusCode: 200);
-      }
-      return SessionData(
-        token: token,
-        email: email ?? identifier,
-        handle: handle,
+      return _sessionFromResponse(
+        response,
+        fallbackIdentifier: identifier,
+      );
+    }
+
+    throw _apiError(response);
+  }
+
+  Future<SessionData> loginWithProvider({
+    required String provider,
+    String? idToken,
+    String? accessToken,
+    String? email,
+    String? displayName,
+  }) async {
+    if ((idToken == null || idToken.isEmpty) &&
+        (accessToken == null || accessToken.isEmpty)) {
+      throw ApiException('Token OAuth manquant ou invalide');
+    }
+
+    final response = await _post(
+      '/auth/oauth/$provider',
+      body: {
+        if (idToken != null) 'idToken': idToken,
+        if (accessToken != null) 'accessToken': accessToken,
+        if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
+        if (displayName != null && displayName.trim().isNotEmpty)
+          'name': displayName.trim(),
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return _sessionFromResponse(
+        response,
+        fallbackIdentifier: email,
       );
     }
 
@@ -123,5 +148,26 @@ class AuthApi {
 
   void dispose() {
     _client.close();
+  }
+
+  SessionData _sessionFromResponse(
+    http.Response response, {
+    String? fallbackIdentifier,
+  }) {
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    final token = decoded['token'] as String?;
+    final email = decoded['email'] as String? ?? fallbackIdentifier;
+    final handle = decoded['handle'] as String?;
+    if (token == null || token.isEmpty || email == null || email.isEmpty) {
+      throw ApiException(
+        'Réponse invalide du serveur',
+        statusCode: response.statusCode,
+      );
+    }
+    return SessionData(
+      token: token,
+      email: email,
+      handle: handle,
+    );
   }
 }
