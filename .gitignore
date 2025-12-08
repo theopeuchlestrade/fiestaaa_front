@@ -9,6 +9,20 @@
 .history
 .svn/
 migrate_working_dir/
+.env
+.env.*
+**/service-account.json
+**/service-account*.json
+*.keystore
+*.jks
+*.p12
+*.p8
+*.pem
+*.der
+*.crt
+*.mobileprovision
+**/google-services.json
+**/GoogleService-Info.plist
 
 # IntelliJ related
 *.iml
@@ -53,3 +67,6 @@ app.*.map.json
 .flutter-plugins-dependencies
 **/Flutter/Generated.xcconfig
 **/Flutter/flutter_export_environment.sh
+
+# Generated Firebase service worker (created from template + .env)
+web/firebase-messaging-sw.js

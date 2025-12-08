@@ -5,8 +5,7 @@ const String apiBaseUrl = String.fromEnvironment(
 
 const String googleWebClientId = String.fromEnvironment(
   'FIESTAAA_GOOGLE_WEB_CLIENT_ID',
-  defaultValue:
-      '900475997784-dlhlkhvo70sk0jpi72n32ugp85cq7etf.apps.googleusercontent.com',
+  defaultValue: '',
 );
 
 const String appleServiceId = String.fromEnvironment(
@@ -22,8 +21,7 @@ const String appleRedirectUri = String.fromEnvironment(
 // Public VAPID key for FCM web push
 const String fcmWebVapidKey = String.fromEnvironment(
   'FIESTAAA_FCM_VAPID_KEY',
-  defaultValue:
-      'BCyVeS1aOKK5gZLD7lKtr6U637mA5c3CZJCKle9jQdNEXsHT8drtq-2cC22vJ67OVHK82Epuefd8nqsV5NfPiKI',
+  defaultValue: '',
 );
 
 Uri buildWsUri(String path, {Map<String, String>? queryParameters}) {
