@@ -61,6 +61,22 @@ class _AuthPageState extends State<AuthPage> {
         defaultTargetPlatform == TargetPlatform.macOS;
   }
 
+  String? _validatePassword(String? value) {
+    final password = value ?? '';
+    if (password.isEmpty) return 'Mot de passe requis';
+    if (password.length < 12) {
+      return '12 caractères minimum';
+    }
+    final hasUpper = RegExp(r'[A-Z]').hasMatch(password);
+    final hasLower = RegExp(r'[a-z]').hasMatch(password);
+    final hasDigit = RegExp(r'[0-9]').hasMatch(password);
+    final hasSpecial = RegExp(r'[^\w\s]').hasMatch(password);
+    if (!(hasUpper && hasLower && hasDigit && hasSpecial)) {
+      return 'Inclure majuscule, minuscule, chiffre et symbole';
+    }
+    return null;
+  }
+
   Future<void> _loginWithGoogleToken({
     String? idToken,
     String? accessToken,
@@ -484,6 +500,8 @@ class _AuthPageState extends State<AuthPage> {
                                   prefixIcon: const Icon(Icons.lock_outline),
                                   filled: true,
                                   fillColor: Colors.grey.shade50,
+                                  helperText:
+                                      '12+ caractères, avec majuscule, minuscule, chiffre et symbole',
                                   suffixIcon: IconButton(
                                     icon: Icon(
                                       _obscurePassword
@@ -494,12 +512,7 @@ class _AuthPageState extends State<AuthPage> {
                                         _obscurePassword = !_obscurePassword),
                                   ),
                                 ),
-                                validator: (value) {
-                                  if ((value ?? '').length < 6) {
-                                    return '8 caractères minimum';
-                                  }
-                                  return null;
-                                },
+                                validator: _validatePassword,
                               ),
                               if (_mode == AuthMode.register) ...[
                                 const SizedBox(height: 16),
@@ -994,6 +1007,8 @@ class _AuthPageState extends State<AuthPage> {
                   decoration: InputDecoration(
                     labelText: 'Mot de passe',
                     prefixIcon: const Icon(Icons.lock_outline),
+                    helperText:
+                        '12+ caractères, avec majuscule, minuscule, chiffre et symbole',
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
@@ -1007,12 +1022,7 @@ class _AuthPageState extends State<AuthPage> {
                       },
                     ),
                   ),
-                  validator: (value) {
-                    if ((value ?? '').length < 6) {
-                      return '8 caractères minimum';
-                    }
-                    return null;
-                  },
+                  validator: _validatePassword,
                 ),
                 if (_mode == AuthMode.register) ...[
                   const SizedBox(height: 18),
