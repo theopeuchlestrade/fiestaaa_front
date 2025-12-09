@@ -1,0 +1,101 @@
+name: Build and Deploy Front
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+env:
+  IMAGE: ghcr.io/theopeuchlestrade/fiestaaa_front
+  TAG: ${{ github.sha }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required secrets
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          FIESTAAA_API_BASE_URL: ${{ secrets.FIESTAAA_API_BASE_URL }}
+          FIESTAAA_GOOGLE_WEB_CLIENT_ID: ${{ secrets.FIESTAAA_GOOGLE_WEB_CLIENT_ID }}
+          FIESTAAA_APPLE_SERVICE_ID: ${{ secrets.FIESTAAA_APPLE_SERVICE_ID }}
+          FIESTAAA_APPLE_REDIRECT_URI: ${{ secrets.FIESTAAA_APPLE_REDIRECT_URI }}
+          FIESTAAA_FCM_VAPID_KEY: ${{ secrets.FIESTAAA_FCM_VAPID_KEY }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
+          FIREBASE_WEB_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
+        run: |
+          missing=0
+          for var in VPS_HOST VPS_USER VPS_SSH_KEY GHCR_TOKEN \
+            FIESTAAA_API_BASE_URL FIESTAAA_GOOGLE_WEB_CLIENT_ID \
+            FIESTAAA_APPLE_SERVICE_ID FIESTAAA_APPLE_REDIRECT_URI \
+            FIESTAAA_FCM_VAPID_KEY FIREBASE_PROJECT_ID FIREBASE_STORAGE_BUCKET \
+            FIREBASE_MESSAGING_SENDER_ID FIREBASE_WEB_API_KEY FIREBASE_WEB_APP_ID; do
+            if [ -z "${!var}" ]; then
+              echo "::error::$var manquant"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+
+      - name: Login GHCR
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Check if image exists
+        id: image_exists
+        run: |
+          if docker manifest inspect "$IMAGE:$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build image
+        if: steps.image_exists.outputs.exists == 'false'
+        run: |
+          docker build \
+            -f fiestaaa_front/Dockerfile \
+            -t $IMAGE:$TAG \
+            -t $IMAGE:latest \
+            --build-arg FIESTAAA_API_BASE_URL="${{ secrets.FIESTAAA_API_BASE_URL }}" \
+            --build-arg FIESTAAA_GOOGLE_WEB_CLIENT_ID="${{ secrets.FIESTAAA_GOOGLE_WEB_CLIENT_ID }}" \
+            --build-arg FIESTAAA_APPLE_SERVICE_ID="${{ secrets.FIESTAAA_APPLE_SERVICE_ID }}" \
+            --build-arg FIESTAAA_APPLE_REDIRECT_URI="${{ secrets.FIESTAAA_APPLE_REDIRECT_URI }}" \
+            --build-arg FIESTAAA_FCM_VAPID_KEY="${{ secrets.FIESTAAA_FCM_VAPID_KEY }}" \
+            --build-arg FIREBASE_PROJECT_ID="${{ secrets.FIREBASE_PROJECT_ID }}" \
+            --build-arg FIREBASE_STORAGE_BUCKET="${{ secrets.FIREBASE_STORAGE_BUCKET }}" \
+            --build-arg FIREBASE_MESSAGING_SENDER_ID="${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}" \
+            --build-arg FIREBASE_WEB_API_KEY="${{ secrets.FIREBASE_WEB_API_KEY }}" \
+            --build-arg FIREBASE_WEB_APP_ID="${{ secrets.FIREBASE_WEB_APP_ID }}" \
+            --build-arg FIREBASE_WEB_MEASUREMENT_ID="${{ secrets.FIREBASE_WEB_MEASUREMENT_ID }}" \
+            --build-arg FIREBASE_AUTH_DOMAIN="${{ secrets.FIREBASE_AUTH_DOMAIN }}" \
+            fiestaaa_front
+
+      - name: Push image
+        if: steps.image_exists.outputs.exists == 'false'
+        run: docker push $IMAGE --all-tags
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            cd ~/apps/fiestaaa
+            echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
+            docker compose pull front
+            docker compose up -d front
+        env:
+          GHCR_USERNAME: theopeuchlestrade
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
