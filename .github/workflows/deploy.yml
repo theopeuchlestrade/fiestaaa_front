@@ -60,7 +60,7 @@ jobs:
         if: steps.image_exists.outputs.exists == 'false'
         run: |
           docker build \
-            -f fiestaaa_front/Dockerfile \
+            -f Dockerfile \
             -t $IMAGE:$TAG \
             -t $IMAGE:latest \
             --build-arg FIESTAAA_API_BASE_URL="${{ secrets.FIESTAAA_API_BASE_URL }}" \
@@ -75,7 +75,7 @@ jobs:
             --build-arg FIREBASE_WEB_API_KEY="${{ secrets.FIREBASE_WEB_API_KEY }}" \
             --build-arg FIREBASE_WEB_APP_ID="${{ secrets.FIREBASE_WEB_APP_ID }}" \
             --build-arg FIREBASE_WEB_MEASUREMENT_ID="${{ secrets.FIREBASE_WEB_MEASUREMENT_ID }}" \
-            fiestaaa_front
+            .
 
       - name: Push image
         if: steps.image_exists.outputs.exists == 'false'
