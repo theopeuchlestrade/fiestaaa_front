@@ -1,7 +1,7 @@
 # Build a production web bundle and serve it with Nginx
 
-# Note: cirruslabs/flutter n'expose pas (encore) de tag 3.38; on reste sur 3.24 (stable)
-FROM ghcr.io/cirruslabs/flutter:3.24 AS build
+# Note: certaines tags GHCR ne sont pas disponibles; on utilise l'image Docker Hub cirrusci/flutter stable 3.24.0
+FROM cirrusci/flutter:3.24.0 AS build
 WORKDIR /app
 
 # Build-time configuration (required)
