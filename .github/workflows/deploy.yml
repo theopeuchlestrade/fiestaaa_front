@@ -19,27 +19,24 @@ jobs:
 
       - name: Check required secrets
         env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
           FIESTAAA_API_BASE_URL: ${{ secrets.FIESTAAA_API_BASE_URL }}
-          FIESTAAA_GOOGLE_WEB_CLIENT_ID: ${{ secrets.FIESTAAA_GOOGLE_WEB_CLIENT_ID }}
-          FIESTAAA_APPLE_SERVICE_ID: ${{ secrets.FIESTAAA_APPLE_SERVICE_ID }}
           FIESTAAA_APPLE_REDIRECT_URI: ${{ secrets.FIESTAAA_APPLE_REDIRECT_URI }}
+          FIESTAAA_APPLE_SERVICE_ID: ${{ secrets.FIESTAAA_APPLE_SERVICE_ID }}
           FIESTAAA_FCM_VAPID_KEY: ${{ secrets.FIESTAAA_FCM_VAPID_KEY }}
+          FIESTAAA_GOOGLE_WEB_CLIENT_ID: ${{ secrets.FIESTAAA_GOOGLE_WEB_CLIENT_ID }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
-          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
           FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
           FIREBASE_WEB_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_USER: ${{ secrets.VPS_USER }}
         run: |
           missing=0
-          for var in VPS_HOST VPS_USER VPS_SSH_KEY GHCR_TOKEN \
-            FIESTAAA_API_BASE_URL FIESTAAA_GOOGLE_WEB_CLIENT_ID \
-            FIESTAAA_APPLE_SERVICE_ID FIESTAAA_APPLE_REDIRECT_URI \
-            FIESTAAA_FCM_VAPID_KEY FIREBASE_PROJECT_ID FIREBASE_STORAGE_BUCKET \
-            FIREBASE_MESSAGING_SENDER_ID FIREBASE_WEB_API_KEY FIREBASE_WEB_APP_ID; do
+          for var in FIESTAAA_API_BASE_URL FIESTAAA_APPLE_REDIRECT_URI FIESTAAA_APPLE_SERVICE_ID FIESTAAA_FCM_VAPID_KEY FIESTAAA_GOOGLE_WEB_CLIENT_ID FIREBASE_AUTH_DOMAIN FIREBASE_MESSAGING_SENDER_ID FIREBASE_PROJECT_ID FIREBASE_STORAGE_BUCKET FIREBASE_WEB_API_KEY FIREBASE_WEB_APP_ID GHCR_TOKEN VPS_HOST VPS_SSH_KEY VPS_USER; do
             if [ -z "${!var}" ]; then
               echo "::error::$var manquant"
               missing=1
@@ -67,17 +64,17 @@ jobs:
             -t $IMAGE:$TAG \
             -t $IMAGE:latest \
             --build-arg FIESTAAA_API_BASE_URL="${{ secrets.FIESTAAA_API_BASE_URL }}" \
-            --build-arg FIESTAAA_GOOGLE_WEB_CLIENT_ID="${{ secrets.FIESTAAA_GOOGLE_WEB_CLIENT_ID }}" \
-            --build-arg FIESTAAA_APPLE_SERVICE_ID="${{ secrets.FIESTAAA_APPLE_SERVICE_ID }}" \
             --build-arg FIESTAAA_APPLE_REDIRECT_URI="${{ secrets.FIESTAAA_APPLE_REDIRECT_URI }}" \
+            --build-arg FIESTAAA_APPLE_SERVICE_ID="${{ secrets.FIESTAAA_APPLE_SERVICE_ID }}" \
             --build-arg FIESTAAA_FCM_VAPID_KEY="${{ secrets.FIESTAAA_FCM_VAPID_KEY }}" \
+            --build-arg FIESTAAA_GOOGLE_WEB_CLIENT_ID="${{ secrets.FIESTAAA_GOOGLE_WEB_CLIENT_ID }}" \
+            --build-arg FIREBASE_AUTH_DOMAIN="${{ secrets.FIREBASE_AUTH_DOMAIN }}" \
+            --build-arg FIREBASE_MESSAGING_SENDER_ID="${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}" \
             --build-arg FIREBASE_PROJECT_ID="${{ secrets.FIREBASE_PROJECT_ID }}" \
             --build-arg FIREBASE_STORAGE_BUCKET="${{ secrets.FIREBASE_STORAGE_BUCKET }}" \
-            --build-arg FIREBASE_MESSAGING_SENDER_ID="${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}" \
             --build-arg FIREBASE_WEB_API_KEY="${{ secrets.FIREBASE_WEB_API_KEY }}" \
             --build-arg FIREBASE_WEB_APP_ID="${{ secrets.FIREBASE_WEB_APP_ID }}" \
             --build-arg FIREBASE_WEB_MEASUREMENT_ID="${{ secrets.FIREBASE_WEB_MEASUREMENT_ID }}" \
-            --build-arg FIREBASE_AUTH_DOMAIN="${{ secrets.FIREBASE_AUTH_DOMAIN }}" \
             fiestaaa_front
 
       - name: Push image
