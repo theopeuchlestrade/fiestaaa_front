@@ -31,9 +31,11 @@ flutter run -d emulator-5554 --dart-define-from-file=.env
 
 ## Firebase config & service worker (Web)
 
-1. Créez un fichier `.env` à la racine avec les clés Firebase web :
+1. Créez un fichier `.env` à la racine avec les clés Firebase web et OAuth :
   ```bash
   FIESTAAA_API_BASE_URL=http://127.0.0.1:8080
+  FIESTAAA_APPLE_SERVICE_ID=com.fiestaaa.web
+  FIESTAAA_APPLE_REDIRECT_URI=http://localhost:5001/
   FIESTAAA_FCM_VAPID_KEY={fcm_vapid_key}
   FIESTAAA_GOOGLE_WEB_CLIENT_ID={google_web_client_id}
   FIREBASE_PROJECT_ID=fiestaaa-app
