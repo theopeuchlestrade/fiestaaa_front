@@ -914,38 +914,41 @@ class _AuthPageState extends State<AuthPage> {
         children: [
           if (_isSubmitting) const LinearProgressIndicator(),
           if (_isSubmitting) const SizedBox(height: 12),
-          SegmentedButton<AuthMode>(
-            segments: const [
-              ButtonSegment<AuthMode>(
-                value: AuthMode.login,
-                label: Text('Connexion'),
-                icon: Icon(Icons.login),
-              ),
-              ButtonSegment<AuthMode>(
-                value: AuthMode.register,
-                label: Text('Inscription'),
-                icon: Icon(Icons.person_add_alt_1),
-              ),
-            ],
-            selected: <AuthMode>{_mode},
-            onSelectionChanged: (newSelection) =>
-                _toggleMode(newSelection.first),
-            showSelectedIcon: false,
-            style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.resolveWith(
-                (states) => states.contains(WidgetState.selected)
-                    ? FiestaaaPalette.primary.withValues(alpha: 0.12)
-                    : Colors.grey.shade100,
-              ),
-              side: WidgetStateProperty.all(
-                BorderSide(color: Colors.grey.shade300),
-              ),
-              padding: WidgetStateProperty.all(
-                const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-              ),
-              shape: WidgetStateProperty.all(
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+          SizedBox(
+            width: double.infinity, // occupe toute la largeur pour éviter la troncature du texte
+            child: SegmentedButton<AuthMode>(
+              segments: const [
+                ButtonSegment<AuthMode>(
+                  value: AuthMode.login,
+                  label: Text('Connexion'),
+                  icon: Icon(Icons.login),
+                ),
+                ButtonSegment<AuthMode>(
+                  value: AuthMode.register,
+                  label: Text('Inscription'),
+                  icon: Icon(Icons.person_add_alt_1),
+                ),
+              ],
+              selected: <AuthMode>{_mode},
+              onSelectionChanged: (newSelection) =>
+                  _toggleMode(newSelection.first),
+              showSelectedIcon: false,
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.resolveWith(
+                  (states) => states.contains(WidgetState.selected)
+                      ? FiestaaaPalette.primary.withValues(alpha: 0.12)
+                      : Colors.grey.shade100,
+                ),
+                side: WidgetStateProperty.all(
+                  BorderSide(color: Colors.grey.shade300),
+                ),
+                padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                ),
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ),
