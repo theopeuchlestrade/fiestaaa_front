@@ -1,17 +1,48 @@
+# VCS / IDE
 .git
 .github
+.idea
+.vscode
+.metadata
+*.iml
+
+# Dart / Flutter tooling
 .dart_tool
-.idea
-.vscode
-.idea
-.vscode
+.dart-tool
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache
+.pub
+
+# Build outputs and coverage
 build
+coverage
+
+# Platform-specific (not needed for web bundle)
 android
 ios
 linux
 macos
 windows
+
+# Tests and local-only artifacts
 test
-coverage
-*.iml
+
+# Secrets and credentials
 .env
+.env.*
+**/service-account.json
+**/service-account*.json
+**/google-services.json
+**/GoogleService-Info.plist
+*.keystore
+*.jks
+*.p12
+*.p8
+*.pem
+*.der
+*.crt
+*.mobileprovision
+
+# Generated assets
+web/firebase-messaging-sw.js
