@@ -103,7 +103,8 @@ jobs:
               fi
             fi
             ${compose_cmd} pull front
-            ${compose_cmd} up -d front
+            # Évite de redémarrer l'API/DB si elles sont déjà en place
+            ${compose_cmd} up -d --no-deps front
         env:
           GHCR_USERNAME: theopeuchlestrade
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
