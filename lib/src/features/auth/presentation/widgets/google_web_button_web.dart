@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fiestaaa_front/src/core/config.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart';
 import 'package:google_sign_in_web/google_sign_in_web.dart';
@@ -45,12 +46,18 @@ class _GoogleWebButtonState extends State<_GoogleWebButton> {
           clientId: googleWebClientId,
         ),
       );
-    } catch (e) {
-      widget.onError(e);
-      setState(() {
-        _failed = true;
-      });
-      return;
+    } catch (e, st) {
+      final alreadyInitialized = e is StateError &&
+          (e.message?.contains('already completed') ?? false);
+      if (!alreadyInitialized) {
+        widget.onError(e);
+        setState(() {
+          _failed = true;
+        });
+        return;
+      }
+      // Si déjà initialisé (hot restart / widget recréé), on continue avec l'instance existante.
+      await instance.initialized.catchError((_) {});
     }
 
     _sub = instance.userDataEvents?.listen((user) {
@@ -103,6 +110,7 @@ class _GoogleWebButtonState extends State<_GoogleWebButton> {
       absorbing: widget.disabled,
       child: SizedBox(
         height: 48,
+        width: double.infinity,
         child: button,
       ),
     );
