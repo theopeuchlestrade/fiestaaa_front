@@ -851,8 +851,9 @@ Bug report
   }
 
   Widget _buildSocialButtons() {
+    const double buttonHeight = 48;
     final shape =
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(14));
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(24));
     final googleWebButton = buildGoogleWebButton(
       disabled: _isSubmitting,
       onError: (error) {
@@ -885,46 +886,54 @@ Bug report
       );
     }
 
+    Widget wrapSocial(Widget child) => Center(child: child);
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        googleWebButton ??
+        wrapSocial(
+          googleWebButton ??
+              OutlinedButton.icon(
+                onPressed: _isSubmitting ? null : _continueWithGoogle,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black87,
+                  side: BorderSide(color: Colors.grey.shade300),
+                  shape: shape,
+                ),
+                icon: _socialInProgress == 'google'
+                    ? spinner(FiestaaaPalette.primary)
+                    : const Icon(Icons.g_translate),
+                label: const Text(
+                  'Continuer avec Google',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+        ),
+        const SizedBox(height: 12),
+        if (_shouldShowAppleButton)
+          wrapSocial(
             OutlinedButton.icon(
-              onPressed: _isSubmitting ? null : _continueWithGoogle,
+              onPressed: _isSubmitting ? null : _continueWithApple,
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                minimumSize: const Size.fromHeight(buttonHeight),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.black87,
                 side: BorderSide(color: Colors.grey.shade300),
                 shape: shape,
               ),
-              icon: _socialInProgress == 'google'
-                  ? spinner(FiestaaaPalette.primary)
-                  : const Icon(Icons.g_translate),
+              icon: _socialInProgress == 'apple'
+                  ? spinner(Colors.black87)
+                  : const Icon(Icons.apple, color: Colors.black87),
               label: const Text(
-                'Continuer avec Google',
+                'Continuer avec Apple',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                 ),
-              ),
-            ),
-        const SizedBox(height: 12),
-        if (_shouldShowAppleButton)
-          OutlinedButton.icon(
-            onPressed: _isSubmitting ? null : _continueWithApple,
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              shape: shape,
-            ),
-            icon: _socialInProgress == 'apple'
-                ? spinner(Colors.white)
-                : const Icon(Icons.ios_share),
-            label: const Text(
-              'Continuer avec Apple',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
               ),
             ),
           ),
