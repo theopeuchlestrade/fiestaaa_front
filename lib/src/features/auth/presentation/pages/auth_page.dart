@@ -5,6 +5,7 @@ import 'package:fiestaaa_front/src/features/auth/presentation/widgets/google_web
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
@@ -36,6 +37,18 @@ class _AuthPageState extends State<AuthPage> {
   bool _isSubmitting = false;
   String? _socialInProgress;
 
+  static const String _feedbackEmail = 'feedback@fiestaaa.app';
+  static const String _bugTemplate = '''
+Bug report
+- Appareil / OS :
+- Version de l'app :
+- Contexte (écran, action) :
+- Étapes exactes pour reproduire :
+- Résultat attendu :
+- Résultat obtenu / message d'erreur :
+- Capture d'écran (si possible) :
+''';
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -59,6 +72,18 @@ class _AuthPageState extends State<AuthPage> {
     }
     return defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS;
+  }
+
+  Future<void> _copyFeedbackEmail() async {
+    await Clipboard.setData(const ClipboardData(text: _feedbackEmail));
+    if (!mounted) return;
+    _showSnack('Adresse copiée');
+  }
+
+  Future<void> _copyBugTemplate() async {
+    await Clipboard.setData(const ClipboardData(text: _bugTemplate));
+    if (!mounted) return;
+    _showSnack('Template de bug copié');
   }
 
   String? _validatePassword(String? value) {
@@ -435,6 +460,8 @@ class _AuthPageState extends State<AuthPage> {
                                     color: Colors.grey.shade600,
                                   ),
                         ),
+                        const SizedBox(height: 12),
+                        _buildAlphaBanner(compact: true),
                         const SizedBox(height: 32),
                         if (_isSubmitting) const LinearProgressIndicator(),
                         if (_isSubmitting) const SizedBox(height: 20),
@@ -914,6 +941,8 @@ class _AuthPageState extends State<AuthPage> {
         children: [
           if (_isSubmitting) const LinearProgressIndicator(),
           if (_isSubmitting) const SizedBox(height: 12),
+          _buildAlphaBanner(compact: false),
+          const SizedBox(height: 20),
           Container(
             decoration: BoxDecoration(
               color: Colors.grey.shade100,
@@ -924,12 +953,14 @@ class _AuthPageState extends State<AuthPage> {
               children: [
                 Expanded(
                   child: TextButton.icon(
-                    onPressed:
-                        _mode == AuthMode.login ? null : () => _toggleMode(AuthMode.login),
+                    onPressed: _mode == AuthMode.login
+                        ? null
+                        : () => _toggleMode(AuthMode.login),
                     icon: const Icon(Icons.login),
                     label: const Text('Connexion'),
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 12),
                       foregroundColor: _mode == AuthMode.login
                           ? FiestaaaPalette.primary
                           : Colors.grey.shade800,
@@ -951,7 +982,8 @@ class _AuthPageState extends State<AuthPage> {
                     icon: const Icon(Icons.person_add_alt_1),
                     label: const Text('Inscription'),
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 12),
                       foregroundColor: _mode == AuthMode.register
                           ? FiestaaaPalette.primary
                           : Colors.grey.shade800,
@@ -1136,6 +1168,113 @@ class _AuthPageState extends State<AuthPage> {
                     : 'Déjà inscrit ? Connectez-vous',
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAlphaBanner({required bool compact}) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        vertical: compact ? 12 : 14,
+        horizontal: compact ? 12 : 16,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orange.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.shade200.withValues(alpha: 0.4),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade100,
+                  shape: BoxShape.circle,
+                ),
+                padding: const EdgeInsets.all(8),
+                child: Icon(
+                  Icons.science_outlined,
+                  color: Colors.orange.shade800,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Version Alpha de test — vos retours sont précieux !',
+                  style: TextStyle(
+                    color: Colors.orange.shade900,
+                    fontWeight: FontWeight.w800,
+                    fontSize: compact ? 14 : 15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: SelectableText(
+                  'Signalez les bugs à $_feedbackEmail',
+                  style: TextStyle(
+                    color: Colors.orange.shade800,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Copier l’adresse',
+                onPressed: _copyFeedbackEmail,
+                icon: const Icon(Icons.copy_rounded, size: 18),
+                color: Colors.orange.shade800,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _copyBugTemplate,
+                icon: const Icon(Icons.article_outlined, size: 18),
+                label: const Text('Copier le template de bug'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.orange.shade800,
+                  side: BorderSide(color: Colors.orange.shade200),
+                  padding: EdgeInsets.symmetric(
+                    vertical: compact ? 10 : 12,
+                    horizontal: compact ? 10 : 12,
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _copyFeedbackEmail,
+                icon: const Icon(Icons.alternate_email, size: 18),
+                label: const Text('Copier l’adresse'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.orange.shade800,
+                  side: BorderSide(color: Colors.orange.shade200),
+                  padding: EdgeInsets.symmetric(
+                    vertical: compact ? 10 : 12,
+                    horizontal: compact ? 10 : 12,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
