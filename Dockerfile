@@ -27,7 +27,7 @@ RUN flutter pub get --enforce-lockfile
 COPY . .
 
 # Generate the Firebase service worker from build-time env
-RUN set -euo pipefail; \
+RUN /bin/bash -lc 'set -euo pipefail; \
   auth_domain="${FIREBASE_AUTH_DOMAIN:-${FIREBASE_PROJECT_ID}.firebaseapp.com}"; \
   cat > .env <<EOF
 FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
@@ -37,7 +37,7 @@ FIREBASE_WEB_API_KEY=${FIREBASE_WEB_API_KEY}
 FIREBASE_WEB_APP_ID=${FIREBASE_WEB_APP_ID}
 FIREBASE_WEB_MEASUREMENT_ID=${FIREBASE_WEB_MEASUREMENT_ID}
 FIREBASE_AUTH_DOMAIN=${auth_domain}
-EOF
+EOF'
 RUN dart run tool/generate_firebase_sw.dart
 
 # Build Flutter web bundle with the required dart-defines
