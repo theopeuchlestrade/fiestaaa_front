@@ -914,43 +914,58 @@ class _AuthPageState extends State<AuthPage> {
         children: [
           if (_isSubmitting) const LinearProgressIndicator(),
           if (_isSubmitting) const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity, // occupe toute la largeur pour éviter la troncature du texte
-            child: SegmentedButton<AuthMode>(
-              segments: const [
-                ButtonSegment<AuthMode>(
-                  value: AuthMode.login,
-                  label: Text('Connexion'),
-                  icon: Icon(Icons.login),
-                ),
-                ButtonSegment<AuthMode>(
-                  value: AuthMode.register,
-                  label: Text('Inscription'),
-                  icon: Icon(Icons.person_add_alt_1),
-                ),
-              ],
-              selected: <AuthMode>{_mode},
-              onSelectionChanged: (newSelection) =>
-                  _toggleMode(newSelection.first),
-              showSelectedIcon: false,
-              style: ButtonStyle(
-                backgroundColor: WidgetStateProperty.resolveWith(
-                  (states) => states.contains(WidgetState.selected)
-                      ? FiestaaaPalette.primary.withValues(alpha: 0.12)
-                      : Colors.grey.shade100,
-                ),
-                side: WidgetStateProperty.all(
-                  BorderSide(color: Colors.grey.shade300),
-                ),
-                padding: WidgetStateProperty.all(
-                  const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                ),
-                shape: WidgetStateProperty.all(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed:
+                        _mode == AuthMode.login ? null : () => _toggleMode(AuthMode.login),
+                    icon: const Icon(Icons.login),
+                    label: const Text('Connexion'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                      foregroundColor: _mode == AuthMode.login
+                          ? FiestaaaPalette.primary
+                          : Colors.grey.shade800,
+                      backgroundColor: _mode == AuthMode.login
+                          ? FiestaaaPalette.primary.withValues(alpha: 0.12)
+                          : Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ),
-              ),
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed: _mode == AuthMode.register
+                        ? null
+                        : () => _toggleMode(AuthMode.register),
+                    icon: const Icon(Icons.person_add_alt_1),
+                    label: const Text('Inscription'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                      foregroundColor: _mode == AuthMode.register
+                          ? FiestaaaPalette.primary
+                          : Colors.grey.shade800,
+                      backgroundColor: _mode == AuthMode.register
+                          ? FiestaaaPalette.primary.withValues(alpha: 0.12)
+                          : Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 28),
