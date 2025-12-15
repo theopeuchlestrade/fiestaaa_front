@@ -1,7 +1,8 @@
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
-import 'package:fiestaaa_front/src/features/auth/presentation/widgets/google_web_button.dart';
+
+import 'package:fiestaaa_front/src/features/auth/presentation/widgets/google_logo.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -854,27 +855,7 @@ Bug report
     const double buttonHeight = 48;
     final shape =
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(24));
-    final googleWebButton = buildGoogleWebButton(
-      disabled: _isSubmitting,
-      onError: (error) {
-        if (!mounted) return;
-        _showSnack(
-          'Connexion Google impossible pour le moment.',
-          isError: true,
-        );
-      },
-      onSuccess: ({
-        required String idToken,
-        String? email,
-        String? displayName,
-      }) async {
-        await _loginWithGoogleToken(
-          idToken: idToken,
-          email: email,
-          displayName: displayName,
-        );
-      },
-    );
+
     Widget spinner(Color color) {
       return SizedBox(
         height: 18,
@@ -886,55 +867,46 @@ Bug report
       );
     }
 
+    final socialButtonStyle = OutlinedButton.styleFrom(
+      minimumSize: const Size.fromHeight(buttonHeight),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      backgroundColor: Colors.white,
+      foregroundColor: Colors.black87,
+      side: BorderSide(color: Colors.grey.shade300),
+      shape: shape,
+      textStyle: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        fontFamily: 'Manrope', // Explicitly ensuring font consistency
+      ),
+      elevation: 0,
+    );
+
     Widget wrapSocial(Widget child) => Center(child: child);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         wrapSocial(
-          googleWebButton ??
-              OutlinedButton.icon(
-                onPressed: _isSubmitting ? null : _continueWithGoogle,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black87,
-                  side: BorderSide(color: Colors.grey.shade300),
-                  shape: shape,
-                ),
-                icon: _socialInProgress == 'google'
-                    ? spinner(FiestaaaPalette.primary)
-                    : const Icon(Icons.g_translate),
-                label: const Text(
-                  'Continuer avec Google',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
+          OutlinedButton.icon(
+            onPressed: _isSubmitting ? null : _continueWithGoogle,
+            style: socialButtonStyle,
+            icon: _socialInProgress == 'google'
+                ? spinner(FiestaaaPalette.primary)
+                : const GoogleLogo(size: 24),
+            label: const Text('Continuer avec Google'),
+          ),
         ),
         const SizedBox(height: 12),
         if (_shouldShowAppleButton)
           wrapSocial(
             OutlinedButton.icon(
               onPressed: _isSubmitting ? null : _continueWithApple,
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(buttonHeight),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black87,
-                side: BorderSide(color: Colors.grey.shade300),
-                shape: shape,
-              ),
+              style: socialButtonStyle,
               icon: _socialInProgress == 'apple'
                   ? spinner(Colors.black87)
-                  : const Icon(Icons.apple, color: Colors.black87),
-              label: const Text(
-                'Continuer avec Apple',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+                  : const Icon(Icons.apple, color: Colors.black87, size: 24),
+              label: const Text('Continuer avec Apple'),
             ),
           ),
       ],
