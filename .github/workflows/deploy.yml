@@ -3,6 +3,11 @@ on:
   push:
     branches: [main, master]
   workflow_dispatch:
+    inputs:
+      force_build:
+        description: "Ignore existing image and rebuild"
+        type: boolean
+        default: false
 
 env:
   IMAGE: ghcr.io/theopeuchlestrade/fiestaaa_front
@@ -57,7 +62,7 @@ jobs:
           fi
 
       - name: Build image
-        if: steps.image_exists.outputs.exists == 'false'
+        if: steps.image_exists.outputs.exists == 'false' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_build == 'true')
         run: |
           docker build \
             -f Dockerfile \
@@ -78,7 +83,7 @@ jobs:
             .
 
       - name: Push image
-        if: steps.image_exists.outputs.exists == 'false'
+        if: steps.image_exists.outputs.exists == 'false' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_build == 'true')
         run: docker push $IMAGE --all-tags
 
       - name: Deploy to VPS
