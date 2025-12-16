@@ -3,6 +3,7 @@ import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 
 import 'package:fiestaaa_front/src/features/auth/presentation/widgets/google_logo.dart';
+import 'package:fiestaaa_front/src/features/auth/presentation/widgets/google_web_button.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -884,18 +885,49 @@ Bug report
 
     Widget wrapSocial(Widget child) => Center(child: child);
 
+    final googleWebButton = kIsWeb
+        ? buildGoogleWebButton(
+            onSuccess: ({
+              required String idToken,
+              String? email,
+              String? displayName,
+            }) {
+              _loginWithGoogleToken(
+                idToken: idToken,
+                email: email,
+                displayName: displayName,
+              );
+            },
+            onError: (error) {
+              if (!mounted) return;
+              setState(() {
+                _isSubmitting = false;
+                _socialInProgress = null;
+              });
+              _showSnack(
+                'Connexion Google impossible pour le moment.',
+                isError: true,
+              );
+            },
+            disabled: _isSubmitting,
+          )
+        : null;
+
+    final Widget googleButton = googleWebButton ??
+        OutlinedButton.icon(
+          onPressed: _isSubmitting ? null : _continueWithGoogle,
+          style: socialButtonStyle,
+          icon: _socialInProgress == 'google'
+              ? spinner(FiestaaaPalette.primary)
+              : const GoogleLogo(size: 24),
+          label: const Text('Continuer avec Google'),
+        );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         wrapSocial(
-          OutlinedButton.icon(
-            onPressed: _isSubmitting ? null : _continueWithGoogle,
-            style: socialButtonStyle,
-            icon: _socialInProgress == 'google'
-                ? spinner(FiestaaaPalette.primary)
-                : const GoogleLogo(size: 24),
-            label: const Text('Continuer avec Google'),
-          ),
+          googleButton,
         ),
         const SizedBox(height: 12),
         if (_shouldShowAppleButton)
