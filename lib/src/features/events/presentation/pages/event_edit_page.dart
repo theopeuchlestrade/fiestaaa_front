@@ -393,7 +393,8 @@ class _EventEditPageState extends State<EventEditPage> {
               shrinkWrap: true,
               physics: const ClampingScrollPhysics(),
               itemCount: _addressSuggestions.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
+              separatorBuilder: (context, index) =>
+                  const Divider(height: 1),
               itemBuilder: (context, index) {
                 final suggestion = _addressSuggestions[index];
                 return ListTile(

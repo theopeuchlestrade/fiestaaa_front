@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:ui';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -15,7 +15,7 @@ class PushNotificationService {
 
   static final PushNotificationService instance = PushNotificationService._();
 
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  late final FirebaseMessaging _messaging;
   final NotificationsApi _api = NotificationsApi();
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
@@ -29,9 +29,10 @@ class PushNotificationService {
 
   Future<void> init() async {
     if (_initialized) return;
+    _messaging = FirebaseMessaging.instance;
     _initialized = true;
 
-    await FirebaseMessaging.instance.setAutoInitEnabled(true);
+    await _messaging.setAutoInitEnabled(true);
     await _requestPermissions();
     await _initLocalNotifications();
     await _messaging.setForegroundNotificationPresentationOptions(

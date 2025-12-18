@@ -692,7 +692,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
     if (duration.inHours < 24) {
       final minutes = duration.inMinutes % 60;
-      return '${duration.inHours} h ${minutes} min';
+      return '${duration.inHours} h $minutes min';
     }
     return '${duration.inDays} j';
   }
@@ -2035,9 +2035,9 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
     final minutes = diff.inMinutes % 60;
     String label;
     if (days > 0) {
-      label = '$days j ${hours} h';
+      label = '$days j $hours h';
     } else if (hours > 0) {
-      label = '$hours h ${minutes} min';
+      label = '$hours h $minutes min';
     } else {
       label = '$minutes min';
     }
