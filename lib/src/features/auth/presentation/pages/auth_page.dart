@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
@@ -29,10 +31,8 @@ class _AuthPageState extends State<AuthPage> {
   final _confirmPasswordController = TextEditingController();
   final _handleController = TextEditingController();
   final _api = AuthApi();
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: const ['email'],
-    clientId: googleWebClientId.isNotEmpty ? googleWebClientId : null,
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  static Future<void>? _googleInitFuture;
   AuthMode _mode = AuthMode.login;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
@@ -52,6 +52,14 @@ Bug report
 ''';
 
   @override
+  void initState() {
+    super.initState();
+    if (kIsWeb && googleWebClientId.isNotEmpty) {
+      unawaited(_ensureGoogleInitialized());
+    }
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -59,6 +67,14 @@ Bug report
     _handleController.dispose();
     _api.dispose();
     super.dispose();
+  }
+
+  Future<void> _ensureGoogleInitialized() {
+    if (_googleInitFuture != null) return _googleInitFuture!;
+    _googleInitFuture = _googleSignIn.initialize(
+      clientId: kIsWeb ? googleWebClientId : null,
+    );
+    return _googleInitFuture!;
   }
 
   void _toggleMode(AuthMode? mode) {
@@ -139,8 +155,7 @@ Bug report
         isError: true,
       );
     } finally {
-      if (!mounted) return;
-      if (manageState) {
+      if (manageState && mounted) {
         setState(() {
           _isSubmitting = false;
           _socialInProgress = null;
@@ -166,13 +181,19 @@ Bug report
     });
 
     try {
-      final account = await _googleSignIn.signIn();
-      if (account == null) return;
-
-      final auth = await account.authentication;
+      await _ensureGoogleInitialized();
+      final account = await _googleSignIn.authenticate();
+      final auth = account.authentication;
       final idToken = auth.idToken;
+      String? accessToken;
+
       if (idToken == null || idToken.isEmpty) {
-        throw ApiException('Token Google manquant ou invalide');
+        final authClient = account.authorizationClient;
+        final authz = await authClient.authorizationForScopes(
+              const ['email'],
+            ) ??
+            await authClient.authorizeScopes(const ['email']);
+        accessToken = authz.accessToken;
       }
 
       if (idToken != null && idToken.isNotEmpty) {
@@ -182,9 +203,9 @@ Bug report
           displayName: account.displayName,
           manageState: false,
         );
-      } else if (auth.accessToken != null && auth.accessToken!.isNotEmpty) {
+      } else if (accessToken != null && accessToken.isNotEmpty) {
         await _loginWithGoogleToken(
-          accessToken: auth.accessToken!,
+          accessToken: accessToken,
           email: account.email,
           displayName: account.displayName,
           manageState: false,
@@ -192,6 +213,16 @@ Bug report
       } else {
         throw ApiException('Token Google manquant ou invalide');
       }
+    } on GoogleSignInException catch (e) {
+      if (!mounted) return;
+      if (e.code == GoogleSignInExceptionCode.canceled ||
+          e.code == GoogleSignInExceptionCode.interrupted) {
+        return;
+      }
+      _showSnack(
+        e.description ?? 'Connexion Google impossible pour le moment.',
+        isError: true,
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
@@ -202,11 +233,12 @@ Bug report
         isError: true,
       );
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _isSubmitting = false;
-        _socialInProgress = null;
-      });
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+          _socialInProgress = null;
+        });
+      }
     }
   }
 
@@ -271,10 +303,7 @@ Bug report
       if (e.code == AuthorizationErrorCode.canceled) {
         return;
       }
-      _showSnack(
-        e.message ?? 'Connexion Apple échouée.',
-        isError: true,
-      );
+      _showSnack(e.message, isError: true);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
@@ -285,11 +314,12 @@ Bug report
         isError: true,
       );
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _isSubmitting = false;
-        _socialInProgress = null;
-      });
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+          _socialInProgress = null;
+        });
+      }
     }
   }
 

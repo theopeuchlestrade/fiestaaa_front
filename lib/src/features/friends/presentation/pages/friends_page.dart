@@ -400,7 +400,8 @@ class _SearchCard extends StatelessWidget {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: suggestions.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 1),
                     itemBuilder: (context, index) {
                       final suggestion = suggestions[index];
                       final label = suggestion.handle.isNotEmpty
@@ -853,7 +854,7 @@ class _AvatarCircle extends StatelessWidget {
         child: Image.network(
           url!,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => placeholder(),
+          errorBuilder: (context, error, stackTrace) => placeholder(),
         ),
       ),
     );

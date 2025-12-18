@@ -144,7 +144,7 @@ class _AvatarCircle extends StatelessWidget {
     return CircleAvatar(
       backgroundColor: Colors.grey.shade200,
       backgroundImage: NetworkImage(url!),
-      onBackgroundImageError: (_, __) {},
+      onBackgroundImageError: (error, stackTrace) {},
       child: null,
     );
   }

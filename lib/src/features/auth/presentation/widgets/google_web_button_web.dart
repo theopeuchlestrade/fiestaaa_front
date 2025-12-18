@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:fiestaaa_front/src/core/config.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart';
-import 'package:google_sign_in_web/google_sign_in_web.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_sign_in_web/web_only.dart' as gsi_web;
 
 class _GoogleWebButton extends StatefulWidget {
   const _GoogleWebButton({
@@ -26,53 +25,40 @@ class _GoogleWebButton extends StatefulWidget {
 }
 
 class _GoogleWebButtonState extends State<_GoogleWebButton> {
-  GoogleSignInPlugin? _plugin;
-  StreamSubscription<GoogleSignInUserData?>? _sub;
+  StreamSubscription<GoogleSignInAuthenticationEvent>? _sub;
   bool _failed = false;
 
   @override
   void initState() {
     super.initState();
-    _initPlugin();
+    _sub = GoogleSignIn.instance.authenticationEvents.listen(
+      _handleAuthEvent,
+      onError: _handleAuthError,
+    );
   }
 
-  Future<void> _initPlugin() async {
-    final instance = GoogleSignInPlatform.instance;
-    if (instance is! GoogleSignInPlugin) return;
-    try {
-      await instance.initWithParams(
-        SignInInitParameters(
-          scopes: const ['email', 'profile'],
-          clientId: googleWebClientId,
-        ),
-      );
-    } catch (e, st) {
-      final alreadyInitialized = e is StateError &&
-          (e.message?.contains('already completed') ?? false);
-      if (!alreadyInitialized) {
-        widget.onError(e);
-        setState(() {
-          _failed = true;
-        });
-        return;
-      }
-      // Si déjà initialisé (hot restart / widget recréé), on continue avec l'instance existante.
-      await instance.initialized.catchError((_) {});
+  void _handleAuthEvent(GoogleSignInAuthenticationEvent event) {
+    if (event is! GoogleSignInAuthenticationEventSignIn) return;
+    if (widget.disabled) return;
+    final idToken = event.user.authentication.idToken;
+    if (idToken == null || idToken.isEmpty) return;
+    widget.onSuccess(
+      idToken: idToken,
+      email: event.user.email,
+      displayName: event.user.displayName,
+    );
+  }
+
+  void _handleAuthError(Object error) {
+    if (error is GoogleSignInException &&
+        (error.code == GoogleSignInExceptionCode.canceled ||
+            error.code == GoogleSignInExceptionCode.interrupted)) {
+      return;
     }
-
-    _sub = instance.userDataEvents?.listen((user) {
-      final idToken = user?.idToken;
-      if (idToken == null || idToken.isEmpty) return;
-      widget.onSuccess(
-        idToken: idToken,
-        email: user?.email,
-        displayName: user?.displayName,
-      );
-    });
-
+    widget.onError(error);
     if (!mounted) return;
     setState(() {
-      _plugin = instance;
+      _failed = true;
     });
   }
 
@@ -90,20 +76,14 @@ class _GoogleWebButtonState extends State<_GoogleWebButton> {
         child: Center(child: Text('Google indisponible')),
       );
     }
-    if (_plugin == null) {
-      return const SizedBox(
-        height: 48,
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      );
-    }
-    final button = _plugin!.renderButton(
-      configuration: GSIButtonConfiguration(
-        type: GSIButtonType.standard,
-        text: GSIButtonText.continueWith,
-        shape: GSIButtonShape.pill,
-        theme: GSIButtonTheme.outline,
-        size: GSIButtonSize.large,
-        logoAlignment: GSIButtonLogoAlignment.left,
+    final button = gsi_web.renderButton(
+      configuration: gsi_web.GSIButtonConfiguration(
+        type: gsi_web.GSIButtonType.standard,
+        text: gsi_web.GSIButtonText.continueWith,
+        shape: gsi_web.GSIButtonShape.pill,
+        theme: gsi_web.GSIButtonTheme.outline,
+        size: gsi_web.GSIButtonSize.large,
+        logoAlignment: gsi_web.GSIButtonLogoAlignment.left,
       ),
     );
     return AbsorbPointer(
