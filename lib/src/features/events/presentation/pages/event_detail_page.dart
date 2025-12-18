@@ -21,7 +21,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -1392,7 +1391,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     TileLayer(
                       urlTemplate:
                           'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      tileProvider: CancellableNetworkTileProvider(),
+                      tileProvider: NetworkTileProvider(),
                       userAgentPackageName: 'fiestaaa_front',
                     ),
                     MarkerLayer(
