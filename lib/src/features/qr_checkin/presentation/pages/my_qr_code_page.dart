@@ -159,7 +159,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -174,7 +174,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                       color: Theme.of(context)
                           .colorScheme
                           .primaryContainer
-                          .withOpacity(0.1),
+                          .withValues(alpha: 0.1),
                       borderRadius:
                           const BorderRadius.vertical(top: Radius.circular(24)),
                     ),
@@ -199,7 +199,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                             color: Theme.of(context)
                                 .colorScheme
                                 .primary
-                                .withOpacity(0.1),
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -341,7 +341,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
             Text(
               'Fiestaaa',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 1,
