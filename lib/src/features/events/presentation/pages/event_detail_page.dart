@@ -21,7 +21,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -692,7 +691,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
     if (duration.inHours < 24) {
       final minutes = duration.inMinutes % 60;
-      return '${duration.inHours} h ${minutes} min';
+      return '${duration.inHours} h $minutes min';
     }
     return '${duration.inDays} j';
   }
@@ -1392,7 +1391,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     TileLayer(
                       urlTemplate:
                           'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      tileProvider: CancellableNetworkTileProvider(),
+                      tileProvider: NetworkTileProvider(),
                       userAgentPackageName: 'fiestaaa_front',
                     ),
                     MarkerLayer(
@@ -2035,9 +2034,9 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
     final minutes = diff.inMinutes % 60;
     String label;
     if (days > 0) {
-      label = '$days j ${hours} h';
+      label = '$days j $hours h';
     } else if (hours > 0) {
-      label = '$hours h ${minutes} min';
+      label = '$hours h $minutes min';
     } else {
       label = '$minutes min';
     }

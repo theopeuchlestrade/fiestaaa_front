@@ -1,11 +1,14 @@
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import 'dart:js_interop';
+
+import 'package:web/web.dart' as web;
 
 Future<void> showWebNotification(String title, String body) async {
-  if (html.Notification.permission == 'default') {
-    await html.Notification.requestPermission();
+  var permission = web.Notification.permission;
+  if (permission == 'default') {
+    final requested = await web.Notification.requestPermission().toDart;
+    permission = requested.toDart;
   }
-  if (html.Notification.permission == 'granted') {
-    html.Notification(title, body: body);
+  if (permission == 'granted') {
+    web.Notification(title, web.NotificationOptions(body: body));
   }
 }
