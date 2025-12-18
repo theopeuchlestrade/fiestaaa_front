@@ -599,50 +599,80 @@ class _RequestSection extends StatelessWidget {
               '${req.isIncoming(userEmail) ? 'Reçue' : 'Envoyée'} le ${formatter.format(req.createdAt.toLocal())}';
           final isPending = req.status == 'Pending';
 
+          final actions = isPending && onAccept != null && onDecline != null
+              ? Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    TextButton(
+                      onPressed: () => onDecline!(req),
+                      child: const Text('Refuser'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => onAccept!(req),
+                      child: const Text('Accepter'),
+                    ),
+                  ],
+                )
+              : Chip(
+                  label: Text(
+                    req.status,
+                    style: TextStyle(
+                      color: req.status == 'Accepted'
+                          ? Colors.green.shade800
+                          : req.status == 'Declined'
+                              ? Colors.grey.shade800
+                              : Colors.orange.shade800,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  backgroundColor: req.status == 'Accepted'
+                      ? Colors.green.shade100
+                      : req.status == 'Declined'
+                          ? Colors.grey.shade200
+                          : Colors.orange.shade100,
+                );
+
           return Column(
             children: [
               _BubbleTile(
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 6,
-                    horizontal: 4,
-                  ),
-                  leading: _AvatarCircle(
-                      url: avatarUrl, fallbackText: counterpartHandle),
-                  title: Text(label),
-                  subtitle: Text(subtitle),
-                  trailing: isPending && onAccept != null && onDecline != null
-                      ? Wrap(
-                          spacing: 8,
-                          children: [
-                            TextButton(
-                              onPressed: () => onDecline!(req),
-                              child: const Text('Refuser'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () => onAccept!(req),
-                              child: const Text('Accepter'),
-                            ),
-                          ],
-                        )
-                      : Chip(
-                          label: Text(
-                            req.status,
-                            style: TextStyle(
-                              color: req.status == 'Accepted'
-                                  ? Colors.green.shade800
-                                  : req.status == 'Declined'
-                                      ? Colors.grey.shade800
-                                      : Colors.orange.shade800,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          backgroundColor: req.status == 'Accepted'
-                              ? Colors.green.shade100
-                              : req.status == 'Declined'
-                                  ? Colors.grey.shade200
-                                  : Colors.orange.shade100,
-                        ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isCompact = constraints.maxWidth < 420;
+                    final subtitleWidget = isCompact
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                subtitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 8),
+                              actions,
+                            ],
+                          )
+                        : Text(subtitle);
+
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 6,
+                        horizontal: 4,
+                      ),
+                      leading: _AvatarCircle(
+                        url: avatarUrl,
+                        fallbackText: counterpartHandle,
+                      ),
+                      title: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: subtitleWidget,
+                      trailing: isCompact ? null : actions,
+                      isThreeLine: isCompact,
+                    );
+                  },
                 ),
               ),
               if (req != requests.last) const SizedBox(height: 10),

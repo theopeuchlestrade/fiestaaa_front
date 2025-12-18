@@ -441,25 +441,13 @@ class _EventCreatePageState extends State<EventCreatePage> {
     final subtitle = _invitationDeadline == null
         ? 'Optionnel : l’invitation expirera à cette date'
         : 'Réponse attendue avant le ${DateFormat.yMMMMd('fr_FR').format(_invitationDeadline!)}';
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(Icons.hourglass_bottom, color: accent),
-      title: Text(
-        'Date limite de réponse',
-        style: Theme.of(context)
-            .textTheme
-            .titleMedium
-            ?.copyWith(color: accent, fontWeight: FontWeight.w700),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(color: Colors.grey.shade700),
-      ),
-      trailing: SizedBox(
-        width: 180,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.end,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 420;
+        final actions = Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: isCompact ? WrapAlignment.start : WrapAlignment.end,
           children: [
             if (_invitationDeadline != null)
               IconButton(
@@ -476,8 +464,37 @@ class _EventCreatePageState extends State<EventCreatePage> {
               child: Text(_invitationDeadline == null ? 'Définir' : 'Modifier'),
             ),
           ],
-        ),
-      ),
+        );
+
+        final subtitleWidget = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              subtitle,
+              style: TextStyle(color: Colors.grey.shade700),
+            ),
+            if (isCompact) ...[
+              const SizedBox(height: 8),
+              actions,
+            ],
+          ],
+        );
+
+        return ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(Icons.hourglass_bottom, color: accent),
+          title: Text(
+            'Date limite de réponse',
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(color: accent, fontWeight: FontWeight.w700),
+          ),
+          subtitle: subtitleWidget,
+          trailing: isCompact ? null : actions,
+          isThreeLine: isCompact,
+        );
+      },
     );
   }
 
