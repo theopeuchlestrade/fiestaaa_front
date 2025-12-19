@@ -154,31 +154,6 @@ class InvitationsApi {
         statusCode: response.statusCode);
   }
 
-  Future<List<InvitationSuggestionModel>> fetchInvitationSuggestions({
-    required String token,
-    required int eventId,
-    String query = '',
-  }) async {
-    final uri = Uri.parse('$apiBaseUrl/events/$eventId/invitations/suggestions')
-        .replace(queryParameters: query.isEmpty ? null : {'q': query});
-    final response = await _client.get(
-      uri,
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as List<dynamic>;
-      return decoded
-          .map((e) =>
-              InvitationSuggestionModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw ApiException('Impossible de récupérer les suggestions',
-        statusCode: response.statusCode);
-  }
-
   void dispose() {
     _client.close();
   }
