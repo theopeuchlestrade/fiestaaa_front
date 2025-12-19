@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
+
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/friends/data/friends_api.dart';
 import 'package:fiestaaa_front/src/features/friends/domain/friend_model.dart';
@@ -39,7 +40,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   List<FriendModel> _friends = [];
   List<FriendRequestModel> _friendRequests = [];
   bool _loadingFriends = true;
-
   String? _friendsError;
   final _friendFilterController = TextEditingController();
   final Set<String> _selectedFriendHandles = {};
@@ -53,7 +53,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   @override
   void initState() {
     super.initState();
-
     _friendFilterController.addListener(() {
       setState(() {});
     });
@@ -71,6 +70,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     _friendsApi.dispose();
     super.dispose();
   }
+
 
   @override
   void didUpdateWidget(covariant EventInvitationsPage oldWidget) {
@@ -90,6 +90,8 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       _fetch();
     }
   }
+
+
 
   Future<void> _loadFriendsAndRequests() async {
     setState(() {
@@ -123,7 +125,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     }
   }
 
-<<<<<<< HEAD
   Future<void> _fetch() async {
     setState(() {
       _loading = true;
@@ -152,17 +153,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
         setState(() => _loading = false);
       }
     }
-  }
-
-  void _applySuggestion(InvitationSuggestionModel suggestion) {
-    final value =
-        suggestion.handle.isNotEmpty ? suggestion.handle : suggestion.email;
-    _emailController
-      ..text = value
-      ..selection = TextSelection.collapsed(offset: value.length);
-    setState(() {
-      _suggestions = [];
-    });
   }
 
   Future<void> _createInvitation() async {
@@ -314,142 +304,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       }
     });
   }
-=======
-  Future<void> _fetch() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final all = await _api.fetchEventInvitations(
-        token: widget.session.token,
-        eventId: widget.eventId,
-      );
-      if (!mounted) return;
-      setState(() {
-        _invitations =
-            all.where((inv) => inv.eventId == widget.eventId).toList();
-      });
-    } on ApiException catch (e) {
-      setState(() => _error = e.message);
-    } catch (_) {
-      setState(() => _error = 'Impossible de charger les invitations.');
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
-    }
-  }
-
->>>>>>> 9e8f70e (refactor: remove auto completion for people invited before front)
-
-  Future<void> _createInvitation() async {
-    if (!_isOwner) return;
-    final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      _showSnack('Identifiant requis', isError: true);
-      return;
-    }
-    if (!email.contains('@') &&
-        !RegExp(r'^[a-z0-9._-]{4,32}$').hasMatch(email)) {
-      _showSnack('Identifiant invalide', isError: true);
-      return;
-    }
-    setState(() => _submitting = true);
-    try {
-      final result = await _api.createInvitation(
-        token: widget.session.token,
-        eventId: widget.eventId,
-        identifier: email,
-      );
-      if (!mounted) return;
-      _emailController.clear();
-      await _fetch();
-      final successMessage = result.emailSent
-          ? (result.message ?? 'Invitation envoyée par email')
-          : 'Invitation créée';
-      _showSnack(successMessage);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      if (e.statusCode == 410) {
-        _showSnack(
-          'La date limite est dépassée, impossible d’inviter de nouvelles personnes.',
-          isError: true,
-        );
-        await _fetch();
-        return;
-      }
-      _showSnack(e.message, isError: true);
-    } catch (_) {
-      if (!mounted) return;
-      _showSnack('Erreur lors de la création', isError: true);
-    } finally {
-      if (mounted) {
-        setState(() => _submitting = false);
-      }
-    }
-  }
-
-  Future<void> _deleteInvitation(InvitationModel invitation) async {
-    if (!_isOwner) return;
-    try {
-      await _api.deleteInvitation(
-        token: widget.session.token,
-        eventId: invitation.eventId,
-        email: invitation.email,
-      );
-      if (!mounted) return;
-      await _fetch();
-      _showSnack('Invitation supprimée');
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      _showSnack(e.message, isError: true);
-    } catch (_) {
-      if (!mounted) return;
-      _showSnack('Erreur lors de la suppression', isError: true);
-    }
-  }
-
-  List<FriendModel> get _filteredFriends {
-    final query = _friendFilterController.text.trim().toLowerCase();
-    if (query.isEmpty) return _friends;
-    return _friends
-        .where((f) =>
-            f.handle.toLowerCase().contains(query) ||
-            f.email.toLowerCase().contains(query))
-        .toList();
-  }
-
-  bool _identifierMatches(String identifier, String handle, String email) {
-    final normalized = identifier.toLowerCase();
-    return handle.toLowerCase() == normalized ||
-        email.toLowerCase() == normalized;
-  }
-
-  bool _isFriendWith(String identifier) {
-    return _friends
-        .any((f) => _identifierMatches(identifier, f.handle, f.email));
-  }
-
-  bool _hasPendingFriendRequestWith(String identifier) {
-    return _friendRequests.any((req) {
-      if (req.status != 'Pending') return false;
-      final incoming = req.isIncoming(widget.session.email);
-      final handle = incoming ? req.senderHandle : req.receiverHandle;
-      final email = incoming ? req.senderEmail : req.receiverEmail;
-      return _identifierMatches(identifier, handle, email);
-    });
-  }
-
-  void _toggleFriendSelection(String handle) {
-    setState(() {
-      if (_selectedFriendHandles.contains(handle)) {
-        _selectedFriendHandles.remove(handle);
-      } else {
-        _selectedFriendHandles.add(handle);
-      }
-    });
-  }
 
   Future<void> _inviteSelectedFriends() async {
     if (_selectedFriendHandles.isEmpty || !_isOwner) return;
@@ -527,9 +381,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
         invitation.email.toLowerCase() == widget.session.email.toLowerCase();
     final isEventOwner =
         invitation.email.toLowerCase() == widget.ownerEmail.toLowerCase();
- 
+
     final actions = <Widget>[];
- 
+
     if (!isSelf) {
       if (_isFriendWith(identifier)) {
         actions.add(_statusIcon(Icons.verified, Colors.teal));
@@ -546,7 +400,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       }
     }
 
-<<<<<<< HEAD
     if (_isOwner && !isEventOwner) {
       actions.add(
         IconButton(
@@ -590,50 +443,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(24),
           children: [
-=======
-
-    if (_isOwner && !isEventOwner) {
-      actions.add(
-        IconButton(
-          onPressed: () => _deleteInvitation(invitation),
-          icon: const Icon(Icons.delete),
-          tooltip: 'Supprimer',
-        ),
-      );
-    }
-
-    if (actions.isEmpty) return null;
-    return Wrap(
-      spacing: 4,
-      children: actions,
-    );
-  }
-
-  void _showSnack(String text, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? Colors.red.shade400 : null,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final filteredFriends = _filteredFriends;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Invitations'),
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await Future.wait([_fetch(), _loadFriendsAndRequests()]);
-        },
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(24),
-          children: [
->>>>>>> 9e8f70e (refactor: remove auto completion for people invited before front)
             if (_isOwner) ...[
               _InviteForm(
                 emailController: _emailController,
@@ -641,7 +450,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
                 submitting: _submitting,
               ),
               const SizedBox(height: 16),
-
               _FriendsInviteCard(
                 loading: _loadingFriends,
                 error: _friendsError,
@@ -755,44 +563,6 @@ class _InviteForm extends StatelessWidget {
             prefixIcon: Icon(Icons.alternate_email),
           ),
         ),
-<<<<<<< HEAD
-        if (suggestionsLoading)
-          const Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: LinearProgressIndicator(minHeight: 2),
-          )
-        else if (suggestions.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Material(
-              elevation: 2,
-              borderRadius: BorderRadius.circular(12),
-              child: ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: suggestions.length,
-                separatorBuilder: (context, index) =>
-                    const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final suggestion = suggestions[index];
-                  final handle = suggestion.handle.isNotEmpty
-                      ? suggestion.handle
-                      : 'compte-a-creer';
-                  final title = '@$handle';
-                  return ListTile(
-                    leading: const Icon(Icons.person_add_alt_1_outlined),
-                    title: Text(title),
-                    subtitle: Text(
-                      'Invité le ${formatter.format(suggestion.lastInvitedAt.toLocal())}',
-                    ),
-                    onTap: () => onSuggestionSelected(suggestion),
-                  );
-                },
-              ),
-            ),
-          ),
-=======
->>>>>>> 9e8f70e (refactor: remove auto completion for people invited before front)
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
@@ -813,7 +583,6 @@ class _InviteForm extends StatelessWidget {
   }
 }
 
-<<<<<<< HEAD
 class _FriendsInviteCard extends StatelessWidget {
   const _FriendsInviteCard({
     required this.loading,
@@ -958,147 +727,3 @@ class _FriendsInviteCard extends StatelessWidget {
     );
   }
 }
-=======
-
-class _FriendsInviteCard extends StatelessWidget {
-  const _FriendsInviteCard({
-    required this.loading,
-    required this.error,
-    required this.friends,
-    required this.selectedHandles,
-    required this.filterController,
-    required this.onToggle,
-    required this.onInvite,
-    required this.inviting,
-    required this.onRefresh,
-  });
-
-  final bool loading;
-  final String? error;
-  final List<FriendModel> friends;
-  final Set<String> selectedHandles;
-  final TextEditingController filterController;
-  final ValueChanged<String> onToggle;
-  final Future<void> Function()? onInvite;
-  final bool inviting;
-  final Future<void> Function() onRefresh;
-
-  @override
-  Widget build(BuildContext context) {
-    final selectionLabel = selectedHandles.isEmpty
-        ? ''
-        : selectedHandles.length == 1
-            ? 'cet ami'
-            : '${selectedHandles.length} amis';
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.people_outline, color: Colors.teal),
-                const SizedBox(width: 8),
-                Text(
-                  'Inviter depuis mes amis',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: loading ? null : () => onRefresh(),
-                  tooltip: 'Rafraîchir',
-                  icon: const Icon(Icons.refresh),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Recherchez et sélectionnez plusieurs amis, puis envoyez une invitation groupée.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.grey.shade700),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: filterController,
-              decoration: const InputDecoration(
-                labelText: 'Filtrer vos amis',
-                prefixIcon: Icon(Icons.search),
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (loading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (error != null)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    error!,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: onRefresh,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Réessayer'),
-                  ),
-                ],
-              )
-            else if (friends.isEmpty)
-              const Text(
-                'Aucun ami disponible pour le moment.',
-                style: TextStyle(color: Colors.grey),
-              )
-            else
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: friends
-                    .map(
-                      (friend) => FilterChip(
-                        label: Text('@${friend.handle}'),
-                        selected: selectedHandles.contains(friend.handle),
-                        onSelected: (_) => onToggle(friend.handle),
-                      ),
-                    )
-                    .toList(),
-              ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: onInvite == null ? null : () => onInvite!(),
-                icon: inviting
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.send),
-                label: Text(
-                  inviting
-                      ? 'Envoi...'
-                      : (selectionLabel.isEmpty
-                          ? 'Inviter'
-                          : 'Inviter $selectionLabel'),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
->>>>>>> 9e8f70e (refactor: remove auto completion for people invited before front)

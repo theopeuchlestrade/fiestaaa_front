@@ -30,7 +30,6 @@ class InvitationModel {
   }
 }
 
-
 class InvitationCreationResult {
   InvitationCreationResult.invitation(this.invitation)
       : emailSent = false,

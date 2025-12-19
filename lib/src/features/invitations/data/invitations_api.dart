@@ -154,7 +154,6 @@ class InvitationsApi {
         statusCode: response.statusCode);
   }
 
-
   void dispose() {
     _client.close();
   }
