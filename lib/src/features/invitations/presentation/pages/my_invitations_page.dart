@@ -222,6 +222,49 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
     }
   }
 
+  Widget _buildInvitationActions(InvitationModel invitation,
+      {required bool compact}) {
+    if (invitation.status == 'Waiting') {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        alignment: compact ? WrapAlignment.start : WrapAlignment.end,
+        children: [
+          TextButton(
+            onPressed: () => _respond(invitation, 'Declined'),
+            child: const Text('Refuser'),
+          ),
+          ElevatedButton(
+            onPressed: () => _respond(invitation, 'Accepted'),
+            child: const Text('Accepter'),
+          ),
+        ],
+      );
+    }
+
+    if (invitation.status == 'Accepted') {
+      return TextButton.icon(
+        onPressed: () => _confirmLeave(invitation),
+        icon: const Icon(Icons.logout),
+        style: TextButton.styleFrom(
+          foregroundColor: Colors.red.shade700,
+        ),
+        label: const Text('Quitter'),
+      );
+    }
+
+    return Chip(
+      label: Text(
+        _statusLabel(invitation.status),
+        style: TextStyle(
+          color: _statusTextColor(invitation.status),
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      backgroundColor: _statusBackgroundColor(invitation.status),
+    );
+  }
+
   void _showSnack(String text, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -306,56 +349,45 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
                     highlightColor: Colors.transparent,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: ListTile(
-                        title:
-                            Text(inv.eventName ?? 'Évènement #${inv.eventId}'),
-                        subtitle: Text(
-                          'Reçu le ${DateFormat.yMMMMd('fr_FR').format(inv.dateInvi)}',
-                        ),
-                        leading: Icon(
-                          Icons.mail_outline,
-                          color: inv.status == 'Accepted'
-                              ? Colors.green
-                              : inv.status == 'Declined'
-                                  ? Colors.redAccent
-                                  : inv.status == 'Expired'
-                                      ? Colors.grey
-                                      : FiestaaaPalette.primary,
-                        ),
-                        trailing: inv.status == 'Waiting'
-                            ? Wrap(
-                                spacing: 8,
-                                children: [
-                                  TextButton(
-                                    onPressed: () => _respond(inv, 'Declined'),
-                                    child: const Text('Refuser'),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () => _respond(inv, 'Accepted'),
-                                    child: const Text('Accepter'),
-                                  ),
-                                ],
-                              )
-                            : inv.status == 'Accepted'
-                                ? TextButton.icon(
-                                    onPressed: () => _confirmLeave(inv),
-                                    icon: const Icon(Icons.logout),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: Colors.red.shade700,
-                                    ),
-                                    label: const Text('Quitter'),
-                                  )
-                                : Chip(
-                                    label: Text(
-                                      _statusLabel(inv.status),
-                                      style: TextStyle(
-                                        color: _statusTextColor(inv.status),
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    backgroundColor:
-                                        _statusBackgroundColor(inv.status),
-                                  ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isCompact = constraints.maxWidth < 420;
+                          final actions =
+                              _buildInvitationActions(inv, compact: isCompact);
+                          final subtitle = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Reçu le ${DateFormat.yMMMMd('fr_FR').format(inv.dateInvi)}',
+                              ),
+                              if (isCompact) ...[
+                                const SizedBox(height: 8),
+                                actions,
+                              ],
+                            ],
+                          );
+
+                          return ListTile(
+                            title: Text(
+                              inv.eventName ?? 'Évènement #${inv.eventId}',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: subtitle,
+                            leading: Icon(
+                              Icons.mail_outline,
+                              color: inv.status == 'Accepted'
+                                  ? Colors.green
+                                  : inv.status == 'Declined'
+                                      ? Colors.redAccent
+                                      : inv.status == 'Expired'
+                                          ? Colors.grey
+                                          : FiestaaaPalette.primary,
+                            ),
+                            trailing: isCompact ? null : actions,
+                            isThreeLine: isCompact,
+                          );
+                        },
                       ),
                     ),
                   ),
