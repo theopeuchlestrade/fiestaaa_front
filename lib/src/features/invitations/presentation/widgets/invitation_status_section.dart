@@ -77,9 +77,14 @@ class InvitationStatusSection extends StatelessWidget {
         : 'compte-a-creer';
     final display = '@$handle';
     final title = Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(display),
+        Flexible(
+          child: Text(
+            display,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
         if (isOwner) ...[
           const SizedBox(width: 8),
           Tooltip(

@@ -530,29 +530,50 @@ class _EventEditPageState extends State<EventEditPage> {
     final subtitle = _invitationDeadline == null
         ? 'Optionnel : l’invitation expirera à cette date'
         : 'Réponse attendue avant le ${DateFormat.yMMMMd('fr_FR').format(_invitationDeadline!)}';
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: const Icon(Icons.hourglass_bottom),
-      title: const Text('Date limite de réponse'),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(color: Colors.grey.shade700),
-      ),
-      trailing: Wrap(
-        spacing: 8,
-        children: [
-          if (_invitationDeadline != null)
-            IconButton(
-              onPressed: () => setState(() => _invitationDeadline = null),
-              icon: const Icon(Icons.clear),
-              tooltip: 'Retirer',
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 420;
+        final actions = Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: isCompact ? WrapAlignment.start : WrapAlignment.end,
+          children: [
+            if (_invitationDeadline != null)
+              IconButton(
+                onPressed: () => setState(() => _invitationDeadline = null),
+                icon: const Icon(Icons.clear),
+                tooltip: 'Retirer',
+              ),
+            OutlinedButton(
+              onPressed: _pickInvitationDeadline,
+              child: Text(_invitationDeadline == null ? 'Définir' : 'Modifier'),
             ),
-          OutlinedButton(
-            onPressed: _pickInvitationDeadline,
-            child: Text(_invitationDeadline == null ? 'Définir' : 'Modifier'),
-          ),
-        ],
-      ),
+          ],
+        );
+
+        final subtitleWidget = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              subtitle,
+              style: TextStyle(color: Colors.grey.shade700),
+            ),
+            if (isCompact) ...[
+              const SizedBox(height: 8),
+              actions,
+            ],
+          ],
+        );
+
+        return ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.hourglass_bottom),
+          title: const Text('Date limite de réponse'),
+          subtitle: subtitleWidget,
+          trailing: isCompact ? null : actions,
+          isThreeLine: isCompact,
+        );
+      },
     );
   }
 

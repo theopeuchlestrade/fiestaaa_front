@@ -156,6 +156,10 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       setState(() {
         _friends = results[0] as List<FriendModel>;
         _friendRequests = results[1] as List<FriendRequestModel>;
+        _pruneSelectedFriendHandles(
+          _buildInvitedIdentifiers(_invitations),
+          _friends,
+        );
       });
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -184,6 +188,10 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       setState(() {
         _invitations =
             all.where((inv) => inv.eventId == widget.eventId).toList();
+        _pruneSelectedFriendHandles(
+          _buildInvitedIdentifiers(_invitations),
+          _friends,
+        );
       });
     } on ApiException catch (e) {
       setState(() => _error = e.message);
@@ -276,18 +284,51 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
 
   List<FriendModel> get _filteredFriends {
     final query = _friendFilterController.text.trim().toLowerCase();
-    if (query.isEmpty) return _friends;
-    return _friends
-        .where((f) =>
-            f.handle.toLowerCase().contains(query) ||
-            f.email.toLowerCase().contains(query))
-        .toList();
+    final invitedIdentifiers = _buildInvitedIdentifiers(_invitations);
+    return _friends.where((friend) {
+      final handle = friend.handle.toLowerCase();
+      final email = friend.email.toLowerCase();
+      if (invitedIdentifiers.contains(handle) ||
+          invitedIdentifiers.contains(email)) {
+        return false;
+      }
+      if (query.isEmpty) return true;
+      return handle.contains(query) || email.contains(query);
+    }).toList();
   }
 
   bool _identifierMatches(String identifier, String handle, String email) {
     final normalized = identifier.toLowerCase();
     return handle.toLowerCase() == normalized ||
         email.toLowerCase() == normalized;
+  }
+
+  Set<String> _buildInvitedIdentifiers(List<InvitationModel> invitations) {
+    final identifiers = <String>{};
+    for (final invitation in invitations) {
+      identifiers.add(invitation.email.toLowerCase());
+      final handle = invitation.handle?.trim();
+      if (handle != null && handle.isNotEmpty) {
+        identifiers.add(handle.toLowerCase());
+      }
+    }
+    return identifiers;
+  }
+
+  void _pruneSelectedFriendHandles(
+    Set<String> invitedIdentifiers,
+    List<FriendModel> friends,
+  ) {
+    final friendsByHandle = <String, FriendModel>{
+      for (final friend in friends) friend.handle.toLowerCase(): friend,
+    };
+    _selectedFriendHandles.removeWhere((handle) {
+      final normalized = handle.toLowerCase();
+      final friend = friendsByHandle[normalized];
+      if (friend == null) return true;
+      return invitedIdentifiers.contains(normalized) ||
+          invitedIdentifiers.contains(friend.email.toLowerCase());
+    });
   }
 
   bool _isFriendWith(String identifier) {
@@ -303,6 +344,15 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       final email = incoming ? req.senderEmail : req.receiverEmail;
       return _identifierMatches(identifier, handle, email);
     });
+  }
+
+  Widget _statusIcon(IconData icon, Color color) {
+    return SizedBox.square(
+      dimension: kMinInteractiveDimension,
+      child: Center(
+        child: Icon(icon, color: color),
+      ),
+    );
   }
 
   void _toggleFriendSelection(String handle) {
@@ -396,9 +446,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
 
     if (!isSelf) {
       if (_isFriendWith(identifier)) {
-        actions.add(const Icon(Icons.verified, color: Colors.teal));
+        actions.add(_statusIcon(Icons.verified, Colors.teal));
       } else if (_hasPendingFriendRequestWith(identifier)) {
-        actions.add(const Icon(Icons.hourglass_top, color: Colors.orange));
+        actions.add(_statusIcon(Icons.hourglass_top, Colors.orange));
       } else {
         actions.add(IconButton(
           onPressed: _sendingFriendAsk
@@ -423,6 +473,8 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     if (actions.isEmpty) return null;
     return Wrap(
       spacing: 4,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: actions,
     );
   }
@@ -676,14 +728,17 @@ class _FriendsInviteCard extends StatelessWidget {
               children: [
                 const Icon(Icons.people_outline, color: Colors.teal),
                 const SizedBox(width: 8),
-                Text(
-                  'Inviter depuis mes amis',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                Expanded(
+                  child: Text(
+                    'Inviter depuis mes amis',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
                 ),
-                const Spacer(),
                 IconButton(
                   onPressed: loading ? null : () => onRefresh(),
                   tooltip: 'Rafraîchir',
