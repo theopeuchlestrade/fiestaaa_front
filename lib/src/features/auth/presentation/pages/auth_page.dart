@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
+import 'package:fiestaaa_front/src/features/auth/presentation/widgets/google_auth_helper.dart';
 
 import 'package:fiestaaa_front/src/features/auth/presentation/widgets/google_logo.dart';
-import 'package:fiestaaa_front/src/features/auth/presentation/widgets/google_web_button.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -54,9 +54,15 @@ Bug report
   @override
   void initState() {
     super.initState();
-    if (kIsWeb && googleWebClientId.isNotEmpty) {
-      unawaited(_ensureGoogleInitialized());
-    }
+  }
+
+  Future<void> _ensureGoogleInitialized() {
+    if (_googleInitFuture != null) return _googleInitFuture!;
+    // Mobile only. (Web uses googleAuthHelper.)
+    _googleInitFuture = _googleSignIn.initialize(
+      clientId: kIsWeb ? googleWebClientId : null,
+    );
+    return _googleInitFuture!;
   }
 
   @override
@@ -67,14 +73,6 @@ Bug report
     _handleController.dispose();
     _api.dispose();
     super.dispose();
-  }
-
-  Future<void> _ensureGoogleInitialized() {
-    if (_googleInitFuture != null) return _googleInitFuture!;
-    _googleInitFuture = _googleSignIn.initialize(
-      clientId: kIsWeb ? googleWebClientId : null,
-    );
-    return _googleInitFuture!;
   }
 
   void _toggleMode(AuthMode? mode) {
@@ -181,42 +179,68 @@ Bug report
     });
 
     try {
-      await _ensureGoogleInitialized();
-      final account = await _googleSignIn.authenticate();
-      final auth = account.authentication;
-      final idToken = auth.idToken;
-      String? accessToken;
-
-      if (idToken == null || idToken.isEmpty) {
-        final authClient = account.authorizationClient;
-        final authz = await authClient.authorizationForScopes(
-              const ['email'],
-            ) ??
-            await authClient.authorizeScopes(const ['email']);
-        accessToken = authz.accessToken;
-      }
-
-      if (idToken != null && idToken.isNotEmpty) {
-        await _loginWithGoogleToken(
-          idToken: idToken,
-          email: account.email,
-          displayName: account.displayName,
-          manageState: false,
+      if (kIsWeb) {
+        // Web: direct GIS token client. Important: may not callback on popup close,
+        // so we protect with a timeout in the helper implementation.
+        final helperResult = await googleAuthHelper.signIn(
+          clientId: googleWebClientId,
+          scopes: ['email', 'profile'],
         );
-      } else if (accessToken != null && accessToken.isNotEmpty) {
+
+        // Popup closed / canceled => no login.
+        if (helperResult == null || helperResult.accessToken == null) {
+          if (!mounted) return;
+          _showSnack('Connexion Google annulée.', isError: true);
+          return;
+        }
+
         await _loginWithGoogleToken(
-          accessToken: accessToken,
-          email: account.email,
-          displayName: account.displayName,
+          accessToken: helperResult.accessToken!,
+          email: helperResult.email,
+          displayName: helperResult.displayName,
           manageState: false,
         );
       } else {
-        throw ApiException('Token Google manquant ou invalide');
+        // Mobile flow utilizing google_sign_in
+        await _ensureGoogleInitialized();
+        final account = await _googleSignIn.authenticate();
+        final auth = account.authentication;
+        final idToken = auth.idToken;
+        String? accessToken;
+
+        if (idToken == null || idToken.isEmpty) {
+          // Some setups return no idToken; fallback to access token.
+          final authClient = account.authorizationClient;
+          final authz = await authClient.authorizationForScopes(
+                const ['email'],
+              ) ??
+              await authClient.authorizeScopes(const ['email']);
+          accessToken = authz.accessToken;
+        }
+
+        if (idToken != null && idToken.isNotEmpty) {
+          await _loginWithGoogleToken(
+            idToken: idToken,
+            email: account.email,
+            displayName: account.displayName,
+            manageState: false, // State managed by finally
+          );
+        } else if (accessToken != null && accessToken.isNotEmpty) {
+          await _loginWithGoogleToken(
+            accessToken: accessToken,
+            email: account.email,
+            displayName: account.displayName,
+            manageState: false,
+          );
+        } else {
+          throw ApiException('Token Google manquant ou invalide');
+        }
       }
     } on GoogleSignInException catch (e) {
       if (!mounted) return;
       if (e.code == GoogleSignInExceptionCode.canceled ||
           e.code == GoogleSignInExceptionCode.interrupted) {
+        _showSnack('Connexion Google annulée.', isError: true);
         return;
       }
       _showSnack(
@@ -226,10 +250,12 @@ Bug report
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
+      // Log the full error for debugging but show a friendly message
+      debugPrint('Google Sign In Error: $e');
       _showSnack(
-        'Connexion Google impossible pour le moment.',
+        'Connexion Google impossible. (Erreur technique)',
         isError: true,
       );
     } finally {
@@ -915,43 +941,14 @@ Bug report
 
     Widget wrapSocial(Widget child) => Center(child: child);
 
-    final googleWebButton = kIsWeb
-        ? buildGoogleWebButton(
-            onSuccess: ({
-              required String idToken,
-              String? email,
-              String? displayName,
-            }) {
-              _loginWithGoogleToken(
-                idToken: idToken,
-                email: email,
-                displayName: displayName,
-              );
-            },
-            onError: (error) {
-              if (!mounted) return;
-              setState(() {
-                _isSubmitting = false;
-                _socialInProgress = null;
-              });
-              _showSnack(
-                'Connexion Google impossible pour le moment.',
-                isError: true,
-              );
-            },
-            disabled: _isSubmitting,
-          )
-        : null;
-
-    final Widget googleButton = googleWebButton ??
-        OutlinedButton.icon(
-          onPressed: _isSubmitting ? null : _continueWithGoogle,
-          style: socialButtonStyle,
-          icon: _socialInProgress == 'google'
-              ? spinner(FiestaaaPalette.primary)
-              : const GoogleLogo(size: 24),
-          label: const Text('Continuer avec Google'),
-        );
+    final Widget googleButton = OutlinedButton.icon(
+      onPressed: _isSubmitting ? null : _continueWithGoogle,
+      style: socialButtonStyle,
+      icon: _socialInProgress == 'google'
+          ? spinner(FiestaaaPalette.primary)
+          : const GoogleLogo(size: 24),
+      label: const Text('Continuer avec Google'),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
