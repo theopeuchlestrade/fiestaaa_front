@@ -30,26 +30,6 @@ class InvitationModel {
   }
 }
 
-class InvitationSuggestionModel {
-  InvitationSuggestionModel({
-    required this.email,
-    required this.handle,
-    required this.lastInvitedAt,
-  });
-
-  final String email;
-  final String handle;
-  final DateTime lastInvitedAt;
-
-  factory InvitationSuggestionModel.fromJson(Map<String, dynamic> json) {
-    return InvitationSuggestionModel(
-      email: json['email'] as String,
-      handle: json['handle'] as String,
-      lastInvitedAt: DateTime.parse(json['last_invited_at'] as String),
-    );
-  }
-}
-
 class InvitationCreationResult {
   InvitationCreationResult.invitation(this.invitation)
       : emailSent = false,

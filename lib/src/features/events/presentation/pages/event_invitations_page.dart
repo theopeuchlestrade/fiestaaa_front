@@ -8,7 +8,6 @@ import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dar
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/features/invitations/presentation/widgets/invitation_status_section.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class EventInvitationsPage extends StatefulWidget {
   const EventInvitationsPage({
@@ -37,9 +36,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
 
   final _emailController = TextEditingController();
   bool _submitting = false;
-  Timer? _suggestionDebounce;
-  List<InvitationSuggestionModel> _suggestions = [];
-  bool _suggestionsLoading = false;
   List<FriendModel> _friends = [];
   List<FriendRequestModel> _friendRequests = [];
   bool _loadingFriends = true;
@@ -56,9 +52,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   @override
   void initState() {
     super.initState();
-    if (_isOwner) {
-      _emailController.addListener(_onEmailChanged);
-    }
     _friendFilterController.addListener(() {
       setState(() {});
     });
@@ -69,7 +62,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
 
   @override
   void dispose() {
-    _suggestionDebounce?.cancel();
     _realtimeSub?.cancel();
     _api.dispose();
     _emailController.dispose();
@@ -87,23 +79,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     }
   }
 
-  void _onEmailChanged() {
-    if (!_isOwner) return;
-    _suggestionDebounce?.cancel();
-    final query = _emailController.text.trim();
-    if (query.length < 2) {
-      setState(() {
-        _suggestions = [];
-        _suggestionsLoading = false;
-      });
-      return;
-    }
-
-    _suggestionDebounce = Timer(const Duration(milliseconds: 300), () {
-      _loadSuggestions(query);
-    });
-  }
-
   void _handleRealtime(Map<String, dynamic> message) {
     final type = message['type'] as String?;
     if (type == null) return;
@@ -111,34 +86,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     if (eventId is int && eventId != widget.eventId) return;
     if (type == 'invitation_updated') {
       _fetch();
-    }
-  }
-
-  Future<void> _loadSuggestions(String query) async {
-    setState(() {
-      _suggestionsLoading = true;
-    });
-    try {
-      final results = await _api.fetchInvitationSuggestions(
-        token: widget.session.token,
-        eventId: widget.eventId,
-        query: query,
-      );
-      if (!mounted) return;
-      setState(() {
-        _suggestions = results;
-      });
-    } on ApiException catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _suggestions = [];
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _suggestionsLoading = false;
-        });
-      }
     }
   }
 
@@ -202,17 +149,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
         setState(() => _loading = false);
       }
     }
-  }
-
-  void _applySuggestion(InvitationSuggestionModel suggestion) {
-    final value =
-        suggestion.handle.isNotEmpty ? suggestion.handle : suggestion.email;
-    _emailController
-      ..text = value
-      ..selection = TextSelection.collapsed(offset: value.length);
-    setState(() {
-      _suggestions = [];
-    });
   }
 
   Future<void> _createInvitation() async {
@@ -508,9 +444,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
                 emailController: _emailController,
                 onSubmit: _submitting ? null : _createInvitation,
                 submitting: _submitting,
-                suggestions: _suggestions,
-                suggestionsLoading: _suggestionsLoading,
-                onSuggestionSelected: _applySuggestion,
               ),
               const SizedBox(height: 16),
               _FriendsInviteCard(
@@ -602,21 +535,14 @@ class _InviteForm extends StatelessWidget {
     required this.emailController,
     required this.onSubmit,
     required this.submitting,
-    required this.suggestions,
-    required this.suggestionsLoading,
-    required this.onSuggestionSelected,
   });
 
   final TextEditingController emailController;
   final VoidCallback? onSubmit;
   final bool submitting;
-  final List<InvitationSuggestionModel> suggestions;
-  final bool suggestionsLoading;
-  final ValueChanged<InvitationSuggestionModel> onSuggestionSelected;
 
   @override
   Widget build(BuildContext context) {
-    final formatter = DateFormat.yMMMMd('fr_FR');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -633,41 +559,6 @@ class _InviteForm extends StatelessWidget {
             prefixIcon: Icon(Icons.alternate_email),
           ),
         ),
-        if (suggestionsLoading)
-          const Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: LinearProgressIndicator(minHeight: 2),
-          )
-        else if (suggestions.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Material(
-              elevation: 2,
-              borderRadius: BorderRadius.circular(12),
-              child: ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: suggestions.length,
-                separatorBuilder: (context, index) =>
-                    const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final suggestion = suggestions[index];
-                  final handle = suggestion.handle.isNotEmpty
-                      ? suggestion.handle
-                      : 'compte-a-creer';
-                  final title = '@$handle';
-                  return ListTile(
-                    leading: const Icon(Icons.person_add_alt_1_outlined),
-                    title: Text(title),
-                    subtitle: Text(
-                      'Invité le ${formatter.format(suggestion.lastInvitedAt.toLocal())}',
-                    ),
-                    onTap: () => onSuggestionSelected(suggestion),
-                  );
-                },
-              ),
-            ),
-          ),
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
@@ -680,7 +571,7 @@ class _InviteForm extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.send),
-            label: Text(submitting ? 'Envoi...' : 'Envoyer l’invitation'),
+            label: Text(submitting ? 'Envoi...' : "Envoyer l'invitation"),
           ),
         ),
       ],
