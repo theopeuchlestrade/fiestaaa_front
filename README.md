@@ -51,6 +51,7 @@ flutter run -d emulator-5554 --dart-define-from-file=.env
   dart run tool/generate_firebase_sw.dart
   ```
   Cela produit `web/firebase-messaging-sw.js` à partir de `web/firebase-messaging-sw.template.js` et de votre `.env`.
+
 3. Les mêmes valeurs doivent être passées en `--dart-define` (voir commandes ci-dessus) pour correspondre à `lib/firebase_options.dart`.
 
 > `web/firebase-messaging-sw.js` est ignoré par git : conservez les secrets uniquement dans `.env`/CI.***
