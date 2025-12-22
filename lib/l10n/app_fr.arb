@@ -1,0 +1,581 @@
+{
+  "@@locale": "fr",
+  
+  "appTitle": "Fiestaaa",
+  "@appTitle": {
+    "description": "App title"
+  },
+
+  "languageName": "Français",
+  "@languageName": {
+    "description": "Name of this language in this language"
+  },
+
+  "changeLanguage": "Changer la langue",
+  "@changeLanguage": {
+    "description": "Change language button"
+  },
+
+  "french": "Français",
+  "english": "English",
+
+  "myProfile": "Mon profil",
+  "manageAccountAndInvitations": "Gérez votre compte et vos invitations.",
+  "connected": "Connecté",
+  "tokenValidUntil": "Token valide jusqu'au {date} {time}",
+  "@tokenValidUntil": {
+    "placeholders": {
+      "date": {"type": "String"},
+      "time": {"type": "String"}
+    }
+  },
+  "changePhoto": "Changer la photo",
+  "uploading": "Envoi...",
+  "logout": "Se déconnecter",
+  "deleteMyAccount": "Supprimer mon compte",
+  "deleteAccountTitle": "Supprimer mon compte",
+  "deleteAccountWarning": "Cette action est irréversible. Toutes vos données seront définitivement supprimées.",
+  "cancel": "Annuler",
+  "delete": "Supprimer",
+  "accountDeleted": "Compte supprimé",
+  "deletionFailed": "Suppression impossible",
+
+  "updateIdentifier": "Modifier mon identifiant",
+  "identifierExample": "Ex: mango-forest-4832",
+  "identifierHelperText": "Utilisable à la connexion et pour les invitations.",
+  "check": "Vérifier",
+  "update": "Mettre à jour",
+  "updating": "En cours...",
+  "enterIdentifierToCheck": "Renseignez un identifiant pour vérifier",
+  "identifierAvailable": "Identifiant disponible",
+  "identifierTaken": "Identifiant déjà pris",
+  "identifierUpdated": "Identifiant mis à jour",
+  "pleaseEnterIdentifier": "Merci de renseigner un identifiant",
+  "updateFailed": "Mise à jour impossible",
+  "checkFailed": "Vérification impossible",
+
+  "photoUpdated": "Photo mise à jour",
+  "imageTooLarge": "Image trop lourde (max 1.5 Mo)",
+  "uploadFailed": "Upload impossible",
+  "profileLoadFailed": "Impossible de charger votre profil",
+  "profileNotFound": "Profil introuvable",
+  "retry": "Réessayer",
+
+  "login": "Connexion",
+  "register": "Inscription",
+  "createAccount": "Créer un compte",
+  "email": "Email",
+  "password": "Mot de passe",
+  "confirmPassword": "Confirmer le mot de passe",
+  "continueWithGoogle": "Continuer avec Google",
+  "continueWithApple": "Continuer avec Apple",
+  "or": "ou",
+  "alreadyHaveAccount": "Déjà un compte ?",
+  "noAccountYet": "Pas encore de compte ?",
+  "loginSuccess": "Connexion réussie, bienvenue !",
+  "accountCreated": "Compte créé ! Connectez-vous maintenant.",
+  "googleLoginSuccess": "Connexion Google réussie !",
+  "appleLoginSuccess": "Connexion Apple réussie !",
+  "googleLoginCancelled": "Connexion Google annulée.",
+  "networkError": "Erreur réseau, merci de réessayer.",
+  "addressCopied": "Adresse copiée",
+  "bugTemplateCopied": "Template de bug copié",
+
+  "myEvents": "Mes Fiestaaa",
+  "noEventsYet": "Aucun événement pour le moment.",
+  "createFirstEvent": "Créez votre premier Fiestaaa !",
+  "createEvent": "Créer un Fiestaaa",
+  "eventCreated": "Fiestaaa créé !",
+  "creationFailed": "Erreur lors de la création",
+
+  "eventName": "Nom de l'événement",
+  "eventDescription": "Description",
+  "eventDate": "Date",
+  "eventTime": "Heure",
+  "eventAddress": "Adresse",
+  "invitationDeadline": "Date limite d'inscription",
+  "optional": "optionnel",
+  "pleaseSelectSuggestedAddress": "Merci de choisir une adresse suggérée",
+  "pleaseSelectValidDeadline": "Choisissez une date limite valide",
+
+  "invitations": "Invitations",
+  "myInvitations": "Mes invitations",
+  "noInvitations": "Aucune invitation reçue",
+  "accept": "Accepter",
+  "decline": "Refuser",
+  "pending": "En attente",
+  "accepted": "Acceptée",
+  "declined": "Refusée",
+  "invitationExpired": "Invitation expirée",
+
+  "friends": "Amis",
+  "noFriendsYet": "Aucun ami pour le moment.",
+  "searchFriends": "Rechercher des amis",
+  "addFriend": "Ajouter un ami",
+  "friendRequestSent": "Demande envoyée",
+  "friendRequests": "Demandes d'amis",
+
+  "items": "Items",
+  "addItem": "Ajouter un item",
+  "itemAdded": "Item ajouté",
+  "itemDeleted": "Item supprimé",
+  "addItemFailed": "Impossible d'ajouter l'item",
+  "deleteItemFailed": "Suppression impossible",
+  "reserve": "Réserver",
+  "reserved": "Réservé",
+  "available": "Disponible",
+
+  "polls": "Sondages",
+  "createPoll": "Créer un sondage",
+  "pollCreated": "Sondage créé",
+  "pollDeleted": "Sondage supprimé",
+  "createPollFailed": "Impossible de créer le sondage",
+  "deletePollFailed": "Suppression impossible",
+  "voteNotRecorded": "Vote non enregistré",
+  "acceptInvitationBeforeVoting": "Acceptez l'invitation avant de voter.",
+  "pollExpired": "Ce sondage est expiré.",
+
+  "share": "Partager",
+  "linkCopied": "Lien copié !",
+  "copyLinkFailed": "Impossible de copier le lien",
+  "edit": "Modifier",
+  "save": "Enregistrer",
+  "close": "Fermer",
+  "confirm": "Confirmer",
+  "yes": "Oui",
+  "no": "Non",
+  "ok": "OK",
+  "error": "Erreur",
+  "success": "Succès",
+  "loading": "Chargement...",
+  "actionFailed": "Action impossible",
+
+  "payment": "Cagnotte",
+  "contribute": "Participer",
+  "viewDetails": "Voir les détails",
+  "seeOnMap": "Voir sur la carte",
+  "navigate": "Naviguer",
+  "call": "Appeler",
+
+  "qrCode": "QR Code",
+  "myQrCode": "Mon QR Code",
+  "scanQrCode": "Scanner un QR Code",
+  "checkedIn": "Présent",
+  "notCheckedIn": "Non pointé",
+
+  "settings": "Paramètres",
+  "about": "À propos",
+  "version": "Version",
+  "privacyPolicy": "Politique de confidentialité",
+  "termsOfService": "Conditions d'utilisation",
+
+  "welcomeBack": "Bon retour !",
+  "welcomeNew": "Bienvenue !",
+  "loginToContinue": "Connectez-vous pour continuer",
+  "createAccountFree": "Créez votre compte gratuitement",
+  "emailOrIdentifier": "Email ou identifiant",
+  "identifierOptional": "Identifiant (optionnel)",
+  "identifierPublicOptional": "Identifiant public (optionnel)",
+  "identifierAutoGenerated": "Auto-généré si vide. 4-32 caractères a-z 0-9 . _ -",
+  "identifierFormat": "4-32 caractères a-z 0-9 . _ -",
+  "passwordHelperText": "12+ caractères, avec majuscule, minuscule, chiffre et symbole",
+  "passwordRequired": "Mot de passe requis",
+  "passwordMinLength": "12 caractères minimum",
+  "passwordRequirements": "Inclure majuscule, minuscule, chiffre et symbole",
+  "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
+  "pleaseEnterEmail": "Merci de renseigner votre email",
+  "pleaseEnterIdentifierLogin": "Merci de renseigner votre identifiant",
+  "invalidEmail": "Email invalide",
+  "signIn": "Se connecter",
+  "orContinueWith": "ou continuez avec",
+  "createNewAccount": "Créer un nouveau compte",
+  "alreadyHaveAccountLogin": "J'ai déjà un compte",
+  "newToFiestaaa": "Nouveau sur Fiestaaa ? Enregistrez-vous",
+  "alreadyRegistered": "Déjà inscrit ? Connectez-vous",
+  "termsAcceptance": "En continuant, vous acceptez nos conditions\nd'utilisation et notre politique de confidentialité",
+  "alphaVersionBanner": "Version Alpha de test — vos retours sont précieux !",
+  "reportBugsTo": "Signalez les bugs à {email}",
+  "@reportBugsTo": {
+    "placeholders": {
+      "email": {"type": "String"}
+    }
+  },
+  "copyAddress": "Copier l'adresse",
+  "copyBugTemplate": "Copier le template de bug",
+  "googleLoginTechnicalError": "Connexion Google impossible. (Erreur technique)",
+  "googleLoginFailed": "Connexion Google impossible pour le moment.",
+  "appleLoginFailed": "Connexion Apple impossible pour le moment.",
+  "appleNotAvailable": "Connexion Apple non disponible sur cette plateforme.",
+  "missingGoogleConfig": "Ajoutez FIESTAAA_GOOGLE_WEB_CLIENT_ID pour activer Google sur le web.",
+  "missingAppleConfig": "Configurez FIESTAAA_APPLE_SERVICE_ID et FIESTAAA_APPLE_REDIRECT_URI.",
+  "missingToken": "Token {provider} manquant ou invalide",
+  "@missingToken": {
+    "placeholders": {
+      "provider": {"type": "String"}
+    }
+  },
+  "easyOrganization": "Organisation facile",
+  "easyOrganizationDesc": "Créez vos fiestaaa en quelques clics",
+  "simplifiedSharing": "Partage simplifié",
+  "simplifiedSharingDesc": "Invitez vos amis instantanément",
+  "collaborativeManagement": "Gestion collaborative",
+  "collaborativeManagementDesc": "Organisez ensemble vos fiestaaa",
+  "appTagline": "Créez, partagez et gérez vos fiestaaa en toute simplicité.",
+
+  "fiestaaa": "Fiestaaa",
+  "create": "Créer",
+  "profile": "Profil",
+  "shareLinkInvalid": "Lien de partage invalide ou expiré.",
+  "refresh": "Actualiser",
+  "yourFiestaaa": "Vos fiestaaa",
+  "noFiestaaaYet": "Aucune fiestaaa pour le moment.",
+  "unableToLoadFiestaaa": "Impossible de charger les fiestaaa",
+  "unableToLoadInvitations": "Impossible de charger les invitations.",
+  "invitationsWaitingCount": "{count, plural, =1{1 invitation attend votre réponse} other{{count} invitations attendent votre réponse}}",
+  "@invitationsWaitingCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "organizer": "Organisateur",
+  "participationConfirmed": "Participation confirmée",
+  "responseExpected": "Réponse attendue",
+  "refused": "Refusé",
+
+  "createNewFiestaaa": "Créer une nouvelle fiestaaa",
+  "createFiestaaaSubtitle": "Partagez une ambiance : date, lieu, cagnotte, tout est là.",
+  "fiestaaaName": "Nom de la fiestaaa",
+  "description": "Description",
+  "address": "Adresse",
+  "addressValidated": "Adresse validée",
+  "searchAndSelectAddress": "Recherchez puis sélectionnez une suggestion validée",
+  "search": "Rechercher",
+  "enterAtLeast3Chars": "Saisissez au moins 3 caractères",
+  "noAddressFound": "Aucune adresse trouvée",
+  "searchNotPossible": "Recherche impossible pour le moment",
+  "validateAddressFromSearch": "Validez l'adresse depuis la recherche",
+  "responseDeadline": "Date limite de réponse",
+  "optionalDeadlineHelper": "Optionnel : l'invitation expirera à cette date",
+  "responseExpectedBefore": "Réponse attendue avant le {date}",
+  "@responseExpectedBefore": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "define": "Définir",
+  "modify": "Modifier",
+  "remove": "Retirer",
+  "associatedPayment": "Cagnotte associée",
+  "choosePaymentProvider": "Choisissez Lydia, Leetchi, Lyf Pay...",
+  "noPayment": "Aucune cagnotte",
+  "contributionType": "Type de contribution",
+  "globalObjective": "Objectif global",
+  "perPerson": "Par personne",
+  "paymentLink": "Lien de la cagnotte",
+  "linkRequired": "Lien requis pour la cagnotte",
+  "linkFormatInvalid": "Le lien ne correspond pas au format {provider}",
+  "@linkFormatInvalid": {
+    "placeholders": {
+      "provider": {"type": "String"}
+    }
+  },
+  "amountPerPerson": "Montant demandé par personne (€)",
+  "totalAmount": "Montant total souhaité (€)",
+  "amountPerPersonHelper": "Chaque invité est invité à verser ce montant",
+  "totalAmountHelper": "Indiquez le total que vous espérez collecter (optionnel)",
+  "enterPositiveAmount": "Entrez un montant positif",
+  "createTheFiestaaa": "Créer la fiestaaa",
+  "fieldRequired": "Champ requis",
+  "positiveNumberRequired": "Nombre positif requis",
+  "reloadPaymentProviders": "Recharger les cagnottes",
+  "unableToLoadPaymentProviders": "Impossible de charger les cagnottes disponibles",
+  "deadlineExpired": "La date limite est dépassée, impossible d'inviter de nouvelles personnes.",
+
+  "editFiestaaa": "Modifier la fiestaaa",
+  "updateError": "Erreur lors de la mise à jour",
+  "fiestaaaUpdated": "Fiestaaa mise à jour",
+  "fiestaaaDeleted": "Fiestaaa supprimée",
+  "deleteFiestaaaTitle": "Supprimer cette fiestaaa ?",
+  "deleteFiestaaaWarning": "Cette action supprimera la fiestaaa pour tous les participants. Les invités ne la verront plus lors de leur prochaine actualisation.",
+  "deleteImpossible": "Suppression impossible",
+
+  "dateAndTime": "Date & heure",
+  "responseBefore": "Réponse avant",
+  "noPaymentConfigured": "Aucune cagnotte renseignée",
+  "loadingPaymentInfo": "Chargement des informations...",
+  "targetAmount": "Montant visé : {amount}",
+  "@targetAmount": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "contributionPerPerson": "Contribution demandée par personne : {amount}",
+  "@contributionPerPerson": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "amountNotSpecified": "Montant non précisé",
+  "link": "Lien : {link}",
+  "@link": {
+    "placeholders": {
+      "link": {"type": "String"}
+    }
+  },
+  "notProvided": "non renseigné",
+  "openPayment": "Ouvrir la cagnotte",
+  "linkUnavailable": "Lien indisponible",
+  "unableToOpenPayment": "Impossible d'ouvrir la cagnotte",
+  "openInMapsApp": "Ouvrir dans votre app de cartes",
+  "unableToOpenMap": "Impossible d'ouvrir la carte",
+  "linkCopiedToClipboard": "Lien copié dans le presse-papiers",
+  "unableToGenerateLink": "Impossible de générer le lien",
+
+  "ephemeralPolls": "Sondages éphémères",
+  "newPoll": "Nouveau sondage",
+  "creating": "Création...",
+  "collectQuickFeedback": "Collectez un avis rapide auprès des participants. Chaque sondage s'expire automatiquement.",
+  "noPollsYet": "Aucun sondage pour le moment.",
+  "expired": "Expiré",
+  "expiresIn": "Expire dans {time}",
+  "@expiresIn": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "question": "Question",
+  "options": "Options",
+  "optionNumber": "Option {number}",
+  "@optionNumber": {
+    "placeholders": {
+      "number": {"type": "int"}
+    }
+  },
+  "addOption": "Ajouter une option",
+  "expiration": "Expiration",
+  "customDuration": "Durée personnalisée",
+  "durationInHours": "Durée en heures (max 7 jours)",
+  "durationHelperText": "Renseignez une durée supérieure à 24h si besoin.",
+  "multipleAnswersAllowed": "Plusieurs réponses autorisées",
+  "createThePoll": "Créer le sondage",
+  "questionAndOptionsRequired": "Question et au moins deux options requises.",
+  "durationMustBeOver24h": "Pour plus de 24h, saisissez un nombre d'heures supérieur à 24.",
+  "deletePollTitle": "Supprimer ce sondage ?",
+  "deletePollWarning": "Cette action supprimera le sondage pour tout le monde.",
+  "votesFor": "Votes pour \"{question}\"",
+  "@votesFor": {
+    "placeholders": {
+      "question": {"type": "String"}
+    }
+  },
+  "noVotesYet": "Aucun vote pour le moment.",
+
+  "availableItems": "Items disponibles",
+  "add": "Ajouter",
+  "adding": "Ajout...",
+  "chooseWhatYouBring": "Choisissez ce que vous apportez. Les quantités sont partagées entre tous les participants.",
+  "acceptInvitationToContribute": "Acceptez l'invitation avant de pouvoir contribuer aux items.",
+  "invitationExpiredNoContributions": "Invitation expirée : les contributions ne sont plus possibles.",
+  "newItem": "Nouvel item",
+  "itemName": "Nom de l'item",
+  "desiredQuantity": "Quantité souhaitée",
+  "unit": "Unité (ex: pièce, gramme...)",
+  "addTheItem": "Ajouter l'item",
+  "deleteItemTitle": "Supprimer {name} ?",
+  "@deleteItemTitle": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "deleteItemWarning": "Cette action supprimera l'item et toutes les contributions associées.",
+  "contributionFor": "Contribution pour {name}",
+  "@contributionFor": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "promised": "Promis : {reserved}/{max} {unit}",
+  "@promised": {
+    "placeholders": {
+      "reserved": {"type": "int"},
+      "max": {"type": "int"},
+      "unit": {"type": "String"}
+    }
+  },
+  "desiredQuantityField": "Quantité souhaitée",
+  "enterZeroToCancel": "Entrez 0 pour annuler votre contribution.",
+  "enterPositiveNumber": "Entrez un nombre positif",
+  "maximumUnits": "Maximum {max} unités",
+  "@maximumUnits": {
+    "placeholders": {
+      "max": {"type": "int"}
+    }
+  },
+  "validate": "Valider",
+  "thankYouContribution": "Merci pour votre contribution !",
+  "unableToLoadItems": "Impossible de charger les items.",
+
+  "invitationAccepted": "Invitation acceptée",
+  "invitationDeclined": "Invitation refusée",
+  "manageInvitations": "Gérer les invitations",
+  "viewParticipants": "Voir les participants",
+  "shareFiestaaa": "Partager la fiestaaa",
+  "deleteFiestaaa": "Supprimer la fiestaaa",
+  "scanQRCodes": "Scanner QR Codes",
+
+  "inviteUser": "Inviter un utilisateur",
+  "identifierRequired": "Identifiant requis",
+  "invalidIdentifier": "Identifiant invalide",
+  "invitationSent": "Invitation envoyée",
+  "invitationSentByEmail": "Invitation envoyée par email",
+  "invitationCreated": "Invitation créée",
+  "invitationDeleted": "Invitation supprimée",
+  "deleteInvitationError": "Erreur lors de la suppression",
+  "sendInvitation": "Envoyer l'invitation",
+  "sending": "Envoi...",
+  "inviteFromFriends": "Inviter depuis mes amis",
+  "searchAndSelectFriends": "Recherchez et sélectionnez plusieurs amis, puis envoyez une invitation groupée.",
+  "filterFriends": "Filtrer vos amis",
+  "noFriendAvailable": "Aucun ami disponible pour le moment.",
+  "invite": "Inviter",
+  "inviteFriend": "Inviter cet ami",
+  "inviteFriendsCount": "Inviter {count} amis",
+  "@inviteFriendsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "invitationSentToFriend": "Invitation envoyée à votre ami.",
+  "invitationsSentToFriends": "Invitations envoyées à {count} amis.",
+  "@invitationsSentToFriends": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "noInvitationSent": "Aucune invitation envoyée",
+  "waiting": "En attente",
+  "acceptedSectionTitle": "Acceptées",
+  "declinedSectionTitle": "Refusées",
+  "noWaitingInvitation": "Aucun invité en attente de réponse.",
+  "noOneAcceptedYet": "Personne n'a encore accepté.",
+  "noDeclineRecorded": "Aucun refus enregistré.",
+  "sentOn": "Envoyée le {date}",
+  "@sentOn": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "eventCreator": "Créateur de l'événement",
+  "addAsFriend": "Ajouter en ami",
+  "friendRequestSentSuccess": "Demande d'ami envoyée",
+  "unableToSendRequest": "Impossible d'envoyer la demande",
+
+  "myFriends": "Mes amis",
+  "addContactsManageRequests": "Ajoutez des contacts et gérez vos demandes.",
+  "emailOrIdentifierField": "Email ou identifiant",
+  "sendRequest": "Envoyer la demande",
+  "requestSent": "Demande envoyée",
+  "enterEmailOrIdentifier": "Renseignez un email ou identifiant",
+  "received": "Reçues",
+  "sent": "Envoyées",
+  "noRequest": "Aucune",
+  "noRequestInProgress": "Aucune demande en cours.",
+  "receivedOn": "Reçue le {date}",
+  "@receivedOn": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "sentOnDate": "Envoyée le {date}",
+  "@sentOnDate": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "friendSince": "Ami depuis {date}",
+  "@friendSince": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "removeFriendTitle": "Retirer cet ami ?",
+  "removeFriendWarning": "Vous ne serez plus connecté à @{handle}.",
+  "@removeFriendWarning": {
+    "placeholders": {
+      "handle": {"type": "String"}
+    }
+  },
+  "friendRemoved": "Ami retiré",
+  "removeImpossible": "Suppression impossible",
+  "requestAccepted": "Demande acceptée",
+  "friendRequestDeclined": "Demande d'ami refusée",
+  "unableToLoadFriends": "Impossible de charger vos amis.",
+  "unableToLoadRequests": "Impossible de charger vos demandes.",
+  "addFirstFriends": "Ajoutez vos premiers amis pour les inviter rapidement.",
+
+  "fiestaaaTab": "Fiestaaa",
+  "friendsTab": "Amis",
+  "noPendingInvitation": "Aucune invitation en attente.",
+  "noRequestForNow": "Aucune demande pour le moment.",
+  "nothingForNow": "Rien pour le moment",
+  "leaveEvent": "Quitter",
+  "leaveEventTitle": "Quitter cet événement ?",
+  "leaveEventWarning": "Vous êtes actuellement inscrit. Quitter l'événement retirera vos engagements pour {eventName}.",
+  "@leaveEventWarning": {
+    "placeholders": {
+      "eventName": {"type": "String"}
+    }
+  },
+
+  "myTicket": "Mon Billet",
+  "oops": "Oups !",
+  "personalInvitation": "INVITATION PERSONNELLE",
+  "presentCodeAtEntrance": "Présentez ce code à l'entrée",
+  "generatedOn": "Généré le",
+  "validForSingleEntry": "Valable pour une seule entrée",
+
+  "scanner": "Scanner",
+  "invited": "Invités",
+  "present": "Présents",
+  "remaining": "Restants",
+  "accessGranted": "Accès Autorisé",
+  "accessDenied": "Accès Refusé",
+  "unknownUser": "Utilisateur inconnu",
+  "scanNext": "Scanner le suivant",
+
+  "noInvitationForNow": "Aucune invitation pour le moment. Ajoutez-en plus haut.",
+  "accountToCreate": "compte-a-creer",
+
+  "guest": "Invité",
+  "unableToLoadPolls": "Impossible de charger les sondages.",
+  "noItemsYet": "Aucun item n’a encore été ajouté pour cette fiestaaa.",
+  "participations": "Participations",
+  "noContributionsYet": "Personne n’a contribué pour le moment.",
+  "remainingAvailable": "{count} {unit} encore disponible{s}",
+  "@remainingAvailable": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "unit": {"type": "String"},
+      "s": {"type": "String"}
+    }
+  },
+  "quotaFilled": "Quota rempli – vous pouvez remplacer une contribution existante.",
+  "editContribution": "Modifier ma contribution",
+  "iContribute": "Je contribue",
+  "invitationStatusWaiting": "Invitation en attente",
+  "deadlineExpiredHelper": "Échéance dépassée",
+  "confirmPresence": "Confirmez votre présence pour apparaître comme participant.",
+  "deadlinePassedInactive": "La date limite est dépassée, cette invitation n’est plus active.",
+  "acceptedMessage": "Merci ! Vous êtes compté parmi les participants.",
+  "declinedMessage": "Vous avez décliné cette invitation.",
+  "leaveFiestaaaPrompt": "Vous ne venez plus finalement ? Vous pouvez quitter la fiestaaa, vos réservations seront libérées.",
+  "leaveFiestaaaTitle": "Quitter la fiestaaa ?",
+  "leaveFiestaaaContent": "Vous ne serez plus compté comme participant et vos engagements seront retirés.",
+  "leaveFiestaaaAction": "Quitter cette fiestaaa",
+  "pollSelectMultiple": "Sélectionnez une ou plusieurs options.",
+  "pollSelectOne": "Choisissez une option.",
+  "viewVotes": "Voir les votes",
+  "mapProviderGoogle": "Google Maps",
+  "mapProviderApple": "Apple Plans",
+  "mapProviderOsm": "OpenStreetMap"
+}

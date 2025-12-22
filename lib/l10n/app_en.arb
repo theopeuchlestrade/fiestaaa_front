@@ -1,0 +1,569 @@
+{
+  "@@locale": "en",
+  
+  "appTitle": "Fiestaaa",
+  "languageName": "English",
+  "changeLanguage": "Change language",
+  "french": "Français",
+  "english": "English",
+
+  "myProfile": "My profile",
+  "manageAccountAndInvitations": "Manage your account and invitations.",
+  "connected": "Connected",
+  "tokenValidUntil": "Token valid until {date} {time}",
+  "@tokenValidUntil": {
+    "placeholders": {
+      "date": {"type": "String"},
+      "time": {"type": "String"}
+    }
+  },
+  "changePhoto": "Change photo",
+  "uploading": "Uploading...",
+  "logout": "Log out",
+  "deleteMyAccount": "Delete my account",
+  "deleteAccountTitle": "Delete my account",
+  "deleteAccountWarning": "This action is irreversible. All your data will be permanently deleted.",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "accountDeleted": "Account deleted",
+  "deletionFailed": "Deletion failed",
+
+  "updateIdentifier": "Update my identifier",
+  "identifierExample": "E.g.: mango-forest-4832",
+  "identifierHelperText": "Can be used for login and invitations.",
+  "check": "Check",
+  "update": "Update",
+  "updating": "Updating...",
+  "enterIdentifierToCheck": "Enter an identifier to check",
+  "identifierAvailable": "Identifier available",
+  "identifierTaken": "Identifier already taken",
+  "identifierUpdated": "Identifier updated",
+  "pleaseEnterIdentifier": "Please enter an identifier",
+  "updateFailed": "Update failed",
+  "checkFailed": "Check failed",
+
+  "photoUpdated": "Photo updated",
+  "imageTooLarge": "Image too large (max 1.5 MB)",
+  "uploadFailed": "Upload failed",
+  "profileLoadFailed": "Unable to load your profile",
+  "profileNotFound": "Profile not found",
+  "retry": "Retry",
+
+  "login": "Login",
+  "register": "Register",
+  "createAccount": "Create account",
+  "email": "Email",
+  "password": "Password",
+  "confirmPassword": "Confirm password",
+  "continueWithGoogle": "Continue with Google",
+  "continueWithApple": "Continue with Apple",
+  "or": "or",
+  "alreadyHaveAccount": "Already have an account?",
+  "noAccountYet": "Don't have an account yet?",
+  "loginSuccess": "Login successful, welcome!",
+  "accountCreated": "Account created! Please log in now.",
+  "googleLoginSuccess": "Google login successful!",
+  "appleLoginSuccess": "Apple login successful!",
+  "googleLoginCancelled": "Google login cancelled.",
+  "networkError": "Network error, please try again.",
+  "addressCopied": "Address copied",
+  "bugTemplateCopied": "Bug template copied",
+
+  "myEvents": "My Fiestaaa",
+  "noEventsYet": "No events yet.",
+  "createFirstEvent": "Create your first Fiestaaa!",
+  "createEvent": "Create a Fiestaaa",
+  "eventCreated": "Fiestaaa created!",
+  "creationFailed": "Creation failed",
+
+  "eventName": "Event name",
+  "eventDescription": "Description",
+  "eventDate": "Date",
+  "eventTime": "Time",
+  "eventAddress": "Address",
+  "invitationDeadline": "Registration deadline",
+  "optional": "optional",
+  "pleaseSelectSuggestedAddress": "Please select a suggested address",
+  "pleaseSelectValidDeadline": "Please select a valid deadline",
+
+  "invitations": "Invitations",
+  "myInvitations": "My invitations",
+  "noInvitations": "No invitations received",
+  "accept": "Accept",
+  "decline": "Decline",
+  "pending": "Pending",
+  "accepted": "Accepted",
+  "declined": "Declined",
+  "invitationExpired": "Invitation expired",
+
+  "friends": "Friends",
+  "noFriendsYet": "No friends yet.",
+  "searchFriends": "Search friends",
+  "addFriend": "Add friend",
+  "friendRequestSent": "Request sent",
+  "friendRequests": "Friend requests",
+
+  "items": "Items",
+  "addItem": "Add item",
+  "itemAdded": "Item added",
+  "itemDeleted": "Item deleted",
+  "addItemFailed": "Unable to add item",
+  "deleteItemFailed": "Deletion failed",
+  "reserve": "Reserve",
+  "reserved": "Reserved",
+  "available": "Available",
+
+  "polls": "Polls",
+  "createPoll": "Create poll",
+  "pollCreated": "Poll created",
+  "pollDeleted": "Poll deleted",
+  "createPollFailed": "Unable to create poll",
+  "deletePollFailed": "Deletion failed",
+  "voteNotRecorded": "Vote not recorded",
+  "acceptInvitationBeforeVoting": "Accept the invitation before voting.",
+  "pollExpired": "This poll has expired.",
+
+  "share": "Share",
+  "linkCopied": "Link copied!",
+  "copyLinkFailed": "Unable to copy link",
+  "edit": "Edit",
+  "save": "Save",
+  "close": "Close",
+  "confirm": "Confirm",
+  "yes": "Yes",
+  "no": "No",
+  "ok": "OK",
+  "error": "Error",
+  "success": "Success",
+  "loading": "Loading...",
+  "actionFailed": "Action failed",
+
+  "payment": "Collection",
+  "contribute": "Contribute",
+  "viewDetails": "View details",
+  "seeOnMap": "See on map",
+  "navigate": "Navigate",
+  "call": "Call",
+
+  "qrCode": "QR Code",
+  "myQrCode": "My QR Code",
+  "scanQrCode": "Scan QR Code",
+  "checkedIn": "Checked in",
+  "notCheckedIn": "Not checked in",
+
+  "settings": "Settings",
+  "about": "About",
+  "version": "Version",
+  "privacyPolicy": "Privacy policy",
+  "termsOfService": "Terms of service",
+
+  "fiestaaa": "Fiestaaa",
+  "create": "Create",
+  "profile": "Profile",
+  "shareLinkInvalid": "Share link invalid or expired.",
+
+  "welcomeBack": "Welcome back!",
+  "welcomeNew": "Welcome!",
+  "loginToContinue": "Log in to continue",
+  "createAccountFree": "Create your account for free",
+  "emailOrIdentifier": "Email or identifier",
+  "identifierOptional": "Identifier (optional)",
+  "identifierPublicOptional": "Public identifier (optional)",
+  "identifierAutoGenerated": "Auto-generated if empty. 4-32 chars a-z 0-9 . _ -",
+  "identifierFormat": "4-32 chars a-z 0-9 . _ -",
+  "passwordHelperText": "12+ chars with uppercase, lowercase, number and symbol",
+  "passwordRequired": "Password required",
+  "passwordMinLength": "Minimum 12 characters",
+  "passwordRequirements": "Include uppercase, lowercase, number and symbol",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "pleaseEnterEmail": "Please enter your email",
+  "pleaseEnterIdentifierLogin": "Please enter your identifier",
+  "invalidEmail": "Invalid email",
+  "signIn": "Sign in",
+  "orContinueWith": "or continue with",
+  "createNewAccount": "Create a new account",
+  "alreadyHaveAccountLogin": "I already have an account",
+  "newToFiestaaa": "New to Fiestaaa? Register",
+  "alreadyRegistered": "Already registered? Log in",
+  "termsAcceptance": "By continuing, you accept our terms\nof service and privacy policy",
+  "alphaVersionBanner": "Alpha test version — your feedback is valuable!",
+  "reportBugsTo": "Report bugs to {email}",
+  "@reportBugsTo": {
+    "placeholders": {
+      "email": {"type": "String"}
+    }
+  },
+  "copyAddress": "Copy address",
+  "copyBugTemplate": "Copy bug template",
+  "googleLoginTechnicalError": "Google login failed. (Technical error)",
+  "googleLoginFailed": "Google login unavailable at the moment.",
+  "appleLoginFailed": "Apple login unavailable at the moment.",
+  "appleNotAvailable": "Apple login not available on this platform.",
+  "missingGoogleConfig": "Add FIESTAAA_GOOGLE_WEB_CLIENT_ID to enable Google on web.",
+  "missingAppleConfig": "Configure FIESTAAA_APPLE_SERVICE_ID and FIESTAAA_APPLE_REDIRECT_URI.",
+  "missingToken": "Missing or invalid {provider} token",
+  "@missingToken": {
+    "placeholders": {
+      "provider": {"type": "String"}
+    }
+  },
+  "easyOrganization": "Easy organization",
+  "easyOrganizationDesc": "Create your fiestaaa in a few clicks",
+  "simplifiedSharing": "Simplified sharing",
+  "simplifiedSharingDesc": "Invite your friends instantly",
+  "collaborativeManagement": "Collaborative management",
+  "collaborativeManagementDesc": "Organize your fiestaaa together",
+  "appTagline": "Create, share and manage your fiestaaa with ease.",
+
+  "refresh": "Refresh",
+  "yourFiestaaa": "Your fiestaaa",
+  "noFiestaaaYet": "No fiestaaa yet.",
+  "unableToLoadFiestaaa": "Unable to load fiestaaa",
+  "unableToLoadInvitations": "Unable to load invitations.",
+  "invitationsWaitingCount": "{count, plural, =1{1 invitation awaits your response} other{{count} invitations await your response}}",
+  "@invitationsWaitingCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "organizer": "Organizer",
+  "participationConfirmed": "Participation confirmed",
+  "responseExpected": "Response expected",
+  "refused": "Refused",
+
+  "createNewFiestaaa": "Create a new fiestaaa",
+  "createFiestaaaSubtitle": "Share the vibe: date, location, collection — it's all here.",
+  "fiestaaaName": "Fiestaaa name",
+  "description": "Description",
+  "address": "Address",
+  "addressValidated": "Address validated",
+  "searchAndSelectAddress": "Search then select a validated suggestion",
+  "search": "Search",
+  "enterAtLeast3Chars": "Enter at least 3 characters",
+  "noAddressFound": "No address found",
+  "searchNotPossible": "Search unavailable at the moment",
+  "validateAddressFromSearch": "Validate the address from the search",
+  "responseDeadline": "Response deadline",
+  "optionalDeadlineHelper": "Optional: invitation will expire on this date",
+  "responseExpectedBefore": "Response expected before {date}",
+  "@responseExpectedBefore": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "define": "Set",
+  "modify": "Modify",
+  "remove": "Remove",
+  "associatedPayment": "Associated collection",
+  "choosePaymentProvider": "Choose Lydia, Leetchi, Lyf Pay...",
+  "noPayment": "No collection",
+  "contributionType": "Contribution type",
+  "globalObjective": "Global objective",
+  "perPerson": "Per person",
+  "paymentLink": "Collection link",
+  "linkRequired": "Link required for collection",
+  "linkFormatInvalid": "Link does not match {provider} format",
+  "@linkFormatInvalid": {
+    "placeholders": {
+      "provider": {"type": "String"}
+    }
+  },
+  "amountPerPerson": "Amount requested per person (€)",
+  "totalAmount": "Total amount desired (€)",
+  "amountPerPersonHelper": "Each guest is invited to contribute this amount",
+  "totalAmountHelper": "Indicate the total you hope to collect (optional)",
+  "enterPositiveAmount": "Enter a positive amount",
+  "createTheFiestaaa": "Create the fiestaaa",
+  "fieldRequired": "Field required",
+  "positiveNumberRequired": "Positive number required",
+  "reloadPaymentProviders": "Reload collections",
+  "unableToLoadPaymentProviders": "Unable to load available collections",
+  "deadlineExpired": "Deadline has passed, cannot invite new people.",
+
+  "editFiestaaa": "Edit fiestaaa",
+  "updateError": "Update error",
+  "fiestaaaUpdated": "Fiestaaa updated",
+  "fiestaaaDeleted": "Fiestaaa deleted",
+  "deleteFiestaaaTitle": "Delete this fiestaaa?",
+  "deleteFiestaaaWarning": "This action will delete the fiestaaa for all participants. Guests will no longer see it after their next refresh.",
+  "deleteImpossible": "Deletion impossible",
+
+  "dateAndTime": "Date & time",
+  "responseBefore": "Respond before",
+  "noPaymentConfigured": "No collection configured",
+  "loadingPaymentInfo": "Loading information...",
+  "targetAmount": "Target amount: {amount}",
+  "@targetAmount": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "contributionPerPerson": "Contribution requested per person: {amount}",
+  "@contributionPerPerson": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "amountNotSpecified": "Amount not specified",
+  "link": "Link: {link}",
+  "@link": {
+    "placeholders": {
+      "link": {"type": "String"}
+    }
+  },
+  "notProvided": "not provided",
+  "openPayment": "Open collection",
+  "linkUnavailable": "Link unavailable",
+  "unableToOpenPayment": "Unable to open collection",
+  "openInMapsApp": "Open in your maps app",
+  "unableToOpenMap": "Unable to open map",
+  "linkCopiedToClipboard": "Link copied to clipboard",
+  "unableToGenerateLink": "Unable to generate link",
+
+  "ephemeralPolls": "Ephemeral polls",
+  "newPoll": "New poll",
+  "creating": "Creating...",
+  "collectQuickFeedback": "Collect quick feedback from participants. Each poll expires automatically.",
+  "noPollsYet": "No polls yet.",
+  "expired": "Expired",
+  "expiresIn": "Expires in {time}",
+  "@expiresIn": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "question": "Question",
+  "options": "Options",
+  "optionNumber": "Option {number}",
+  "@optionNumber": {
+    "placeholders": {
+      "number": {"type": "int"}
+    }
+  },
+  "addOption": "Add option",
+  "expiration": "Expiration",
+  "customDuration": "Custom duration",
+  "durationInHours": "Duration in hours (max 7 days)",
+  "durationHelperText": "Enter a duration over 24h if needed.",
+  "multipleAnswersAllowed": "Multiple answers allowed",
+  "createThePoll": "Create the poll",
+  "questionAndOptionsRequired": "Question and at least two options required.",
+  "durationMustBeOver24h": "For more than 24h, enter a number of hours greater than 24.",
+  "deletePollTitle": "Delete this poll?",
+  "deletePollWarning": "This action will delete the poll for everyone.",
+  "votesFor": "Votes for \"{question}\"",
+  "@votesFor": {
+    "placeholders": {
+      "question": {"type": "String"}
+    }
+  },
+  "noVotesYet": "No votes yet.",
+
+  "availableItems": "Available items",
+  "add": "Add",
+  "adding": "Adding...",
+  "chooseWhatYouBring": "Choose what you're bringing. Quantities are shared among all participants.",
+  "acceptInvitationToContribute": "Accept the invitation before contributing to items.",
+  "invitationExpiredNoContributions": "Invitation expired: contributions are no longer possible.",
+  "newItem": "New item",
+  "itemName": "Item name",
+  "desiredQuantity": "Desired quantity",
+  "unit": "Unit (e.g.: piece, gram...)",
+  "addTheItem": "Add the item",
+  "deleteItemTitle": "Delete {name}?",
+  "@deleteItemTitle": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "deleteItemWarning": "This action will delete the item and all associated contributions.",
+  "contributionFor": "Contribution for {name}",
+  "@contributionFor": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "promised": "Promised: {reserved}/{max} {unit}",
+  "@promised": {
+    "placeholders": {
+      "reserved": {"type": "int"},
+      "max": {"type": "int"},
+      "unit": {"type": "String"}
+    }
+  },
+  "desiredQuantityField": "Desired quantity",
+  "enterZeroToCancel": "Enter 0 to cancel your contribution.",
+  "enterPositiveNumber": "Enter a positive number",
+  "maximumUnits": "Maximum {max} units",
+  "@maximumUnits": {
+    "placeholders": {
+      "max": {"type": "int"}
+    }
+  },
+  "validate": "Validate",
+  "thankYouContribution": "Thank you for your contribution!",
+  "unableToLoadItems": "Unable to load items.",
+
+  "invitationAccepted": "Invitation accepted",
+  "invitationDeclined": "Invitation declined",
+  "manageInvitations": "Manage invitations",
+  "viewParticipants": "View participants",
+  "shareFiestaaa": "Share fiestaaa",
+  "deleteFiestaaa": "Delete fiestaaa",
+  "scanQRCodes": "Scan QR Codes",
+
+  "inviteUser": "Invite a user",
+  "identifierRequired": "Identifier required",
+  "invalidIdentifier": "Invalid identifier",
+  "invitationSent": "Invitation sent",
+  "invitationSentByEmail": "Invitation sent by email",
+  "invitationCreated": "Invitation created",
+  "invitationDeleted": "Invitation deleted",
+  "deleteInvitationError": "Error while deleting",
+  "sendInvitation": "Send invitation",
+  "sending": "Sending...",
+  "inviteFromFriends": "Invite from my friends",
+  "searchAndSelectFriends": "Search and select multiple friends, then send a group invitation.",
+  "filterFriends": "Filter your friends",
+  "noFriendAvailable": "No friends available at the moment.",
+  "invite": "Invite",
+  "inviteFriend": "Invite this friend",
+  "inviteFriendsCount": "Invite {count} friends",
+  "@inviteFriendsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "invitationSentToFriend": "Invitation sent to your friend.",
+  "invitationsSentToFriends": "Invitations sent to {count} friends.",
+  "@invitationsSentToFriends": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "noInvitationSent": "No invitation sent",
+  "waiting": "Waiting",
+  "acceptedSectionTitle": "Accepted",
+  "declinedSectionTitle": "Declined",
+  "noWaitingInvitation": "No guests waiting for a response.",
+  "noOneAcceptedYet": "No one has accepted yet.",
+  "noDeclineRecorded": "No decline recorded.",
+  "sentOn": "Sent on {date}",
+  "@sentOn": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "eventCreator": "Event creator",
+  "addAsFriend": "Add as friend",
+  "friendRequestSentSuccess": "Friend request sent",
+  "unableToSendRequest": "Unable to send request",
+
+  "myFriends": "My friends",
+  "addContactsManageRequests": "Add contacts and manage your requests.",
+  "emailOrIdentifierField": "Email or identifier",
+  "sendRequest": "Send request",
+  "requestSent": "Request sent",
+  "enterEmailOrIdentifier": "Enter an email or identifier",
+  "received": "Received",
+  "sent": "Sent",
+  "noRequest": "None",
+  "noRequestInProgress": "No request in progress.",
+  "receivedOn": "Received on {date}",
+  "@receivedOn": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "sentOnDate": "Sent on {date}",
+  "@sentOnDate": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "friendSince": "Friend since {date}",
+  "@friendSince": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "removeFriendTitle": "Remove this friend?",
+  "removeFriendWarning": "You will no longer be connected to @{handle}.",
+  "@removeFriendWarning": {
+    "placeholders": {
+      "handle": {"type": "String"}
+    }
+  },
+  "friendRemoved": "Friend removed",
+  "removeImpossible": "Removal impossible",
+  "requestAccepted": "Request accepted",
+  "friendRequestDeclined": "Friend request declined",
+  "unableToLoadFriends": "Unable to load your friends.",
+  "unableToLoadRequests": "Unable to load your requests.",
+  "addFirstFriends": "Add your first friends to invite them quickly.",
+
+  "fiestaaaTab": "Fiestaaa",
+  "friendsTab": "Friends",
+  "noPendingInvitation": "No pending invitation.",
+  "noRequestForNow": "No request for now.",
+  "nothingForNow": "Nothing for now",
+  "leaveEvent": "Leave",
+  "leaveEventTitle": "Leave this event?",
+  "leaveEventWarning": "You are currently registered. Leaving the event will remove your commitments for {eventName}.",
+  "@leaveEventWarning": {
+    "placeholders": {
+      "eventName": {"type": "String"}
+    }
+  },
+
+  "myTicket": "My Ticket",
+  "oops": "Oops!",
+  "personalInvitation": "PERSONAL INVITATION",
+  "presentCodeAtEntrance": "Present this code at the entrance",
+  "generatedOn": "Generated on",
+  "validForSingleEntry": "Valid for a single entry",
+
+  "scanner": "Scanner",
+  "invited": "Invited",
+  "present": "Present",
+  "remaining": "Remaining",
+  "accessGranted": "Access Granted",
+  "accessDenied": "Access Denied",
+  "unknownUser": "Unknown user",
+  "scanNext": "Scan next",
+
+  "noInvitationForNow": "No invitation for now. Add some above.",
+  "accountToCreate": "account-to-create",
+
+  "guest": "Guest",
+  "unableToLoadPolls": "Unable to load polls.",
+  "noItemsYet": "No items added for this fiestaaa yet.",
+  "participations": "Participations",
+  "noContributionsYet": "No one has contributed yet.",
+  "remainingAvailable": "{count} {unit} still available",
+  "@remainingAvailable": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "unit": {"type": "String"}
+    }
+  },
+  "quotaFilled": "Quota filled – you can replace an existing contribution.",
+  "editContribution": "Edit my contribution",
+  "iContribute": "I contribute",
+  "invitationStatusWaiting": "Invitation pending",
+  "deadlineExpiredHelper": "Deadline expired",
+  "confirmPresence": "Confirm your presence to appear as a participant.",
+  "deadlinePassedInactive": "The deadline has passed, this invitation is no longer active.",
+  "acceptedMessage": "Thank you! You are counted among the participants.",
+  "declinedMessage": "You have declined this invitation.",
+  "leaveFiestaaaPrompt": "Not coming finally? You can leave the fiestaaa, your reservations will be released.",
+  "leaveFiestaaaTitle": "Leave the fiestaaa?",
+  "leaveFiestaaaContent": "You will no longer be counted as a participant and your commitments will be removed.",
+  "leaveFiestaaaAction": "Leave this fiestaaa",
+  "pollSelectMultiple": "Select one or more options.",
+  "pollSelectOne": "Choose an option.",
+  "viewVotes": "View votes",
+  "mapProviderGoogle": "Google Maps",
+  "mapProviderApple": "Apple Maps",
+  "mapProviderOsm": "OpenStreetMap"
+}

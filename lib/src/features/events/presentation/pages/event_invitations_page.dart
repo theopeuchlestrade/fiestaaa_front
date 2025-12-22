@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/friends/data/friends_api.dart';
@@ -113,7 +114,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       setState(() => _friendsError = e.message);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _friendsError = 'Impossible de charger vos amis.');
+      setState(() => _friendsError = S.of(context).unableToLoadFriends);
     } finally {
       if (mounted) {
         setState(() => _loadingFriends = false);
@@ -143,7 +144,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } catch (_) {
-      setState(() => _error = 'Impossible de charger les invitations.');
+      setState(() => _error = S.of(context).unableToLoadInvitations);
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -155,12 +156,12 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     if (!_isOwner) return;
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      _showSnack('Identifiant requis', isError: true);
+      _showSnack(S.of(context).identifierRequired, isError: true);
       return;
     }
     if (!email.contains('@') &&
         !RegExp(r'^[a-z0-9._-]{4,32}$').hasMatch(email)) {
-      _showSnack('Identifiant invalide', isError: true);
+      _showSnack(S.of(context).invalidIdentifier, isError: true);
       return;
     }
     setState(() => _submitting = true);
@@ -173,15 +174,16 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       if (!mounted) return;
       _emailController.clear();
       await _fetch();
+      if (!mounted) return;
       final successMessage = result.emailSent
-          ? (result.message ?? 'Invitation envoyée par email')
-          : 'Invitation créée';
+          ? (result.message ?? S.of(context).invitationSentByEmail)
+          : S.of(context).invitationCreated;
       _showSnack(successMessage);
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 410) {
         _showSnack(
-          'La date limite est dépassée, impossible d’inviter de nouvelles personnes.',
+          S.of(context).deadlineExpired,
           isError: true,
         );
         await _fetch();
@@ -190,7 +192,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Erreur lors de la création', isError: true);
+      _showSnack(S.of(context).creationFailed, isError: true);
     } finally {
       if (mounted) {
         setState(() => _submitting = false);
@@ -208,13 +210,14 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       );
       if (!mounted) return;
       await _fetch();
-      _showSnack('Invitation supprimée');
+      if (!mounted) return;
+      _showSnack(S.of(context).invitationDeleted);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Erreur lors de la suppression', isError: true);
+      _showSnack(S.of(context).deleteInvitationError, isError: true);
     }
   }
 
@@ -307,6 +310,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     var successCount = 0;
     String? firstError;
     var deadlineExpired = false;
+    // Capture localized string before async loop
+    final creationFailedMsg = S.of(context).creationFailed;
+
     try {
       for (final handle in _selectedFriendHandles) {
         try {
@@ -323,17 +329,18 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
             break;
           }
         } catch (_) {
-          firstError ??= 'Erreur lors de la création';
+          firstError ??= creationFailedMsg;
         }
       }
       if (!mounted) return;
       await _fetch();
+      if (!mounted) return;
       setState(() {
         _selectedFriendHandles.clear();
       });
-      if (deadlineExpired) {
+        if (deadlineExpired) {
         _showSnack(
-          'La date limite est dépassée, impossible d’inviter de nouvelles personnes.',
+          S.of(context).deadlineExpired,
           isError: true,
         );
         return;
@@ -341,13 +348,13 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       if (successCount > 0) {
         _showSnack(
           successCount == 1
-              ? 'Invitation envoyée à votre ami.'
-              : 'Invitations envoyées à $successCount amis.',
+              ? S.of(context).invitationSentToFriend
+              : S.of(context).invitationsSentToFriends(successCount),
         );
       } else if (firstError != null) {
         _showSnack(firstError, isError: true);
       } else {
-        _showSnack('Aucune invitation envoyée', isError: true);
+        _showSnack(S.of(context).noInvitationSent, isError: true);
       }
     } finally {
       if (mounted) {
@@ -372,13 +379,14 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       );
       if (!mounted) return;
       await _loadFriendsAndRequests();
-      _showSnack('Demande d’ami envoyée');
+      if (!mounted) return;
+      _showSnack(S.of(context).friendRequestSentSuccess);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Impossible d’envoyer la demande', isError: true);
+      _showSnack(S.of(context).unableToSendRequest, isError: true);
     } finally {
       if (mounted) {
         setState(() => _sendingFriendAsk = false);
@@ -408,7 +416,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
               ? null
               : () => _sendFriendRequestForInvitation(invitation),
           icon: const Icon(Icons.person_add_alt_1),
-          tooltip: 'Ajouter en ami',
+          tooltip: S.of(context).addAsFriend,
         ));
       }
     }
@@ -418,7 +426,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
         IconButton(
           onPressed: () => _deleteInvitation(invitation),
           icon: const Icon(Icons.delete),
-          tooltip: 'Supprimer',
+          tooltip: S.of(context).delete,
         ),
       );
     }
@@ -446,7 +454,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     final filteredFriends = _filteredFriends;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Invitations'),
+        title: Text(S.of(context).invitations),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -487,14 +495,14 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
                   const SizedBox(height: 8),
                   ElevatedButton(
                     onPressed: _fetch,
-                    child: const Text('Réessayer'),
+                    child: Text(S.of(context).retry),
                   ),
                 ],
               )
             else if (_invitations.isEmpty)
-              const Center(
+              Center(
                 child: Text(
-                    'Aucune invitation pour le moment. Ajoutez-en plus haut.'),
+                    S.of(context).noInvitationForNow),
               )
             else
               ..._buildInvitationSections(),
@@ -505,25 +513,25 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   }
 
   List<Widget> _buildInvitationSections() {
-    const sections = [
+    final sections = [
       (
         status: 'Waiting',
-        title: 'En attente',
-        emptyLabel: 'Aucun invité en attente de réponse.',
+        title: S.of(context).waiting,
+        emptyLabel: S.of(context).noWaitingInvitation,
         icon: Icons.hourglass_bottom,
         color: Colors.amber,
       ),
       (
         status: 'Accepted',
-        title: 'Acceptées',
-        emptyLabel: 'Personne n’a encore accepté.',
+        title: S.of(context).acceptedSectionTitle,
+        emptyLabel: S.of(context).noOneAcceptedYet,
         icon: Icons.check_circle,
         color: Colors.green,
       ),
       (
         status: 'Declined',
-        title: 'Refusées',
-        emptyLabel: 'Aucun refus enregistré.',
+        title: S.of(context).declinedSectionTitle,
+        emptyLabel: S.of(context).noDeclineRecorded,
         icon: Icons.cancel,
         color: Colors.redAccent,
       ),
@@ -564,16 +572,16 @@ class _InviteForm extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Inviter un utilisateur',
+          S.of(context).inviteUser,
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 12),
         TextField(
           controller: emailController,
           keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(
-            labelText: 'Email ou identifiant',
-            prefixIcon: Icon(Icons.alternate_email),
+          decoration: InputDecoration(
+            labelText: S.of(context).emailOrIdentifier,
+            prefixIcon: const Icon(Icons.alternate_email),
           ),
         ),
         const SizedBox(height: 12),
@@ -588,7 +596,7 @@ class _InviteForm extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.send),
-            label: Text(submitting ? 'Envoi...' : "Envoyer l'invitation"),
+            label: Text(submitting ? S.of(context).sending : S.of(context).sendInvitation),
           ),
         ),
       ],
@@ -621,11 +629,14 @@ class _FriendsInviteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectionLabel = selectedHandles.isEmpty
-        ? ''
-        : selectedHandles.length == 1
-            ? 'cet ami'
-            : '${selectedHandles.length} amis';
+    final buttonLabel = inviting
+        ? S.of(context).sending
+        : (selectedHandles.isEmpty
+            ? S.of(context).invite
+            : (selectedHandles.length == 1
+                ? S.of(context).inviteFriend
+                : S.of(context).inviteFriendsCount(selectedHandles.length)));
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -638,7 +649,7 @@ class _FriendsInviteCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Inviter depuis mes amis',
+                    S.of(context).inviteFromFriends,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context)
@@ -649,14 +660,14 @@ class _FriendsInviteCard extends StatelessWidget {
                 ),
                 IconButton(
                   onPressed: loading ? null : () => onRefresh(),
-                  tooltip: 'Rafraîchir',
+                  tooltip: S.of(context).refresh,
                   icon: const Icon(Icons.refresh),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              'Recherchez et sélectionnez plusieurs amis, puis envoyez une invitation groupée.',
+              S.of(context).searchAndSelectFriends,
               style: Theme.of(context)
                   .textTheme
                   .bodySmall
@@ -665,9 +676,9 @@ class _FriendsInviteCard extends StatelessWidget {
             const SizedBox(height: 12),
             TextField(
               controller: filterController,
-              decoration: const InputDecoration(
-                labelText: 'Filtrer vos amis',
-                prefixIcon: Icon(Icons.search),
+              decoration: InputDecoration(
+                labelText: S.of(context).filterFriends,
+                prefixIcon: const Icon(Icons.search),
               ),
             ),
             const SizedBox(height: 12),
@@ -690,14 +701,14 @@ class _FriendsInviteCard extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: onRefresh,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Réessayer'),
+                    label: Text(S.of(context).retry),
                   ),
                 ],
               )
             else if (friends.isEmpty)
-              const Text(
-                'Aucun ami disponible pour le moment.',
-                style: TextStyle(color: Colors.grey),
+              Text(
+                S.of(context).noFriendAvailable,
+                style: const TextStyle(color: Colors.grey),
               )
             else
               Wrap(
@@ -725,13 +736,7 @@ class _FriendsInviteCard extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.send),
-                label: Text(
-                  inviting
-                      ? 'Envoi...'
-                      : (selectionLabel.isEmpty
-                          ? 'Inviter'
-                          : 'Inviter $selectionLabel'),
-                ),
+                label: Text(buttonLabel),
               ),
             ),
           ],

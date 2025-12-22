@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/locale_service.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/data/session_storage.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
@@ -7,6 +8,7 @@ import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/src/core/push_notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 
 class FiestaaaApp extends StatefulWidget {
   const FiestaaaApp({super.key});
@@ -17,6 +19,7 @@ class FiestaaaApp extends StatefulWidget {
 
 class _FiestaaaAppState extends State<FiestaaaApp> {
   final _authApi = AuthApi();
+  final _localeService = LocaleService();
   SessionData? _session;
   bool _loadingSession = true;
   String? _pendingShareToken;
@@ -25,7 +28,17 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   void initState() {
     super.initState();
     _pendingShareToken = Uri.base.queryParameters['shareToken'];
-    _restoreSession();
+    _localeService.addListener(_onLocaleChanged);
+    _init();
+  }
+
+  Future<void> _init() async {
+    await _localeService.loadSavedLocale();
+    await _restoreSession();
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _restoreSession() async {
@@ -82,6 +95,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
 
   @override
   void dispose() {
+    _localeService.removeListener(_onLocaleChanged);
     _authApi.dispose();
     PushNotificationService.instance.dispose();
     super.dispose();
@@ -94,16 +108,13 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       debugShowCheckedModeBanner: false,
       theme: buildFiestaaaTheme(),
       localizationsDelegates: const [
+        S.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('fr'),
-        Locale('fr', 'FR'),
-        Locale('en'),
-      ],
-      locale: const Locale('fr', 'FR'),
+      supportedLocales: LocaleService.supportedLocales,
+      locale: _localeService.locale,
       home: _loadingSession
           ? const _SplashScreen()
           : _session == null
@@ -118,6 +129,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
                       _pendingShareToken = null;
                     });
                   },
+                  localeService: _localeService,
                 ),
     );
   }

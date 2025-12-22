@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -63,18 +64,18 @@ class InvitationStatusSection extends StatelessWidget {
                     ?.copyWith(color: Colors.grey.shade600),
               )
             else
-              ...invitations.map(_buildTile),
+              ...invitations.map((invitation) => _buildTile(context, invitation)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTile(InvitationModel invitation) {
+  Widget _buildTile(BuildContext context, InvitationModel invitation) {
     final isOwner = invitation.email.toLowerCase() == ownerEmail.toLowerCase();
     final handle = invitation.handle?.isNotEmpty == true
         ? invitation.handle!
-        : 'compte-a-creer';
+        : S.of(context).accountToCreate;
     final display = '@$handle';
     final title = Row(
       children: [
@@ -88,7 +89,7 @@ class InvitationStatusSection extends StatelessWidget {
         if (isOwner) ...[
           const SizedBox(width: 8),
           Tooltip(
-            message: 'Créateur de l’événement',
+            message: S.of(context).eventCreator,
             child: Icon(
               Icons.emoji_events,
               color: Colors.amber.shade700,
@@ -105,7 +106,7 @@ class InvitationStatusSection extends StatelessWidget {
       trailing = IconButton(
         onPressed: () => onDelete!(invitation),
         icon: const Icon(Icons.delete),
-        tooltip: 'Supprimer',
+        tooltip: S.of(context).delete,
       );
     }
     return ListTile(
@@ -116,7 +117,7 @@ class InvitationStatusSection extends StatelessWidget {
       ),
       title: title,
       subtitle: Text(
-        'Envoyée le ${DateFormat.yMMMMd('fr_FR').format(invitation.dateInvi)}',
+        S.of(context).sentOn(DateFormat.yMMMMd(Localizations.localeOf(context).toString()).format(invitation.dateInvi)),
       ),
       trailing: trailing,
     );
