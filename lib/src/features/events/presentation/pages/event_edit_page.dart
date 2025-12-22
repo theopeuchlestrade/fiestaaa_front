@@ -5,6 +5,7 @@ import 'package:fiestaaa_front/src/features/events/domain/address_suggestion.dar
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_provider_model.dart';
+import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
@@ -584,122 +585,134 @@ class _EventEditPageState extends State<EventEditPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(S.of(context).editFiestaaa),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
+      body: FiestaaaPageLayout(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: S.of(context).fiestaaaName,
-                  prefixIcon: const Icon(Icons.celebration),
-                ),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? S.of(context).fieldRequired
-                    : null,
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: BackButton(),
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                minLines: 3,
-                maxLines: 5,
-                decoration: InputDecoration(
-                  labelText: S.of(context).description,
-                  alignLabelWithHint: true,
-                  prefixIcon: const Icon(Icons.description),
-                ),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? S.of(context).fieldRequired
-                    : null,
+              const SizedBox(height: 4),
+              FiestaaaPageHeader(
+                title: S.of(context).editFiestaaa,
               ),
-              const SizedBox(height: 16),
-              _buildAddressField(),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _pickDate,
-                      icon: const Icon(Icons.event),
-                      label: Text(
-                        DateFormat.yMMMMd(Localizations.localeOf(context).toString())
-                            .format(_selectedDate),
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        labelText: S.of(context).fiestaaaName,
+                        prefixIcon: const Icon(Icons.celebration),
+                      ),
+                      validator: (value) => value == null || value.trim().isEmpty
+                          ? S.of(context).fieldRequired
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _descriptionController,
+                      minLines: 3,
+                      maxLines: 5,
+                      decoration: InputDecoration(
+                        labelText: S.of(context).description,
+                        alignLabelWithHint: true,
+                        prefixIcon: const Icon(Icons.description),
+                      ),
+                      validator: (value) => value == null || value.trim().isEmpty
+                          ? S.of(context).fieldRequired
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildAddressField(),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pickDate,
+                            icon: const Icon(Icons.event),
+                            label: Text(
+                              DateFormat.yMMMMd(Localizations.localeOf(context).toString())
+                                  .format(_selectedDate),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pickTime,
+                            icon: const Icon(Icons.access_time),
+                            label: Text(_selectedTime.format(context)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildInvitationDeadlineField(),
+                    const SizedBox(height: 12),
+                    _buildPaymentProviderField(),
+                    const SizedBox(height: 16),
+                    _buildPaymentModeToggle(),
+                    if (_selectedProviderId != null) const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _paymentIdentifierController,
+                      decoration: InputDecoration(
+                        labelText: S.of(context).paymentLink,
+                        prefixIcon: const Icon(Icons.link),
+                      ),
+                      enabled: _selectedProviderId != null,
+                      validator: _validatePaymentLink,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _paymentAmountController,
+                      decoration: InputDecoration(
+                        labelText: _paymentPerPerson
+                            ? S.of(context).amountPerPerson
+                            : S.of(context).totalAmount,
+                        prefixIcon: const Icon(Icons.euro),
+                        helperText: _paymentPerPerson
+                            ? S.of(context).amountPerPersonHelper
+                            : S.of(context).totalAmountHelper,
+                      ),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      enabled: _selectedProviderId != null,
+                      validator: (value) {
+                        if (_selectedProviderId == null) {
+                          return null;
+                        }
+                        final raw = value?.trim() ?? '';
+                        if (raw.isEmpty) {
+                          return null;
+                        }
+                        final parsed = double.tryParse(raw.replaceAll(',', '.'));
+                        if (parsed == null || parsed < 0) {
+                          return S.of(context).enterPositiveAmount;
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _submitting ? null : _submit,
+                        child: _submitting
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Text(S.of(context).save),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _pickTime,
-                      icon: const Icon(Icons.access_time),
-                      label: Text(_selectedTime.format(context)),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildInvitationDeadlineField(),
-              const SizedBox(height: 12),
-              _buildPaymentProviderField(),
-              const SizedBox(height: 16),
-              _buildPaymentModeToggle(),
-              if (_selectedProviderId != null) const SizedBox(height: 12),
-              TextFormField(
-                controller: _paymentIdentifierController,
-                decoration: InputDecoration(
-                  labelText: S.of(context).paymentLink,
-                  prefixIcon: const Icon(Icons.link),
-                ),
-                enabled: _selectedProviderId != null,
-                validator: _validatePaymentLink,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _paymentAmountController,
-                decoration: InputDecoration(
-                  labelText: _paymentPerPerson
-                      ? S.of(context).amountPerPerson
-                      : S.of(context).totalAmount,
-                  prefixIcon: const Icon(Icons.euro),
-                  helperText: _paymentPerPerson
-                      ? S.of(context).amountPerPersonHelper
-                      : S.of(context).totalAmountHelper,
-                ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                enabled: _selectedProviderId != null,
-                validator: (value) {
-                  if (_selectedProviderId == null) {
-                    return null;
-                  }
-                  final raw = value?.trim() ?? '';
-                  if (raw.isEmpty) {
-                    return null;
-                  }
-                  final parsed = double.tryParse(raw.replaceAll(',', '.'));
-                  if (parsed == null || parsed < 0) {
-                    return S.of(context).enterPositiveAmount;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submitting ? null : _submit,
-                  child: _submitting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(S.of(context).save),
+                  ],
                 ),
               ),
             ],

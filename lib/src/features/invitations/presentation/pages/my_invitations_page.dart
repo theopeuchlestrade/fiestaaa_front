@@ -285,125 +285,138 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(S.of(context).myInvitations),
-          bottom: TabBar(
-            tabs: [
-              Tab(text: S.of(context).fiestaaaTab),
-              Tab(text: S.of(context).friendsTab),
+        body: FiestaaaPageLayout(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: BackButton(),
+              ),
+              const SizedBox(height: 4),
+              FiestaaaPageHeader(
+                title: S.of(context).myInvitations,
+                bottomSpacing: 8,
+              ),
+              TabBar(
+                tabs: [
+                  Tab(text: S.of(context).fiestaaaTab),
+                  Tab(text: S.of(context).friendsTab),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _buildEventInvitationsTab(),
+                    _buildFriendRequestsTab(),
+                  ],
+                ),
+              ),
             ],
           ),
-        ),
-        body: TabBarView(
-          children: [
-            _buildEventInvitationsTab(),
-            _buildFriendRequestsTab(),
-          ],
         ),
       ),
     );
   }
 
   Widget _buildEventInvitationsTab() {
-    return FiestaaaBackground(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-      child: RefreshIndicator(
-        onRefresh: _fetchEventInvitations,
-        displacement: 28,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(8, 8, 8, 32),
-          children: [
-            if (_loadingInvitations)
-              const SizedBox(
-                height: 220,
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (_invitationError != null)
-              Column(
-                children: [
-                  Text(_invitationError!),
-                  const SizedBox(height: 12),
-                  ElevatedButton.icon(
-                    onPressed: _fetchEventInvitations,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(S.of(context).retry),
-                  ),
-                ],
-              )
-            else if (_invitations.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Center(
-                  child: Text(S.of(context).noPendingInvitation),
+    return RefreshIndicator(
+      onRefresh: _fetchEventInvitations,
+      displacement: 28,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(top: 8, bottom: 32),
+        children: [
+          if (_loadingInvitations)
+            const SizedBox(
+              height: 220,
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_invitationError != null)
+            Column(
+              children: [
+                Text(_invitationError!),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: _fetchEventInvitations,
+                  icon: const Icon(Icons.refresh),
+                  label: Text(S.of(context).retry),
                 ),
-              )
-            else
-              ..._invitations.map(
-                (inv) => Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    onTap: widget.onOpenEvent != null &&
-                            inv.status == 'Accepted'
-                        ? () => widget.onOpenEvent!(inv.eventId)
-                        : null,
-                    splashColor:
-                        FiestaaaPalette.primary.withValues(alpha: 0.12),
-                    highlightColor: Colors.transparent,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final isCompact = constraints.maxWidth < 420;
-                          final actions =
-                              _buildInvitationActions(inv, compact: isCompact);
-                          final subtitle = Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                S.of(context).receivedOn(
-                                  DateFormat.yMMMMd(Localizations.localeOf(context).toString())
-                                      .format(inv.dateInvi),
-                                ),
+              ],
+            )
+          else if (_invitations.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Center(
+                child: Text(S.of(context).noPendingInvitation),
+              ),
+            )
+          else
+            ..._invitations.map(
+              (inv) => Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: widget.onOpenEvent != null &&
+                          inv.status == 'Accepted'
+                      ? () => widget.onOpenEvent!(inv.eventId)
+                      : null,
+                  splashColor:
+                      FiestaaaPalette.primary.withValues(alpha: 0.12),
+                  highlightColor: Colors.transparent,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isCompact = constraints.maxWidth < 420;
+                        final actions =
+                            _buildInvitationActions(inv, compact: isCompact);
+                        final subtitle = Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              S.of(context).receivedOn(
+                                DateFormat.yMMMMd(Localizations.localeOf(context).toString())
+                                    .format(inv.dateInvi),
                               ),
-                              if (isCompact) ...[
-                                const SizedBox(height: 8),
-                                actions,
-                              ],
+                            ),
+                            if (isCompact) ...[
+                              const SizedBox(height: 8),
+                              actions,
                             ],
-                          );
+                          ],
+                        );
 
-                          return ListTile(
-                            title: Text(
-                              inv.eventName ?? '${S.of(context).fiestaaa} #${inv.eventId}',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            subtitle: subtitle,
-                            leading: Icon(
-                              Icons.mail_outline,
-                              color: inv.status == 'Accepted'
-                                  ? Colors.green
-                                  : inv.status == 'Declined'
-                                      ? Colors.redAccent
-                                      : inv.status == 'Expired'
-                                          ? Colors.grey
-                                          : FiestaaaPalette.primary,
-                            ),
-                            trailing: isCompact ? null : actions,
-                            isThreeLine: isCompact,
-                          );
-                        },
-                      ),
+                        return ListTile(
+                          title: Text(
+                            inv.eventName ?? '${S.of(context).fiestaaa} #${inv.eventId}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: subtitle,
+                          leading: Icon(
+                            Icons.mail_outline,
+                            color: inv.status == 'Accepted'
+                                ? Colors.green
+                                : inv.status == 'Declined'
+                                    ? Colors.redAccent
+                                    : inv.status == 'Expired'
+                                        ? Colors.grey
+                                        : FiestaaaPalette.primary,
+                          ),
+                          trailing: isCompact ? null : actions,
+                          isThreeLine: isCompact,
+                        );
+                      },
                     ),
                   ),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -416,58 +429,55 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
         .where((req) => !req.isIncoming(widget.session.email))
         .toList();
 
-    return FiestaaaBackground(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-      child: RefreshIndicator(
-        onRefresh: _fetchFriendRequests,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(8, 8, 8, 32),
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                S.of(context).friendRequests,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+    return RefreshIndicator(
+      onRefresh: _fetchFriendRequests,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(top: 8, bottom: 32),
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              S.of(context).friendRequests,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            if (_loadingFriendRequests)
-              const Center(child: CircularProgressIndicator())
-            else if (_friendRequestsError != null)
-              Column(
-                children: [
-                  Text(_friendRequestsError!),
-                  const SizedBox(height: 12),
-                  ElevatedButton.icon(
-                    onPressed: _fetchFriendRequests,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(S.of(context).retry),
-                  ),
-                ],
-              )
-            else if (incoming.isEmpty && outgoing.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Text(S.of(context).noRequestForNow),
+          ),
+          if (_loadingFriendRequests)
+            const Center(child: CircularProgressIndicator())
+          else if (_friendRequestsError != null)
+            Column(
+              children: [
+                Text(_friendRequestsError!),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: _fetchFriendRequests,
+                  icon: const Icon(Icons.refresh),
+                  label: Text(S.of(context).retry),
                 ),
-              )
-            else ...[
-              _FriendRequestsSection(
-                title: S.of(context).received,
-                requests: incoming,
-                onAccept: (req) => _respondFriendRequest(req, 'Accepted'),
-                onDecline: (req) => _respondFriendRequest(req, 'Declined'),
-                incoming: true,
+              ],
+            )
+          else if (incoming.isEmpty && outgoing.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(S.of(context).noRequestForNow),
               ),
-              const SizedBox(height: 12),
-              _FriendRequestsSection(
-                title: S.of(context).sent,
-                requests: outgoing,
-              ),
-            ],
+            )
+          else ...[
+            _FriendRequestsSection(
+              title: S.of(context).received,
+              requests: incoming,
+              onAccept: (req) => _respondFriendRequest(req, 'Accepted'),
+              onDecline: (req) => _respondFriendRequest(req, 'Declined'),
+              incoming: true,
+            ),
+            const SizedBox(height: 12),
+            _FriendRequestsSection(
+              title: S.of(context).sent,
+              requests: outgoing,
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

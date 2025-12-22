@@ -8,6 +8,7 @@ import 'package:fiestaaa_front/src/features/friends/domain/friend_model.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/features/invitations/presentation/widgets/invitation_status_section.dart';
+import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 
 class EventInvitationsPage extends StatefulWidget {
@@ -453,60 +454,66 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   Widget build(BuildContext context) {
     final filteredFriends = _filteredFriends;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(S.of(context).invitations),
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await Future.wait([_fetch(), _loadFriendsAndRequests()]);
-        },
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(24),
-          children: [
-            if (_isOwner) ...[
-              _InviteForm(
-                emailController: _emailController,
-                onSubmit: _submitting ? null : _createInvitation,
-                submitting: _submitting,
+      body: FiestaaaPageLayout(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await Future.wait([_fetch(), _loadFriendsAndRequests()]);
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            children: [
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: BackButton(),
               ),
-              const SizedBox(height: 16),
-              _FriendsInviteCard(
-                loading: _loadingFriends,
-                error: _friendsError,
-                friends: filteredFriends,
-                selectedHandles: _selectedFriendHandles,
-                filterController: _friendFilterController,
-                onToggle: _toggleFriendSelection,
-                onInvite: _selectedFriendHandles.isEmpty || _invitingFriends
-                    ? null
-                    : _inviteSelectedFriends,
-                inviting: _invitingFriends,
-                onRefresh: _loadFriendsAndRequests,
+              const SizedBox(height: 4),
+              FiestaaaPageHeader(
+                title: S.of(context).invitations,
               ),
-              const SizedBox(height: 24),
+              if (_isOwner) ...[
+                _InviteForm(
+                  emailController: _emailController,
+                  onSubmit: _submitting ? null : _createInvitation,
+                  submitting: _submitting,
+                ),
+                const SizedBox(height: 16),
+                _FriendsInviteCard(
+                  loading: _loadingFriends,
+                  error: _friendsError,
+                  friends: filteredFriends,
+                  selectedHandles: _selectedFriendHandles,
+                  filterController: _friendFilterController,
+                  onToggle: _toggleFriendSelection,
+                  onInvite: _selectedFriendHandles.isEmpty || _invitingFriends
+                      ? null
+                      : _inviteSelectedFriends,
+                  inviting: _invitingFriends,
+                  onRefresh: _loadFriendsAndRequests,
+                ),
+                const SizedBox(height: 24),
+              ],
+              if (_loading)
+                const Center(child: CircularProgressIndicator())
+              else if (_error != null)
+                Column(
+                  children: [
+                    Text(_error!),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: _fetch,
+                      child: Text(S.of(context).retry),
+                    ),
+                  ],
+                )
+              else if (_invitations.isEmpty)
+                Center(
+                  child: Text(S.of(context).noInvitationForNow),
+                )
+              else
+                ..._buildInvitationSections(),
             ],
-            if (_loading)
-              const Center(child: CircularProgressIndicator())
-            else if (_error != null)
-              Column(
-                children: [
-                  Text(_error!),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: _fetch,
-                    child: Text(S.of(context).retry),
-                  ),
-                ],
-              )
-            else if (_invitations.isEmpty)
-              Center(
-                child: Text(
-                    S.of(context).noInvitationForNow),
-              )
-            else
-              ..._buildInvitationSections(),
-          ],
+          ),
         ),
       ),
     );

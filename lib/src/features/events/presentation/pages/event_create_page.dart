@@ -581,152 +581,144 @@ class _EventCreatePageState extends State<EventCreatePage> {
 
   @override
   Widget build(BuildContext context) {
-    return FiestaaaBackground(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                S.of(context).createNewFiestaaa,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                S.of(context).createFiestaaaSubtitle,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 20),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller: _nameController,
-                          decoration: InputDecoration(
-                            labelText: S.of(context).fiestaaaName,
-                            prefixIcon: const Icon(Icons.celebration),
-                          ),
-                          validator: (value) =>
-                              value == null || value.trim().isEmpty
-                                  ? S.of(context).fieldRequired
-                                  : null,
+    return FiestaaaPageLayout(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FiestaaaPageHeader(
+              title: S.of(context).createNewFiestaaa,
+              subtitle: S.of(context).createFiestaaaSubtitle,
+              bottomSpacing: 20,
+            ),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: InputDecoration(
+                          labelText: S.of(context).fiestaaaName,
+                          prefixIcon: const Icon(Icons.celebration),
                         ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _descriptionController,
-                          minLines: 3,
-                          maxLines: 5,
-                          decoration: InputDecoration(
-                            labelText: S.of(context).description,
-                            alignLabelWithHint: true,
-                            prefixIcon: const Icon(Icons.description),
-                          ),
-                          validator: (value) =>
-                              value == null || value.trim().isEmpty
-                                  ? S.of(context).fieldRequired
-                                  : null,
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                                ? S.of(context).fieldRequired
+                                : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _descriptionController,
+                        minLines: 3,
+                        maxLines: 5,
+                        decoration: InputDecoration(
+                          labelText: S.of(context).description,
+                          alignLabelWithHint: true,
+                          prefixIcon: const Icon(Icons.description),
                         ),
-                        const SizedBox(height: 16),
-                        _buildAddressField(),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: _pickDate,
-                                icon: const Icon(Icons.event),
-                                label: Text(DateFormat.yMMMMd(S.of(context).localeName)
-                                    .format(_selectedDate)),
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                                ? S.of(context).fieldRequired
+                                : null,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildAddressField(),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _pickDate,
+                              icon: const Icon(Icons.event),
+                              label: Text(
+                                DateFormat.yMMMMd(S.of(context).localeName)
+                                    .format(_selectedDate),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: _pickTime,
-                                icon: const Icon(Icons.access_time),
-                                label: Text(_selectedTime.format(context)),
-                              ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _pickTime,
+                              icon: const Icon(Icons.access_time),
+                              label: Text(_selectedTime.format(context)),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _buildInvitationDeadlineField(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildInvitationDeadlineField(),
+                      const SizedBox(height: 12),
+                      _buildPaymentProviderField(),
+                      const SizedBox(height: 16),
+                      _buildPaymentModeToggle(),
+                      if (_selectedProviderId != null)
                         const SizedBox(height: 12),
-                        _buildPaymentProviderField(),
-                        const SizedBox(height: 16),
-                        _buildPaymentModeToggle(),
-                        if (_selectedProviderId != null)
-                          const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _paymentIdentifierController,
-                          decoration: InputDecoration(
-                            labelText: S.of(context).paymentLink,
-                            prefixIcon: const Icon(Icons.link),
-                          ),
-                          enabled: _selectedProviderId != null,
-                          validator: _validatePaymentLink,
+                      TextFormField(
+                        controller: _paymentIdentifierController,
+                        decoration: InputDecoration(
+                          labelText: S.of(context).paymentLink,
+                          prefixIcon: const Icon(Icons.link),
                         ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _paymentAmountController,
-                          decoration: InputDecoration(
-                            labelText: _paymentPerPerson
-                                ? S.of(context).amountPerPerson
-                                : S.of(context).totalAmount,
-                            prefixIcon: const Icon(Icons.euro),
-                            helperText: _paymentPerPerson
-                                ? S.of(context).amountPerPersonHelper
-                                : S.of(context).totalAmountHelper,
-                          ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true),
-                          enabled: _selectedProviderId != null,
-                          validator: (value) {
-                            if (_selectedProviderId == null) {
-                              return null;
-                            }
-                            final raw = value?.trim() ?? '';
-                            if (raw.isEmpty) {
-                              return null;
-                            }
-                            final parsed =
-                                double.tryParse(raw.replaceAll(',', '.'));
-                            if (parsed == null || parsed < 0) {
-                              return S.of(context).enterPositiveAmount;
-                            }
+                        enabled: _selectedProviderId != null,
+                        validator: _validatePaymentLink,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _paymentAmountController,
+                        decoration: InputDecoration(
+                          labelText: _paymentPerPerson
+                              ? S.of(context).amountPerPerson
+                              : S.of(context).totalAmount,
+                          prefixIcon: const Icon(Icons.euro),
+                          helperText: _paymentPerPerson
+                              ? S.of(context).amountPerPersonHelper
+                              : S.of(context).totalAmountHelper,
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        enabled: _selectedProviderId != null,
+                        validator: (value) {
+                          if (_selectedProviderId == null) {
                             return null;
-                          },
+                          }
+                          final raw = value?.trim() ?? '';
+                          if (raw.isEmpty) {
+                            return null;
+                          }
+                          final parsed =
+                              double.tryParse(raw.replaceAll(',', '.'));
+                          if (parsed == null || parsed < 0) {
+                            return S.of(context).enterPositiveAmount;
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _submitting ? null : _submit,
+                          child: _submitting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Text(S.of(context).createTheFiestaaa),
                         ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _submitting ? null : _submit,
-                            child: _submitting
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  )
-                                : Text(S.of(context).createTheFiestaaa),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

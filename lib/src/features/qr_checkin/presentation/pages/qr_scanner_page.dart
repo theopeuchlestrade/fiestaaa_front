@@ -22,7 +22,8 @@ class QRScannerPage extends StatefulWidget {
 
 class _QRScannerPageState extends State<QRScannerPage> {
   final QRCheckinApi _api = QRCheckinApi();
-  final MobileScannerController _scannerController = MobileScannerController();
+  final MobileScannerController _scannerController =
+      MobileScannerController(autoStart: false);
 
   QRScanStats? _stats;
   QRScanResult? _lastScanResult;
@@ -69,7 +70,15 @@ class _QRScannerPageState extends State<QRScannerPage> {
   void _scheduleScannerStart() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      await _scannerController.start();
+      final state = _scannerController.value;
+      if (state.isRunning || state.isStarting) {
+        return;
+      }
+      try {
+        await _scannerController.start();
+      } on MobileScannerException {
+        // Ignore duplicate start attempts while initializing.
+      }
     });
   }
 
