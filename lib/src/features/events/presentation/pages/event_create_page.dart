@@ -6,6 +6,7 @@ import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_provider_model.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -90,7 +91,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _providersError = 'Impossible de charger les cagnottes disponibles';
+        _providersError = S.of(context).unableToLoadPaymentProviders;
         _loadingProviders = false;
       });
     }
@@ -117,7 +118,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
       initialDate: _selectedDate,
       firstDate: DateTime.now().subtract(const Duration(days: 1)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      locale: const Locale('fr'),
+      locale: Localizations.localeOf(context),
     );
     if (picked != null) {
       setState(() {
@@ -157,7 +158,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
       initialDate: initial,
       firstDate: now,
       lastDate: lastDate,
-      locale: const Locale('fr'),
+      locale: Localizations.localeOf(context),
     );
 
     if (picked != null) {
@@ -169,7 +170,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
     final query = _addressController.text.trim();
     if (query.length < 3) {
       setState(() {
-        _addressSearchError = 'Saisissez au moins 3 caractères';
+        _addressSearchError = S.of(context).enterAtLeast3Chars;
         _addressSuggestions = [];
         _selectedSuggestion = null;
       });
@@ -190,7 +191,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
       setState(() {
         _addressSuggestions = results;
         if (results.isEmpty) {
-          _addressSearchError = 'Aucune adresse trouvée';
+          _addressSearchError = S.of(context).noAddressFound;
         }
       });
     } on ApiException catch (e) {
@@ -203,7 +204,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
       if (!mounted) return;
       setState(() {
         _addressSuggestions = [];
-        _addressSearchError = 'Recherche impossible pour le moment';
+        _addressSearchError = S.of(context).searchNotPossible;
       });
     } finally {
       if (mounted) {
@@ -226,9 +227,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedSuggestion == null) {
       setState(() {
-        _addressSearchError = 'Validez l’adresse depuis la recherche';
+        _addressSearchError = S.of(context).validateAddressFromSearch;
       });
-      _showSnack('Merci de choisir une adresse suggérée', isError: true);
+      _showSnack(S.of(context).pleaseSelectSuggestedAddress, isError: true);
       return;
     }
     final today = DateTime.now();
@@ -236,7 +237,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
     if (_invitationDeadline != null &&
         (_invitationDeadline!.isBefore(todayDate) ||
             _invitationDeadline!.isAfter(_selectedDate))) {
-      _showSnack('Choisissez une date limite valide', isError: true);
+      _showSnack(S.of(context).pleaseSelectValidDeadline, isError: true);
       return;
     }
     setState(() => _submitting = true);
@@ -268,7 +269,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
         payload: payload,
       );
       if (!mounted) return;
-      _showSnack('Fiestaaa créé !');
+      _showSnack(S.of(context).eventCreated);
       widget.onEventCreated();
       _formKey.currentState?.reset();
       _nameController.clear();
@@ -288,7 +289,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Erreur lors de la création', isError: true);
+      _showSnack(S.of(context).creationFailed, isError: true);
     } finally {
       if (mounted) {
         setState(() => _submitting = false);
@@ -318,13 +319,13 @@ class _EventCreatePageState extends State<EventCreatePage> {
     }
     final text = value?.trim() ?? '';
     if (text.isEmpty) {
-      return 'Lien requis pour la cagnotte';
+      return S.of(context).linkRequired;
     }
     final provider = _providerById(_selectedProviderId);
     final regExp = provider?.compiledValidationRegex ??
         RegExp(PaymentProviderModel.defaultValidationRegex);
     if (!regExp.hasMatch(text)) {
-      return 'Le lien ne correspond pas au format ${provider?.name ?? 'attendu'}';
+      return S.of(context).linkFormatInvalid(provider?.name ?? 'attendu');
     }
     return null;
   }
@@ -364,16 +365,16 @@ class _EventCreatePageState extends State<EventCreatePage> {
           TextButton.icon(
             onPressed: _loadPaymentProviders,
             icon: const Icon(Icons.refresh),
-            label: const Text('Recharger les cagnottes'),
+            label: Text(S.of(context).reloadPaymentProviders),
           ),
         ],
       );
     }
 
     final items = <DropdownMenuItem<int?>>[
-      const DropdownMenuItem<int?>(
+      DropdownMenuItem<int?>(
         value: null,
-        child: Text('Aucune cagnotte'),
+        child: Text(S.of(context).noPayment),
       ),
       ..._providers.map(
         (provider) => DropdownMenuItem<int?>(
@@ -387,10 +388,10 @@ class _EventCreatePageState extends State<EventCreatePage> {
       key: ValueKey(_selectedProviderId),
       initialValue: _selectedProviderId,
       items: items,
-      decoration: const InputDecoration(
-        labelText: 'Cagnotte associée',
-        prefixIcon: Icon(Icons.payment),
-        helperText: 'Choisissez Lydia, Leetchi, Lyf Pay...',
+      decoration: InputDecoration(
+        labelText: S.of(context).associatedPayment,
+        prefixIcon: const Icon(Icons.payment),
+        helperText: S.of(context).choosePaymentProvider,
       ),
       onChanged: (value) {
         setState(() {
@@ -413,7 +414,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Type de contribution',
+          S.of(context).contributionType,
           style: Theme.of(context)
               .textTheme
               .labelLarge
@@ -421,9 +422,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
         ),
         const SizedBox(height: 8),
         SegmentedButton<bool>(
-          segments: const [
-            ButtonSegment(value: false, label: Text('Objectif global')),
-            ButtonSegment(value: true, label: Text('Par personne')),
+          segments: [
+            ButtonSegment(value: false, label: Text(S.of(context).globalObjective)),
+            ButtonSegment(value: true, label: Text(S.of(context).perPerson)),
           ],
           selected: {_paymentPerPerson},
           onSelectionChanged: (value) {
@@ -439,8 +440,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
   Widget _buildInvitationDeadlineField() {
     final accent = Theme.of(context).colorScheme.primary;
     final subtitle = _invitationDeadline == null
-        ? 'Optionnel : l’invitation expirera à cette date'
-        : 'Réponse attendue avant le ${DateFormat.yMMMMd('fr_FR').format(_invitationDeadline!)}';
+        ? S.of(context).optionalDeadlineHelper
+        : S.of(context).responseExpectedBefore(DateFormat.yMMMMd(S.of(context).localeName).format(_invitationDeadline!));
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 420;
@@ -453,7 +454,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
               IconButton(
                 onPressed: () => setState(() => _invitationDeadline = null),
                 icon: const Icon(Icons.clear),
-                tooltip: 'Retirer',
+                tooltip: S.of(context).remove,
               ),
             OutlinedButton(
               onPressed: _pickInvitationDeadline,
@@ -461,7 +462,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
                 foregroundColor: accent,
                 side: BorderSide(color: accent.withValues(alpha: 0.4)),
               ),
-              child: Text(_invitationDeadline == null ? 'Définir' : 'Modifier'),
+              child: Text(_invitationDeadline == null ? S.of(context).define : S.of(context).modify),
             ),
           ],
         );
@@ -484,7 +485,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
           contentPadding: EdgeInsets.zero,
           leading: Icon(Icons.hourglass_bottom, color: accent),
           title: Text(
-            'Date limite de réponse',
+            S.of(context).responseDeadline,
             style: Theme.of(context)
                 .textTheme
                 .titleMedium
@@ -506,11 +507,11 @@ class _EventCreatePageState extends State<EventCreatePage> {
           controller: _addressController,
           focusNode: _addressFocus,
           decoration: InputDecoration(
-            labelText: 'Adresse',
+            labelText: S.of(context).address,
             prefixIcon: const Icon(Icons.place),
             helperText: _selectedSuggestion == null
-                ? 'Recherchez puis sélectionnez une suggestion validée'
-                : 'Adresse validée',
+                ? S.of(context).searchAndSelectAddress
+                : S.of(context).addressValidated,
             suffixIcon: IconButton(
               onPressed: _searchingAddress ? null : _searchAddress,
               icon: _searchingAddress
@@ -520,11 +521,11 @@ class _EventCreatePageState extends State<EventCreatePage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.search),
-              tooltip: 'Rechercher',
+              tooltip: S.of(context).search,
             ),
           ),
           validator: (value) =>
-              value == null || value.trim().isEmpty ? 'Champ requis' : null,
+              value == null || value.trim().isEmpty ? S.of(context).fieldRequired : null,
           onFieldSubmitted: (_) => _searchAddress(),
         ),
         if (_addressSearchError != null) ...[
@@ -570,7 +571,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
                   color: Colors.green.shade600,
                 ),
                 const SizedBox(width: 6),
-                const Text('Adresse validée'),
+                Text(S.of(context).addressValidated),
               ],
             ),
           ),
@@ -589,14 +590,14 @@ class _EventCreatePageState extends State<EventCreatePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Créer une nouvelle fiestaaa',
+                S.of(context).createNewFiestaaa,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
               ),
               const SizedBox(height: 6),
               Text(
-                'Partagez une ambiance : date, lieu, cagnotte, tout est là.',
+                S.of(context).createFiestaaaSubtitle,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 20),
@@ -609,13 +610,13 @@ class _EventCreatePageState extends State<EventCreatePage> {
                       children: [
                         TextFormField(
                           controller: _nameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Nom de la fiestaaa',
-                            prefixIcon: Icon(Icons.celebration),
+                          decoration: InputDecoration(
+                            labelText: S.of(context).fiestaaaName,
+                            prefixIcon: const Icon(Icons.celebration),
                           ),
                           validator: (value) =>
                               value == null || value.trim().isEmpty
-                                  ? 'Champ requis'
+                                  ? S.of(context).fieldRequired
                                   : null,
                         ),
                         const SizedBox(height: 16),
@@ -623,14 +624,14 @@ class _EventCreatePageState extends State<EventCreatePage> {
                           controller: _descriptionController,
                           minLines: 3,
                           maxLines: 5,
-                          decoration: const InputDecoration(
-                            labelText: 'Description',
+                          decoration: InputDecoration(
+                            labelText: S.of(context).description,
                             alignLabelWithHint: true,
-                            prefixIcon: Icon(Icons.description),
+                            prefixIcon: const Icon(Icons.description),
                           ),
                           validator: (value) =>
                               value == null || value.trim().isEmpty
-                                  ? 'Champ requis'
+                                  ? S.of(context).fieldRequired
                                   : null,
                         ),
                         const SizedBox(height: 16),
@@ -642,7 +643,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
                               child: OutlinedButton.icon(
                                 onPressed: _pickDate,
                                 icon: const Icon(Icons.event),
-                                label: Text(DateFormat.yMMMMd('fr_FR')
+                                label: Text(DateFormat.yMMMMd(S.of(context).localeName)
                                     .format(_selectedDate)),
                               ),
                             ),
@@ -666,9 +667,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
                           const SizedBox(height: 12),
                         TextFormField(
                           controller: _paymentIdentifierController,
-                          decoration: const InputDecoration(
-                            labelText: 'Lien de la cagnotte',
-                            prefixIcon: Icon(Icons.link),
+                          decoration: InputDecoration(
+                            labelText: S.of(context).paymentLink,
+                            prefixIcon: const Icon(Icons.link),
                           ),
                           enabled: _selectedProviderId != null,
                           validator: _validatePaymentLink,
@@ -678,12 +679,12 @@ class _EventCreatePageState extends State<EventCreatePage> {
                           controller: _paymentAmountController,
                           decoration: InputDecoration(
                             labelText: _paymentPerPerson
-                                ? 'Montant demandé par personne (€)'
-                                : 'Montant total souhaité (€)',
+                                ? S.of(context).amountPerPerson
+                                : S.of(context).totalAmount,
                             prefixIcon: const Icon(Icons.euro),
                             helperText: _paymentPerPerson
-                                ? 'Chaque invité est invité à verser ce montant'
-                                : 'Indiquez le total que vous espérez collecter (optionnel)',
+                                ? S.of(context).amountPerPersonHelper
+                                : S.of(context).totalAmountHelper,
                           ),
                           keyboardType: const TextInputType.numberWithOptions(
                               decimal: true),
@@ -699,7 +700,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
                             final parsed =
                                 double.tryParse(raw.replaceAll(',', '.'));
                             if (parsed == null || parsed < 0) {
-                              return 'Entrez un montant positif';
+                              return S.of(context).enterPositiveAmount;
                             }
                             return null;
                           },
@@ -716,7 +717,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
                                     child: CircularProgressIndicator(
                                         strokeWidth: 2),
                                   )
-                                : const Text('Créer la fiestaaa'),
+                                : Text(S.of(context).createTheFiestaaa),
                           ),
                         ),
                       ],

@@ -7,6 +7,7 @@ import 'package:fiestaaa_front/src/features/payment_providers/data/payment_provi
 import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_provider_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 
 class EventEditPage extends StatefulWidget {
   const EventEditPage({
@@ -115,7 +116,7 @@ class _EventEditPageState extends State<EventEditPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _providersError = 'Impossible de charger les cagnottes disponibles';
+        _providersError = S.of(context).unableToLoadPaymentProviders;
         _loadingProviders = false;
       });
     }
@@ -142,7 +143,7 @@ class _EventEditPageState extends State<EventEditPage> {
       initialDate: _selectedDate,
       firstDate: DateTime.now().subtract(const Duration(days: 1)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      locale: const Locale('fr'),
+      locale: Localizations.localeOf(context),
     );
     if (picked != null) {
       setState(() {
@@ -182,7 +183,7 @@ class _EventEditPageState extends State<EventEditPage> {
       initialDate: initial,
       firstDate: now,
       lastDate: lastDate,
-      locale: const Locale('fr'),
+      locale: Localizations.localeOf(context),
     );
 
     if (picked != null) {
@@ -194,7 +195,7 @@ class _EventEditPageState extends State<EventEditPage> {
     final query = _addressController.text.trim();
     if (query.length < 3) {
       setState(() {
-        _addressSearchError = 'Saisissez au moins 3 caractères';
+        _addressSearchError = S.of(context).enterAtLeast3Chars;
         _addressSuggestions = [];
         _selectedSuggestion = null;
       });
@@ -215,7 +216,7 @@ class _EventEditPageState extends State<EventEditPage> {
       setState(() {
         _addressSuggestions = results;
         if (results.isEmpty) {
-          _addressSearchError = 'Aucune adresse trouvée';
+          _addressSearchError = S.of(context).noAddressFound;
         }
       });
     } on ApiException catch (e) {
@@ -228,7 +229,7 @@ class _EventEditPageState extends State<EventEditPage> {
       if (!mounted) return;
       setState(() {
         _addressSuggestions = [];
-        _addressSearchError = 'Recherche impossible pour le moment';
+        _addressSearchError = S.of(context).searchNotPossible;
       });
     } finally {
       if (mounted) {
@@ -251,9 +252,9 @@ class _EventEditPageState extends State<EventEditPage> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedSuggestion == null) {
       setState(() {
-        _addressSearchError = 'Validez l’adresse depuis la recherche';
+        _addressSearchError = S.of(context).validateAddressFromSearch;
       });
-      _showSnack('Merci de choisir une adresse suggérée', isError: true);
+      _showSnack(S.of(context).pleaseSelectSuggestedAddress, isError: true);
       return;
     }
     final today = DateTime.now();
@@ -261,7 +262,7 @@ class _EventEditPageState extends State<EventEditPage> {
     if (_invitationDeadline != null &&
         (_invitationDeadline!.isBefore(todayDate) ||
             _invitationDeadline!.isAfter(_selectedDate))) {
-      _showSnack('Choisissez une date limite valide', isError: true);
+      _showSnack(S.of(context).pleaseSelectValidDeadline, isError: true);
       return;
     }
     setState(() => _submitting = true);
@@ -299,7 +300,7 @@ class _EventEditPageState extends State<EventEditPage> {
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Erreur lors de la mise à jour', isError: true);
+      _showSnack(S.of(context).updateError, isError: true);
     } finally {
       if (mounted) {
         setState(() => _submitting = false);
@@ -338,13 +339,13 @@ class _EventEditPageState extends State<EventEditPage> {
     }
     final text = value?.trim() ?? '';
     if (text.isEmpty) {
-      return 'Lien requis pour la cagnotte';
+      return S.of(context).linkRequired;
     }
     final provider = _providerById(_selectedProviderId);
     final regExp = provider?.compiledValidationRegex ??
         RegExp(PaymentProviderModel.defaultValidationRegex);
     if (!regExp.hasMatch(text)) {
-      return 'Le lien ne correspond pas au format ${provider?.name ?? 'attendu'}';
+      return S.of(context).linkFormatInvalid(provider?.name ?? '');
     }
     return null;
   }
@@ -357,11 +358,11 @@ class _EventEditPageState extends State<EventEditPage> {
           controller: _addressController,
           focusNode: _addressFocus,
           decoration: InputDecoration(
-            labelText: 'Adresse',
+            labelText: S.of(context).address,
             prefixIcon: const Icon(Icons.place),
             helperText: _selectedSuggestion == null
-                ? 'Recherchez puis sélectionnez une suggestion validée'
-                : 'Adresse validée',
+                ? S.of(context).searchAndSelectAddress
+                : S.of(context).addressValidated,
             suffixIcon: IconButton(
               onPressed: _searchingAddress ? null : _searchAddress,
               icon: _searchingAddress
@@ -371,11 +372,11 @@ class _EventEditPageState extends State<EventEditPage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.search),
-              tooltip: 'Rechercher',
+              tooltip: S.of(context).search,
             ),
           ),
           validator: (value) =>
-              value == null || value.trim().isEmpty ? 'Champ requis' : null,
+              value == null || value.trim().isEmpty ? S.of(context).fieldRequired : null,
           onFieldSubmitted: (_) => _searchAddress(),
         ),
         if (_addressSearchError != null) ...[
@@ -421,7 +422,7 @@ class _EventEditPageState extends State<EventEditPage> {
                   color: Colors.green.shade600,
                 ),
                 const SizedBox(width: 6),
-                const Text('Adresse validée'),
+                Text(S.of(context).addressValidated),
               ],
             ),
           ),
@@ -454,16 +455,16 @@ class _EventEditPageState extends State<EventEditPage> {
           TextButton.icon(
             onPressed: _loadPaymentProviders,
             icon: const Icon(Icons.refresh),
-            label: const Text('Recharger les cagnottes'),
+            label: Text(S.of(context).reloadPaymentProviders),
           ),
         ],
       );
     }
 
     final items = <DropdownMenuItem<int?>>[
-      const DropdownMenuItem<int?>(
+      DropdownMenuItem<int?>(
         value: null,
-        child: Text('Aucune cagnotte'),
+        child: Text(S.of(context).noPayment),
       ),
       ..._providers.map(
         (provider) => DropdownMenuItem<int?>(
@@ -477,10 +478,10 @@ class _EventEditPageState extends State<EventEditPage> {
       key: ValueKey(_selectedProviderId),
       initialValue: _selectedProviderId,
       items: items,
-      decoration: const InputDecoration(
-        labelText: 'Cagnotte associée',
-        prefixIcon: Icon(Icons.payment),
-        helperText: 'Choisissez Lydia, Leetchi, Lyf Pay...',
+      decoration: InputDecoration(
+        labelText: S.of(context).associatedPayment,
+        prefixIcon: const Icon(Icons.payment),
+        helperText: S.of(context).choosePaymentProvider,
       ),
       onChanged: (value) {
         setState(() {
@@ -503,7 +504,7 @@ class _EventEditPageState extends State<EventEditPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Type de contribution',
+          S.of(context).contributionType,
           style: Theme.of(context)
               .textTheme
               .labelLarge
@@ -511,9 +512,9 @@ class _EventEditPageState extends State<EventEditPage> {
         ),
         const SizedBox(height: 8),
         SegmentedButton<bool>(
-          segments: const [
-            ButtonSegment(value: false, label: Text('Objectif global')),
-            ButtonSegment(value: true, label: Text('Par personne')),
+          segments: [
+            ButtonSegment(value: false, label: Text(S.of(context).globalObjective)),
+            ButtonSegment(value: true, label: Text(S.of(context).perPerson)),
           ],
           selected: {_paymentPerPerson},
           onSelectionChanged: (value) {
@@ -528,8 +529,10 @@ class _EventEditPageState extends State<EventEditPage> {
 
   Widget _buildInvitationDeadlineField() {
     final subtitle = _invitationDeadline == null
-        ? 'Optionnel : l’invitation expirera à cette date'
-        : 'Réponse attendue avant le ${DateFormat.yMMMMd('fr_FR').format(_invitationDeadline!)}';
+        ? S.of(context).optionalDeadlineHelper
+        : S.of(context).responseExpectedBefore(
+            DateFormat.yMMMMd(Localizations.localeOf(context).toString())
+                .format(_invitationDeadline!));
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 420;
@@ -542,11 +545,12 @@ class _EventEditPageState extends State<EventEditPage> {
               IconButton(
                 onPressed: () => setState(() => _invitationDeadline = null),
                 icon: const Icon(Icons.clear),
-                tooltip: 'Retirer',
+                tooltip: S.of(context).remove,
               ),
             OutlinedButton(
               onPressed: _pickInvitationDeadline,
-              child: Text(_invitationDeadline == null ? 'Définir' : 'Modifier'),
+              child: Text(
+                  _invitationDeadline == null ? S.of(context).define : S.of(context).modify),
             ),
           ],
         );
@@ -568,7 +572,7 @@ class _EventEditPageState extends State<EventEditPage> {
         return ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.hourglass_bottom),
-          title: const Text('Date limite de réponse'),
+          title: Text(S.of(context).responseDeadline),
           subtitle: subtitleWidget,
           trailing: isCompact ? null : actions,
           isThreeLine: isCompact,
@@ -581,7 +585,7 @@ class _EventEditPageState extends State<EventEditPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Modifier la fiestaaa'),
+        title: Text(S.of(context).editFiestaaa),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -591,12 +595,12 @@ class _EventEditPageState extends State<EventEditPage> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nom de la fiestaaa',
-                  prefixIcon: Icon(Icons.celebration),
+                decoration: InputDecoration(
+                  labelText: S.of(context).fiestaaaName,
+                  prefixIcon: const Icon(Icons.celebration),
                 ),
                 validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Champ requis'
+                    ? S.of(context).fieldRequired
                     : null,
               ),
               const SizedBox(height: 16),
@@ -604,13 +608,13 @@ class _EventEditPageState extends State<EventEditPage> {
                 controller: _descriptionController,
                 minLines: 3,
                 maxLines: 5,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
+                decoration: InputDecoration(
+                  labelText: S.of(context).description,
                   alignLabelWithHint: true,
-                  prefixIcon: Icon(Icons.description),
+                  prefixIcon: const Icon(Icons.description),
                 ),
                 validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Champ requis'
+                    ? S.of(context).fieldRequired
                     : null,
               ),
               const SizedBox(height: 16),
@@ -623,7 +627,8 @@ class _EventEditPageState extends State<EventEditPage> {
                       onPressed: _pickDate,
                       icon: const Icon(Icons.event),
                       label: Text(
-                        DateFormat.yMMMMd('fr_FR').format(_selectedDate),
+                        DateFormat.yMMMMd(Localizations.localeOf(context).toString())
+                            .format(_selectedDate),
                       ),
                     ),
                   ),
@@ -646,9 +651,9 @@ class _EventEditPageState extends State<EventEditPage> {
               if (_selectedProviderId != null) const SizedBox(height: 12),
               TextFormField(
                 controller: _paymentIdentifierController,
-                decoration: const InputDecoration(
-                  labelText: 'Lien de la cagnotte',
-                  prefixIcon: Icon(Icons.link),
+                decoration: InputDecoration(
+                  labelText: S.of(context).paymentLink,
+                  prefixIcon: const Icon(Icons.link),
                 ),
                 enabled: _selectedProviderId != null,
                 validator: _validatePaymentLink,
@@ -658,12 +663,12 @@ class _EventEditPageState extends State<EventEditPage> {
                 controller: _paymentAmountController,
                 decoration: InputDecoration(
                   labelText: _paymentPerPerson
-                      ? 'Montant demandé par personne (€)'
-                      : 'Montant total souhaité (€)',
+                      ? S.of(context).amountPerPerson
+                      : S.of(context).totalAmount,
                   prefixIcon: const Icon(Icons.euro),
                   helperText: _paymentPerPerson
-                      ? 'Chaque invité est invité à verser ce montant'
-                      : 'Indiquez le total que vous espérez collecter (optionnel)',
+                      ? S.of(context).amountPerPersonHelper
+                      : S.of(context).totalAmountHelper,
                 ),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -678,7 +683,7 @@ class _EventEditPageState extends State<EventEditPage> {
                   }
                   final parsed = double.tryParse(raw.replaceAll(',', '.'));
                   if (parsed == null || parsed < 0) {
-                    return 'Entrez un montant positif';
+                    return S.of(context).enterPositiveAmount;
                   }
                   return null;
                 },
@@ -694,7 +699,7 @@ class _EventEditPageState extends State<EventEditPage> {
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Enregistrer'),
+                      : Text(S.of(context).save),
                 ),
               ),
             ],

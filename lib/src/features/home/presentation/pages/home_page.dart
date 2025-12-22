@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/locale_service.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
@@ -10,6 +11,7 @@ import 'package:fiestaaa_front/src/features/friends/presentation/pages/friends_p
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -20,6 +22,7 @@ class HomePage extends StatefulWidget {
     this.initialShareToken,
     this.onShareTokenConsumed,
     this.onSessionUpdated,
+    this.localeService,
   });
 
   final SessionData session;
@@ -27,6 +30,7 @@ class HomePage extends StatefulWidget {
   final String? initialShareToken;
   final VoidCallback? onShareTokenConsumed;
   final Future<void> Function(SessionData session)? onSessionUpdated;
+  final LocaleService? localeService;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -190,7 +194,8 @@ class _HomePageState extends State<HomePage> {
     } catch (_) {
       _shareHandled = true;
       widget.onShareTokenConsumed?.call();
-      _showSnack('Lien de partage invalide ou expiré.');
+      if (!mounted) return;
+      _showSnack(S.of(context).shareLinkInvalid);
     } finally {
       if (mounted) {
         setState(() {
@@ -208,6 +213,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = S.of(context);
     final pages = [
       EventsListPage(
         key: _eventsKey,
@@ -237,6 +243,7 @@ class _HomePageState extends State<HomePage> {
             await widget.onSessionUpdated!(session);
           }
         },
+        localeService: widget.localeService,
       ),
     ];
 
@@ -251,19 +258,19 @@ class _HomePageState extends State<HomePage> {
         items: [
           BottomNavigationBarItem(
             icon: _iconWithBadge(Icons.event_note, _pendingEventInvites),
-            label: 'Fiestaaa',
+            label: l10n.fiestaaa,
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.add_circle_outline),
-            label: 'Créer',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.add_circle_outline),
+            label: l10n.create,
           ),
           BottomNavigationBarItem(
             icon: _iconWithBadge(Icons.group, _pendingFriendRequests),
-            label: 'Amis',
+            label: l10n.friends,
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profil',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.person),
+            label: l10n.profile,
           ),
         ],
       ),

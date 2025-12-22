@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/data/qr_checkin_api.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/domain/qr_checkin_models.dart';
 import 'package:flutter/material.dart';
@@ -70,7 +71,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Mon Billet', style: TextStyle(color: Colors.white)),
+        title: Text(S.of(context).myTicket, style: const TextStyle(color: Colors.white)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -118,7 +119,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Oups !',
+                  S.of(context).oops,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -133,7 +134,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                 ElevatedButton.icon(
                   onPressed: _loadQRCode,
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Réessayer'),
+                  label: Text(S.of(context).retry),
                 ),
               ],
             ),
@@ -203,7 +204,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            'INVITATION PERSONNELLE',
+                            S.of(context).personalInvitation,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -232,7 +233,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                         ),
                         const SizedBox(height: 24),
                         Text(
-                          'Présentez ce code à l\'entrée',
+                          S.of(context).presentCodeAtEntrance,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: Colors.grey[600],
@@ -302,7 +303,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                       children: [
                         _buildInfoRow(
                           icon: Icons.calendar_today,
-                          label: 'Généré le',
+                          label: S.of(context).generatedOn,
                           value: _formatDate(_qrData!.generatedAt),
                         ),
                         const SizedBox(height: 16),
@@ -320,7 +321,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  'Valable pour une seule entrée',
+                                  S.of(context).validForSingleEntry,
                                   style: TextStyle(
                                     color: Colors.amber[900],
                                     fontSize: 13,

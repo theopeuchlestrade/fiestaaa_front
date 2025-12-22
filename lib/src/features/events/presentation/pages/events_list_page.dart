@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
@@ -89,7 +90,7 @@ class EventsListPageState extends State<EventsListPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Impossible de charger les fiestaaa';
+        _error = S.of(context).unableToLoadFiestaaa;
       });
     } finally {
       if (mounted) {
@@ -131,7 +132,7 @@ class EventsListPageState extends State<EventsListPage> {
             ElevatedButton.icon(
               onPressed: _loadEvents,
               icon: const Icon(Icons.refresh),
-              label: const Text('Réessayer'),
+              label: Text(S.of(context).retry),
             ),
           ],
         ),
@@ -145,12 +146,12 @@ class EventsListPageState extends State<EventsListPage> {
             children: [
               Icon(Icons.celebration, color: Colors.grey.shade500, size: 40),
               const SizedBox(height: 12),
-              const Text('Aucune fiestaaa pour le moment.'),
+              Text(S.of(context).noFiestaaaYet),
               const SizedBox(height: 12),
               ElevatedButton.icon(
                 onPressed: _loadEvents,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Actualiser'),
+                label: Text(S.of(context).refresh),
               ),
             ],
           ),
@@ -228,9 +229,7 @@ class _EventsGrid extends StatelessWidget {
                         leading: const Icon(Icons.mark_email_unread,
                             color: Colors.orange),
                         title: Text(
-                          pendingInvites == 1
-                              ? '1 invitation attend votre réponse'
-                              : '$pendingInvites invitations attendent votre réponse',
+                          S.of(context).invitationsWaitingCount(pendingInvites),
                           style: const TextStyle(fontWeight: FontWeight.w700),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -259,7 +258,7 @@ class _EventsGrid extends StatelessWidget {
                                     .withValues(alpha: 0.8)),
                             const SizedBox(width: 8),
                             Text(
-                              'Vos fiestaaa',
+                              S.of(context).yourFiestaaa,
                               style: Theme.of(context)
                                   .textTheme
                                   .titleMedium
@@ -274,7 +273,7 @@ class _EventsGrid extends StatelessWidget {
                       const Spacer(),
                       IconButton(
                         onPressed: onRefresh,
-                        tooltip: 'Actualiser',
+                        tooltip: S.of(context).refresh,
                         icon: const Icon(Icons.refresh),
                       ),
                     ],
@@ -486,7 +485,7 @@ class _EventBubble extends StatelessWidget {
         sessionEmail.toLowerCase() == event.ownerEmail.toLowerCase();
     if (isOwner) {
         return _EventBadgeData(
-          label: 'Organisateur',
+          label: S.of(context).organizer,
           color: FiestaaaPalette.primary,
           background: FiestaaaPalette.primary.withValues(alpha: 0.12),
           icon: Icons.emoji_events,
@@ -500,21 +499,21 @@ class _EventBubble extends StatelessWidget {
     switch (invitation!.status) {
       case 'Accepted':
         return _EventBadgeData(
-          label: 'Participation confirmée',
+          label: S.of(context).participationConfirmed,
           color: Colors.green.shade800,
           background: Colors.green.shade100,
           icon: Icons.check_circle,
         );
       case 'Waiting':
         return _EventBadgeData(
-          label: 'Réponse attendue',
+          label: S.of(context).responseExpected,
           color: Colors.orange.shade800,
           background: Colors.orange.shade100,
           icon: Icons.hourglass_top,
         );
       case 'Declined':
         return _EventBadgeData(
-          label: 'Refusé',
+          label: S.of(context).refused,
           color: Colors.grey.shade700,
           background: Colors.grey.shade200,
           icon: Icons.remove_circle_outline,

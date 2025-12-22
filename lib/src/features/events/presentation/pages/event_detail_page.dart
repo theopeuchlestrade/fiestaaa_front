@@ -24,14 +24,15 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 
-String _displayName(String? handle) {
+String _displayName(BuildContext context, String? handle) {
   final trimmed = handle?.trim() ?? '';
-  return trimmed.isEmpty ? 'Invité' : trimmed;
+  return trimmed.isEmpty ? S.of(context).guest : trimmed;
 }
 
-String _displayInitial(String? handle) {
-  final name = _displayName(handle);
+String _displayInitial(BuildContext context, String? handle) {
+  final name = _displayName(context, handle);
   return name.isEmpty ? '?' : name[0].toUpperCase();
 }
 
@@ -136,7 +137,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _itemsError = 'Impossible de charger les items.';
+        _itemsError = S.of(context).unableToLoadItems;
       });
     } finally {
       if (mounted && showLoading) {
@@ -162,11 +163,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _pollsError = e.statusCode == 403
-          ? 'Acceptez l\'invitation pour voir et voter aux sondages.'
+          ? S.of(context).acceptInvitationBeforeVoting
           : e.message);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _pollsError = 'Impossible de charger les sondages.');
+      setState(() => _pollsError = S.of(context).unableToLoadPolls);
     } finally {
       if (mounted && showLoading) {
         setState(() {
@@ -222,7 +223,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Vote non enregistré', isError: true);
+      _showSnack(S.of(context).voteNotRecorded, isError: true);
     } finally {
       if (mounted) {
         setState(() => _votingPollId = null);
@@ -232,11 +233,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   Future<void> _toggleVote(PollModel poll, int optionId) async {
     if (!_canVotePolls) {
-      _showSnack('Acceptez l\'invitation avant de voter.', isError: true);
+      _showSnack(S.of(context).acceptInvitationBeforeVoting, isError: true);
       return;
     }
     if (poll.isExpired) {
-      _showSnack('Ce sondage est expiré.', isError: true);
+      _showSnack(S.of(context).pollExpired, isError: true);
       return;
     }
     final selection = {...poll.myVotes};
@@ -270,13 +271,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
       setState(() {
         _pollsExpanded = true;
       });
-      _showSnack('Sondage créé');
+      _showSnack(S.of(context).pollCreated);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Impossible de créer le sondage', isError: true);
+      _showSnack(S.of(context).createPollFailed, isError: true);
     } finally {
       if (mounted) {
         setState(() => _creatingPoll = false);
@@ -288,16 +289,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Supprimer ce sondage ?'),
-        content: const Text('Cette action supprimera le sondage pour tout le monde.'),
+        title: Text(S.of(context).deletePollTitle),
+        content: Text(S.of(context).deletePollWarning),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Annuler'),
+            child: Text(S.of(context).cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Supprimer'),
+            child: Text(S.of(context).delete),
           ),
         ],
       ),
@@ -316,13 +317,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
       setState(() {
         _polls = (_polls ?? []).where((p) => p.id != poll.id).toList();
       });
-      _showSnack('Sondage supprimé');
+      _showSnack(S.of(context).pollDeleted);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Suppression impossible', isError: true);
+      _showSnack(S.of(context).deletePollFailed, isError: true);
     } finally {
       if (mounted) {
         setState(() => _deletingPollId = null);
@@ -366,7 +367,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       children: [
                         Expanded(
                           child: Text(
-                            'Nouveau sondage',
+                            S.of(context).newPoll,
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                         ),
@@ -380,14 +381,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     TextField(
                       controller: questionController,
                       maxLength: 120,
-                      decoration: const InputDecoration(
-                        labelText: 'Question',
-                        prefixIcon: Icon(Icons.quiz_outlined),
+                      decoration: InputDecoration(
+                        labelText: S.of(context).question,
+                        prefixIcon: const Icon(Icons.quiz_outlined),
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Options',
+                      S.of(context).options,
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                     const SizedBox(height: 6),
@@ -403,7 +404,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                 child: TextField(
                                   controller: controller,
                                   decoration: InputDecoration(
-                                    labelText: 'Option ${index + 1}',
+                                    labelText: S.of(context).optionNumber(index + 1),
                                     prefixIcon:
                                         const Icon(Icons.circle_outlined),
                                   ),
@@ -433,12 +434,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             });
                           },
                           icon: const Icon(Icons.add),
-                          label: const Text('Ajouter une option'),
+                          label: Text(S.of(context).addOption),
                         ),
                       ),
                     const SizedBox(height: 4),
                     Text(
-                      'Expiration',
+                      S.of(context).expiration,
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                     const SizedBox(height: 8),
@@ -458,7 +459,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           ),
                         ),
                         ChoiceChip(
-                          label: const Text('Durée personnalisée'),
+                          label: Text(S.of(context).customDuration),
                           selected: useCustomDuration,
                           onSelected: (_) => setModalState(() {
                             useCustomDuration = true;
@@ -472,11 +473,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       TextField(
                         controller: customDurationController,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Durée en heures (max 7 jours)',
-                          prefixIcon: Icon(Icons.schedule),
+                        decoration: InputDecoration(
+                          labelText: S.of(context).durationInHours,
+                          prefixIcon: const Icon(Icons.schedule),
                           helperText:
-                              'Renseignez une durée supérieure à 24h si besoin.',
+                              S.of(context).durationHelperText,
                         ),
                       ),
                     ],
@@ -485,7 +486,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       value: allowMultiple,
                       onChanged: (value) =>
                           setModalState(() => allowMultiple = value),
-                      title: const Text('Plusieurs réponses autorisées'),
+                      title: Text(S.of(context).multipleAnswersAllowed),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -504,8 +505,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                 .where((txt) => txt.isNotEmpty)
                                 .toList();
                             if (question.isEmpty || options.length < 2) {
-                              _showSnack(
-                                'Question et au moins deux options requises.',
+                                _showSnack(
+                                S.of(context).questionAndOptionsRequired,
                                 isError: true,
                               );
                               return;
@@ -516,8 +517,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                       customDurationController.text.trim()) ??
                                   0;
                               if (hours <= 24) {
-                                _showSnack(
-                                  'Pour plus de 24h, saisissez un nombre d\'heures supérieur à 24.',
+                                  _showSnack(
+                                  S.of(context).durationMustBeOver24h,
                                   isError: true,
                                 );
                                 return;
@@ -536,7 +537,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             ));
                           },
                           icon: const Icon(Icons.send),
-                          label: const Text('Créer le sondage'),
+                          label: Text(S.of(context).createThePoll),
                         ),
                       ],
                     ),
@@ -568,8 +569,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Votes pour "${poll.question}"',
+                    Text(
+                      S.of(context).votesFor(poll.question),
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -633,7 +634,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                               const SizedBox(height: 8),
                               if (option.voters.isEmpty)
                                 Text(
-                                  'Aucun vote pour le moment.',
+                                  S.of(context).noVotesYet,
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodySmall
@@ -645,7 +646,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                   runSpacing: 8,
                                   children: option.voters.map((voter) {
                                     final displayName =
-                                        _displayName(voter.handle);
+                                        _displayName(context,voter.handle);
                                     return Chip(
                                       avatar: CircleAvatar(
                                         backgroundColor: Colors.grey.shade300,
@@ -654,7 +655,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                             : NetworkImage(voter.avatarUrl!),
                                         child: voter.avatarUrl == null
                                             ? Text(
-                                                _displayInitial(voter.handle),
+                                                _displayInitial(context,voter.handle),
                                                 style: const TextStyle(
                                                     fontWeight:
                                                         FontWeight.w700),
@@ -685,7 +686,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   String _formatRemaining(Duration duration) {
-    if (duration.isNegative) return 'Expiré';
+    if (duration.isNegative) return S.of(context).expired;
     if (duration.inMinutes < 60) {
       return '${duration.inMinutes} min';
     }
@@ -813,61 +814,61 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 children: [
                   Row(
                     children: [
-                      Expanded(
-                        child: Text(
-                          'Nouvel item',
-                          style: Theme.of(context).textTheme.titleLarge,
+                        Expanded(
+                          child: Text(
+                            S.of(context).newItem,
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: nameController,
-                    autofocus: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Nom de l\'item',
-                      prefixIcon: Icon(Icons.shopping_bag),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
                     ),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Champ requis'
-                        : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: quantityController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Quantité souhaitée',
-                      prefixIcon: Icon(Icons.format_list_numbered),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: nameController,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        labelText: S.of(context).itemName,
+                        prefixIcon: const Icon(Icons.shopping_bag),
+                      ),
+                      validator: (value) => value == null || value.trim().isEmpty
+                          ? S.of(context).fieldRequired
+                          : null,
                     ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: quantityController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: S.of(context).desiredQuantity,
+                        prefixIcon: const Icon(Icons.format_list_numbered),
+                      ),
                     validator: (value) {
                       final text = value?.trim() ?? '';
-                      if (text.isEmpty) {
-                        return 'Champ requis';
-                      }
-                      final parsed = int.tryParse(text);
-                      if (parsed == null || parsed <= 0) {
-                        return 'Nombre positif requis';
-                      }
+                        if (text.isEmpty) {
+                          return S.of(context).fieldRequired;
+                        }
+                        final parsed = int.tryParse(text);
+                        if (parsed == null || parsed <= 0) {
+                          return S.of(context).positiveNumberRequired;
+                        }
                       return null;
                     },
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
-                    controller: unitController,
-                    decoration: const InputDecoration(
-                      labelText: 'Unité (ex: pièce, gramme...)',
-                      prefixIcon: Icon(Icons.straighten),
+                    TextFormField(
+                      controller: unitController,
+                      decoration: InputDecoration(
+                        labelText: S.of(context).unit,
+                        prefixIcon: const Icon(Icons.straighten),
+                      ),
+                      validator: (value) => value == null || value.trim().isEmpty
+                          ? S.of(context).fieldRequired
+                          : null,
                     ),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Champ requis'
-                        : null,
-                  ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -886,7 +887,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                               .pop(_NewEventItemData(name, qty, unit));
                         },
                         icon: const Icon(Icons.add),
-                        label: const Text('Ajouter l\'item'),
+                          label: Text(S.of(context).addTheItem),
                       ),
                     ],
                   ),
@@ -914,14 +915,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
         unitLabel: unit,
       );
       if (!mounted) return;
-      _showSnack('Item ajouté');
+      _showSnack(S.of(context).itemAdded);
       await _loadItems(showLoading: false);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Impossible d’ajouter l’item', isError: true);
+      _showSnack(S.of(context).addItemFailed, isError: true);
     } finally {
       if (mounted) {
         setState(() => _creatingCustomItem = false);
@@ -933,9 +934,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Supprimer ${item.name} ?'),
-        content: const Text(
-          'Cette action supprimera l’item et toutes les contributions associées.',
+        title: Text(S.of(context).deleteItemTitle(item.name)),
+        content: Text(
+          S.of(context).deleteItemWarning,
         ),
         actions: [
           TextButton(
@@ -960,14 +961,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
         itemId: item.itemId,
       );
       if (!mounted) return;
-      _showSnack('Item supprimé');
+      _showSnack(S.of(context).itemDeleted);
       await _loadItems(showLoading: false);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Suppression impossible', isError: true);
+      _showSnack(S.of(context).deleteItemFailed, isError: true);
     } finally {
       if (mounted) {
         setState(() => _deletingItemId = null);
@@ -999,7 +1000,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       if (!mounted) return;
       setState(() {
         _paymentProvidersError =
-            'Impossible de charger les cagnottes disponibles';
+            S.of(context).unableToLoadPaymentProviders;
         _loadingPaymentProviders = false;
       });
     }
@@ -1015,7 +1016,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       if (!mounted) return;
       _notifyInvitationStatus(status);
       _showSnack(
-        status == 'Accepted' ? 'Invitation acceptée' : 'Invitation refusée',
+        status == 'Accepted' ? S.of(context).invitationAccepted : S.of(context).invitationDeclined,
       );
       if (status == 'Declined') {
         widget.onEventRemoved?.call(_currentEvent.id);
@@ -1031,14 +1032,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 410) {
-        _showSnack('Invitation expirée', isError: true);
+        _showSnack(S.of(context).invitationExpired, isError: true);
         await _loadMyInvitation();
         return;
       }
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Action impossible', isError: true);
+      _showSnack(S.of(context).actionFailed, isError: true);
     }
   }
 
@@ -1046,9 +1047,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Supprimer cette fiestaaa ?'),
-        content: const Text(
-          'Cette action supprimera la fiestaaa pour tous les participants. Les invités ne la verront plus lors de leur prochaine actualisation.',
+        title: Text(S.of(context).deleteFiestaaaTitle),
+        content: Text(
+          S.of(context).deleteFiestaaaWarning,
         ),
         actions: [
           TextButton(
@@ -1081,7 +1082,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       );
       if (!mounted) return;
       widget.onEventRemoved?.call(_currentEvent.id);
-      _showSnack('Fiestaaa supprimée');
+      _showSnack(S.of(context).fiestaaaDeleted);
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
@@ -1090,7 +1091,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Suppression impossible', isError: true);
+      _showSnack(S.of(context).deleteImpossible, isError: true);
     } finally {
       if (mounted) {
         setState(() => _deletingEvent = false);
@@ -1126,14 +1127,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
         quantity: quantity,
       );
       if (!mounted) return;
-      _showSnack('Merci pour votre contribution !');
+      _showSnack(S.of(context).thankYouContribution);
       await _loadItems(showLoading: false);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Erreur réseau, merci de réessayer.', isError: true);
+      _showSnack(S.of(context).networkError, isError: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -1145,7 +1146,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   Future<void> _openQuantityDialog(EventItemModel item) async {
     if (!_canContributeItems) {
-      _showSnack('Acceptez l\'invitation avant de contribuer.', isError: true);
+      _showSnack(S.of(context).acceptInvitationToContribute, isError: true);
       return;
     }
     final controller = TextEditingController();
@@ -1154,7 +1155,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Contribution pour ${item.name}'),
+          title: Text(S.of(context).contributionFor(item.name)),
           content: Form(
             key: formKey,
             child: Column(
@@ -1162,7 +1163,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Promis : ${item.reservedQuantity}/${item.maxQuantity} ${item.unitLabel}',
+                  S.of(context).promised(item.reservedQuantity, item.maxQuantity, item.unitLabel),
                   style: Theme.of(context)
                       .textTheme
                       .bodyMedium
@@ -1174,21 +1175,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   autofocus: true,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Quantité souhaitée',
-                    helperText: 'Entrez 0 pour annuler votre contribution.',
+                    labelText: S.of(context).desiredQuantityField,
+                    helperText: S.of(context).enterZeroToCancel,
                     suffixText: item.unitLabel,
                   ),
                   validator: (value) {
                     final text = value?.trim() ?? '';
                     if (text.isEmpty) {
-                      return 'Champ requis';
+                      return S.of(context).fieldRequired;
                     }
                     final parsed = int.tryParse(text);
                     if (parsed == null || parsed < 0) {
-                      return 'Entrez un nombre positif';
+                      return S.of(context).enterPositiveNumber;
                     }
                     if (parsed > item.maxQuantity) {
-                      return 'Maximum ${item.maxQuantity} unités';
+                      return S.of(context).maximumUnits(item.maxQuantity);
                     }
                     return null;
                   },
@@ -1199,7 +1200,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text(S.of(context).cancel),
             ),
             ElevatedButton(
               onPressed: () {
@@ -1207,7 +1208,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 final qty = int.parse(controller.text.trim());
                 Navigator.of(context).pop(qty);
               },
-              child: const Text('Valider'),
+              child: Text(S.of(context).validate),
             ),
           ],
         );
@@ -1229,13 +1230,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
             IconButton(
               onPressed: _openEditEvent,
               icon: const Icon(Icons.edit),
-              tooltip: 'Modifier la fiestaaa',
+              tooltip: S.of(context).editFiestaaa,
             ),
           IconButton(
             onPressed: _openInvitations,
             icon: const Icon(Icons.people_alt),
-            tooltip:
-                _isOwner ? 'Gérer les invitations' : 'Voir les participants',
+              tooltip:
+                  _isOwner ? S.of(context).manageInvitations : S.of(context).viewParticipants,
           ),
           if (_isOwner)
             IconButton(
@@ -1247,7 +1248,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.ios_share),
-              tooltip: 'Partager la fiestaaa',
+              tooltip: S.of(context).shareFiestaaa,
             ),
           if (_isOwner)
             IconButton(
@@ -1259,19 +1260,19 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.delete_outline),
-              tooltip: 'Supprimer la fiestaaa',
+              tooltip: S.of(context).deleteFiestaaa,
             ),
           if (_isOwner)
             IconButton(
               onPressed: _openQRScanner,
               icon: const Icon(Icons.qr_code_scanner),
-              tooltip: 'Scanner QR Codes',
+              tooltip: S.of(context).scanQRCodes,
             )
           else if (_hasAcceptedInvitation || _isWaitingInvitation)
             IconButton(
               onPressed: _openMyQRCode,
               icon: const Icon(Icons.qr_code),
-              tooltip: 'Mon QR Code',
+              tooltip: S.of(context).myQrCode,
             ),
         ],
       ),
@@ -1295,7 +1296,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ),
             _DetailTile(
               icon: Icons.event,
-              label: 'Date & heure',
+              label: S.of(context).dateAndTime,
               value:
                   '${_currentEvent.formattedDate} à ${_currentEvent.formattedTime}',
             ),
@@ -1304,7 +1305,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 _isWaitingInvitation)
               _DetailTile(
                 icon: Icons.hourglass_bottom,
-                label: 'Réponse avant',
+                label: S.of(context).responseBefore,
                 value: _currentEvent.formattedInvitationDeadline ??
                     DateFormat.yMMMMd('fr_FR')
                         .format(_currentEvent.invitationDeadline!),
@@ -1312,7 +1313,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             _buildLocationSection(),
             _DetailTile(
               icon: Icons.description,
-              label: 'Description',
+              label: S.of(context).description,
               value: _currentEvent.description,
             ),
             _buildPaymentSection(),
@@ -1330,7 +1331,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     if (!_currentEvent.hasCoordinates) {
       return _DetailTile(
         icon: Icons.place,
-        label: 'Adresse',
+        label: S.of(context).address,
         value: _currentEvent.address,
       );
     }
@@ -1354,8 +1355,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Adresse',
+                        Text(
+                          S.of(context).address,
                         style: Theme.of(context)
                             .textTheme
                             .labelLarge
@@ -1417,7 +1418,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             OutlinedButton.icon(
               onPressed: () => _openMap(target),
               icon: const Icon(Icons.map_outlined),
-              label: const Text('Ouvrir dans votre app de cartes'),
+              label: Text(S.of(context).openInMapsApp),
             ),
           ],
         ),
@@ -1427,25 +1428,25 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   Widget _buildPaymentSection() {
     if (_currentEvent.paymentProviderId == null) {
-      return const _DetailTile(
+      return _DetailTile(
         icon: Icons.payment,
-        label: 'Paiement',
-        value: 'Aucune cagnotte renseignée',
+        label: S.of(context).payment,
+        value: S.of(context).noPaymentConfigured,
       );
     }
 
     if (_loadingPaymentProviders) {
-      return const _DetailTile(
+      return _DetailTile(
         icon: Icons.payment,
-        label: 'Paiement',
-        value: 'Chargement des informations...',
+        label: S.of(context).payment,
+        value: S.of(context).loadingPaymentInfo,
       );
     }
 
     if (_providersById.isEmpty && _paymentProvidersError != null) {
       return _DetailTile(
         icon: Icons.payment,
-        label: 'Paiement',
+        label: S.of(context).payment,
         value: _paymentProvidersError!,
       );
     }
@@ -1456,12 +1457,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
     final amount = _currentEvent.paymentRequestedAmount;
     final amountText = amount != null
         ? NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(amount)
-        : 'Montant non précisé';
+        : S.of(context).amountNotSpecified;
     final identifier = _currentEvent.paymentIdentifier?.trim();
     final paymentUri = _buildPaymentUri(provider);
     final linkLabel = paymentUri?.toString() ??
         (identifier == null || identifier.isEmpty
-            ? 'non renseigné'
+            ? S.of(context).notProvided
             : identifier);
 
     return Card(
@@ -1480,8 +1481,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Paiement',
+                        Text(
+                          S.of(context).payment,
                         style: Theme.of(context)
                             .textTheme
                             .labelLarge
@@ -1499,11 +1500,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
             const SizedBox(height: 12),
             Text(_currentEvent.paymentPerPerson
-                ? 'Contribution demandée par personne : $amountText'
-                : 'Montant visé : $amountText'),
+                ? S.of(context).contributionPerPerson(amountText)
+                : S.of(context).targetAmount(amountText)),
             const SizedBox(height: 4),
             Text(
-              'Lien : $linkLabel',
+              S.of(context).link(linkLabel),
             ),
             const SizedBox(height: 12),
             Row(
@@ -1516,15 +1517,15 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     icon: const Icon(Icons.open_in_new),
                     label: Text(
                       paymentUri == null
-                          ? 'Lien indisponible'
-                          : 'Ouvrir la cagnotte',
+                          ? S.of(context).linkUnavailable
+                          : S.of(context).openPayment,
                     ),
                   ),
                 ),
                 if (_paymentProvidersError != null)
                   IconButton(
                     onPressed: _loadPaymentProviders,
-                    tooltip: 'Recharger les cagnottes',
+                    tooltip: S.of(context).reloadPaymentProviders,
                     icon: const Icon(Icons.refresh),
                   ),
               ],
@@ -1559,11 +1560,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
         mode: LaunchMode.externalApplication,
       );
       if (!success && mounted) {
-        _showSnack('Impossible d\'ouvrir la cagnotte', isError: true);
+        _showSnack(S.of(context).unableToOpenPayment, isError: true);
       }
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Impossible d\'ouvrir la cagnotte', isError: true);
+      _showSnack(S.of(context).unableToOpenPayment, isError: true);
     }
   }
 
@@ -1576,13 +1577,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
       );
       final link = _buildShareUrl(token);
       await Clipboard.setData(ClipboardData(text: link));
-      _showSnack('Lien copié dans le presse-papiers');
+      if (!mounted) return;
+      _showSnack(S.of(context).linkCopiedToClipboard);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Impossible de générer le lien', isError: true);
+      _showSnack(S.of(context).unableToGenerateLink, isError: true);
     } finally {
       if (mounted) {
         setState(() => _sharingLink = false);
@@ -1620,7 +1622,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       final success =
           await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!success && mounted) {
-        _showSnack('Impossible d\'ouvrir la carte', isError: true);
+        _showSnack(S.of(context).unableToOpenMap, isError: true);
       }
     } catch (_) {
       if (!mounted) return;
@@ -1638,17 +1640,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
           children: [
             ListTile(
               leading: const Icon(Icons.explore),
-              title: const Text('Google Maps'),
+              title: Text(S.of(context).mapProviderGoogle),
               onTap: () => Navigator.of(context).pop('google'),
             ),
             ListTile(
               leading: const Icon(Icons.apple),
-              title: const Text('Apple Plans'),
+              title: Text(S.of(context).mapProviderApple),
               onTap: () => Navigator.of(context).pop('apple'),
             ),
             ListTile(
               leading: const Icon(Icons.map),
-              title: const Text('OpenStreetMap'),
+              title: Text(S.of(context).mapProviderOsm),
               onTap: () => Navigator.of(context).pop('osm'),
             ),
           ],
@@ -1682,12 +1684,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
       ),
     );
 
+    if (!mounted) return;
     if (updated != null) {
       setState(() {
         _currentEvent = updated;
       });
       widget.onEventUpdated?.call();
-      _showSnack('Fiestaaa mise à jour');
+      _showSnack(S.of(context).fiestaaaUpdated);
     }
   }
 
@@ -1737,7 +1740,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           children: [
             Expanded(
               child: Text(
-                'Sondages éphémères',
+                S.of(context).ephemeralPolls,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
@@ -1751,7 +1754,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.add_circle_outline),
-                label: Text(_creatingPoll ? 'Création...' : 'Nouveau sondage'),
+                label: Text(_creatingPoll ? S.of(context).creating : S.of(context).newPoll),
               ),
             IconButton(
               onPressed: () =>
@@ -1764,7 +1767,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Collectez un avis rapide auprès des participants. Chaque sondage s\'expire automatiquement.',
+          S.of(context).collectQuickFeedback,
           style: Theme.of(context)
               .textTheme
               .bodySmall
@@ -1794,7 +1797,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           const SizedBox(height: 8),
           ElevatedButton(
             onPressed: _loadPolls,
-            child: const Text('Réessayer'),
+            child: Text(S.of(context).retry),
           ),
         ],
       );
@@ -1810,7 +1813,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           border: Border.all(color: Colors.grey.shade200),
         ),
         child: Text(
-          'Aucun sondage pour le moment.',
+          S.of(context).noPollsYet,
           style: Theme.of(context)
               .textTheme
               .bodyMedium
@@ -1828,8 +1831,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
               isVoting: _votingPollId == poll.id,
               canVote: _canVotePolls && !_isWaitingInvitation,
               remainingLabel: poll.isExpired
-                  ? 'Expiré'
-                  : 'Expire dans ${_formatRemaining(poll.timeRemaining)}',
+                  ? S.of(context).expired
+                  : S.of(context).expiresIn(_formatRemaining(poll.timeRemaining)),
               onDelete: (_isOwner ||
                       (poll.createdByEmail != null &&
                           poll.createdByEmail!.toLowerCase() ==
@@ -1851,7 +1854,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           children: [
             Expanded(
               child: Text(
-                'Items disponibles',
+                S.of(context).availableItems,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
@@ -1866,7 +1869,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       )
                     : const Icon(Icons.add),
                 label: Text(
-                  _creatingCustomItem ? 'Ajout...' : 'Ajouter',
+                  _creatingCustomItem ? S.of(context).adding : S.of(context).add,
                 ),
               ),
             IconButton(
@@ -1880,7 +1883,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Choisissez ce que vous apportez. Les quantités sont partagées entre tous les participants.',
+          S.of(context).chooseWhatYouBring,
           style: Theme.of(context)
               .textTheme
               .bodySmall
@@ -1890,7 +1893,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              'Acceptez l\'invitation avant de pouvoir contribuer aux items.',
+              S.of(context).acceptInvitationToContribute,
               style: Theme.of(context)
                   .textTheme
                   .bodySmall
@@ -1901,7 +1904,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              'Invitation expirée : les contributions ne sont plus possibles.',
+              S.of(context).invitationExpiredNoContributions,
               style: Theme.of(context)
                   .textTheme
                   .bodySmall
@@ -1926,7 +1929,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     const SizedBox(height: 8),
                     ElevatedButton(
                       onPressed: _loadItems,
-                      child: const Text('Réessayer'),
+                      child: Text(S.of(context).retry),
                     ),
                   ],
                 )
@@ -2069,22 +2072,22 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
       background = Colors.grey.shade100;
       accent = Colors.grey.shade700;
       icon = Icons.hourglass_disabled;
-      statusLabel = 'Invitation expirée';
+      statusLabel = S.of(context).invitationExpired;
     } else if (waiting) {
       background = Colors.orange.shade50;
       accent = Colors.orange.shade800;
       icon = Icons.mark_email_unread;
-      statusLabel = 'Invitation en attente';
+      statusLabel = S.of(context).invitationStatusWaiting;
     } else if (accepted) {
       background = Colors.green.shade50;
       accent = Colors.green.shade800;
       icon = Icons.check_circle;
-      statusLabel = 'Participation confirmée';
+      statusLabel = S.of(context).participationConfirmed;
     } else {
       background = Colors.grey.shade200;
       accent = Colors.grey.shade700;
       icon = Icons.cancel_outlined;
-      statusLabel = 'Invitation refusée';
+      statusLabel = S.of(context).invitationDeclined;
     }
 
     return Card(
@@ -2122,8 +2125,8 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                         const SizedBox(width: 6),
                         Text(
                           _deadlinePassed
-                              ? 'Échéance dépassée'
-                              : (_timeRemaining ?? 'Calcul...'),
+                              ? S.of(context).deadlineExpiredHelper
+                              : (_timeRemaining ?? S.of(context).loading),
                           style:
                               Theme.of(context).textTheme.labelMedium?.copyWith(
                                     color: accent.withValues(alpha: 0.9),
@@ -2146,7 +2149,7 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                         foregroundColor: Colors.red.shade700,
                         side: BorderSide(color: Colors.red.shade200),
                       ),
-                      child: const Text('Refuser'),
+                      child: Text(S.of(context).decline),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -2157,19 +2160,19 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                         backgroundColor: Colors.green.shade600,
                         foregroundColor: Colors.white,
                       ),
-                      child: const Text('Accepter'),
+                      child: Text(S.of(context).accept),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               Text(
-                'Confirmez votre présence pour apparaître comme participant.',
+                S.of(context).confirmPresence,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ] else if (expired) ...[
               Text(
-                'La date limite est dépassée, cette invitation n’est plus active.',
+                S.of(context).deadlinePassedInactive,
                 style: Theme.of(context)
                     .textTheme
                     .bodyMedium
@@ -2178,8 +2181,8 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
             ] else
               Text(
                 accepted
-                    ? 'Merci ! Vous êtes compté parmi les participants.'
-                    : 'Vous avez décliné cette invitation.',
+                    ? S.of(context).acceptedMessage
+                    : S.of(context).declinedMessage,
                 style: Theme.of(context)
                     .textTheme
                     .bodyMedium
@@ -2188,7 +2191,7 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
             if (accepted) ...[
               const SizedBox(height: 12),
               Text(
-                'Vous ne venez plus finalement ? Vous pouvez quitter la fiestaaa, vos réservations seront libérées.',
+                S.of(context).leaveFiestaaaPrompt,
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall
@@ -2200,9 +2203,9 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: const Text('Quitter la fiestaaa ?'),
-                      content: const Text(
-                        'Vous ne serez plus compté comme participant et vos engagements seront retirés.',
+                      title: Text(S.of(context).leaveFiestaaaTitle),
+                      content: Text(
+                        S.of(context).leaveFiestaaaContent,
                       ),
                       actions: [
                         TextButton(
@@ -2211,7 +2214,7 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                         ),
                         ElevatedButton(
                           onPressed: () => Navigator.of(context).pop(true),
-                          child: const Text('Quitter'),
+                          child: Text(S.of(context).leaveEvent),
                         ),
                       ],
                     ),
@@ -2224,7 +2227,7 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.red.shade700,
                 ),
-                label: const Text('Quitter cette fiestaaa'),
+                label: Text(S.of(context).leaveFiestaaaAction),
               ),
             ],
           ],
@@ -2340,8 +2343,8 @@ class _PollCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     poll.allowMultiple
-                        ? 'Sélectionnez une ou plusieurs options.'
-                        : 'Choisissez une option.',
+                        ? S.of(context).pollSelectMultiple
+                        : S.of(context).pollSelectOne,
                     style: TextStyle(
                       color: fadedText,
                       fontWeight: FontWeight.w600,
@@ -2403,7 +2406,7 @@ class _PollCard extends StatelessWidget {
                       ),
                     ),
                     onPressed: onViewVotes,
-                    child: const Text('Voir les votes'),
+                    child: Text(S.of(context).viewVotes),
                   ),
                 ),
                 if (onDelete != null) ...[
@@ -2521,7 +2524,7 @@ class _PollOptionTile extends StatelessWidget {
                               : NetworkImage(firstVoter.avatarUrl!),
                           child: firstVoter.avatarUrl == null
                               ? Text(
-                                  _displayInitial(firstVoter.handle),
+                                  _displayInitial(context,firstVoter.handle),
                                   style: TextStyle(
                                     color: Colors.grey.shade800,
                                     fontWeight: FontWeight.w700,
@@ -2618,7 +2621,7 @@ class _EventItemsList extends StatelessWidget {
           border: Border.all(color: Colors.grey.shade200),
         ),
         child: Text(
-          'Aucun item n’a encore été ajouté pour cette fiestaaa.',
+          S.of(context).noItemsYet,
           style: Theme.of(context)
               .textTheme
               .bodyMedium
@@ -2707,7 +2710,7 @@ class _EventItemTile extends StatelessWidget {
                     const Icon(Icons.people_alt),
                     const SizedBox(width: 8),
                     Text(
-                      'Participations',
+                      S.of(context).participations,
                       style: Theme.of(context)
                           .textTheme
                           .titleMedium
@@ -2717,11 +2720,11 @@ class _EventItemTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 if (list.isEmpty)
-                  const Text('Personne n’a contribué pour le moment.')
+                  Text(S.of(context).noContributionsYet)
                 else
                   ...list.map(
                     (c) => ListTile(
-                      title: Text(_displayName(c.handle)),
+                      title: Text(_displayName(context,c.handle)),
                       contentPadding: EdgeInsets.zero,
                       leading: CircleAvatar(
                         backgroundColor: Colors.grey.shade200,
@@ -2730,7 +2733,7 @@ class _EventItemTile extends StatelessWidget {
                             : NetworkImage(c.avatarUrl!),
                         child: c.avatarUrl == null
                             ? Text(
-                                _displayInitial(c.handle),
+                                _displayInitial(context,c.handle),
                                 style: const TextStyle(
                                     fontWeight: FontWeight.w700),
                               )
@@ -2844,7 +2847,7 @@ class _EventItemTile extends StatelessWidget {
                                           : NetworkImage(c.avatarUrl!),
                                       child: c.avatarUrl == null
                                           ? Text(
-                                              _displayInitial(c.handle),
+                                              _displayInitial(context,c.handle),
                                               style: TextStyle(
                                                 fontWeight: FontWeight.w700,
                                                 color: Colors.grey.shade800,
@@ -2898,8 +2901,8 @@ class _EventItemTile extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               available > 0
-                  ? '$available ${item.unitLabel} encore disponible${available > 1 ? 's' : ''}.'
-                  : 'Quota rempli – vous pouvez remplacer une contribution existante.',
+                  ? S.of(context).remainingAvailable(available, item.unitLabel, available > 1 ? 's' : '')
+                  : S.of(context).quotaFilled,
               style: TextStyle(
                 color: isFull ? accentGreen : mutedText,
                 fontWeight: FontWeight.w600,
@@ -2940,10 +2943,10 @@ class _EventItemTile extends StatelessWidget {
                             ),
                       label: Text(
                         isLoading
-                            ? 'Envoi...'
+                            ? S.of(context).sending
                             : (hasContributed
-                                ? 'Modifier ma contribution'
-                                : 'Je contribue'),
+                                ? S.of(context).editContribution
+                                : S.of(context).iContribute),
                       ),
                     ),
                   ),
