@@ -278,29 +278,19 @@ class _ProfilePageState extends State<ProfilePage> {
     final l10n = S.of(context);
     final locale = Localizations.localeOf(context).languageCode;
     
-    return FiestaaaBackground(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.myProfile,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                l10n.manageAccountAndInvitations,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              FutureBuilder<ProfileInfo>(
-                future: _future,
-                builder: (context, snapshot) {
+    return FiestaaaPageLayout(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FiestaaaPageHeader(
+              title: l10n.myProfile,
+              subtitle: l10n.manageAccountAndInvitations,
+            ),
+            FutureBuilder<ProfileInfo>(
+              future: _future,
+              builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const SizedBox(
                       height: 240,
@@ -567,10 +557,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       const SizedBox(height: 12),
                     ],
                   );
-                },
-              ),
-            ],
-          ),
+              },
+            ),
+          ],
         ),
       ),
     );
