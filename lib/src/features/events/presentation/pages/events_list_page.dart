@@ -128,12 +128,6 @@ class EventsListPageState extends State<EventsListPage> {
             Icon(Icons.wifi_off, color: Colors.grey.shade500, size: 40),
             const SizedBox(height: 12),
             Text(_error!, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: _loadEvents,
-              icon: const Icon(Icons.refresh),
-              label: Text(S.of(context).retry),
-            ),
           ],
         ),
       );
@@ -147,12 +141,6 @@ class EventsListPageState extends State<EventsListPage> {
               Icon(Icons.celebration, color: Colors.grey.shade500, size: 40),
               const SizedBox(height: 12),
               Text(S.of(context).noFiestaaaYet),
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                onPressed: _loadEvents,
-                icon: const Icon(Icons.refresh),
-                label: Text(S.of(context).refresh),
-              ),
             ],
           ),
         );
@@ -269,12 +257,6 @@ class _EventsGrid extends StatelessWidget {
                             ),
                           ],
                         ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: onRefresh,
-                        tooltip: S.of(context).refresh,
-                        icon: const Icon(Icons.refresh),
                       ),
                     ],
                   ),
