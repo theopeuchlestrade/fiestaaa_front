@@ -709,26 +709,26 @@ class _EventDetailPageState extends State<EventDetailPage> {
   void _handleRealtimeMessage(Map<String, dynamic> message) {
     final type = message['type'] as String?;
     if (type == null) return;
-    final eventId = message['event_id'] ?? message['eventId'];
+    final eventId = message['event_id'];
     if (eventId is int && eventId != _currentEvent.id) {
       return;
     }
     switch (type) {
-      case 'event_updated':
+      case 'event.updated':
         _refreshEvent();
         break;
-      case 'event_deleted':
+      case 'event.deleted':
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
         }
         break;
-      case 'items_changed':
+      case 'event.items.changed':
         _loadItems(showLoading: false);
         break;
-      case 'polls_changed':
+      case 'event.polls.changed':
         _loadPolls(showLoading: false);
         break;
-      case 'invitation_updated':
+      case 'event.invitations.changed':
         _loadMyInvitation();
         break;
       default:
