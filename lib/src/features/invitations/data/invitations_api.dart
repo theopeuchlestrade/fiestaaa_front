@@ -86,8 +86,10 @@ class InvitationsApi {
                 : status),
       );
     }
-    throw ApiException('Impossible de créer l’invitation',
-        statusCode: response.statusCode);
+    throw _apiError(
+      response,
+      fallbackMessage: 'Impossible de créer l’invitation',
+    );
   }
 
   Future<InvitationModel> updateInvitation({
@@ -127,8 +129,7 @@ class InvitationsApi {
       },
     );
     if (response.statusCode != 200) {
-      throw ApiException('Suppression impossible',
-          statusCode: response.statusCode);
+      throw _apiError(response, fallbackMessage: 'Suppression impossible');
     }
   }
 
@@ -150,8 +151,27 @@ class InvitationsApi {
         jsonDecode(response.body) as Map<String, dynamic>,
       );
     }
-    throw ApiException('Action impossible (${response.statusCode})',
-        statusCode: response.statusCode);
+    throw _apiError(response, fallbackMessage: 'Action impossible');
+  }
+
+  ApiException _apiError(
+    http.Response response, {
+    required String fallbackMessage,
+  }) {
+    try {
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final details = decoded['details'] as String?;
+      final error = decoded['error'] as String?;
+      final message = details?.isNotEmpty == true
+          ? details!
+          : (error?.isNotEmpty == true ? error! : fallbackMessage);
+      return ApiException(message, statusCode: response.statusCode);
+    } catch (_) {
+      return ApiException(
+        '$fallbackMessage (${response.statusCode})',
+        statusCode: response.statusCode,
+      );
+    }
   }
 
   void dispose() {
