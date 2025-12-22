@@ -95,17 +95,14 @@ class _HomePageState extends State<HomePage> {
     if (type == null) return;
 
     switch (type) {
-      case 'event_created':
-      case 'event_updated':
-      case 'event_deleted':
-      case 'items_changed':
+      case 'events.changed':
         _eventsKey.currentState?.reload();
         break;
-      case 'invitation_updated':
+      case 'invitations.changed':
         _eventsKey.currentState?.reload();
         _loadPendingBadges();
         break;
-      case 'friend_request_updated':
+      case 'friend_requests.changed':
         _loadPendingBadges();
         break;
       default:

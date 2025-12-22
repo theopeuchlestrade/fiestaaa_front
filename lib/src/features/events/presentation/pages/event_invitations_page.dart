@@ -82,9 +82,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   void _handleRealtime(Map<String, dynamic> message) {
     final type = message['type'] as String?;
     if (type == null) return;
-    final eventId = message['event_id'] ?? message['eventId'];
+    final eventId = message['event_id'];
     if (eventId is int && eventId != widget.eventId) return;
-    if (type == 'invitation_updated') {
+    if (type == 'event.invitations.changed') {
       _fetch();
     }
   }
@@ -305,6 +305,8 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     if (_selectedFriendHandles.isEmpty || !_isOwner) return;
     setState(() => _invitingFriends = true);
     var successCount = 0;
+    String? firstError;
+    var deadlineExpired = false;
     try {
       for (final handle in _selectedFriendHandles) {
         try {
@@ -314,8 +316,14 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
             identifier: handle,
           );
           successCount++;
+        } on ApiException catch (e) {
+          firstError ??= e.message;
+          if (e.statusCode == 410) {
+            deadlineExpired = true;
+            break;
+          }
         } catch (_) {
-          // Ignore individual failures, we report a summary below.
+          firstError ??= 'Erreur lors de la création';
         }
       }
       if (!mounted) return;
@@ -323,12 +331,21 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       setState(() {
         _selectedFriendHandles.clear();
       });
+      if (deadlineExpired) {
+        _showSnack(
+          'La date limite est dépassée, impossible d’inviter de nouvelles personnes.',
+          isError: true,
+        );
+        return;
+      }
       if (successCount > 0) {
         _showSnack(
           successCount == 1
               ? 'Invitation envoyée à votre ami.'
               : 'Invitations envoyées à $successCount amis.',
         );
+      } else if (firstError != null) {
+        _showSnack(firstError, isError: true);
       } else {
         _showSnack('Aucune invitation envoyée', isError: true);
       }

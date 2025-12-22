@@ -76,7 +76,7 @@ class _FriendsPageState extends State<FriendsPage> {
   void _handleRealtime(Map<String, dynamic> message) {
     final type = message['type'] as String?;
     if (type == null) return;
-    if (type == 'friend_request_updated') {
+    if (type == 'friend_requests.changed' || type == 'friendships.changed') {
       _refreshAll();
     }
   }
