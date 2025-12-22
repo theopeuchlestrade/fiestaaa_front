@@ -5,6 +5,7 @@ import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/auth/presentation/widgets/google_auth_helper.dart';
 
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/presentation/widgets/google_logo.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/foundation.dart';
@@ -93,27 +94,27 @@ Bug report
   Future<void> _copyFeedbackEmail() async {
     await Clipboard.setData(const ClipboardData(text: _feedbackEmail));
     if (!mounted) return;
-    _showSnack('Adresse copiée');
+    _showSnack(S.of(context).addressCopied);
   }
 
   Future<void> _copyBugTemplate() async {
     await Clipboard.setData(const ClipboardData(text: _bugTemplate));
     if (!mounted) return;
-    _showSnack('Template de bug copié');
+    _showSnack(S.of(context).bugTemplateCopied);
   }
 
   String? _validatePassword(String? value) {
     final password = value ?? '';
-    if (password.isEmpty) return 'Mot de passe requis';
+    if (password.isEmpty) return S.of(context).passwordRequired;
     if (password.length < 12) {
-      return '12 caractères minimum';
+      return S.of(context).passwordMinLength;
     }
     final hasUpper = RegExp(r'[A-Z]').hasMatch(password);
     final hasLower = RegExp(r'[a-z]').hasMatch(password);
     final hasDigit = RegExp(r'[0-9]').hasMatch(password);
     final hasSpecial = RegExp(r'[^\w\s]').hasMatch(password);
     if (!(hasUpper && hasLower && hasDigit && hasSpecial)) {
-      return 'Inclure majuscule, minuscule, chiffre et symbole';
+      return S.of(context).passwordRequirements;
     }
     return null;
   }
@@ -142,14 +143,14 @@ Bug report
       );
       await widget.onAuthenticated(session);
       if (!mounted) return;
-      _showSnack('Connexion Google réussie !');
+      _showSnack(S.of(context).googleLoginSuccess);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
       _showSnack(
-        'Connexion Google impossible pour le moment.',
+        S.of(context).googleLoginFailed,
         isError: true,
       );
     } finally {
@@ -167,7 +168,7 @@ Bug report
 
     if (kIsWeb && googleWebClientId.isEmpty) {
       _showSnack(
-        'Ajoutez FIESTAAA_GOOGLE_WEB_CLIENT_ID pour activer Google sur le web.',
+        S.of(context).missingGoogleConfig,
         isError: true,
       );
       return;
@@ -190,7 +191,7 @@ Bug report
         // Popup closed / canceled => no login.
         if (helperResult == null || helperResult.accessToken == null) {
           if (!mounted) return;
-          _showSnack('Connexion Google annulée.', isError: true);
+          _showSnack(S.of(context).googleLoginCancelled, isError: true);
           return;
         }
 
@@ -233,18 +234,19 @@ Bug report
             manageState: false,
           );
         } else {
-          throw ApiException('Token Google manquant ou invalide');
+          if (!mounted) return;
+          throw ApiException(S.of(context).missingToken('Google'));
         }
       }
     } on GoogleSignInException catch (e) {
       if (!mounted) return;
       if (e.code == GoogleSignInExceptionCode.canceled ||
           e.code == GoogleSignInExceptionCode.interrupted) {
-        _showSnack('Connexion Google annulée.', isError: true);
+        _showSnack(S.of(context).googleLoginCancelled, isError: true);
         return;
       }
       _showSnack(
-        e.description ?? 'Connexion Google impossible pour le moment.',
+        e.description ?? S.of(context).googleLoginFailed,
         isError: true,
       );
     } on ApiException catch (e) {
@@ -255,7 +257,7 @@ Bug report
       // Log the full error for debugging but show a friendly message
       debugPrint('Google Sign In Error: $e');
       _showSnack(
-        'Connexion Google impossible. (Erreur technique)',
+        S.of(context).googleLoginTechnicalError,
         isError: true,
       );
     } finally {
@@ -273,7 +275,7 @@ Bug report
 
     if (!_shouldShowAppleButton) {
       _showSnack(
-        'Connexion Apple non disponible sur cette plateforme.',
+        S.of(context).appleNotAvailable,
         isError: true,
       );
       return;
@@ -281,7 +283,7 @@ Bug report
 
     if (kIsWeb && (appleServiceId.isEmpty || appleRedirectUri.isEmpty)) {
       _showSnack(
-        'Configurez FIESTAAA_APPLE_SERVICE_ID et FIESTAAA_APPLE_REDIRECT_URI.',
+        S.of(context).missingAppleConfig,
         isError: true,
       );
       return;
@@ -307,7 +309,8 @@ Bug report
       );
       final idToken = credential.identityToken;
       if (idToken == null || idToken.isEmpty) {
-        throw ApiException('Token Apple manquant ou invalide');
+        if (!mounted) return;
+        throw ApiException(S.of(context).missingToken('Apple'));
       }
 
       final fullName = [
@@ -323,7 +326,7 @@ Bug report
       );
       await widget.onAuthenticated(session);
       if (!mounted) return;
-      _showSnack('Connexion Apple réussie !');
+      _showSnack(S.of(context).appleLoginSuccess);
     } on SignInWithAppleAuthorizationException catch (e) {
       if (!mounted) return;
       if (e.code == AuthorizationErrorCode.canceled) {
@@ -336,7 +339,7 @@ Bug report
     } catch (_) {
       if (!mounted) return;
       _showSnack(
-        'Connexion Apple impossible pour le moment.',
+        S.of(context).appleLoginFailed,
         isError: true,
       );
     } finally {
@@ -366,7 +369,7 @@ Bug report
               : _handleController.text.trim(),
         );
         if (!mounted) return;
-        _showSnack('Compte créé ! Connectez-vous maintenant.');
+        _showSnack(S.of(context).accountCreated);
         setState(() {
           _mode = AuthMode.login;
           _confirmPasswordController.clear();
@@ -379,14 +382,14 @@ Bug report
         );
         await widget.onAuthenticated(session);
         if (!mounted) return;
-        _showSnack('Connexion réussie, bienvenue !');
+        _showSnack(S.of(context).loginSuccess);
       }
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Erreur réseau, merci de réessayer.', isError: true);
+      _showSnack(S.of(context).networkError, isError: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -433,6 +436,7 @@ Bug report
   }
 
   Widget _buildMobileLayout(BuildContext context) {
+    final l10n = S.of(context);
     return Container(
       decoration: const BoxDecoration(
         gradient: FiestaaaPalette.cardGradient,
@@ -496,8 +500,8 @@ Bug report
                         // Welcome Text
                         Text(
                           _mode == AuthMode.login
-                              ? 'Bon retour !'
-                              : 'Bienvenue !',
+                              ? l10n.welcomeBack
+                              : l10n.welcomeNew,
                           textAlign: TextAlign.center,
                           style: Theme.of(context)
                               .textTheme
@@ -510,8 +514,8 @@ Bug report
                         const SizedBox(height: 8),
                         Text(
                           _mode == AuthMode.login
-                              ? 'Connectez-vous pour continuer'
-                              : 'Créez votre compte gratuitement',
+                              ? l10n.loginToContinue
+                              : l10n.createAccountFree,
                           textAlign: TextAlign.center,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -533,8 +537,8 @@ Bug report
                                 keyboardType: TextInputType.emailAddress,
                                 decoration: InputDecoration(
                                   labelText: _mode == AuthMode.login
-                                      ? 'Email ou identifiant'
-                                      : 'Email',
+                                      ? l10n.emailOrIdentifier
+                                      : l10n.email,
                                   prefixIcon: const Icon(Icons.email_outlined),
                                   filled: true,
                                   fillColor: Colors.grey.shade50,
@@ -543,13 +547,13 @@ Bug report
                                   final email = value?.trim() ?? '';
                                   if (email.isEmpty) {
                                     return _mode == AuthMode.login
-                                        ? 'Merci de renseigner votre identifiant'
-                                        : 'Merci de renseigner votre email';
+                                        ? l10n.pleaseEnterIdentifierLogin
+                                        : l10n.pleaseEnterEmail;
                                   }
                                   if (_mode == AuthMode.login) return null;
                                   if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
                                       .hasMatch(email)) {
-                                    return 'Email invalide';
+                                    return l10n.invalidEmail;
                                   }
                                   return null;
                                 },
@@ -559,18 +563,18 @@ Bug report
                                 TextFormField(
                                   controller: _handleController,
                                   decoration: InputDecoration(
-                                    labelText: 'Identifiant (optionnel)',
+                                    labelText: l10n.identifierOptional,
                                     prefixIcon: const Icon(Icons.tag),
                                     filled: true,
                                     fillColor: Colors.grey.shade50,
-                                    helperText: '4-32 caractères a-z 0-9 . _ -',
+                                    helperText: l10n.identifierFormat,
                                   ),
                                   validator: (value) {
                                     final handle = value?.trim() ?? '';
                                     if (handle.isEmpty) return null;
                                     if (!RegExp(r'^[a-z0-9._-]{4,32}$')
                                         .hasMatch(handle)) {
-                                      return '4-32 caractères a-z 0-9 . _ -';
+                                      return l10n.identifierFormat;
                                     }
                                     return null;
                                   },
@@ -581,12 +585,12 @@ Bug report
                                 controller: _passwordController,
                                 obscureText: _obscurePassword,
                                 decoration: InputDecoration(
-                                  labelText: 'Mot de passe',
+                                  labelText: l10n.password,
                                   prefixIcon: const Icon(Icons.lock_outline),
                                   filled: true,
                                   fillColor: Colors.grey.shade50,
                                   helperText:
-                                      '12+ caractères, avec majuscule, minuscule, chiffre et symbole',
+                                      l10n.passwordHelperText,
                                   suffixIcon: IconButton(
                                     icon: Icon(
                                       _obscurePassword
@@ -605,7 +609,7 @@ Bug report
                                   controller: _confirmPasswordController,
                                   obscureText: _obscureConfirm,
                                   decoration: InputDecoration(
-                                    labelText: 'Confirmez le mot de passe',
+                                    labelText: l10n.confirmPassword,
                                     prefixIcon: const Icon(Icons.lock_outline),
                                     filled: true,
                                     fillColor: Colors.grey.shade50,
@@ -621,7 +625,7 @@ Bug report
                                   ),
                                   validator: (value) {
                                     if (value != _passwordController.text) {
-                                      return 'Les mots de passe ne correspondent pas';
+                                      return l10n.passwordsDoNotMatch;
                                     }
                                     return null;
                                   },
@@ -654,8 +658,8 @@ Bug report
                                         )
                                       : Text(
                                           _mode == AuthMode.login
-                                              ? 'Se connecter'
-                                              : 'Créer un compte',
+                                              ? l10n.signIn
+                                              : l10n.createAccount,
                                           style: const TextStyle(
                                             fontSize: 17,
                                             fontWeight: FontWeight.w700,
@@ -676,7 +680,7 @@ Bug report
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 12),
                               child: Text(
-                                'ou continuez avec',
+                                l10n.orContinueWith,
                                 style: TextStyle(
                                   color: Colors.grey.shade500,
                                   fontSize: 13,
@@ -704,8 +708,8 @@ Bug report
                           ),
                           child: Text(
                             _mode == AuthMode.login
-                                ? 'Créer un nouveau compte'
-                                : 'J\'ai déjà un compte',
+                                ? l10n.createNewAccount
+                                : l10n.alreadyHaveAccountLogin,
                             style: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 15,
@@ -720,7 +724,7 @@ Bug report
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Text(
-                      'En continuant, vous acceptez nos conditions\nd\'utilisation et notre politique de confidentialité',
+                      l10n.termsAcceptance,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.8),
@@ -739,6 +743,7 @@ Bug report
   }
 
   Widget _buildDesktopLayout(BuildContext context) {
+    final l10n = S.of(context);
     return Card(
       clipBehavior: Clip.antiAlias,
       elevation: 0,
@@ -815,7 +820,7 @@ Bug report
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Créez, partagez et gérez vos fiestaaa en toute simplicité.',
+                          l10n.appTagline,
                           style:
                               Theme.of(context).textTheme.titleLarge?.copyWith(
                                     color: Colors.white.withValues(alpha: 0.9),
@@ -826,20 +831,20 @@ Bug report
                         const SizedBox(height: 40),
                         _buildFeatureItem(
                           icon: Icons.event,
-                          title: 'Organisation facile',
-                          description: 'Créez vos fiestaaa en quelques clics',
+                          title: l10n.easyOrganization,
+                          description: l10n.easyOrganizationDesc,
                         ),
                         const SizedBox(height: 20),
                         _buildFeatureItem(
                           icon: Icons.share,
-                          title: 'Partage simplifié',
-                          description: 'Invitez vos amis instantanément',
+                          title: l10n.simplifiedSharing,
+                          description: l10n.simplifiedSharingDesc,
                         ),
                         const SizedBox(height: 20),
                         _buildFeatureItem(
                           icon: Icons.people,
-                          title: 'Gestion collaborative',
-                          description: 'Organisez ensemble vos fiestaaa',
+                          title: l10n.collaborativeManagement,
+                          description: l10n.collaborativeManagementDesc,
                         ),
                       ],
                     ),
@@ -947,7 +952,7 @@ Bug report
       icon: _socialInProgress == 'google'
           ? spinner(FiestaaaPalette.primary)
           : const GoogleLogo(size: 24),
-      label: const Text('Continuer avec Google'),
+      label: Text(S.of(context).continueWithGoogle),
     );
 
     return Column(
@@ -965,7 +970,7 @@ Bug report
               icon: _socialInProgress == 'apple'
                   ? spinner(Colors.black87)
                   : const Icon(Icons.apple, color: Colors.black87, size: 24),
-              label: const Text('Continuer avec Apple'),
+              label: Text(S.of(context).continueWithApple),
             ),
           ),
       ],
@@ -973,6 +978,7 @@ Bug report
   }
 
   Widget _buildAuthForm(BuildContext context, double padding) {
+    final l10n = S.of(context);
     return Padding(
       padding: EdgeInsets.all(padding),
       child: Column(
@@ -997,7 +1003,7 @@ Bug report
                         ? null
                         : () => _toggleMode(AuthMode.login),
                     icon: const Icon(Icons.login),
-                    label: const Text('Connexion'),
+                    label: Text(l10n.login),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                           vertical: 14, horizontal: 12),
@@ -1020,7 +1026,7 @@ Bug report
                         ? null
                         : () => _toggleMode(AuthMode.register),
                     icon: const Icon(Icons.person_add_alt_1),
-                    label: const Text('Inscription'),
+                    label: Text(l10n.register),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                           vertical: 14, horizontal: 12),
@@ -1050,22 +1056,22 @@ Bug report
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     labelText: _mode == AuthMode.login
-                        ? 'Email ou identifiant'
-                        : 'Email',
+                        ? l10n.emailOrIdentifier
+                        : l10n.email,
                     prefixIcon: const Icon(Icons.email_outlined),
                   ),
                   validator: (value) {
                     final email = value?.trim() ?? '';
                     if (email.isEmpty) {
                       return _mode == AuthMode.login
-                          ? 'Merci de renseigner votre identifiant'
-                          : 'Merci de renseigner votre email';
+                          ? l10n.pleaseEnterIdentifierLogin
+                          : l10n.pleaseEnterEmail;
                     }
                     if (_mode == AuthMode.login) {
                       return null;
                     }
                     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
-                      return 'Email invalide';
+                      return l10n.invalidEmail;
                     }
                     return null;
                   },
@@ -1074,17 +1080,17 @@ Bug report
                   const SizedBox(height: 18),
                   TextFormField(
                     controller: _handleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Identifiant public (optionnel)',
+                    decoration: InputDecoration(
+                      labelText: l10n.identifierPublicOptional,
                       helperText:
-                          'Auto-généré si vide. 4-32 caractères a-z 0-9 . _ -',
-                      prefixIcon: Icon(Icons.tag),
+                          l10n.identifierAutoGenerated,
+                      prefixIcon: const Icon(Icons.tag),
                     ),
                     validator: (value) {
                       final handle = value?.trim() ?? '';
                       if (handle.isEmpty) return null;
                       if (!RegExp(r'^[a-z0-9._-]{4,32}$').hasMatch(handle)) {
-                        return '4-32 caractères a-z 0-9 . _ -';
+                        return l10n.identifierFormat;
                       }
                       return null;
                     },
@@ -1095,10 +1101,10 @@ Bug report
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Mot de passe',
+                    labelText: l10n.password,
                     prefixIcon: const Icon(Icons.lock_outline),
                     helperText:
-                        '12+ caractères, avec majuscule, minuscule, chiffre et symbole',
+                        l10n.passwordHelperText,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
@@ -1120,7 +1126,7 @@ Bug report
                     controller: _confirmPasswordController,
                     obscureText: _obscureConfirm,
                     decoration: InputDecoration(
-                      labelText: 'Confirmez le mot de passe',
+                      labelText: l10n.confirmPassword,
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -1137,7 +1143,7 @@ Bug report
                     ),
                     validator: (value) {
                       if (value != _passwordController.text) {
-                        return 'Les mots de passe ne correspondent pas';
+                        return l10n.passwordsDoNotMatch;
                       }
                       return null;
                     },
@@ -1164,8 +1170,8 @@ Bug report
                           )
                         : Text(
                             _mode == AuthMode.login
-                                ? 'Se connecter'
-                                : 'Créer un compte',
+                                ? l10n.signIn
+                                : l10n.createAccount,
                             style: const TextStyle(fontSize: 16),
                           ),
                   ),
@@ -1180,7 +1186,7 @@ Bug report
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
-                  'ou continuez avec',
+                  l10n.orContinueWith,
                   style: TextStyle(
                     color: Colors.grey.shade600,
                     fontSize: 13,
@@ -1204,8 +1210,8 @@ Bug report
                       ),
               child: Text(
                 _mode == AuthMode.login
-                    ? 'Nouveau sur Fiestaaa ? Enregistrez-vous'
-                    : 'Déjà inscrit ? Connectez-vous',
+                    ? l10n.newToFiestaaa
+                    : l10n.alreadyRegistered,
               ),
             ),
           ),
@@ -1215,6 +1221,7 @@ Bug report
   }
 
   Widget _buildAlphaBanner({required bool compact}) {
+    final l10n = S.of(context);
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(
@@ -1253,7 +1260,7 @@ Bug report
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Version Alpha de test — vos retours sont précieux !',
+                  l10n.alphaVersionBanner,
                   style: TextStyle(
                     color: Colors.orange.shade900,
                     fontWeight: FontWeight.w800,
@@ -1268,7 +1275,7 @@ Bug report
             children: [
               Expanded(
                 child: SelectableText(
-                  'Signalez les bugs à $_feedbackEmail',
+                  l10n.reportBugsTo(_feedbackEmail),
                   style: TextStyle(
                     color: Colors.orange.shade800,
                     fontWeight: FontWeight.w600,
@@ -1276,7 +1283,7 @@ Bug report
                 ),
               ),
               IconButton(
-                tooltip: 'Copier l’adresse',
+                tooltip: l10n.copyAddress,
                 onPressed: _copyFeedbackEmail,
                 icon: const Icon(Icons.copy_rounded, size: 18),
                 color: Colors.orange.shade800,
@@ -1291,7 +1298,7 @@ Bug report
               OutlinedButton.icon(
                 onPressed: _copyBugTemplate,
                 icon: const Icon(Icons.article_outlined, size: 18),
-                label: const Text('Copier le template de bug'),
+                label: Text(l10n.copyBugTemplate),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.orange.shade800,
                   side: BorderSide(color: Colors.orange.shade200),
@@ -1304,7 +1311,7 @@ Bug report
               OutlinedButton.icon(
                 onPressed: _copyFeedbackEmail,
                 icon: const Icon(Icons.alternate_email, size: 18),
-                label: const Text('Copier l’adresse'),
+                label: Text(l10n.copyAddress),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.orange.shade800,
                   side: BorderSide(color: Colors.orange.shade200),

@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/friends/data/friends_api.dart';
@@ -68,8 +69,8 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
       setState(() => _invitationError = e.message);
     } catch (_) {
       if (!mounted) return;
-      setState(
-          () => _invitationError = 'Impossible de charger vos invitations.');
+      setState(() =>
+          _invitationError = S.of(context).unableToLoadInvitations);
     } finally {
       if (mounted) {
         setState(() => _loadingInvitations = false);
@@ -94,7 +95,7 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() =>
-          _friendRequestsError = 'Impossible de charger vos demandes d’ami.');
+          _friendRequestsError = S.of(context).unableToLoadRequests);
     } finally {
       if (mounted) {
         setState(() => _loadingFriendRequests = false);
@@ -111,20 +112,22 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
       );
       if (!mounted) return;
       _showSnack(
-        status == 'Accepted' ? 'Invitation acceptée' : 'Invitation refusée',
+        status == 'Accepted'
+            ? S.of(context).invitationAccepted
+            : S.of(context).invitationDeclined,
       );
       await _fetchEventInvitations();
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 410) {
-        _showSnack('Invitation expirée', isError: true);
+        _showSnack(S.of(context).invitationExpired, isError: true);
         await _fetchEventInvitations();
         return;
       }
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Action impossible', isError: true);
+      _showSnack(S.of(context).actionFailed, isError: true);
     }
   }
 
@@ -140,15 +143,18 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
       );
       if (!mounted) return;
       await _fetchFriendRequests();
+      if (!mounted) return;
       _showSnack(
-        status == 'Accepted' ? 'Demande acceptée' : 'Demande d’ami refusée',
+        status == 'Accepted'
+            ? S.of(context).requestAccepted
+            : S.of(context).friendRequestDeclined,
       );
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Action impossible', isError: true);
+      _showSnack(S.of(context).actionFailed, isError: true);
     }
   }
 
@@ -156,18 +162,18 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Quitter cet événement ?'),
+        title: Text(S.of(context).leaveEventTitle),
         content: Text(
-          'Vous êtes actuellement inscrit. Quitter l’événement retirera vos engagements pour ${invitation.eventName ?? 'cet évènement'}.',
+          S.of(context).leaveEventWarning(invitation.eventName ?? S.of(context).fiestaaa),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Annuler'),
+            child: Text(S.of(context).cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Quitter'),
+            child: Text(S.of(context).leaveEvent),
           ),
         ],
       ),
@@ -180,13 +186,13 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
   String _statusLabel(String status) {
     switch (status) {
       case 'Accepted':
-        return 'Acceptée';
+        return S.of(context).accepted;
       case 'Declined':
-        return 'Refusée';
+        return S.of(context).declined;
       case 'Expired':
-        return 'Expirée';
+        return S.of(context).expired;
       case 'Waiting':
-        return 'En attente';
+        return S.of(context).pending;
       default:
         return status;
     }
@@ -232,11 +238,11 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
         children: [
           TextButton(
             onPressed: () => _respond(invitation, 'Declined'),
-            child: const Text('Refuser'),
+            child: Text(S.of(context).decline),
           ),
           ElevatedButton(
             onPressed: () => _respond(invitation, 'Accepted'),
-            child: const Text('Accepter'),
+            child: Text(S.of(context).accept),
           ),
         ],
       );
@@ -249,7 +255,7 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
         style: TextButton.styleFrom(
           foregroundColor: Colors.red.shade700,
         ),
-        label: const Text('Quitter'),
+        label: Text(S.of(context).leaveEvent),
       );
     }
 
@@ -280,11 +286,11 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Mes invitations'),
-          bottom: const TabBar(
+          title: Text(S.of(context).myInvitations),
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Fiestaaa'),
-              Tab(text: 'Amis'),
+              Tab(text: S.of(context).fiestaaaTab),
+              Tab(text: S.of(context).friendsTab),
             ],
           ),
         ),
@@ -321,15 +327,15 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
                   ElevatedButton.icon(
                     onPressed: _fetchEventInvitations,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Réessayer'),
+                    label: Text(S.of(context).retry),
                   ),
                 ],
               )
             else if (_invitations.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Center(
-                  child: Text('Aucune invitation en attente.'),
+                  child: Text(S.of(context).noPendingInvitation),
                 ),
               )
             else
@@ -358,7 +364,10 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Reçu le ${DateFormat.yMMMMd('fr_FR').format(inv.dateInvi)}',
+                                S.of(context).receivedOn(
+                                  DateFormat.yMMMMd(Localizations.localeOf(context).toString())
+                                      .format(inv.dateInvi),
+                                ),
                               ),
                               if (isCompact) ...[
                                 const SizedBox(height: 8),
@@ -369,7 +378,7 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
 
                           return ListTile(
                             title: Text(
-                              inv.eventName ?? 'Évènement #${inv.eventId}',
+                              inv.eventName ?? '${S.of(context).fiestaaa} #${inv.eventId}',
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -418,7 +427,7 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
-                'Demandes d’amis',
+                S.of(context).friendRequests,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
@@ -432,20 +441,20 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
                   ElevatedButton.icon(
                     onPressed: _fetchFriendRequests,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Réessayer'),
+                    label: Text(S.of(context).retry),
                   ),
                 ],
               )
             else if (incoming.isEmpty && outgoing.isEmpty)
-              const Center(
+              Center(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Text('Aucune demande pour le moment.'),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(S.of(context).noRequestForNow),
                 ),
               )
             else ...[
               _FriendRequestsSection(
-                title: 'Reçues',
+                title: S.of(context).received,
                 requests: incoming,
                 onAccept: (req) => _respondFriendRequest(req, 'Accepted'),
                 onDecline: (req) => _respondFriendRequest(req, 'Declined'),
@@ -453,7 +462,7 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
               ),
               const SizedBox(height: 12),
               _FriendRequestsSection(
-                title: 'Envoyées',
+                title: S.of(context).sent,
                 requests: outgoing,
               ),
             ],
@@ -495,10 +504,10 @@ class _FriendRequestsSection extends StatelessWidget {
                     ?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Rien pour le moment',
-                  style: TextStyle(color: Colors.grey),
+                  S.of(context).nothingForNow,
+                  style: const TextStyle(color: Colors.grey),
                 ),
               ),
             ],
@@ -507,7 +516,6 @@ class _FriendRequestsSection extends StatelessWidget {
       );
     }
 
-    final formatter = DateFormat.yMMMMd('fr_FR');
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -531,9 +539,13 @@ class _FriendRequestsSection extends StatelessWidget {
               final label = counterpartHandle.isNotEmpty
                   ? '@$counterpartHandle'
                   : counterpartEmail;
+                  
+              final dateStr = DateFormat.yMMMMd(Localizations.localeOf(context).toString())
+                  .format(req.createdAt.toLocal());
               final subtitle = incoming
-                  ? 'Reçue le ${formatter.format(req.createdAt.toLocal())}'
-                  : 'Envoyée le ${formatter.format(req.createdAt.toLocal())}';
+                  ? S.of(context).receivedOn(dateStr)
+                  : S.of(context).sentOn(dateStr);
+                  
               return ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.person_add_alt_1),
@@ -545,17 +557,17 @@ class _FriendRequestsSection extends StatelessWidget {
                         children: [
                           TextButton(
                             onPressed: () => onDecline!(req),
-                            child: const Text('Refuser'),
+                            child: Text(S.of(context).decline),
                           ),
                           ElevatedButton(
                             onPressed: () => onAccept!(req),
-                            child: const Text('Accepter'),
+                            child: Text(S.of(context).accept),
                           ),
                         ],
                       )
                     : Chip(
                         label: Text(
-                          req.status,
+                          _statusLabel(context, req.status),
                           style: TextStyle(
                             color: req.status == 'Accepted'
                                 ? Colors.green.shade800
@@ -577,5 +589,18 @@ class _FriendRequestsSection extends StatelessWidget {
         ),
       ),
     );
+  }
+  
+  String _statusLabel(BuildContext context, String status) {
+    switch (status) {
+      case 'Accepted':
+        return S.of(context).accepted;
+      case 'Declined':
+        return S.of(context).declined;
+      case 'Pending':
+        return S.of(context).pending;
+      default:
+        return status;
+    }
   }
 }

@@ -1,10 +1,12 @@
 import 'package:file_selector/file_selector.dart';
+import 'package:fiestaaa_front/src/core/locale_service.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/profile/data/profile_api.dart';
 import 'package:fiestaaa_front/src/features/profile/domain/profile_info.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -13,11 +15,13 @@ class ProfilePage extends StatefulWidget {
     required this.session,
     required this.onLogout,
     this.onSessionUpdated,
+    this.localeService,
   });
 
   final SessionData session;
   final VoidCallback onLogout;
   final Future<void> Function(SessionData session)? onSessionUpdated;
+  final LocaleService? localeService;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -47,10 +51,11 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _checkHandleAvailability() async {
+    final l10n = S.of(context);
     final handle = _handleController.text.trim();
     if (handle.isEmpty) {
       setState(() {
-        _handleStatus = 'Renseignez un identifiant pour vérifier';
+        _handleStatus = l10n.enterIdentifierToCheck;
         _handleAvailable = null;
       });
       return;
@@ -66,7 +71,7 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         _handleAvailable = available;
         _handleStatus =
-            available ? 'Identifiant disponible' : 'Identifiant déjà pris';
+            available ? l10n.identifierAvailable : l10n.identifierTaken;
       });
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -78,7 +83,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       setState(() {
         _handleAvailable = null;
-        _handleStatus = 'Vérification impossible';
+        _handleStatus = l10n.checkFailed;
       });
     } finally {
       if (mounted) {
@@ -90,9 +95,10 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _updateHandle(ProfileInfo profile) async {
+    final l10n = S.of(context);
     final handle = _handleController.text.trim();
     if (handle.isEmpty) {
-      _showSnack('Merci de renseigner un identifiant', isError: true);
+      _showSnack(l10n.pleaseEnterIdentifier, isError: true);
       return;
     }
 
@@ -110,14 +116,14 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         _future = Future.value(updated);
         _handleAvailable = null;
-        _handleStatus = 'Identifiant mis à jour';
+        _handleStatus = l10n.identifierUpdated;
       });
       if (widget.onSessionUpdated != null) {
         await widget.onSessionUpdated!(
           widget.session.copyWith(handle: updated.handle),
         );
       }
-      _showSnack('Identifiant mis à jour');
+      _showSnack(l10n.identifierUpdated);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
@@ -127,7 +133,7 @@ class _ProfilePageState extends State<ProfilePage> {
       });
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Mise à jour impossible', isError: true);
+      _showSnack(l10n.updateFailed, isError: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -138,21 +144,21 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _confirmDeleteAccount() async {
+    final l10n = S.of(context);
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Supprimer mon compte'),
-        content: const Text(
-            'Cette action est irréversible. Toutes vos données seront définitivement supprimées.'),
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.deleteAccountTitle),
+        content: Text(l10n.deleteAccountWarning),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Annuler'),
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Supprimer'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -167,14 +173,14 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       await _api.deleteAccount(token: widget.session.token);
       if (!mounted) return;
-      _showSnack('Compte supprimé');
+      _showSnack(l10n.accountDeleted);
       widget.onLogout();
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Suppression impossible', isError: true);
+      _showSnack(l10n.deletionFailed, isError: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -193,7 +199,36 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Future<void> _showLanguageDialog() async {
+    final l10n = S.of(context);
+    final currentLocale = widget.localeService?.locale?.languageCode ??
+        Localizations.localeOf(context).languageCode;
+
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(l10n.changeLanguage),
+        children: [
+          for (final locale in LocaleService.supportedLocales)
+            ListTile(
+              leading: currentLocale == locale.languageCode
+                  ? const Icon(Icons.check, color: Colors.green)
+                  : const SizedBox(width: 24),
+              title: Text(widget.localeService?.getLanguageName(locale.languageCode) ??
+                  locale.languageCode),
+              onTap: () => Navigator.of(ctx).pop(locale.languageCode),
+            ),
+        ],
+      ),
+    );
+
+    if (selected != null && widget.localeService != null) {
+      await widget.localeService!.setLocale(Locale(selected));
+    }
+  }
+
   Future<void> _pickAndUploadAvatar(ProfileInfo profile) async {
+    final l10n = S.of(context);
     const typeGroup = XTypeGroup(
       label: 'images',
       extensions: ['jpg', 'jpeg', 'png', 'webp'],
@@ -203,7 +238,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final bytes = await file.readAsBytes();
     final sizeMb = bytes.length / (1024 * 1024);
     if (sizeMb > 1.5) {
-      _showSnack('Image trop lourde (max 1.5 Mo)', isError: true);
+      _showSnack(l10n.imageTooLarge, isError: true);
       return;
     }
     setState(() => _updatingHandle = true);
@@ -224,13 +259,13 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         );
       }
-      _showSnack('Photo mise à jour');
+      _showSnack(l10n.photoUpdated);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Upload impossible', isError: true);
+      _showSnack(l10n.uploadFailed, isError: true);
     } finally {
       if (mounted) {
         setState(() => _updatingHandle = false);
@@ -240,6 +275,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = S.of(context);
+    final locale = Localizations.localeOf(context).languageCode;
+    
     return FiestaaaBackground(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       child: SafeArea(
@@ -249,14 +287,14 @@ class _ProfilePageState extends State<ProfilePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Mon profil',
+                l10n.myProfile,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Gérez votre compte et vos invitations.',
+                l10n.manageAccountAndInvitations,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 16),
@@ -272,7 +310,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   if (snapshot.hasError) {
                     return Column(
                       children: [
-                        const Text('Impossible de charger votre profil'),
+                        Text(l10n.profileLoadFailed),
                         const SizedBox(height: 8),
                         ElevatedButton.icon(
                           onPressed: () {
@@ -281,7 +319,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             });
                           },
                           icon: const Icon(Icons.refresh),
-                          label: const Text('Réessayer'),
+                          label: Text(l10n.retry),
                         ),
                       ],
                     );
@@ -289,7 +327,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   final profile = snapshot.data;
                   if (profile == null) {
-                    return const Text('Profil introuvable');
+                    return Text(l10n.profileNotFound);
                   }
 
                   if (_handleController.text.isEmpty) {
@@ -334,12 +372,15 @@ class _ProfilePageState extends State<ProfilePage> {
                                       ?.copyWith(fontWeight: FontWeight.w700),
                                 ),
                                 subtitle: Text(
-                                  'Token valide jusqu’au ${DateFormat.yMMMMd('fr_FR').format(profile.expiration)} ${DateFormat.Hm().format(profile.expiration)}',
+                                  l10n.tokenValidUntil(
+                                    DateFormat.yMMMMd(locale).format(profile.expiration),
+                                    DateFormat.Hm().format(profile.expiration),
+                                  ),
                                 ),
                                 trailing: Chip(
-                                  label: const Text(
-                                    'Connecté',
-                                    style: TextStyle(
+                                  label: Text(
+                                    l10n.connected,
+                                    style: const TextStyle(
                                       color: FiestaaaPalette.primary,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -371,8 +412,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                           )
                                         : const Icon(Icons.image),
                                     label: Text(_updatingHandle
-                                        ? 'Envoi...'
-                                        : 'Changer la photo'),
+                                        ? l10n.uploading
+                                        : l10n.changePhoto),
                                   ),
                                   OutlinedButton.icon(
                                     onPressed: _deletingAccount
@@ -390,12 +431,12 @@ class _ProfilePageState extends State<ProfilePage> {
                                                 strokeWidth: 2),
                                           )
                                         : const Icon(Icons.delete_forever),
-                                    label: const Text('Supprimer mon compte'),
+                                    label: Text(l10n.deleteMyAccount),
                                   ),
                                   OutlinedButton.icon(
                                     onPressed: widget.onLogout,
                                     icon: const Icon(Icons.logout),
-                                    label: const Text('Se déconnecter'),
+                                    label: Text(l10n.logout),
                                   ),
                                 ],
                               ),
@@ -416,7 +457,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                       color: Colors.deepPurple),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Modifier mon identifiant',
+                                    l10n.updateIdentifier,
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium
@@ -437,9 +478,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 controller: _handleController,
                                 enabled: !_updatingHandle,
                                 decoration: InputDecoration(
-                                  labelText: 'Ex: mango-forest-4832',
-                                  helperText:
-                                      'Utilisable à la connexion et pour les invitations.',
+                                  labelText: l10n.identifierExample,
+                                  helperText: l10n.identifierHelperText,
                                   prefixIcon: const Icon(Icons.alternate_email),
                                   suffixIcon: _handleAvailable == true
                                       ? const Icon(Icons.check_circle,
@@ -468,7 +508,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                         ? null
                                         : _checkHandleAvailability,
                                     icon: const Icon(Icons.search),
-                                    label: const Text('Vérifier'),
+                                    label: Text(l10n.check),
                                   ),
                                   const SizedBox(width: 8),
                                   ElevatedButton.icon(
@@ -477,8 +517,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                         : () => _updateHandle(profile),
                                     icon: const Icon(Icons.save_outlined),
                                     label: Text(_updatingHandle
-                                        ? 'En cours...'
-                                        : 'Mettre à jour'),
+                                        ? l10n.updating
+                                        : l10n.update),
                                   ),
                                 ],
                               ),
@@ -486,6 +526,44 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      if (widget.localeService != null)
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.language,
+                                        color: Colors.deepPurple),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      l10n.changeLanguage,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(fontWeight: FontWeight.w700),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                OutlinedButton.icon(
+                                  onPressed: _showLanguageDialog,
+                                  icon: const Icon(Icons.translate),
+                                  label: Text(
+                                    widget.localeService?.getLanguageName(
+                                          widget.localeService?.locale?.languageCode ??
+                                              locale,
+                                        ) ??
+                                        l10n.french,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       const SizedBox(height: 12),
                     ],
                   );

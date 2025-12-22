@@ -70,3 +70,10 @@ app.*.map.json
 
 # Generated Firebase service worker (created from template + .env)
 web/firebase-messaging-sw.js
+
+# Generated localization files (flutter gen-l10n)
+# Commit sources/config (lib/l10n/*.arb + l10n.yaml), not generated Dart files.
+lib/l10n/app_localizations*.dart
+
+# Generated untranslated report (flutter gen-l10n)
+untranslated.txt
