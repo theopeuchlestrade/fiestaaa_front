@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/friends/data/friends_api.dart';
@@ -95,7 +96,7 @@ class _FriendsPageState extends State<FriendsPage> {
       setState(() => _error = e.message);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'Impossible de charger vos amis.');
+      setState(() => _error = S.of(context).unableToLoadFriends);
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -119,7 +120,7 @@ class _FriendsPageState extends State<FriendsPage> {
       setState(() => _requestError = e.message);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _requestError = 'Impossible de charger vos demandes.');
+      setState(() => _requestError = S.of(context).unableToLoadRequests);
     } finally {
       if (mounted) {
         setState(() => _loadingRequests = false);
@@ -168,14 +169,14 @@ class _FriendsPageState extends State<FriendsPage> {
   Future<void> _sendRequest([String? identifier]) async {
     final target = (identifier ?? _searchController.text).trim();
     if (target.isEmpty) {
-      _showSnack('Renseignez un email ou identifiant', isError: true);
+      _showSnack(S.of(context).enterEmailOrIdentifier, isError: true);
       return;
     }
     setState(() => _sending = true);
     try {
       await _api.sendRequest(token: widget.session.token, identifier: target);
       if (!mounted) return;
-      _showSnack('Demande envoyée');
+      _showSnack(S.of(context).requestSent);
       _searchController.clear();
       setState(() => _suggestions = []);
       await _fetchRequests();
@@ -184,7 +185,7 @@ class _FriendsPageState extends State<FriendsPage> {
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Impossible d’envoyer la demande', isError: true);
+      _showSnack(S.of(context).unableToSendRequest, isError: true);
     } finally {
       if (mounted) {
         setState(() => _sending = false);
@@ -206,14 +207,15 @@ class _FriendsPageState extends State<FriendsPage> {
       if (!mounted) return;
       await _fetchRequests();
       await _fetchFriends();
+      if (!mounted) return;
       _showSnack(
-          status == 'Accepted' ? 'Demande acceptée' : 'Demande d’ami refusée');
+          status == 'Accepted' ? S.of(context).requestAccepted : S.of(context).friendRequestDeclined);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Action impossible', isError: true);
+      _showSnack(S.of(context).actionFailed, isError: true);
     } finally {
       if (mounted) {
         setState(() => _sending = false);
@@ -225,19 +227,19 @@ class _FriendsPageState extends State<FriendsPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Retirer cet ami ?'),
-        content: Text('Vous ne serez plus connecté à @${friend.handle}.'),
+        title: Text(S.of(context).removeFriendTitle),
+        content: Text(S.of(context).removeFriendWarning(friend.handle)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Annuler'),
+            child: Text(S.of(context).cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red.shade600,
             ),
-            child: const Text('Retirer'),
+            child: Text(S.of(context).remove),
           ),
         ],
       ),
@@ -251,13 +253,14 @@ class _FriendsPageState extends State<FriendsPage> {
       );
       if (!mounted) return;
       await _fetchFriends();
-      _showSnack('Ami retiré');
+      if (!mounted) return;
+      _showSnack(S.of(context).friendRemoved);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Suppression impossible', isError: true);
+      _showSnack(S.of(context).removeImpossible, isError: true);
     }
   }
 
@@ -294,7 +297,7 @@ class _FriendsPageState extends State<FriendsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Mes amis',
+                      S.of(context).myFriends,
                       style: Theme.of(context)
                           .textTheme
                           .headlineSmall
@@ -302,7 +305,7 @@ class _FriendsPageState extends State<FriendsPage> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Ajoutez des contacts et gérez vos demandes.',
+                      S.of(context).addContactsManageRequests,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 16),
@@ -372,17 +375,17 @@ class _SearchCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _SectionHeader(
+            _SectionHeader(
               icon: Icons.person_add_alt_1_outlined,
               iconColor: FiestaaaPalette.primary,
-              title: 'Ajouter un ami',
+              title: S.of(context).addFriend,
             ),
             const SizedBox(height: 12),
             TextField(
               controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'Email ou identifiant',
-                prefixIcon: Icon(Icons.alternate_email),
+              decoration: InputDecoration(
+                labelText: S.of(context).emailOrIdentifierField,
+                prefixIcon: const Icon(Icons.alternate_email),
               ),
             ),
             if (searching)
@@ -431,7 +434,7 @@ class _SearchCard extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.send),
-                label: Text(sending ? 'Envoi...' : 'Envoyer la demande'),
+                label: Text(sending ? S.of(context).sending : S.of(context).sendRequest),
               ),
             ),
           ],
@@ -462,7 +465,7 @@ class _RequestsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = DateFormat.yMMMMd('fr_FR');
+    final formatter = DateFormat.yMMMMd(S.of(context).localeName);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -472,7 +475,7 @@ class _RequestsCard extends StatelessWidget {
             _SectionHeader(
               icon: Icons.mail_outline,
               iconColor: Colors.deepPurple,
-              title: 'Demandes d’amis',
+              title: S.of(context).friendRequests,
               trailing: loading
                   ? const SizedBox(
                       width: 18,
@@ -498,13 +501,13 @@ class _RequestsCard extends StatelessWidget {
                 ],
               )
             else if (incoming.isEmpty && outgoing.isEmpty)
-              const Text(
-                'Aucune demande en cours.',
-                style: TextStyle(color: Colors.grey),
+              Text(
+                S.of(context).noRequestInProgress,
+                style: const TextStyle(color: Colors.grey),
               )
             else ...[
               _RequestSection(
-                title: 'Reçues',
+                title: S.of(context).received,
                 requests: incoming,
                 userEmail: userEmail,
                 formatter: formatter,
@@ -516,7 +519,7 @@ class _RequestsCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _RequestSection(
-                title: 'Envoyées',
+                title: S.of(context).sent,
                 requests: outgoing,
                 userEmail: userEmail,
                 formatter: formatter,
@@ -580,7 +583,7 @@ class _RequestSection extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               if (requests.isEmpty)
-                const Text('Aucune', style: TextStyle(color: Colors.grey)),
+                Text(S.of(context).noRequest, style: const TextStyle(color: Colors.grey)),
             ],
           ),
           if (requests.isNotEmpty) const SizedBox(height: 10),
@@ -595,8 +598,9 @@ class _RequestSection extends StatelessWidget {
           final label = counterpartHandle.isNotEmpty
               ? '@$counterpartHandle'
               : counterpartEmail;
-          final subtitle =
-              '${req.isIncoming(userEmail) ? 'Reçue' : 'Envoyée'} le ${formatter.format(req.createdAt.toLocal())}';
+          final subtitle = req.isIncoming(userEmail)
+              ? S.of(context).receivedOn(formatter.format(req.createdAt.toLocal()))
+              : S.of(context).sentOnDate(formatter.format(req.createdAt.toLocal()));
           final isPending = req.status == 'Pending';
 
           final actions = isPending && onAccept != null && onDecline != null
@@ -606,11 +610,11 @@ class _RequestSection extends StatelessWidget {
                   children: [
                     TextButton(
                       onPressed: () => onDecline!(req),
-                      child: const Text('Refuser'),
+                      child: Text(S.of(context).decline),
                     ),
                     ElevatedButton(
                       onPressed: () => onAccept!(req),
-                      child: const Text('Accepter'),
+                      child: Text(S.of(context).accept),
                     ),
                   ],
                 )
@@ -711,11 +715,11 @@ class _FriendsList extends StatelessWidget {
             _SectionHeader(
               icon: Icons.group,
               iconColor: Colors.blueGrey,
-              title: 'Mes amis',
+              title: S.of(context).myFriends,
               trailing: IconButton(
                 onPressed: loading ? null : () => onRefresh(),
                 icon: const Icon(Icons.refresh),
-                tooltip: 'Actualiser',
+                tooltip: S.of(context).refresh,
               ),
             ),
             const SizedBox(height: 12),
@@ -735,14 +739,14 @@ class _FriendsList extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: () => onRefresh(),
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Réessayer'),
+                    label: Text(S.of(context).retry),
                   ),
                 ],
               )
             else if (friends.isEmpty)
-              const Text(
-                'Ajoutez vos premiers amis pour les inviter rapidement.',
-                style: TextStyle(color: Colors.grey),
+              Text(
+                S.of(context).addFirstFriends,
+                style: const TextStyle(color: Colors.grey),
               )
             else
               ...friends.map(
@@ -760,7 +764,7 @@ class _FriendsList extends StatelessWidget {
                       ),
                       title: Text('@${friend.handle}'),
                       subtitle: Text(
-                        'Ami depuis ${DateFormat.yMMMMd('fr_FR').format(friend.since)}',
+                        S.of(context).friendSince(DateFormat.yMMMMd(S.of(context).localeName).format(friend.since)),
                       ),
                       trailing: IconButton(
                         onPressed: () => onRemove(friend),

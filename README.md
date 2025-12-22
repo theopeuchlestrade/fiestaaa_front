@@ -29,6 +29,39 @@ flutter run -d chrome --web-port=5001 --dart-define-from-file=.env
 flutter run -d emulator-5554 --dart-define-from-file=.env
 ```
 
+## Localizations (i18n / l10n)
+
+Ce projet utilise `flutter gen-l10n` avec :
+- fichiers ARB dans `lib/l10n/`
+- configuration dans `l10n.yaml`
+
+### Génération automatique (configuration actuelle)
+
+Dans `pubspec.yaml`, on a activé :
+
+```yaml
+flutter:
+  generate: true
+```
+
+Avec ça, Flutter régénère automatiquement les fichiers de localisations lors de commandes comme `flutter pub get`, `flutter run`, `flutter build`, etc.
+
+### Génération manuelle (optionnel)
+
+Si tu préfères générer uniquement à la demande :
+1. retire `flutter: generate: true` (ou mets-le à `false`) dans `pubspec.yaml`
+2. lance la génération manuellement :
+
+```bash
+flutter gen-l10n
+```
+
+### Quoi committer / quoi ignorer
+
+À committer : `lib/l10n/*.arb` + `l10n.yaml` (et éventuellement `untranslated.txt`).
+
+À ignorer : les fichiers générés `lib/l10n/app_localizations*.dart` (gérés dans `.gitignore`).
+
 ## Firebase config & service worker (Web)
 
 1. Créez un fichier `.env` à la racine avec les clés Firebase web et OAuth :

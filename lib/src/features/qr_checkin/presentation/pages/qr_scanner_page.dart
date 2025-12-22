@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/data/qr_checkin_api.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/domain/qr_checkin_models.dart';
 import 'package:flutter/material.dart';
@@ -110,7 +111,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
           _lastScanResult = QRScanResult(
             success: false,
             status: 'error',
-            message: 'Erreur: ${e.toString()}',
+            message: '${S.of(context).error}: ${e.toString()}',
           );
           _isScanning = false;
           _awaitingNextScan = true;
@@ -125,7 +126,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Scanner', style: TextStyle(color: Colors.white)),
+        title: Text(S.of(context).scanner, style: const TextStyle(color: Colors.white)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -259,7 +260,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildStatItem('Invités', '${_stats!.totalInvited}',
+          _buildStatItem(S.of(context).invited, '${_stats!.totalInvited}',
               textColor: onPrimaryColor),
           Container(
               height: 24,
@@ -267,7 +268,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
               color: onPrimaryColor.withValues(alpha: 0.3),
               margin: const EdgeInsets.symmetric(horizontal: 20)),
           _buildStatItem(
-            'Présents',
+            S.of(context).present,
             '${_stats!.totalCheckedIn}',
             textColor: onPrimaryColor,
             isHighlight: true,
@@ -277,7 +278,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
               width: 1,
               color: onPrimaryColor.withValues(alpha: 0.3),
               margin: const EdgeInsets.symmetric(horizontal: 20)),
-          _buildStatItem('Restants',
+          _buildStatItem(S.of(context).remaining,
               '${_stats!.totalInvited - _stats!.totalCheckedIn}',
               textColor: onPrimaryColor),
         ],
@@ -344,7 +345,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            isSuccess ? 'Accès Autorisé' : 'Accès Refusé',
+            isSuccess ? S.of(context).accessGranted : S.of(context).accessDenied,
             style: TextStyle(
               color: color,
               fontSize: 24,
@@ -381,7 +382,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
               ),
             const SizedBox(height: 8),
             Text(
-              _lastScanResult!.userHandle ?? 'Utilisateur inconnu',
+              _lastScanResult!.userHandle ?? S.of(context).unknownUser,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
@@ -415,7 +416,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Scanner le suivant'),
+              child: Text(S.of(context).scanNext),
             ),
           ),
         ],
