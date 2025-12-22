@@ -1220,108 +1220,139 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
+  List<Widget> _buildHeaderActions() {
+    return [
+      if (_isOwner)
+        IconButton(
+          onPressed: _openEditEvent,
+          icon: const Icon(Icons.edit),
+          tooltip: S.of(context).editFiestaaa,
+        ),
+      IconButton(
+        onPressed: _openInvitations,
+        icon: const Icon(Icons.people_alt),
+        tooltip:
+            _isOwner ? S.of(context).manageInvitations : S.of(context).viewParticipants,
+      ),
+      if (_isOwner)
+        IconButton(
+          onPressed: _sharingLink ? null : _shareEvent,
+          icon: _sharingLink
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.ios_share),
+          tooltip: S.of(context).shareFiestaaa,
+        ),
+      if (_isOwner)
+        IconButton(
+          onPressed: _deletingEvent ? null : _confirmDeleteEvent,
+          icon: _deletingEvent
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.delete_outline),
+          tooltip: S.of(context).deleteFiestaaa,
+        ),
+      if (_isOwner)
+        IconButton(
+          onPressed: _openQRScanner,
+          icon: const Icon(Icons.qr_code_scanner),
+          tooltip: S.of(context).scanQRCodes,
+        )
+      else if (_hasAcceptedInvitation || _isWaitingInvitation)
+        IconButton(
+          onPressed: _openMyQRCode,
+          icon: const Icon(Icons.qr_code),
+          tooltip: S.of(context).myQrCode,
+        ),
+    ];
+  }
+
+  Widget _buildHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const BackButton(),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: _buildHeaderActions(),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        FiestaaaPageHeader(
+          title: _currentEvent.name,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_currentEvent.name),
-        actions: [
-          if (_isOwner)
-            IconButton(
-              onPressed: _openEditEvent,
-              icon: const Icon(Icons.edit),
-              tooltip: S.of(context).editFiestaaa,
-            ),
-          IconButton(
-            onPressed: _openInvitations,
-            icon: const Icon(Icons.people_alt),
-              tooltip:
-                  _isOwner ? S.of(context).manageInvitations : S.of(context).viewParticipants,
-          ),
-          if (_isOwner)
-            IconButton(
-              onPressed: _sharingLink ? null : _shareEvent,
-              icon: _sharingLink
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.ios_share),
-              tooltip: S.of(context).shareFiestaaa,
-            ),
-          if (_isOwner)
-            IconButton(
-              onPressed: _deletingEvent ? null : _confirmDeleteEvent,
-              icon: _deletingEvent
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.delete_outline),
-              tooltip: S.of(context).deleteFiestaaa,
-            ),
-          if (_isOwner)
-            IconButton(
-              onPressed: _openQRScanner,
-              icon: const Icon(Icons.qr_code_scanner),
-              tooltip: S.of(context).scanQRCodes,
-            )
-          else if (_hasAcceptedInvitation || _isWaitingInvitation)
-            IconButton(
-              onPressed: _openMyQRCode,
-              icon: const Icon(Icons.qr_code),
-              tooltip: S.of(context).myQrCode,
-            ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await _loadPolls(showLoading: false);
-          await _loadItems(showLoading: false);
-        },
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            if (!_isOwner)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _InvitationStatusCard(
-                  invitation: _myInvitation,
-                  loading: _loadingMyInvitation,
-                  onRespond: _respondInvitation,
-                  deadline: _currentEvent.invitationDeadline,
+      body: FiestaaaPageLayout(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await _loadPolls(showLoading: false);
+            await _loadItems(showLoading: false);
+          },
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              _buildHeader(),
+              if (!_isOwner)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _InvitationStatusCard(
+                    invitation: _myInvitation,
+                    loading: _loadingMyInvitation,
+                    onRespond: _respondInvitation,
+                    deadline: _currentEvent.invitationDeadline,
+                  ),
                 ),
-              ),
-            _DetailTile(
-              icon: Icons.event,
-              label: S.of(context).dateAndTime,
-              value:
-                  '${_currentEvent.formattedDate} à ${_currentEvent.formattedTime}',
-            ),
-            if (_currentEvent.invitationDeadline != null &&
-                !_isOwner &&
-                _isWaitingInvitation)
               _DetailTile(
-                icon: Icons.hourglass_bottom,
-                label: S.of(context).responseBefore,
-                value: _currentEvent.formattedInvitationDeadline ??
-                    DateFormat.yMMMMd('fr_FR')
-                        .format(_currentEvent.invitationDeadline!),
+                icon: Icons.event,
+                label: S.of(context).dateAndTime,
+                value:
+                    '${_currentEvent.formattedDate} à ${_currentEvent.formattedTime}',
               ),
-            _buildLocationSection(),
-            _DetailTile(
-              icon: Icons.description,
-              label: S.of(context).description,
-              value: _currentEvent.description,
-            ),
-            _buildPaymentSection(),
-            const SizedBox(height: 16),
-            _buildPollsBlock(),
-            const SizedBox(height: 24),
-            _buildItemsBlock(),
-          ],
+              if (_currentEvent.invitationDeadline != null &&
+                  !_isOwner &&
+                  _isWaitingInvitation)
+                _DetailTile(
+                  icon: Icons.hourglass_bottom,
+                  label: S.of(context).responseBefore,
+                  value: _currentEvent.formattedInvitationDeadline ??
+                      DateFormat.yMMMMd('fr_FR')
+                          .format(_currentEvent.invitationDeadline!),
+                ),
+              _buildLocationSection(),
+              _DetailTile(
+                icon: Icons.description,
+                label: S.of(context).description,
+                value: _currentEvent.description,
+              ),
+              _buildPaymentSection(),
+              const SizedBox(height: 16),
+              _buildPollsBlock(),
+              const SizedBox(height: 24),
+              _buildItemsBlock(),
+            ],
+          ),
         ),
       ),
     );

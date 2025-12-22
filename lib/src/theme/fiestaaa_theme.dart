@@ -151,6 +151,63 @@ ThemeData buildFiestaaaTheme() {
   );
 }
 
+const EdgeInsets fiestaaaPagePadding =
+    EdgeInsets.symmetric(horizontal: 16, vertical: 20);
+
+class FiestaaaPageLayout extends StatelessWidget {
+  const FiestaaaPageLayout({
+    super.key,
+    required this.child,
+    this.padding = fiestaaaPagePadding,
+  });
+
+  final Widget child;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return FiestaaaBackground(
+      padding: padding,
+      child: SafeArea(child: child),
+    );
+  }
+}
+
+class FiestaaaPageHeader extends StatelessWidget {
+  const FiestaaaPageHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.subtitleSpacing = 6,
+    this.bottomSpacing = 16,
+  });
+
+  final String title;
+  final String? subtitle;
+  final double subtitleSpacing;
+  final double bottomSpacing;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style:
+              textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        if (subtitle != null) ...[
+          SizedBox(height: subtitleSpacing),
+          Text(subtitle!, style: textTheme.bodyMedium),
+        ],
+        SizedBox(height: bottomSpacing),
+      ],
+    );
+  }
+}
+
 class FiestaaaBackground extends StatelessWidget {
   const FiestaaaBackground({
     super.key,

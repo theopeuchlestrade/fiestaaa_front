@@ -280,72 +280,55 @@ class _FriendsPageState extends State<FriendsPage> {
     final outgoing =
         _requests.where((r) => !r.isIncoming(widget.session.email)).toList();
 
-    return FiestaaaBackground(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      child: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _refreshAll,
-          displacement: 28,
-          edgeOffset: 12,
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      S.of(context).myFriends,
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      S.of(context).addContactsManageRequests,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: _SearchCard(
-                  controller: _searchController,
-                  searching: _searching,
-                  suggestions: _suggestions,
-                  sending: _sending,
-                  onSend: _sendRequest,
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              SliverToBoxAdapter(
-                child: _RequestsCard(
-                  incoming: incoming,
-                  outgoing: outgoing,
-                  loading: _loadingRequests,
-                  error: _requestError,
-                  userEmail: widget.session.email,
-                  onAccept: (req) => _respondRequest(req, 'Accepted'),
-                  onDecline: (req) => _respondRequest(req, 'Declined'),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              SliverToBoxAdapter(
-                child: _FriendsList(
-                  friends: _friends,
-                  loading: _loading,
-                  error: _error,
-                  onRefresh: _fetchFriends,
-                  onRemove: _removeFriend,
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
-            ],
+    return FiestaaaPageLayout(
+      child: RefreshIndicator(
+        onRefresh: _refreshAll,
+        displacement: 28,
+        edgeOffset: 12,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
           ),
+          slivers: [
+            SliverToBoxAdapter(
+              child: FiestaaaPageHeader(
+                title: S.of(context).myFriends,
+                subtitle: S.of(context).addContactsManageRequests,
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: _SearchCard(
+                controller: _searchController,
+                searching: _searching,
+                suggestions: _suggestions,
+                sending: _sending,
+                onSend: _sendRequest,
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            SliverToBoxAdapter(
+              child: _RequestsCard(
+                incoming: incoming,
+                outgoing: outgoing,
+                loading: _loadingRequests,
+                error: _requestError,
+                userEmail: widget.session.email,
+                onAccept: (req) => _respondRequest(req, 'Accepted'),
+                onDecline: (req) => _respondRequest(req, 'Declined'),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            SliverToBoxAdapter(
+              child: _FriendsList(
+                friends: _friends,
+                loading: _loading,
+                error: _error,
+                onRefresh: _fetchFriends,
+                onRemove: _removeFriend,
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+          ],
         ),
       ),
     );
