@@ -30,6 +30,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _checkingHandle = false;
   bool? _handleAvailable;
   bool _updatingHandle = false;
+  bool _deletingAccount = false;
   String? _handleStatus;
 
   @override
@@ -131,6 +132,53 @@ class _ProfilePageState extends State<ProfilePage> {
       if (mounted) {
         setState(() {
           _updatingHandle = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _confirmDeleteAccount() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer mon compte'),
+        content: const Text(
+            'Cette action est irréversible. Toutes vos données seront définitivement supprimées.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() {
+      _deletingAccount = true;
+    });
+
+    try {
+      await _api.deleteAccount(token: widget.session.token);
+      if (!mounted) return;
+      _showSnack('Compte supprimé');
+      widget.onLogout();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Suppression impossible', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _deletingAccount = false;
         });
       }
     }
@@ -325,6 +373,24 @@ class _ProfilePageState extends State<ProfilePage> {
                                     label: Text(_updatingHandle
                                         ? 'Envoi...'
                                         : 'Changer la photo'),
+                                  ),
+                                  OutlinedButton.icon(
+                                    onPressed: _deletingAccount
+                                        ? null
+                                        : _confirmDeleteAccount,
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                      side: const BorderSide(color: Colors.red),
+                                    ),
+                                    icon: _deletingAccount
+                                        ? const SizedBox(
+                                            width: 14,
+                                            height: 14,
+                                            child: CircularProgressIndicator(
+                                                strokeWidth: 2),
+                                          )
+                                        : const Icon(Icons.delete_forever),
+                                    label: const Text('Supprimer mon compte'),
                                   ),
                                   OutlinedButton.icon(
                                     onPressed: widget.onLogout,
