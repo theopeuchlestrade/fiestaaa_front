@@ -94,6 +94,21 @@ class ProfileApi {
     throw _apiError(response);
   }
 
+  Future<void> deleteAccount({required String token}) async {
+    final response = await _client.delete(
+      Uri.parse('$apiBaseUrl/me'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return;
+    }
+
+    throw _apiError(response);
+  }
+
   ApiException _apiError(http.Response response) {
     try {
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
