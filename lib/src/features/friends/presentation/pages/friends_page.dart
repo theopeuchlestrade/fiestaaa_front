@@ -449,6 +449,18 @@ class _RequestsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formatter = DateFormat.yMMMMd(S.of(context).localeName);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final mutedText = theme.colorScheme.onSurface.withValues(alpha: 0.6);
+    final incomingBackground = isDark
+        ? Colors.green.withValues(alpha: 0.12)
+        : Colors.green.shade50;
+    final incomingIcon =
+        isDark ? Colors.green.shade200 : Colors.green.shade800;
+    final outgoingBackground =
+        isDark ? Colors.blue.withValues(alpha: 0.12) : Colors.blue.shade50;
+    final outgoingIcon =
+        isDark ? Colors.blue.shade200 : Colors.blue.shade700;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -486,7 +498,7 @@ class _RequestsCard extends StatelessWidget {
             else if (incoming.isEmpty && outgoing.isEmpty)
               Text(
                 S.of(context).noRequestInProgress,
-                style: const TextStyle(color: Colors.grey),
+                style: TextStyle(color: mutedText),
               )
             else ...[
               _RequestSection(
@@ -494,9 +506,9 @@ class _RequestsCard extends StatelessWidget {
                 requests: incoming,
                 userEmail: userEmail,
                 formatter: formatter,
-                backgroundColor: Colors.green.shade50,
+                backgroundColor: incomingBackground,
                 icon: Icons.move_to_inbox_outlined,
-                iconColor: Colors.green.shade800,
+                iconColor: incomingIcon,
                 onAccept: onAccept,
                 onDecline: onDecline,
               ),
@@ -506,9 +518,9 @@ class _RequestsCard extends StatelessWidget {
                 requests: outgoing,
                 userEmail: userEmail,
                 formatter: formatter,
-                backgroundColor: Colors.blue.shade50,
+                backgroundColor: outgoingBackground,
                 icon: Icons.outbox_outlined,
-                iconColor: Colors.blue.shade700,
+                iconColor: outgoingIcon,
               ),
             ],
           ],
@@ -543,6 +555,9 @@ class _RequestSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final mutedText = theme.colorScheme.onSurface.withValues(alpha: 0.6);
     return Container(
       decoration: BoxDecoration(
         color: backgroundColor,
@@ -566,7 +581,7 @@ class _RequestSection extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               if (requests.isEmpty)
-                Text(S.of(context).noRequest, style: const TextStyle(color: Colors.grey)),
+                Text(S.of(context).noRequest, style: TextStyle(color: mutedText)),
             ],
           ),
           if (requests.isNotEmpty) const SizedBox(height: 10),
@@ -606,18 +621,31 @@ class _RequestSection extends StatelessWidget {
                     req.status,
                     style: TextStyle(
                       color: req.status == 'Accepted'
-                          ? Colors.green.shade800
+                          ? (isDark
+                              ? Colors.green.shade200
+                              : Colors.green.shade800)
                           : req.status == 'Declined'
-                              ? Colors.grey.shade800
-                              : Colors.orange.shade800,
+                              ? (isDark
+                                  ? theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.75)
+                                  : Colors.grey.shade800)
+                              : (isDark
+                                  ? Colors.orange.shade200
+                                  : Colors.orange.shade800),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   backgroundColor: req.status == 'Accepted'
-                      ? Colors.green.shade100
+                      ? (isDark
+                          ? Colors.green.withValues(alpha: 0.2)
+                          : Colors.green.shade100)
                       : req.status == 'Declined'
-                          ? Colors.grey.shade200
-                          : Colors.orange.shade100,
+                          ? (isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : Colors.grey.shade200)
+                          : (isDark
+                              ? Colors.orange.withValues(alpha: 0.2)
+                              : Colors.orange.shade100),
                 );
 
           return Column(
@@ -729,7 +757,12 @@ class _FriendsList extends StatelessWidget {
             else if (friends.isEmpty)
               Text(
                 S.of(context).addFirstFriends,
-                style: const TextStyle(color: Colors.grey),
+                style: TextStyle(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.6),
+                ),
               )
             else
               ...friends.map(
@@ -814,17 +847,23 @@ class _BubbleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final surface = theme.colorScheme.surface;
+    final border = theme.dividerColor;
+    final shadow = theme.brightness == Brightness.dark
+        ? Colors.black.withValues(alpha: 0.2)
+        : Colors.black.withValues(alpha: 0.03);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: Colors.grey.shade200,
+          color: border,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: shadow,
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -850,10 +889,17 @@ class _AvatarCircle extends StatelessWidget {
         .take(1)
         .toString()
         .toUpperCase();
+    final theme = Theme.of(context);
+    final bg = theme.brightness == Brightness.dark
+        ? theme.colorScheme.surface.withValues(alpha: 0.9)
+        : Colors.grey.shade200;
+    final fg = theme.brightness == Brightness.dark
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.8)
+        : Colors.grey.shade800;
     Widget placeholder() => CircleAvatar(
           radius: size / 2,
-          backgroundColor: Colors.grey.shade200,
-          foregroundColor: Colors.grey.shade800,
+          backgroundColor: bg,
+          foregroundColor: fg,
           child: Text(
             letter.isNotEmpty ? letter : '?',
             style: const TextStyle(fontWeight: FontWeight.w800),

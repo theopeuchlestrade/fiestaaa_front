@@ -1,5 +1,6 @@
 import 'package:file_selector/file_selector.dart';
 import 'package:fiestaaa_front/src/core/locale_service.dart';
+import 'package:fiestaaa_front/src/core/theme_service.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/profile/data/profile_api.dart';
@@ -16,12 +17,14 @@ class ProfilePage extends StatefulWidget {
     required this.onLogout,
     this.onSessionUpdated,
     this.localeService,
+    this.themeService,
   });
 
   final SessionData session;
   final VoidCallback onLogout;
   final Future<void> Function(SessionData session)? onSessionUpdated;
   final LocaleService? localeService;
+  final ThemeService? themeService;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -224,6 +227,49 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (selected != null && widget.localeService != null) {
       await widget.localeService!.setLocale(Locale(selected));
+    }
+  }
+
+  String _themeLabel(ThemeMode mode, S l10n) {
+    switch (mode) {
+      case ThemeMode.system:
+        return l10n.themeSystem;
+      case ThemeMode.light:
+        return l10n.themeLight;
+      case ThemeMode.dark:
+        return l10n.themeDark;
+    }
+  }
+
+  Future<void> _showThemeDialog() async {
+    final themeService = widget.themeService;
+    if (themeService == null) return;
+    final l10n = S.of(context);
+    final currentTheme = themeService.mode;
+
+    final selected = await showDialog<ThemeMode>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(l10n.changeTheme),
+        children: [
+          for (final mode in [
+            ThemeMode.system,
+            ThemeMode.light,
+            ThemeMode.dark,
+          ])
+            ListTile(
+              leading: currentTheme == mode
+                  ? const Icon(Icons.check, color: Colors.green)
+                  : const SizedBox(width: 24),
+              title: Text(_themeLabel(mode, l10n)),
+              onTap: () => Navigator.of(ctx).pop(mode),
+            ),
+        ],
+      ),
+    );
+
+    if (selected != null) {
+      await themeService.setMode(selected);
     }
   }
 
@@ -516,6 +562,47 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      if (widget.themeService != null)
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.dark_mode,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      l10n.changeTheme,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(fontWeight: FontWeight.w700),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                OutlinedButton.icon(
+                                  onPressed: _showThemeDialog,
+                                  icon: const Icon(Icons.brightness_6_outlined),
+                                  label: Text(
+                                    _themeLabel(
+                                      widget.themeService?.mode ??
+                                          ThemeMode.system,
+                                      l10n,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       const SizedBox(height: 12),
                       if (widget.localeService != null)
                         Card(

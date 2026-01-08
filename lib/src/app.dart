@@ -6,6 +6,7 @@ import 'package:fiestaaa_front/src/features/auth/presentation/pages/auth_page.da
 import 'package:fiestaaa_front/src/features/home/presentation/pages/home_page.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/src/core/push_notification_service.dart';
+import 'package:fiestaaa_front/src/core/theme_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
@@ -20,6 +21,7 @@ class FiestaaaApp extends StatefulWidget {
 class _FiestaaaAppState extends State<FiestaaaApp> {
   final _authApi = AuthApi();
   final _localeService = LocaleService();
+  late final ThemeService _themeService = ThemeService();
   SessionData? _session;
   bool _loadingSession = true;
   String? _pendingShareToken;
@@ -29,15 +31,21 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     super.initState();
     _pendingShareToken = Uri.base.queryParameters['shareToken'];
     _localeService.addListener(_onLocaleChanged);
+    _themeService.addListener(_onThemeChanged);
     _init();
   }
 
   Future<void> _init() async {
     await _localeService.loadSavedLocale();
+    await _themeService.loadSavedTheme();
     await _restoreSession();
   }
 
   void _onLocaleChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _onThemeChanged() {
     if (mounted) setState(() {});
   }
 
@@ -96,6 +104,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   @override
   void dispose() {
     _localeService.removeListener(_onLocaleChanged);
+    _themeService.removeListener(_onThemeChanged);
     _authApi.dispose();
     PushNotificationService.instance.dispose();
     super.dispose();
@@ -107,6 +116,8 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       title: 'Fiestaaa',
       debugShowCheckedModeBanner: false,
       theme: buildFiestaaaTheme(),
+      darkTheme: buildFiestaaaDarkTheme(),
+      themeMode: _themeService.mode,
       localizationsDelegates: const [
         S.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -130,6 +141,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
                     });
                   },
                   localeService: _localeService,
+                  themeService: _themeService,
                 ),
     );
   }
