@@ -251,7 +251,8 @@ class _EventsGrid extends StatelessWidget {
                                   .textTheme
                                   .titleMedium
                                   ?.copyWith(
-                                    color: FiestaaaPalette.text,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                     fontWeight: FontWeight.w700,
                                   ),
                             ),
@@ -318,7 +319,9 @@ class _EventBubble extends StatelessWidget {
       borderRadius: BorderRadius.circular(28),
       child: Container(
         decoration: BoxDecoration(
-          gradient: FiestaaaPalette.cardGradient,
+          gradient: FiestaaaPalette.cardGradientFor(
+            Theme.of(context).brightness,
+          ),
           borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(

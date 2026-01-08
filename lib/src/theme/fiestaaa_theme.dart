@@ -5,56 +5,125 @@ class FiestaaaPalette {
   static const Color primary = Color(0xFF6B4DF5);
   static const Color secondary = Color(0xFF4FD3F3);
   static const Color accent = Color(0xFF8C7BFF);
-  static const Color text = Color(0xFF0F172A);
-  static const Color surface = Color(0xFFF6F7FF);
+  static const Color lightText = Color(0xFF0F172A);
+  static const Color darkText = Color(0xFFE2E8F0);
+  static const Color lightSurface = Color(0xFFF6F7FF);
+  static const Color darkSurface = Color(0xFF0B0F1A);
+  static const Color darkSurfaceRaised = Color(0xFF141B2D);
 
-  static const LinearGradient backgroundGradient = LinearGradient(
+  static const LinearGradient lightBackgroundGradient = LinearGradient(
     colors: [Color(0xFFF6F7FF), Color(0xFFE8ECFF)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  static const LinearGradient cardGradient = LinearGradient(
+  static const LinearGradient darkBackgroundGradient = LinearGradient(
+    colors: [Color(0xFF0B0F1A), Color(0xFF111827)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient lightCardGradient = LinearGradient(
     colors: [Color(0xFF7D5BFF), Color(0xFF4F7CFF)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  static const LinearGradient buttonGradient = LinearGradient(
+  static const LinearGradient darkCardGradient = LinearGradient(
+    colors: [Color(0xFF2C2A6F), Color(0xFF21437E)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient lightButtonGradient = LinearGradient(
     colors: [Color(0xFF5D5FEF), Color(0xFF4FD3F3)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  static const LinearGradient darkButtonGradient = LinearGradient(
+    colors: [Color(0xFF5D5FEF), Color(0xFF2FA7C9)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static Color textFor(Brightness brightness) =>
+      brightness == Brightness.dark ? darkText : lightText;
+
+  static Color surfaceFor(Brightness brightness) =>
+      brightness == Brightness.dark ? darkSurface : lightSurface;
+
+  static Color surfaceRaisedFor(Brightness brightness) =>
+      brightness == Brightness.dark ? darkSurfaceRaised : Colors.white;
+
+  static LinearGradient backgroundGradientFor(Brightness brightness) =>
+      brightness == Brightness.dark
+          ? darkBackgroundGradient
+          : lightBackgroundGradient;
+
+  static LinearGradient cardGradientFor(Brightness brightness) =>
+      brightness == Brightness.dark ? darkCardGradient : lightCardGradient;
+
+  static LinearGradient buttonGradientFor(Brightness brightness) =>
+      brightness == Brightness.dark ? darkButtonGradient : lightButtonGradient;
 }
 
 ThemeData buildFiestaaaTheme() {
+  return _buildFiestaaaTheme(Brightness.light);
+}
+
+ThemeData buildFiestaaaDarkTheme() {
+  return _buildFiestaaaTheme(Brightness.dark);
+}
+
+ThemeData _buildFiestaaaTheme(Brightness brightness) {
+  final isDark = brightness == Brightness.dark;
+  final textColor = FiestaaaPalette.textFor(brightness);
+  final surfaceColor = FiestaaaPalette.surfaceFor(brightness);
+  final surfaceRaised = FiestaaaPalette.surfaceRaisedFor(brightness);
+  final outlineColor = isDark ? Colors.white24 : Colors.grey.shade300;
+  final dividerColor = isDark ? Colors.white12 : Colors.grey.shade200;
+  final mutedText = textColor.withValues(alpha: isDark ? 0.7 : 0.76);
+  final bodyText = textColor.withValues(alpha: isDark ? 0.78 : 0.82);
+  final inputLabelColor = isDark ? mutedText : Colors.grey.shade700;
+
   final colorScheme = ColorScheme.fromSeed(
     seedColor: FiestaaaPalette.primary,
-    brightness: Brightness.light,
+    brightness: brightness,
+  ).copyWith(
+    primary: FiestaaaPalette.primary,
+    secondary: FiestaaaPalette.secondary,
+    surface: surfaceRaised,
+    onSurface: textColor,
+    onPrimary: Colors.white,
+    onSecondary: isDark ? FiestaaaPalette.darkSurface : FiestaaaPalette.lightText,
   );
 
-  final baseTextTheme = GoogleFonts.manropeTextTheme();
+  final baseTextTheme = GoogleFonts.manropeTextTheme().apply(
+    bodyColor: textColor,
+    displayColor: textColor,
+  );
   final textTheme = baseTextTheme.copyWith(
     headlineLarge: baseTextTheme.headlineLarge?.copyWith(
       fontWeight: FontWeight.w800,
-      color: FiestaaaPalette.text,
+      color: textColor,
       letterSpacing: -0.4,
     ),
     headlineMedium: baseTextTheme.headlineMedium?.copyWith(
       fontWeight: FontWeight.w800,
-      color: FiestaaaPalette.text,
+      color: textColor,
       letterSpacing: -0.2,
     ),
     titleLarge: baseTextTheme.titleLarge?.copyWith(
       fontWeight: FontWeight.w700,
-      color: FiestaaaPalette.text,
+      color: textColor,
     ),
     bodyLarge: baseTextTheme.bodyLarge?.copyWith(
-      color: FiestaaaPalette.text.withValues(alpha: 0.82),
+      color: bodyText,
       height: 1.4,
     ),
     bodyMedium: baseTextTheme.bodyMedium?.copyWith(
-      color: FiestaaaPalette.text.withValues(alpha: 0.76),
+      color: mutedText,
       height: 1.4,
     ),
   );
@@ -63,22 +132,22 @@ ThemeData buildFiestaaaTheme() {
     colorScheme: colorScheme.copyWith(
       primary: FiestaaaPalette.primary,
       secondary: FiestaaaPalette.secondary,
-      surface: Colors.white,
+      surface: surfaceRaised,
     ),
-    scaffoldBackgroundColor: FiestaaaPalette.surface,
+    scaffoldBackgroundColor: surfaceColor,
     useMaterial3: true,
     textTheme: textTheme,
     appBarTheme: AppBarTheme(
-      backgroundColor: Colors.white.withValues(alpha: 0.88),
-      surfaceTintColor: Colors.white,
-      foregroundColor: FiestaaaPalette.text,
+      backgroundColor: surfaceRaised.withValues(alpha: isDark ? 0.92 : 0.88),
+      surfaceTintColor: surfaceRaised,
+      foregroundColor: textColor,
       elevation: 0,
       centerTitle: false,
       titleTextStyle: textTheme.titleLarge,
     ),
     cardTheme: CardThemeData(
-      color: Colors.white,
-      surfaceTintColor: Colors.white,
+      color: surfaceRaised,
+      surfaceTintColor: surfaceRaised,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
@@ -92,11 +161,11 @@ ThemeData buildFiestaaaTheme() {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.white,
+      fillColor: surfaceRaised,
       contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderSide: BorderSide(color: outlineColor),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -105,9 +174,9 @@ ThemeData buildFiestaaaTheme() {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderSide: BorderSide(color: outlineColor),
       ),
-      labelStyle: TextStyle(color: Colors.grey.shade700),
+      labelStyle: TextStyle(color: inputLabelColor),
       prefixIconColor: FiestaaaPalette.primary,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -133,21 +202,21 @@ ThemeData buildFiestaaaTheme() {
       ),
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
-      backgroundColor: Colors.white.withValues(alpha: 0.94),
+      backgroundColor: surfaceRaised.withValues(alpha: isDark ? 0.92 : 0.94),
       selectedItemColor: FiestaaaPalette.primary,
-      unselectedItemColor: Colors.grey.shade500,
+      unselectedItemColor: textColor.withValues(alpha: 0.58),
       elevation: 12,
       type: BottomNavigationBarType.fixed,
       showUnselectedLabels: true,
     ),
     chipTheme: ChipThemeData(
-      backgroundColor: Colors.white,
-      labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+      backgroundColor: surfaceRaised,
+      labelStyle: TextStyle(fontWeight: FontWeight.w600, color: textColor),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
       ),
     ),
-    dividerColor: Colors.grey.shade200,
+    dividerColor: dividerColor,
   );
 }
 
@@ -220,11 +289,13 @@ class FiestaaaBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
     final paddedChild =
         padding != null ? Padding(padding: padding!, child: child) : child;
     return Container(
-      decoration:
-          const BoxDecoration(gradient: FiestaaaPalette.backgroundGradient),
+      decoration: BoxDecoration(
+        gradient: FiestaaaPalette.backgroundGradientFor(brightness),
+      ),
       child: Stack(
         children: [
           Positioned(
@@ -232,7 +303,8 @@ class FiestaaaBackground extends StatelessWidget {
             left: -60,
             child: _AccentBlob(
               size: 220,
-              color: FiestaaaPalette.primary.withValues(alpha: 0.16),
+              color: FiestaaaPalette.primary
+                  .withValues(alpha: brightness == Brightness.dark ? 0.22 : 0.16),
             ),
           ),
           Positioned(
@@ -240,7 +312,8 @@ class FiestaaaBackground extends StatelessWidget {
             right: -40,
             child: _AccentBlob(
               size: 200,
-              color: FiestaaaPalette.secondary.withValues(alpha: 0.22),
+              color: FiestaaaPalette.secondary
+                  .withValues(alpha: brightness == Brightness.dark ? 0.26 : 0.22),
             ),
           ),
           paddedChild,

@@ -16,6 +16,14 @@
     "description": "Change language button"
   },
 
+  "changeTheme": "Thème",
+  "@changeTheme": {
+    "description": "Change theme button"
+  },
+  "themeSystem": "Système",
+  "themeLight": "Clair",
+  "themeDark": "Sombre",
+
   "french": "Français",
   "english": "English",
 
@@ -359,6 +367,7 @@
   "multipleAnswersAllowed": "Plusieurs réponses autorisées",
   "createThePoll": "Créer le sondage",
   "questionAndOptionsRequired": "Question et au moins deux options requises.",
+  "pollOptionsMustBeDistinct": "Les options doivent être distinctes.",
   "durationMustBeOver24h": "Pour plus de 24h, saisissez un nombre d'heures supérieur à 24.",
   "deletePollTitle": "Supprimer ce sondage ?",
   "deletePollWarning": "Cette action supprimera le sondage pour tout le monde.",
