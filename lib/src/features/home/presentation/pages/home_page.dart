@@ -11,6 +11,7 @@ import 'package:fiestaaa_front/src/features/friends/presentation/pages/friends_p
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
+import 'package:fiestaaa_front/src/core/theme_service.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
@@ -23,6 +24,7 @@ class HomePage extends StatefulWidget {
     this.onShareTokenConsumed,
     this.onSessionUpdated,
     this.localeService,
+    this.themeService,
   });
 
   final SessionData session;
@@ -31,6 +33,7 @@ class HomePage extends StatefulWidget {
   final VoidCallback? onShareTokenConsumed;
   final Future<void> Function(SessionData session)? onSessionUpdated;
   final LocaleService? localeService;
+  final ThemeService? themeService;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -244,6 +247,7 @@ class _HomePageState extends State<HomePage> {
           }
         },
         localeService: widget.localeService,
+        themeService: widget.themeService,
       ),
     ];
 
