@@ -4,6 +4,10 @@
   "appTitle": "Fiestaaa",
   "languageName": "English",
   "changeLanguage": "Change language",
+  "changeTheme": "Theme",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
   "french": "Français",
   "english": "English",
 
@@ -348,6 +352,7 @@
   "multipleAnswersAllowed": "Multiple answers allowed",
   "createThePoll": "Create the poll",
   "questionAndOptionsRequired": "Question and at least two options required.",
+  "pollOptionsMustBeDistinct": "Options must be distinct.",
   "durationMustBeOver24h": "For more than 24h, enter a number of hours greater than 24.",
   "deletePollTitle": "Delete this poll?",
   "deletePollWarning": "This action will delete the poll for everyone.",

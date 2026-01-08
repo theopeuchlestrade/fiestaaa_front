@@ -500,13 +500,33 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           onPressed: () {
                             final question =
                                 questionController.text.trim();
-                            final options = optionControllers
+                            final rawOptions = optionControllers
                                 .map((c) => c.text.trim())
                                 .where((txt) => txt.isNotEmpty)
                                 .toList();
-                            if (question.isEmpty || options.length < 2) {
-                                _showSnack(
+                            if (question.isEmpty || rawOptions.length < 2) {
+                              _showSnack(
                                 S.of(context).questionAndOptionsRequired,
+                                isError: true,
+                              );
+                              return;
+                            }
+
+                            final seenOptions = <String>{};
+                            final options = <String>[];
+                            var hasDuplicate = false;
+                            for (final option in rawOptions) {
+                              final key = option.toLowerCase();
+                              if (!seenOptions.add(key)) {
+                                hasDuplicate = true;
+                                continue;
+                              }
+                              options.add(option);
+                            }
+
+                            if (hasDuplicate) {
+                              _showSnack(
+                                S.of(context).pollOptionsMustBeDistinct,
                                 isError: true,
                               );
                               return;
@@ -1802,7 +1822,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
           style: Theme.of(context)
               .textTheme
               .bodySmall
-              ?.copyWith(color: Colors.grey.shade700),
+              ?.copyWith(
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.6),
+              ),
         ),
         const SizedBox(height: 12),
         AnimatedCrossFade(
@@ -1835,20 +1860,25 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
     final polls = _polls ?? const [];
     if (polls.isEmpty) {
+      final theme = Theme.of(context);
+      final surface = theme.colorScheme.surface;
+      final border = theme.dividerColor;
+      final textColor =
+          theme.colorScheme.onSurface.withValues(alpha: 0.75);
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: border),
         ),
         child: Text(
           S.of(context).noPollsYet,
           style: Theme.of(context)
               .textTheme
               .bodyMedium
-              ?.copyWith(color: Colors.grey.shade700),
+              ?.copyWith(color: textColor),
         ),
       );
     }
@@ -1918,7 +1948,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
           style: Theme.of(context)
               .textTheme
               .bodySmall
-              ?.copyWith(color: Colors.grey.shade700),
+              ?.copyWith(
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.6),
+              ),
         ),
         if (!_isOwner && _isWaitingInvitation)
           Padding(
@@ -2305,9 +2340,16 @@ class _PollCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background = Colors.white;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final background = theme.colorScheme.surface;
+    final borderColor = theme.dividerColor;
+    final textColor = theme.colorScheme.onSurface;
+    final fadedText = textColor.withValues(alpha: 0.6);
+    final subtleText = textColor.withValues(alpha: 0.5);
+    final surfaceButton =
+        isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade100;
     final accentGreen = Colors.green.shade500;
-    final fadedText = Colors.grey.shade600;
     final maxVotes = poll.maxVotes == 0 ? 1 : poll.maxVotes;
     final timeText = DateFormat.Hm('fr_FR').format(poll.expiresAt);
 
@@ -2317,12 +2359,14 @@ class _PollCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: const [
+        border: Border.all(color: borderColor),
+        boxShadow: [
           BoxShadow(
-            color: Color.fromARGB(30, 0, 0, 0),
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.25)
+                : const Color.fromARGB(30, 0, 0, 0),
             blurRadius: 10,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -2338,7 +2382,7 @@ class _PollCard extends StatelessWidget {
                   child: Text(
                     poll.question,
                     style: TextStyle(
-                      color: Colors.grey.shade900,
+                      color: textColor,
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
                     ),
@@ -2349,13 +2393,16 @@ class _PollCard extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.08),
+                      color: Colors.red
+                          .withValues(alpha: isDark ? 0.2 : 0.08),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       'Expiré',
                       style: TextStyle(
-                        color: Colors.red.shade600,
+                        color: isDark
+                            ? Colors.red.shade200
+                            : Colors.red.shade600,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -2408,7 +2455,7 @@ class _PollCard extends StatelessWidget {
                 Text(
                   timeText,
                   style: TextStyle(
-                    color: Colors.grey.shade500,
+                    color: subtleText,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -2416,8 +2463,11 @@ class _PollCard extends StatelessWidget {
                 Text(
                   remainingLabel,
                   style: TextStyle(
-                    color:
-                        poll.isExpired ? Colors.red.shade400 : Colors.grey.shade700,
+                    color: poll.isExpired
+                        ? (isDark
+                            ? Colors.red.shade300
+                            : Colors.red.shade400)
+                        : fadedText,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -2429,8 +2479,8 @@ class _PollCard extends StatelessWidget {
                 Expanded(
                   child: TextButton(
                     style: TextButton.styleFrom(
-                      backgroundColor: Colors.grey.shade100,
-                      foregroundColor: Colors.grey.shade900,
+                      backgroundColor: surfaceButton,
+                      foregroundColor: textColor,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -2444,8 +2494,11 @@ class _PollCard extends StatelessWidget {
                   const SizedBox(width: 10),
                   TextButton(
                     style: TextButton.styleFrom(
-                      backgroundColor: Colors.red.withValues(alpha: 0.08),
-                      foregroundColor: Colors.red.shade500,
+                      backgroundColor: Colors.red
+                          .withValues(alpha: isDark ? 0.2 : 0.08),
+                      foregroundColor: isDark
+                          ? Colors.red.shade300
+                          : Colors.red.shade500,
                       padding: const EdgeInsets.symmetric(
                           vertical: 12, horizontal: 14),
                       shape: RoundedRectangleBorder(
@@ -2496,11 +2549,21 @@ class _PollOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseBar = Colors.grey.shade200;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = theme.colorScheme.onSurface;
+    final baseBar = isDark ? Colors.white12 : Colors.grey.shade200;
     final ratio = maxVotes == 0 ? 0.0 : option.voteCount / maxVotes;
-    final fillColor =
-        option.voteCount == 0 ? Colors.grey.shade300 : accentColor;
-    final faded = Colors.grey.shade500;
+    final fillColor = option.voteCount == 0
+        ? (isDark ? Colors.white24 : Colors.grey.shade300)
+        : accentColor;
+    final faded = textColor.withValues(alpha: 0.55);
+    final avatarBackground = isDark
+        ? theme.colorScheme.surface.withValues(alpha: 0.9)
+        : Colors.grey.shade200;
+    final avatarForeground = isDark
+        ? textColor.withValues(alpha: 0.8)
+        : Colors.grey.shade800;
     final firstVoter = option.voters.isNotEmpty ? option.voters.first : null;
 
     return GestureDetector(
@@ -2536,7 +2599,7 @@ class _PollOptionTile extends StatelessWidget {
                     child: Text(
                       option.label,
                       style: TextStyle(
-                        color: Colors.grey.shade900,
+                        color: textColor,
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
@@ -2549,7 +2612,7 @@ class _PollOptionTile extends StatelessWidget {
                       if (firstVoter != null)
                         CircleAvatar(
                           radius: 14,
-                          backgroundColor: Colors.grey.shade200,
+                          backgroundColor: avatarBackground,
                           backgroundImage: firstVoter.avatarUrl == null
                               ? null
                               : NetworkImage(firstVoter.avatarUrl!),
@@ -2557,7 +2620,7 @@ class _PollOptionTile extends StatelessWidget {
                               ? Text(
                                   _displayInitial(context,firstVoter.handle),
                                   style: TextStyle(
-                                    color: Colors.grey.shade800,
+                                    color: avatarForeground,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 )
@@ -2567,7 +2630,7 @@ class _PollOptionTile extends StatelessWidget {
                       Text(
                         '${option.voteCount}',
                         style: TextStyle(
-                          color: Colors.grey.shade900,
+                          color: textColor,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -2643,20 +2706,25 @@ class _EventItemsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
+      final theme = Theme.of(context);
+      final surface = theme.colorScheme.surface;
+      final border = theme.dividerColor;
+      final textColor =
+          theme.colorScheme.onSurface.withValues(alpha: 0.75);
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: border),
         ),
         child: Text(
           S.of(context).noItemsYet,
           style: Theme.of(context)
               .textTheme
               .bodyMedium
-              ?.copyWith(color: Colors.grey.shade700),
+              ?.copyWith(color: textColor),
         ),
       );
     }
@@ -2729,6 +2797,14 @@ class _EventItemTile extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       builder: (context) {
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+        final avatarBackground = isDark
+            ? theme.colorScheme.surface.withValues(alpha: 0.9)
+            : Colors.grey.shade200;
+        final avatarForeground = isDark
+            ? theme.colorScheme.onSurface.withValues(alpha: 0.8)
+            : Colors.grey.shade800;
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -2758,15 +2834,17 @@ class _EventItemTile extends StatelessWidget {
                       title: Text(_displayName(context,c.handle)),
                       contentPadding: EdgeInsets.zero,
                       leading: CircleAvatar(
-                        backgroundColor: Colors.grey.shade200,
+                        backgroundColor: avatarBackground,
                         backgroundImage: c.avatarUrl == null
                             ? null
                             : NetworkImage(c.avatarUrl!),
                         child: c.avatarUrl == null
                             ? Text(
                                 _displayInitial(context,c.handle),
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w700),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: avatarForeground,
+                                ),
                               )
                             : null,
                       ),
@@ -2783,6 +2861,26 @@ class _EventItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surface = theme.colorScheme.surface;
+    final borderColor = theme.dividerColor;
+    final textColor = theme.colorScheme.onSurface;
+    final mutedText = textColor.withValues(alpha: 0.6);
+    final actionBackground =
+        isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade100;
+    final actionForeground = textColor;
+    final avatarBackground = isDark
+        ? surface.withValues(alpha: 0.9)
+        : Colors.grey.shade200;
+    final avatarForeground = isDark
+        ? textColor.withValues(alpha: 0.8)
+        : Colors.grey.shade800;
+    final barBackground = isDark ? Colors.white12 : Colors.grey.shade200;
+    final barEmpty = isDark ? Colors.white24 : Colors.grey.shade400;
+    final shadow = isDark
+        ? Colors.black.withValues(alpha: 0.25)
+        : const Color.fromARGB(30, 0, 0, 0);
     final ratio =
         item.maxQuantity == 0 ? 0.0 : item.reservedQuantity / item.maxQuantity;
     final available = item.remaining;
@@ -2793,19 +2891,18 @@ class _EventItemTile extends StatelessWidget {
     final isFull = available <= 0;
     final hasContributed = myContribution.isNotEmpty;
     final accentGreen = Colors.green.shade500;
-    final mutedText = Colors.grey.shade600;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: const [
+        border: Border.all(color: borderColor),
+        boxShadow: [
           BoxShadow(
-            color: Color.fromARGB(30, 0, 0, 0),
+            color: shadow,
             blurRadius: 12,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -2826,7 +2923,7 @@ class _EventItemTile extends StatelessWidget {
                     border: Border.all(
                       color: (hasContributed || isFull)
                           ? accentGreen
-                          : Colors.grey.shade400,
+                          : textColor.withValues(alpha: 0.35),
                       width: 2,
                     ),
                   ),
@@ -2842,7 +2939,7 @@ class _EventItemTile extends StatelessWidget {
                       Text(
                         item.name,
                         style: TextStyle(
-                          color: Colors.grey.shade900,
+                          color: textColor,
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),
@@ -2872,7 +2969,7 @@ class _EventItemTile extends StatelessWidget {
                                     left: left,
                                     child: CircleAvatar(
                                       radius: 14,
-                                      backgroundColor: Colors.grey.shade200,
+                                      backgroundColor: avatarBackground,
                                       backgroundImage: c.avatarUrl == null
                                           ? null
                                           : NetworkImage(c.avatarUrl!),
@@ -2881,7 +2978,7 @@ class _EventItemTile extends StatelessWidget {
                                               _displayInitial(context,c.handle),
                                               style: TextStyle(
                                                 fontWeight: FontWeight.w700,
-                                                color: Colors.grey.shade800,
+                                                color: avatarForeground,
                                               ),
                                             )
                                           : null,
@@ -2904,7 +3001,7 @@ class _EventItemTile extends StatelessWidget {
                 ),
                 TextButton.icon(
                   style: TextButton.styleFrom(
-                    foregroundColor: Colors.grey.shade700,
+                    foregroundColor: textColor.withValues(alpha: 0.75),
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     textStyle: const TextStyle(fontWeight: FontWeight.w600),
@@ -2923,9 +3020,9 @@ class _EventItemTile extends StatelessWidget {
               child: LinearProgressIndicator(
                 minHeight: 10,
                 value: ratio.clamp(0, 1),
-                backgroundColor: Colors.grey.shade200,
+                backgroundColor: barBackground,
                 valueColor: AlwaysStoppedAnimation(
-                  ratio <= 0 ? Colors.grey.shade400 : accentGreen,
+                  ratio <= 0 ? barEmpty : accentGreen,
                 ),
               ),
             ),
@@ -2946,8 +3043,8 @@ class _EventItemTile extends StatelessWidget {
                   Expanded(
                     child: TextButton.icon(
                       style: TextButton.styleFrom(
-                        backgroundColor: Colors.grey.shade100,
-                        foregroundColor: Colors.grey.shade900,
+                        backgroundColor: actionBackground,
+                        foregroundColor: actionForeground,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -2961,7 +3058,7 @@ class _EventItemTile extends StatelessWidget {
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation(
-                                    Colors.grey.shade800),
+                                    actionForeground),
                               ),
                             )
                           : Icon(
@@ -2970,7 +3067,7 @@ class _EventItemTile extends StatelessWidget {
                                   : Icons.radio_button_unchecked,
                               color: hasContributed
                                   ? accentGreen
-                                  : Colors.grey.shade800,
+                                  : actionForeground,
                             ),
                       label: Text(
                         isLoading
@@ -2985,8 +3082,11 @@ class _EventItemTile extends StatelessWidget {
                     const SizedBox(width: 10),
                     TextButton(
                       style: TextButton.styleFrom(
-                        backgroundColor: Colors.red.withValues(alpha: 0.08),
-                        foregroundColor: Colors.red.shade400,
+                        backgroundColor: Colors.red
+                            .withValues(alpha: isDark ? 0.2 : 0.08),
+                        foregroundColor: isDark
+                            ? Colors.red.shade300
+                            : Colors.red.shade400,
                         padding: const EdgeInsets.symmetric(
                             vertical: 12, horizontal: 14),
                         shape: RoundedRectangleBorder(

@@ -437,9 +437,24 @@ Bug report
 
   Widget _buildMobileLayout(BuildContext context) {
     final l10n = S.of(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardColor =
+        isDark ? FiestaaaPalette.darkSurfaceRaised : Colors.white;
+    final inputFill =
+        isDark ? FiestaaaPalette.darkSurface : Colors.grey.shade50;
+    final mutedText = isDark
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.72)
+        : Colors.grey.shade600;
+    final dividerColor = isDark ? Colors.white12 : Colors.grey.shade300;
+    final dividerText = isDark
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.6)
+        : Colors.grey.shade500;
     return Container(
-      decoration: const BoxDecoration(
-        gradient: FiestaaaPalette.cardGradient,
+      decoration: BoxDecoration(
+        gradient: FiestaaaPalette.cardGradientFor(
+          Theme.of(context).brightness,
+        ),
       ),
       child: SafeArea(
         child: Center(
@@ -476,7 +491,7 @@ Bug report
                   Container(
                     padding: const EdgeInsets.all(28),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cardColor,
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
@@ -503,11 +518,12 @@ Bug report
                               ? l10n.welcomeBack
                               : l10n.welcomeNew,
                           textAlign: TextAlign.center,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(
-                                color: FiestaaaPalette.text,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(
+                                color:
+                                    Theme.of(context).colorScheme.onSurface,
                                 fontWeight: FontWeight.w800,
                               ),
                         ),
@@ -519,7 +535,7 @@ Bug report
                           textAlign: TextAlign.center,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.grey.shade600,
+                                    color: mutedText,
                                   ),
                         ),
                         const SizedBox(height: 12),
@@ -541,7 +557,7 @@ Bug report
                                       : l10n.email,
                                   prefixIcon: const Icon(Icons.email_outlined),
                                   filled: true,
-                                  fillColor: Colors.grey.shade50,
+                                  fillColor: inputFill,
                                 ),
                                 validator: (value) {
                                   final email = value?.trim() ?? '';
@@ -566,7 +582,7 @@ Bug report
                                     labelText: l10n.identifierOptional,
                                     prefixIcon: const Icon(Icons.tag),
                                     filled: true,
-                                    fillColor: Colors.grey.shade50,
+                                    fillColor: inputFill,
                                     helperText: l10n.identifierFormat,
                                   ),
                                   validator: (value) {
@@ -588,7 +604,7 @@ Bug report
                                   labelText: l10n.password,
                                   prefixIcon: const Icon(Icons.lock_outline),
                                   filled: true,
-                                  fillColor: Colors.grey.shade50,
+                                  fillColor: inputFill,
                                   helperText:
                                       l10n.passwordHelperText,
                                   suffixIcon: IconButton(
@@ -612,7 +628,7 @@ Bug report
                                     labelText: l10n.confirmPassword,
                                     prefixIcon: const Icon(Icons.lock_outline),
                                     filled: true,
-                                    fillColor: Colors.grey.shade50,
+                                    fillColor: inputFill,
                                     suffixIcon: IconButton(
                                       icon: Icon(
                                         _obscureConfirm
@@ -675,24 +691,24 @@ Bug report
                         Row(
                           children: [
                             Expanded(
-                                child: Divider(color: Colors.grey.shade300)),
+                                child: Divider(color: dividerColor)),
                             Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 12),
                               child: Text(
                                 l10n.orContinueWith,
                                 style: TextStyle(
-                                  color: Colors.grey.shade500,
+                                  color: dividerText,
                                   fontSize: 13,
                                 ),
                               ),
                             ),
                             Expanded(
-                                child: Divider(color: Colors.grey.shade300)),
+                                child: Divider(color: dividerColor)),
                           ],
                         ),
                         const SizedBox(height: 16),
-                        _buildSocialButtons(),
+                        _buildSocialButtons(context),
                         const SizedBox(height: 16),
                         // Switch Mode Button
                         TextButton(
@@ -754,8 +770,10 @@ Bug report
             flex: 5,
             child: Container(
               height: 700,
-              decoration: const BoxDecoration(
-                gradient: FiestaaaPalette.cardGradient,
+              decoration: BoxDecoration(
+                gradient: FiestaaaPalette.cardGradientFor(
+                  Theme.of(context).brightness,
+                ),
               ),
               child: Stack(
                 children: [
@@ -913,10 +931,18 @@ Bug report
     );
   }
 
-  Widget _buildSocialButtons() {
+  Widget _buildSocialButtons(BuildContext context) {
     const double buttonHeight = 48;
     final shape =
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(24));
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final socialBackground =
+        isDark ? FiestaaaPalette.darkSurfaceRaised : Colors.white;
+    final socialForeground =
+        isDark ? theme.colorScheme.onSurface : Colors.black87;
+    final socialBorder = isDark ? Colors.white12 : Colors.grey.shade300;
+    final appleColor = isDark ? Colors.white : Colors.black87;
 
     Widget spinner(Color color) {
       return SizedBox(
@@ -932,9 +958,9 @@ Bug report
     final socialButtonStyle = OutlinedButton.styleFrom(
       minimumSize: const Size.fromHeight(buttonHeight),
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      backgroundColor: Colors.white,
-      foregroundColor: Colors.black87,
-      side: BorderSide(color: Colors.grey.shade300),
+      backgroundColor: socialBackground,
+      foregroundColor: socialForeground,
+      side: BorderSide(color: socialBorder),
       shape: shape,
       textStyle: const TextStyle(
         fontSize: 16,
@@ -968,8 +994,8 @@ Bug report
               onPressed: _isSubmitting ? null : _continueWithApple,
               style: socialButtonStyle,
               icon: _socialInProgress == 'apple'
-                  ? spinner(Colors.black87)
-                  : const Icon(Icons.apple, color: Colors.black87, size: 24),
+                  ? spinner(appleColor)
+                  : Icon(Icons.apple, color: appleColor, size: 24),
               label: Text(S.of(context).continueWithApple),
             ),
           ),
@@ -979,6 +1005,18 @@ Bug report
 
   Widget _buildAuthForm(BuildContext context, double padding) {
     final l10n = S.of(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final toggleBackground =
+        isDark ? FiestaaaPalette.darkSurface : Colors.grey.shade100;
+    final toggleBorder = isDark ? Colors.white12 : Colors.grey.shade300;
+    final toggleInactive = isDark
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.7)
+        : Colors.grey.shade800;
+    final dividerColor = isDark ? Colors.white12 : Colors.grey.shade300;
+    final dividerText = isDark
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.6)
+        : Colors.grey.shade600;
     return Padding(
       padding: EdgeInsets.all(padding),
       child: Column(
@@ -991,9 +1029,9 @@ Bug report
           const SizedBox(height: 20),
           Container(
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+              color: toggleBackground,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: toggleBorder),
             ),
             child: Row(
               children: [
@@ -1009,7 +1047,7 @@ Bug report
                           vertical: 14, horizontal: 12),
                       foregroundColor: _mode == AuthMode.login
                           ? FiestaaaPalette.primary
-                          : Colors.grey.shade800,
+                          : toggleInactive,
                       backgroundColor: _mode == AuthMode.login
                           ? FiestaaaPalette.primary.withValues(alpha: 0.12)
                           : Colors.transparent,
@@ -1032,7 +1070,7 @@ Bug report
                           vertical: 14, horizontal: 12),
                       foregroundColor: _mode == AuthMode.register
                           ? FiestaaaPalette.primary
-                          : Colors.grey.shade800,
+                          : toggleInactive,
                       backgroundColor: _mode == AuthMode.register
                           ? FiestaaaPalette.primary.withValues(alpha: 0.12)
                           : Colors.transparent,
@@ -1182,22 +1220,22 @@ Bug report
           const SizedBox(height: 20),
           Row(
             children: [
-              Expanded(child: Divider(color: Colors.grey.shade300)),
+              Expanded(child: Divider(color: dividerColor)),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
                   l10n.orContinueWith,
                   style: TextStyle(
-                    color: Colors.grey.shade600,
+                    color: dividerText,
                     fontSize: 13,
                   ),
                 ),
               ),
-              Expanded(child: Divider(color: Colors.grey.shade300)),
+              Expanded(child: Divider(color: dividerColor)),
             ],
           ),
           const SizedBox(height: 16),
-          _buildSocialButtons(),
+          _buildSocialButtons(context),
           const SizedBox(height: 12),
           Center(
             child: TextButton(
@@ -1222,6 +1260,21 @@ Bug report
 
   Widget _buildAlphaBanner({required bool compact}) {
     final l10n = S.of(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bannerBackground =
+        isDark ? const Color(0xFF2A1A0E) : Colors.orange.shade50;
+    final bannerBorder =
+        isDark ? Colors.orange.withValues(alpha: 0.35) : Colors.orange.shade200;
+    final bannerShadow = isDark
+        ? Colors.orange.withValues(alpha: 0.18)
+        : Colors.orange.shade200.withValues(alpha: 0.4);
+    final bannerTitle =
+        isDark ? Colors.orange.shade100 : Colors.orange.shade900;
+    final bannerText =
+        isDark ? Colors.orange.shade200 : Colors.orange.shade800;
+    final bannerIconBackground =
+        isDark ? Colors.orange.withValues(alpha: 0.2) : Colors.orange.shade100;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(
@@ -1229,12 +1282,12 @@ Bug report
         horizontal: compact ? 12 : 16,
       ),
       decoration: BoxDecoration(
-        color: Colors.orange.shade50,
+        color: bannerBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.orange.shade200),
+        border: Border.all(color: bannerBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.shade200.withValues(alpha: 0.4),
+            color: bannerShadow,
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -1247,13 +1300,13 @@ Bug report
             children: [
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade100,
+                  color: bannerIconBackground,
                   shape: BoxShape.circle,
                 ),
                 padding: const EdgeInsets.all(8),
                 child: Icon(
                   Icons.science_outlined,
-                  color: Colors.orange.shade800,
+                  color: bannerText,
                   size: 20,
                 ),
               ),
@@ -1262,7 +1315,7 @@ Bug report
                 child: Text(
                   l10n.alphaVersionBanner,
                   style: TextStyle(
-                    color: Colors.orange.shade900,
+                    color: bannerTitle,
                     fontWeight: FontWeight.w800,
                     fontSize: compact ? 14 : 15,
                   ),
@@ -1277,7 +1330,7 @@ Bug report
                 child: SelectableText(
                   l10n.reportBugsTo(_feedbackEmail),
                   style: TextStyle(
-                    color: Colors.orange.shade800,
+                    color: bannerText,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1286,7 +1339,7 @@ Bug report
                 tooltip: l10n.copyAddress,
                 onPressed: _copyFeedbackEmail,
                 icon: const Icon(Icons.copy_rounded, size: 18),
-                color: Colors.orange.shade800,
+                color: bannerText,
               ),
             ],
           ),
@@ -1300,8 +1353,8 @@ Bug report
                 icon: const Icon(Icons.article_outlined, size: 18),
                 label: Text(l10n.copyBugTemplate),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.orange.shade800,
-                  side: BorderSide(color: Colors.orange.shade200),
+                  foregroundColor: bannerText,
+                  side: BorderSide(color: bannerBorder),
                   padding: EdgeInsets.symmetric(
                     vertical: compact ? 10 : 12,
                     horizontal: compact ? 10 : 12,
@@ -1313,8 +1366,8 @@ Bug report
                 icon: const Icon(Icons.alternate_email, size: 18),
                 label: Text(l10n.copyAddress),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.orange.shade800,
-                  side: BorderSide(color: Colors.orange.shade200),
+                  foregroundColor: bannerText,
+                  side: BorderSide(color: bannerBorder),
                   padding: EdgeInsets.symmetric(
                     vertical: compact ? 10 : 12,
                     horizontal: compact ? 10 : 12,
