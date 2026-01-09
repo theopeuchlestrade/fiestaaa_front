@@ -15,6 +15,10 @@ class PushNotificationService {
 
   static final PushNotificationService instance = PushNotificationService._();
 
+  static const String _androidChannelId = 'fiestaaa_fcm';
+  static const String _androidChannelName = 'Notifications';
+  static const String _androidChannelDescription = 'Fiestaaa notifications';
+
   late final FirebaseMessaging _messaging;
   final NotificationsApi _api = NotificationsApi();
   final FlutterLocalNotificationsPlugin _localNotifications =
@@ -172,6 +176,23 @@ class PushNotificationService {
     const initSettings =
         InitializationSettings(android: androidSettings, iOS: iosSettings);
     await _localNotifications.initialize(initSettings);
+
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      final androidPlugin =
+          _localNotifications.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        await androidPlugin.createNotificationChannel(
+          const AndroidNotificationChannel(
+            _androidChannelId,
+            _androidChannelName,
+            description: _androidChannelDescription,
+            importance: Importance.high,
+          ),
+        );
+        await androidPlugin.requestNotificationsPermission();
+      }
+    }
   }
 
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
@@ -187,9 +208,9 @@ class PushNotificationService {
     }
 
     const androidDetails = AndroidNotificationDetails(
-      'fiestaaa_fcm',
-      'Notifications',
-      channelDescription: 'Notifications Fiestaaa en foreground',
+      _androidChannelId,
+      _androidChannelName,
+      channelDescription: _androidChannelDescription,
       importance: Importance.high,
       priority: Priority.high,
       playSound: true,
