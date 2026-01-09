@@ -26,6 +26,9 @@ migrate_working_dir/
 **/google-services.json
 **/GoogleService-Info.plist
 
+# Android keystore signing properties (contains sensitive passwords)
+**/key.properties
+
 # IntelliJ related
 *.iml
 *.ipr
