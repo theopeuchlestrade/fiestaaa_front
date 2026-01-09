@@ -6,6 +6,21 @@ plugins {
     id "com.google.gms.google-services"
 }
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+def hasReleaseSigning =
+        keystorePropertiesFile.exists() &&
+                keystoreProperties['storeFile'] &&
+                keystoreProperties['storePassword'] &&
+                keystoreProperties['keyAlias'] &&
+                keystoreProperties['keyPassword']
+
+
 android {
     namespace = "com.fiestaaa.fiestaaa"
     compileSdk = flutter.compileSdkVersion
@@ -31,11 +46,22 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        release {
+            if (hasReleaseSigning) {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            // Use real release signing when available.
+            // Otherwise fall back to debug signing to keep local builds working.
+            signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
         }
     }
 }
