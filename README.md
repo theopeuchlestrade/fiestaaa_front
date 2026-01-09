@@ -23,11 +23,113 @@ samples, guidance on mobile development, and a full API reference.
 flutter run -d chrome --web-port=5001 --dart-define-from-file=.env
 ```
 
-### Android
+### Android (Émulateur)
 
 ```bash
 flutter run -d emulator-5554 --dart-define-from-file=.env
 ```
+
+## Build APK (Android)
+
+### Build Debug
+
+Pour développer et tester :
+```bash
+flutter build apk --debug --dart-define-from-file=.env
+```
+
+L'APK sera généré dans : `build/app/outputs/flutter-apk/app-debug.apk`
+
+### Build Release
+
+Pour distribution (installation directe, test de prod, etc.) :
+```bash
+flutter build apk --release --dart-define-from-file=.env
+```
+
+L'APK sera généré dans : `build/app/outputs/flutter-apk/app-release.apk`
+
+> **Note** : Par défaut, les builds release utilisent la signature de debug. Voir la section ci-dessous pour configurer une signature de production.
+
+## Signature de l'APK (Keystore)
+
+### Configuration actuelle
+
+Le projet est configuré pour utiliser un keystore de production personnalisé via `android/key.properties`.
+
+- Si `android/key.properties` existe : utilise le keystore de production (`android/fiestaaa-release.jks`)
+- Sinon : fallback vers le keystore de debug (`~/.android/debug.keystore`)
+
+### Créer un keystore de production (signature personnalisée)
+
+⚠️ **IMPORTANT** : Créez et sauvegardez soigneusement le keystore et ses mots de passe. Sans ces informations, il sera impossible de signer les futures mises à jour de l'app.
+
+#### 1. Créer le keystore
+
+Ouvrez un terminal dans le dossier `android/` du projet :
+
+```bash
+cd android
+
+keytool -genkey -v -keystore fiestaaa-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias fiestaaa
+```
+
+Vous devrez répondre aux questions :
+- **Keystore password** : Choisissez un mot de passe fort (⚠️ NOTEZ-LE BIEN)
+- **Re-enter new password** : Réécrivez le mot de passe
+- **What is your first and last name?** : Votre nom
+- **What is the name of your organizational unit?** : (laissez vide)
+- **What is the name of your organization?** : Fiestaaa
+- **What is the name of your City or Locality?** : Votre ville
+- **What is the name of your State or Province?** : Votre région
+- **What is the two-letter country code?** : FR (ou autre)
+- **Alias password** : Choisissez un mot de passe (⚠️ NOTEZ-LE BIEN)
+
+#### 2. Remplir le fichier `android/key.properties`
+
+Créez/modifiez le fichier `android/key.properties` avec vos informations :
+
+```properties
+# Mot de passe du keystore
+storePassword=VOTRE_MOT_DE_PASSE_KESTORE
+
+# Mot de passe de l'alias
+keyPassword=VOTRE_MOT_DE_PASSE_ALIAS
+
+# Alias de la clé
+keyAlias=fiestaaa
+
+# Chemin relatif vers le fichier de keystore (le plus courant : dans android/)
+storeFile=fiestaaa-release.jks
+```
+
+#### 3. Générer l'APK signé
+
+```bash
+flutter build apk --release --dart-define-from-file=.env
+```
+
+L'APK sera signé avec votre keystore personnalisé.
+
+#### 4. Vérifier la signature
+
+```bash
+keytool -list -v -keystore android/fiestaaa-release.jks
+```
+
+Ou avec `apksigner` (sur Windows PowerShell) :
+```powershell
+& 'C:\Users\Diego\AppData\Local\Android\Sdk\build-tools\36.1.0\apksigner.bat' verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk
+```
+
+### Sécurité - Bonnes pratiques
+
+- ✅ **Sauvegardez** le fichier `fiestaaa-release.jks` en plusieurs endroits sécurisés (Google Drive, disque externe, cloud crypté)
+- ✅ **Documentez** les mots de passe (KeePass, Bitwarden, etc.)
+- ✅ **Ne committez JAMAIS** `key.properties` ni `.jks` (déjà dans `.gitignore`)
+- ✅ **Conservez les fingerprints** SHA-1 et SHA-256 pour vérification
+
+> Si vous perdez le keystore ou les mots de passe, il sera impossible de signer les futures mises à jour de l'app. Dans ce cas, il faudra créer un nouveau keystore, mais cela posera des problèmes si l'app a déjà été publiée sur un store (Google Play, etc.).
 
 ## Localizations (i18n / l10n)
 
