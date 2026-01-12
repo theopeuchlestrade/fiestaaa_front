@@ -1,0 +1,9 @@
+name: Manual Build Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-android-apk:
+    uses: ./.github/workflows/build-android-apk.yml
+    secrets: inherit
