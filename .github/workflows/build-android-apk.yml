@@ -118,14 +118,15 @@ jobs:
       - name: Setup Android signing (release)
         if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
         run: |
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/fiestaaa-release.jks
+          mkdir -p android/app
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/fiestaaa-release.jks
           cat <<'EOF' > android/key.properties
           storePassword=${ANDROID_KEYSTORE_PASSWORD}
           keyPassword=${ANDROID_KEY_PASSWORD}
           keyAlias=${ANDROID_KEY_ALIAS}
           storeFile=fiestaaa-release.jks
           EOF
-          chmod 600 android/fiestaaa-release.jks android/key.properties
+          chmod 600 android/app/fiestaaa-release.jks android/key.properties
 
       - name: Ensure google-services.json
         run: |
