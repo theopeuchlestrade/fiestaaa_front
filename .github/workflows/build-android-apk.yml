@@ -120,7 +120,7 @@ jobs:
         run: |
           mkdir -p android/app
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/fiestaaa-release.jks
-          cat <<'EOF' > android/key.properties
+          cat <<EOF > android/key.properties
           storePassword=${ANDROID_KEYSTORE_PASSWORD}
           keyPassword=${ANDROID_KEY_PASSWORD}
           keyAlias=${ANDROID_KEY_ALIAS}
