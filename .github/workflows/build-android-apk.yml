@@ -1,13 +1,53 @@
 name: Build Android APK
 
 on:
-  workflow_dispatch:
+  workflow_call:
+    secrets:
+      FIESTAAA_API_BASE_URL:
+        required: true
+      FIESTAAA_APPLE_REDIRECT_URI:
+        required: true
+      FIESTAAA_APPLE_SERVICE_ID:
+        required: true
+      FIESTAAA_FCM_VAPID_KEY:
+        required: true
+      FIESTAAA_GOOGLE_WEB_CLIENT_ID:
+        required: true
+      FIREBASE_AUTH_DOMAIN:
+        required: true
+      FIREBASE_MESSAGING_SENDER_ID:
+        required: true
+      FIREBASE_PROJECT_ID:
+        required: true
+      FIREBASE_STORAGE_BUCKET:
+        required: true
+      FIREBASE_WEB_API_KEY:
+        required: true
+      FIREBASE_WEB_APP_ID:
+        required: true
+      FIREBASE_WEB_MEASUREMENT_ID:
+        required: false
+      ANDROID_GOOGLE_SERVICES_JSON:
+        required: true
+      ANDROID_KEYSTORE_BASE64:
+        required: false
+      ANDROID_KEYSTORE_PASSWORD:
+        required: false
+      ANDROID_KEY_ALIAS:
+        required: false
+      ANDROID_KEY_PASSWORD:
+        required: false
 
 jobs:
   build-android-apk:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -64,12 +104,7 @@ jobs:
           EOF
 
       - name: Check signing secrets (release)
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
-        env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
         run: |
           missing=0
           for var in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
@@ -81,13 +116,13 @@ jobs:
           if [ "$missing" -ne 0 ]; then exit 1; fi
 
       - name: Setup Android signing (release)
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/fiestaaa-release.jks
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/fiestaaa-release.jks
           cat <<'EOF' > android/key.properties
-          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
-          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storePassword=${ANDROID_KEYSTORE_PASSWORD}
+          keyPassword=${ANDROID_KEY_PASSWORD}
+          keyAlias=${ANDROID_KEY_ALIAS}
           storeFile=fiestaaa-release.jks
           EOF
           chmod 600 android/fiestaaa-release.jks android/key.properties
