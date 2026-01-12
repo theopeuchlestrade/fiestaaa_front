@@ -1,0 +1,91 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-android-apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Check required secrets
+        env:
+          FIESTAAA_API_BASE_URL: ${{ secrets.FIESTAAA_API_BASE_URL }}
+          FIESTAAA_APPLE_REDIRECT_URI: ${{ secrets.FIESTAAA_APPLE_REDIRECT_URI }}
+          FIESTAAA_APPLE_SERVICE_ID: ${{ secrets.FIESTAAA_APPLE_SERVICE_ID }}
+          FIESTAAA_FCM_VAPID_KEY: ${{ secrets.FIESTAAA_FCM_VAPID_KEY }}
+          FIESTAAA_GOOGLE_WEB_CLIENT_ID: ${{ secrets.FIESTAAA_GOOGLE_WEB_CLIENT_ID }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
+          FIREBASE_WEB_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
+        run: |
+          missing=0
+          for var in FIESTAAA_API_BASE_URL FIESTAAA_APPLE_REDIRECT_URI FIESTAAA_APPLE_SERVICE_ID FIESTAAA_FCM_VAPID_KEY FIESTAAA_GOOGLE_WEB_CLIENT_ID FIREBASE_AUTH_DOMAIN FIREBASE_MESSAGING_SENDER_ID FIREBASE_PROJECT_ID FIREBASE_STORAGE_BUCKET FIREBASE_WEB_API_KEY FIREBASE_WEB_APP_ID; do
+            if [ -z "${!var}" ]; then
+              echo "::error::$var manquant"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+
+      - name: Write .env
+        run: |
+          cat <<'EOF' > .env
+          FIESTAAA_API_BASE_URL=${{ secrets.FIESTAAA_API_BASE_URL }}
+          FIESTAAA_APPLE_SERVICE_ID=${{ secrets.FIESTAAA_APPLE_SERVICE_ID }}
+          FIESTAAA_APPLE_REDIRECT_URI=${{ secrets.FIESTAAA_APPLE_REDIRECT_URI }}
+          FIESTAAA_FCM_VAPID_KEY=${{ secrets.FIESTAAA_FCM_VAPID_KEY }}
+          FIESTAAA_GOOGLE_WEB_CLIENT_ID=${{ secrets.FIESTAAA_GOOGLE_WEB_CLIENT_ID }}
+          FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_WEB_API_KEY=${{ secrets.FIREBASE_WEB_API_KEY }}
+          FIREBASE_WEB_APP_ID=${{ secrets.FIREBASE_WEB_APP_ID }}
+          FIREBASE_WEB_MEASUREMENT_ID=${{ secrets.FIREBASE_WEB_MEASUREMENT_ID }}
+          FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          EOF
+
+      - name: Ensure google-services.json
+        run: |
+          if [ -f android/app/google-services.json ]; then
+            exit 0
+          fi
+          if [ -z "${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}" ]; then
+            echo "::error::android/app/google-services.json missing and ANDROID_GOOGLE_SERVICES_JSON secret not set"
+            exit 1
+          fi
+          mkdir -p android/app
+          cat <<'EOF' > android/app/google-services.json
+          ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}
+          EOF
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release --dart-define-from-file=.env
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fiestaaa-android-apk-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
