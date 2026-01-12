@@ -63,6 +63,35 @@ jobs:
           FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}
           EOF
 
+      - name: Check signing secrets (release)
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=0
+          for var in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!var}" ]; then
+              echo "::error::$var manquant"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+
+      - name: Setup Android signing (release)
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/fiestaaa-release.jks
+          cat <<'EOF' > android/key.properties
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=fiestaaa-release.jks
+          EOF
+          chmod 600 android/fiestaaa-release.jks android/key.properties
+
       - name: Ensure google-services.json
         run: |
           if [ -f android/app/google-services.json ]; then
@@ -83,9 +112,32 @@ jobs:
       - name: Build APK
         run: flutter build apk --release --dart-define-from-file=.env
 
+      - name: Extract signing fingerprints
+        run: |
+          APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
+          if [ ! -f "$APK_PATH" ]; then
+            echo "::error::APK introuvable: $APK_PATH"
+            exit 1
+          fi
+          if [ -z "${ANDROID_HOME:-}" ]; then
+            echo "::error::ANDROID_HOME non defini"
+            exit 1
+          fi
+          BUILD_TOOLS_DIR=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)
+          APKSIGNER="$BUILD_TOOLS_DIR/apksigner"
+          if [ ! -x "$APKSIGNER" ]; then
+            echo "::error::apksigner introuvable dans $BUILD_TOOLS_DIR"
+            exit 1
+          fi
+          "$APKSIGNER" verify --print-certs "$APK_PATH" | tee signing-certs.txt
+          grep -E "SHA-1|SHA-256" signing-certs.txt | sed -E 's/.*(SHA-[0-9]+): (.*)/\1=\2/' > signing-sha.txt
+          cat signing-sha.txt
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: fiestaaa-android-apk-${{ github.sha }}
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            signing-sha.txt
           if-no-files-found: error
