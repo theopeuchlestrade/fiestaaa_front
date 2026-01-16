@@ -570,5 +570,105 @@
   "viewVotes": "View votes",
   "mapProviderGoogle": "Google Maps",
   "mapProviderApple": "Apple Maps",
-  "mapProviderOsm": "OpenStreetMap"
+  "mapProviderOsm": "OpenStreetMap",
+
+  "carpools": "Carpools",
+  "carpoolsSubtitle": "Organize your rides together",
+  "proposeCarpool": "Propose a ride",
+  "proposeACarpoolDescription": "Propose a ride and share your vehicle with other participants.",
+  "alreadyInCarpoolForEvent": "You are already in a carpool for this event.",
+  "alreadyInCarpool": "Already in a carpool",
+  "carpoolCreatedSuccess": "Ride created successfully",
+  "carpoolUpdated": "Ride updated",
+  "carpoolDeleted": "Ride deleted",
+  "deleteCarpool": "Delete ride",
+  "deleteCarpoolConfirm": "Are you sure you want to delete this ride?",
+  "deleteCarpoolWithPassengersConfirm": "Warning, this carpool has passengers. If you delete it, they will be notified and removed.",
+  "seeMore": "See more",
+  "carpoolNotes": "Ride notes",
+  "carpoolCannotBeAfterEvent": "Carpool cannot be after the event",
+  "leaveCarpool": "Leave ride",
+  "leaveCarpoolConfirm": "Are you sure you want to leave this ride?",
+  "joinedCarpool": "You have joined the ride",
+  "leftCarpool": "You have left the ride",
+  "acceptInvitationForCarpool": "Accept the event invitation to propose or join a carpool.",
+  "acceptInvitationToPropose": "Accept the invitation to propose a ride",
+  "acceptInvitationToJoin": "Accept the invitation to join a ride",
+  "noCarpoolsAvailable": "No carpools available",
+  "beFirstToPropose": "Be the first to propose a ride!",
+  "carpoolsCount": "{count, plural, =1{1 carpool available} other{{count} carpools available}}",
+  "@carpoolsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "unknownDriver": "Unknown driver",
+  "youAreDriver": "You are the driver",
+  "youArePassenger": "You are a passenger",
+  "passengers": "Passengers",
+  "passengersCount": "Passengers ({count})",
+  "@passengersCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "join": "Join",
+  "joining": "Joining...",
+  "leaving": "Leaving...",
+  "leave": "Leave",
+  "seatsAvailable": "{count, plural, =1{seat} other{seats}}",
+  "@seatsAvailable": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "alreadyPassed": "Already passed",
+  "inMinutes": "In {minutes} min",
+  "@inMinutes": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "inHoursAndMinutes": "In {hours}h {minutes}min",
+  "@inHoursAndMinutes": {
+    "placeholders": {
+      "hours": {"type": "int"},
+      "minutes": {"type": "int"}
+    }
+  },
+  "inHours": "In {hours}h",
+  "@inHours": {
+    "placeholders": {
+      "hours": {"type": "int"}
+    }
+  },
+  "tomorrow": "Tomorrow",
+  "inDays": "In {days} days",
+  "@inDays": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "acceptInvitationToJoinCarpool": "Accept the invitation to join",
+  "youAreTheDriver": "You are the driver",
+  "alreadyPassenger": "You are already a passenger",
+  "driverOfAnotherCarpool": "You are driver of another ride",
+  "passengerInAnotherCarpool": "You are already a passenger in another ride",
+  "carpoolFull": "Ride full",
+  "anonymous": "Anonymous",
+  "carpoolDepartureLocation": "Departure location",
+  "carpoolDepartureLocationHint": "E.g.: London, King's Cross",
+  "carpoolDepartureLocationRequired": "Please enter a departure location",
+  "carpoolDepartureDateTime": "Departure date & time",
+  "carpoolSelectDateTime": "Select date & time",
+  "carpoolDateTimeRequired": "Please select a departure date & time",
+  "carpoolAvailableSeatsCount": "Number of available seats: {count}",
+  "@carpoolAvailableSeatsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "carpoolNotesHint": "E.g.: Passing by North Street, expect 5€ contribution...",
+  "carpoolCreateAction": "Create ride",
+  "carpoolUpdateAction": "Update"
 }
