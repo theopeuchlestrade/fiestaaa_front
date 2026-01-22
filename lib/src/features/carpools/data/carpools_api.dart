@@ -13,9 +13,13 @@ class CarpoolsApi {
   Future<List<CarpoolModel>> fetchEventCarpools({
     required String token,
     required int eventId,
+    String? sortBy,
   }) async {
+    final uri = Uri.parse('$apiBaseUrl/events/$eventId/carpools').replace(
+      queryParameters: sortBy != null ? {'sort': sortBy} : null,
+    );
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/events/$eventId/carpools'),
+      uri,
       headers: {
         'Authorization': 'Bearer $token',
       },

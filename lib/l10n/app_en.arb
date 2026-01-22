@@ -152,14 +152,14 @@
   "qrCode": "QR Code",
   "myQrCode": "My QR Code",
   "scanQrCode": "Scan QR Code",
-  "checkedIn": "Checked in",
-  "notCheckedIn": "Not checked in",
+
 
   "settings": "Settings",
   "about": "About",
   "version": "Version",
   "privacyPolicy": "Privacy policy",
   "termsOfService": "Terms of service",
+
 
   "fiestaaa": "Fiestaaa",
   "create": "Create",
@@ -572,6 +572,7 @@
   "mapProviderApple": "Apple Maps",
   "mapProviderOsm": "OpenStreetMap",
 
+
   "carpools": "Carpools",
   "carpoolsSubtitle": "Organize your rides together",
   "proposeCarpool": "Propose a ride",
@@ -594,6 +595,7 @@
   "acceptInvitationForCarpool": "Accept the event invitation to propose or join a carpool.",
   "acceptInvitationToPropose": "Accept the invitation to propose a ride",
   "acceptInvitationToJoin": "Accept the invitation to join a ride",
+
   "noCarpoolsAvailable": "No carpools available",
   "beFirstToPropose": "Be the first to propose a ride!",
   "carpoolsCount": "{count, plural, =1{1 carpool available} other{{count} carpools available}}",
@@ -602,9 +604,34 @@
       "count": {"type": "int"}
     }
   },
+  "sortBy": "Sort by",
+  "@sortBy": {
+    "description": "Sort menu tooltip"
+  },
+  "sortDefault": "Default sort",
+  "@sortDefault": {
+    "description": "Default sorting option"
+  },
+  "sortByDepartureAsc": "Departure (earliest first)",
+  "@sortByDepartureAsc": {
+    "description": "Sort by departure time ascending"
+  },
+  "sortByDepartureDesc": "Departure (latest first)",
+  "@sortByDepartureDesc": {
+    "description": "Sort by departure time descending"
+  },
+  "sortByAvailableSeats": "Available seats (most first)",
+  "@sortByAvailableSeats": {
+    "description": "Sort by available seats descending"
+  },
+  "sortByTotalSeats": "Total capacity (largest first)",
+  "@sortByTotalSeats": {
+    "description": "Sort by total seats descending"
+  },
   "unknownDriver": "Unknown driver",
   "youAreDriver": "You are the driver",
   "youArePassenger": "You are a passenger",
+
   "passengers": "Passengers",
   "passengersCount": "Passengers ({count})",
   "@passengersCount": {
@@ -615,6 +642,7 @@
   "join": "Join",
   "joining": "Joining...",
   "leaving": "Leaving...",
+
   "leave": "Leave",
   "seatsAvailable": "{count, plural, =1{seat} other{seats}}",
   "@seatsAvailable": {
@@ -670,5 +698,83 @@
   },
   "carpoolNotesHint": "E.g.: Passing by North Street, expect 5€ contribution...",
   "carpoolCreateAction": "Create ride",
-  "carpoolUpdateAction": "Update"
+  "carpoolUpdateAction": "Update",
+  "carpools": "Carpools",
+  "@carpools": {
+    "description": "Carpools section title"
+  },
+  "carpoolsSubtitle": "Organize your rides together",
+  "@carpoolsSubtitle": {
+    "description": "Carpools section subtitle"
+  },
+  "proposeCarpool": "Propose a carpool",
+  "@proposeCarpool": {
+    "description": "Propose carpool button"
+  },
+
+  "departsAt": "Departs at",
+  "@departsAt": {
+    "description": "Departure time prefix"
+  },
+  "seats": "seats",
+  "@seats": {
+    "description": "Seats label"
+  },
+  "joinCarpool": "Join",
+  "@joinCarpool": {
+    "description": "Join carpool button"
+  },
+  "joining": "Joining...",
+  "@joining": {
+    "description": "Joining carpool status"
+  },
+  "leaveCarpool": "Leave",
+  "@leaveCarpool": {
+    "description": "Leave carpool button"
+  },
+  "leaving": "Leaving...",
+  "@leaving": {
+    "description": "Leaving carpool status"
+  },
+  "participants": "Participants",
+  "@participants": {
+    "description": "Participants section title"
+  },
+  "seeWhoIsComing": "See who's coming to the event",
+  "@seeWhoIsComing": {
+    "description": "Participants section subtitle"
+  },
+  "noParticipantsYet": "No participants yet",
+  "@noParticipantsYet": {
+    "description": "No participants yet"
+  },
+  "confirmedParticipants": "{count, plural, =1{1 confirmed participant} other{{count} confirmed participants}}",
+  "@confirmedParticipants": {
+    "description": "Confirmed participants count",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "pendingInvitations": "{count, plural, =1{1 pending invitation} other{{count} pending invitations}}",
+  "@pendingInvitations": {
+    "description": "Pending invitations count",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "carpoolFeatureComingSoon": "Carpool feature coming soon",
+  "@carpoolFeatureComingSoon": {
+    "description": "Carpool feature coming soon message"
+  },
+  "noCarpoolsAvailable": "No carpools available",
+  "@noCarpoolsAvailable": {
+    "description": "No carpools available message"
+  },
+  "carpoolsCount": "{count, plural, =1{1 carpool available} other{{count} carpools available}}",
+  "@carpoolsCount": {
+    "description": "Carpools count",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }

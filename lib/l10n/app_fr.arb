@@ -168,8 +168,7 @@
   "qrCode": "QR Code",
   "myQrCode": "Mon QR Code",
   "scanQrCode": "Scanner un QR Code",
-  "checkedIn": "Présent",
-  "notCheckedIn": "Non pointé",
+
 
   "settings": "Paramètres",
   "about": "À propos",
@@ -229,6 +228,7 @@
   "collaborativeManagement": "Gestion collaborative",
   "collaborativeManagementDesc": "Organisez ensemble vos fiestaaa",
   "appTagline": "Créez, partagez et gérez vos fiestaaa en toute simplicité.",
+
 
   "fiestaaa": "Fiestaaa",
   "create": "Créer",
@@ -588,6 +588,7 @@
   "mapProviderApple": "Apple Plans",
   "mapProviderOsm": "OpenStreetMap",
 
+
   "carpools": "Covoiturages",
   "carpoolsSubtitle": "Organisez vos trajets ensemble",
   "proposeCarpool": "Proposer un covoiturage",
@@ -610,6 +611,7 @@
   "acceptInvitationForCarpool": "Acceptez l'invitation à l'événement pour proposer ou rejoindre un covoiturage.",
   "acceptInvitationToPropose": "Acceptez l'invitation pour proposer un covoiturage",
   "acceptInvitationToJoin": "Acceptez l'invitation pour rejoindre un covoiturage",
+
   "noCarpoolsAvailable": "Aucun covoiturage disponible",
   "beFirstToPropose": "Soyez le premier à proposer un covoiturage !",
   "carpoolsCount": "{count, plural, =1{1 covoiturage disponible} other{{count} covoiturages disponibles}}",
@@ -618,9 +620,34 @@
       "count": {"type": "int"}
     }
   },
+  "sortBy": "Trier par",
+  "@sortBy": {
+    "description": "Sort menu tooltip"
+  },
+  "sortDefault": "Tri par défaut",
+  "@sortDefault": {
+    "description": "Default sorting option"
+  },
+  "sortByDepartureAsc": "Départ (plus tôt d'abord)",
+  "@sortByDepartureAsc": {
+    "description": "Sort by departure time ascending"
+  },
+  "sortByDepartureDesc": "Départ (plus tard d'abord)",
+  "@sortByDepartureDesc": {
+    "description": "Sort by departure time descending"
+  },
+  "sortByAvailableSeats": "Places disponibles (plus nombreuses d'abord)",
+  "@sortByAvailableSeats": {
+    "description": "Sort by available seats descending"
+  },
+  "sortByTotalSeats": "Capacité totale (plus grande d'abord)",
+  "@sortByTotalSeats": {
+    "description": "Sort by total seats descending"
+  },
   "unknownDriver": "Conducteur inconnu",
   "youAreDriver": "Vous êtes le conducteur",
   "youArePassenger": "Vous êtes passager",
+
   "passengers": "Passagers",
   "passengersCount": "Passagers ({count})",
   "@passengersCount": {
@@ -631,6 +658,7 @@
   "join": "Rejoindre",
   "joining": "En cours...",
   "leaving": "En cours...",
+
   "leave": "Quitter",
   "seatsAvailable": "{count, plural, =1{place} other{places}}",
   "@seatsAvailable": {
@@ -686,5 +714,83 @@
   },
   "carpoolNotesHint": "Ex: Passage possible, prévoir 5€...",
   "carpoolCreateAction": "Créer le covoiturage",
-  "carpoolUpdateAction": "Mettre à jour"
+  "carpoolUpdateAction": "Mettre à jour",
+  "carpools": "Covoiturages",
+  "@carpools": {
+    "description": "Carpools section title"
+  },
+  "carpoolsSubtitle": "Organisez vos trajets ensemble",
+  "@carpoolsSubtitle": {
+    "description": "Carpools section subtitle"
+  },
+  "proposeCarpool": "Proposer un covoiturage",
+  "@proposeCarpool": {
+    "description": "Propose carpool button"
+  },
+
+  "departsAt": "Départ à",
+  "@departsAt": {
+    "description": "Departure time prefix"
+  },
+  "seats": "places",
+  "@seats": {
+    "description": "Seats label"
+  },
+  "joinCarpool": "Rejoindre",
+  "@joinCarpool": {
+    "description": "Join carpool button"
+  },
+  "joining": "Rejoint...",
+  "@joining": {
+    "description": "Joining carpool status"
+  },
+  "leaveCarpool": "Quitter",
+  "@leaveCarpool": {
+    "description": "Leave carpool button"
+  },
+  "leaving": "Quitte...",
+  "@leaving": {
+    "description": "Leaving carpool status"
+  },
+  "participants": "Participants",
+  "@participants": {
+    "description": "Participants section title"
+  },
+  "seeWhoIsComing": "Voyez qui vient à l'événement",
+  "@seeWhoIsComing": {
+    "description": "Participants section subtitle"
+  },
+  "noParticipantsYet": "Aucun participant pour l'instant",
+  "@noParticipantsYet": {
+    "description": "No participants yet"
+  },
+  "confirmedParticipants": "{count, plural, =1{1 participant confirmé} other{{count} participants confirmés}}",
+  "@confirmedParticipants": {
+    "description": "Confirmed participants count",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "pendingInvitations": "{count, plural, =1{1 invitation en attente} other{{count} invitations en attente}}",
+  "@pendingInvitations": {
+    "description": "Pending invitations count",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "carpoolFeatureComingSoon": "Fonctionnalité de covoiturage à venir",
+  "@carpoolFeatureComingSoon": {
+    "description": "Carpool feature coming soon message"
+  },
+  "noCarpoolsAvailable": "Aucun covoiturage disponible",
+  "@noCarpoolsAvailable": {
+    "description": "No carpools available message"
+  },
+  "carpoolsCount": "{count, plural, =1{1 covoiturage disponible} other{{count} covoiturages disponibles}}",
+  "@carpoolsCount": {
+    "description": "Carpools count",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }

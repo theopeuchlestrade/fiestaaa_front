@@ -39,6 +39,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
   int? _leavingCarpoolId;
   int? _editingCarpoolId;
   RealtimeClient? _realtime;
+  String? _sortBy; // New: Current sort option
 
   bool get _canInteract => widget.isOwner || widget.hasAcceptedInvitation;
 
@@ -79,6 +80,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
       final data = await _carpoolsApi.fetchEventCarpools(
         token: widget.session.token,
         eventId: widget.eventId,
+        sortBy: _sortBy,
       );
       if (!mounted) return;
       setState(() => _carpools = data);
@@ -102,11 +104,13 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (context) => CarpoolCreatePage(
-        existingCarpool: existing,
-        eventId: widget.eventId,
-        eventDate: widget.eventDate,
-        session: widget.session,
+      builder: (context) => ScaffoldMessenger(
+        child: CarpoolCreatePage(
+          existingCarpool: existing,
+          eventId: widget.eventId,
+          eventDate: widget.eventDate,
+          session: widget.session,
+        ),
       ),
     );
     setState(() => _editingCarpoolId = null);
@@ -322,9 +326,17 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
                 child: BackButton(),
               ),
               const SizedBox(height: 4),
-              FiestaaaPageHeader(
-                title: l10n.carpools,
-                subtitle: l10n.carpoolsSubtitle,
+              Row(
+                children: [
+                  Expanded(
+                    child: FiestaaaPageHeader(
+                      title: l10n.carpools,
+                      subtitle: l10n.carpoolsSubtitle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildSortMenu(l10n),
+                ],
               ),
               if (!_canInteract) ...[
                 _buildWarningBanner(l10n),
@@ -582,6 +594,125 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildSortMenu(S l10n) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isActive = _sortBy != null;
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: isActive 
+            ? FiestaaaPalette.primary.withValues(alpha: 0.12)
+            : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade100),
+        borderRadius: BorderRadius.circular(12),
+        border: isActive 
+            ? Border.all(color: FiestaaaPalette.primary.withValues(alpha: 0.3))
+            : null,
+      ),
+      child: PopupMenuButton<String?>(
+        icon: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.sort,
+              color: isActive ? FiestaaaPalette.primary : theme.iconTheme.color,
+              size: 20,
+            ),
+            if (isActive) ...[
+              const SizedBox(width: 4),
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: FiestaaaPalette.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
+          ],
+        ),
+        tooltip: l10n.sortBy,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        onSelected: (value) {
+          setState(() {
+            _sortBy = value;
+          });
+          _loadCarpools();
+        },
+        itemBuilder: (context) => [
+          _buildSortMenuItem(
+            value: null,
+            label: l10n.sortDefault,
+            icon: Icons.reorder,
+            isSelected: _sortBy == null,
+          ),
+          const PopupMenuDivider(),
+          _buildSortMenuItem(
+            value: 'departure_asc',
+            label: l10n.sortByDepartureAsc,
+            icon: Icons.arrow_upward,
+            isSelected: _sortBy == 'departure_asc',
+          ),
+          _buildSortMenuItem(
+            value: 'departure_desc',
+            label: l10n.sortByDepartureDesc,
+            icon: Icons.arrow_downward,
+            isSelected: _sortBy == 'departure_desc',
+          ),
+          const PopupMenuDivider(),
+          _buildSortMenuItem(
+            value: 'available_seats_desc',
+            label: l10n.sortByAvailableSeats,
+            icon: Icons.event_seat,
+            isSelected: _sortBy == 'available_seats_desc',
+          ),
+          _buildSortMenuItem(
+            value: 'seats_desc',
+            label: l10n.sortByTotalSeats,
+            icon: Icons.airline_seat_recline_normal,
+            isSelected: _sortBy == 'seats_desc',
+          ),
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem<String?> _buildSortMenuItem({
+    required String? value,
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+  }) {
+    return PopupMenuItem<String?>(
+      value: value,
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: isSelected ? FiestaaaPalette.primary : Colors.grey,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected ? FiestaaaPalette.primary : null,
+              ),
+            ),
+          ),
+          if (isSelected)
+            Icon(
+              Icons.check,
+              size: 18,
+              color: FiestaaaPalette.primary,
+            ),
+        ],
+      ),
     );
   }
 }
