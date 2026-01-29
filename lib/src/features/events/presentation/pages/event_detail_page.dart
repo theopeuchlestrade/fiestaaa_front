@@ -9,6 +9,7 @@ import 'package:fiestaaa_front/src/features/events/domain/event_poll_model.dart'
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_edit_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_invitations_page.dart';
+import 'package:fiestaaa_front/src/features/carpools/presentation/pages/event_carpools_page.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
@@ -81,10 +82,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
   bool _loadingPolls = true;
   String? _pollsError;
   int? _votingPollId;
+  int? _deletingPollId;
   bool _creatingPoll = false;
   bool _pollsExpanded = true;
   bool _itemsExpanded = true;
-  int? _deletingPollId;
 
   @override
   void initState() {
@@ -1254,6 +1255,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
         tooltip:
             _isOwner ? S.of(context).manageInvitations : S.of(context).viewParticipants,
       ),
+      if (_isOwner || _hasAcceptedInvitation)
+        IconButton(
+          onPressed: _openCarpools,
+          icon: const Icon(Icons.directions_car),
+          tooltip: 'Covoiturage',
+        ),
       if (_isOwner)
         IconButton(
           onPressed: _sharingLink ? null : _shareEvent,
@@ -1778,6 +1785,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
           eventId: _currentEvent.id,
           eventName: _currentEvent.name,
           token: widget.session.token,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openCarpools() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EventCarpoolsPage(
+          eventId: _currentEvent.id,
+          eventName: _currentEvent.name,
+          eventDate: _currentEvent.startDateTime,
+          session: widget.session,
+          isOwner: _isOwner,
+          hasAcceptedInvitation: _hasAcceptedInvitation,
         ),
       ),
     );

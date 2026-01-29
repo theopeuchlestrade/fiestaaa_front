@@ -168,8 +168,7 @@
   "qrCode": "QR Code",
   "myQrCode": "Mon QR Code",
   "scanQrCode": "Scanner un QR Code",
-  "checkedIn": "Présent",
-  "notCheckedIn": "Non pointé",
+
 
   "settings": "Paramètres",
   "about": "À propos",
@@ -229,6 +228,7 @@
   "collaborativeManagement": "Gestion collaborative",
   "collaborativeManagementDesc": "Organisez ensemble vos fiestaaa",
   "appTagline": "Créez, partagez et gérez vos fiestaaa en toute simplicité.",
+
 
   "fiestaaa": "Fiestaaa",
   "create": "Créer",
@@ -586,5 +586,211 @@
   "viewVotes": "Voir les votes",
   "mapProviderGoogle": "Google Maps",
   "mapProviderApple": "Apple Plans",
-  "mapProviderOsm": "OpenStreetMap"
+  "mapProviderOsm": "OpenStreetMap",
+
+
+  "carpools": "Covoiturages",
+  "carpoolsSubtitle": "Organisez vos trajets ensemble",
+  "proposeCarpool": "Proposer un covoiturage",
+  "proposeACarpoolDescription": "Proposez un trajet et partagez votre véhicule avec d'autres participants.",
+  "alreadyInCarpoolForEvent": "Vous êtes déjà dans un covoiturage pour cet événement.",
+  "alreadyInCarpool": "Déjà dans un covoiturage",
+  "carpoolCreatedSuccess": "Covoiturage créé avec succès",
+  "carpoolUpdated": "Covoiturage mis à jour",
+  "carpoolDeleted": "Covoiturage supprimé",
+  "deleteCarpool": "Supprimer le covoiturage",
+  "deleteCarpoolConfirm": "Êtes-vous sûr de vouloir supprimer ce covoiturage ?",
+  "deleteCarpoolWithPassengersConfirm": "Attention, ce covoiturage a des passagers. Si vous le supprimez, ils seront notifiés et retirés du covoiturage.",
+  "seeMore": "Voir plus",
+  "carpoolNotes": "Notes du covoiturage",
+  "carpoolCannotBeAfterEvent": "Le covoiturage ne peut pas être après l'événement",
+  "leaveCarpool": "Quitter le covoiturage",
+  "leaveCarpoolConfirm": "Êtes-vous sûr de vouloir quitter ce covoiturage ?",
+  "joinedCarpool": "Vous avez rejoint le covoiturage",
+  "leftCarpool": "Vous avez quitté le covoiturage",
+  "acceptInvitationForCarpool": "Acceptez l'invitation à l'événement pour proposer ou rejoindre un covoiturage.",
+  "acceptInvitationToPropose": "Acceptez l'invitation pour proposer un covoiturage",
+  "acceptInvitationToJoin": "Acceptez l'invitation pour rejoindre un covoiturage",
+
+  "noCarpoolsAvailable": "Aucun covoiturage disponible",
+  "beFirstToPropose": "Soyez le premier à proposer un covoiturage !",
+  "carpoolsCount": "{count, plural, =1{1 covoiturage disponible} other{{count} covoiturages disponibles}}",
+  "@carpoolsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "sortBy": "Trier par",
+  "@sortBy": {
+    "description": "Sort menu tooltip"
+  },
+  "sortDefault": "Tri par défaut",
+  "@sortDefault": {
+    "description": "Default sorting option"
+  },
+  "sortByDepartureAsc": "Départ (plus tôt d'abord)",
+  "@sortByDepartureAsc": {
+    "description": "Sort by departure time ascending"
+  },
+  "sortByDepartureDesc": "Départ (plus tard d'abord)",
+  "@sortByDepartureDesc": {
+    "description": "Sort by departure time descending"
+  },
+  "sortByAvailableSeats": "Places disponibles (plus nombreuses d'abord)",
+  "@sortByAvailableSeats": {
+    "description": "Sort by available seats descending"
+  },
+  "sortByTotalSeats": "Capacité totale (plus grande d'abord)",
+  "@sortByTotalSeats": {
+    "description": "Sort by total seats descending"
+  },
+  "unknownDriver": "Conducteur inconnu",
+  "youAreDriver": "Vous êtes le conducteur",
+  "youArePassenger": "Vous êtes passager",
+
+  "passengers": "Passagers",
+  "passengersCount": "Passagers ({count})",
+  "@passengersCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "join": "Rejoindre",
+  "joining": "En cours...",
+  "leaving": "En cours...",
+
+  "leave": "Quitter",
+  "seatsAvailable": "{count, plural, =1{place} other{places}}",
+  "@seatsAvailable": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "alreadyPassed": "Déjà passé",
+  "inMinutes": "Dans {minutes} min",
+  "@inMinutes": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "inHoursAndMinutes": "Dans {hours}h {minutes}min",
+  "@inHoursAndMinutes": {
+    "placeholders": {
+      "hours": {"type": "int"},
+      "minutes": {"type": "int"}
+    }
+  },
+  "inHours": "Dans {hours}h",
+  "@inHours": {
+    "placeholders": {
+      "hours": {"type": "int"}
+    }
+  },
+  "tomorrow": "Demain",
+  "inDays": "Dans {days} jours",
+  "@inDays": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "acceptInvitationToJoinCarpool": "Acceptez l'invitation pour rejoindre",
+  "youAreTheDriver": "Vous êtes le conducteur",
+  "alreadyPassenger": "Vous êtes déjà passager",
+  "driverOfAnotherCarpool": "Vous êtes conducteur d'un autre covoiturage",
+  "passengerInAnotherCarpool": "Vous êtes déjà passager dans un autre covoiturage",
+  "carpoolFull": "Covoiturage complet",
+  "anonymous": "Anonyme",
+  "carpoolDepartureLocation": "Lieu de départ",
+  "carpoolDepartureLocationHint": "Ex: Paris, Gare de Lyon",
+  "carpoolDepartureLocationRequired": "Veuillez entrer un lieu de départ",
+  "carpoolDepartureDateTime": "Date et heure de départ",
+  "carpoolSelectDateTime": "Sélectionner une date et heure",
+  "carpoolDateTimeRequired": "Veuillez sélectionner une date et heure",
+  "carpoolAvailableSeatsCount": "Nombre de places disponibles : {count}",
+  "@carpoolAvailableSeatsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "carpoolNotesHint": "Ex: Passage possible, prévoir 5€...",
+  "carpoolCreateAction": "Créer le covoiturage",
+  "carpoolUpdateAction": "Mettre à jour",
+  "carpools": "Covoiturages",
+  "@carpools": {
+    "description": "Carpools section title"
+  },
+  "carpoolsSubtitle": "Organisez vos trajets ensemble",
+  "@carpoolsSubtitle": {
+    "description": "Carpools section subtitle"
+  },
+  "proposeCarpool": "Proposer un covoiturage",
+  "@proposeCarpool": {
+    "description": "Propose carpool button"
+  },
+
+  "departsAt": "Départ à",
+  "@departsAt": {
+    "description": "Departure time prefix"
+  },
+  "seats": "places",
+  "@seats": {
+    "description": "Seats label"
+  },
+  "joinCarpool": "Rejoindre",
+  "@joinCarpool": {
+    "description": "Join carpool button"
+  },
+  "joining": "Rejoint...",
+  "@joining": {
+    "description": "Joining carpool status"
+  },
+  "leaveCarpool": "Quitter",
+  "@leaveCarpool": {
+    "description": "Leave carpool button"
+  },
+  "leaving": "Quitte...",
+  "@leaving": {
+    "description": "Leaving carpool status"
+  },
+  "participants": "Participants",
+  "@participants": {
+    "description": "Participants section title"
+  },
+  "seeWhoIsComing": "Voyez qui vient à l'événement",
+  "@seeWhoIsComing": {
+    "description": "Participants section subtitle"
+  },
+  "noParticipantsYet": "Aucun participant pour l'instant",
+  "@noParticipantsYet": {
+    "description": "No participants yet"
+  },
+  "confirmedParticipants": "{count, plural, =1{1 participant confirmé} other{{count} participants confirmés}}",
+  "@confirmedParticipants": {
+    "description": "Confirmed participants count",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "pendingInvitations": "{count, plural, =1{1 invitation en attente} other{{count} invitations en attente}}",
+  "@pendingInvitations": {
+    "description": "Pending invitations count",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "carpoolFeatureComingSoon": "Fonctionnalité de covoiturage à venir",
+  "@carpoolFeatureComingSoon": {
+    "description": "Carpool feature coming soon message"
+  },
+  "noCarpoolsAvailable": "Aucun covoiturage disponible",
+  "@noCarpoolsAvailable": {
+    "description": "No carpools available message"
+  },
+  "carpoolsCount": "{count, plural, =1{1 covoiturage disponible} other{{count} covoiturages disponibles}}",
+  "@carpoolsCount": {
+    "description": "Carpools count",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }
