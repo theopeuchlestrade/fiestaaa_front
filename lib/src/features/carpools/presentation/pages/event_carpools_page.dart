@@ -65,7 +65,13 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
     _realtime!.connect();
     _realtime!.stream.listen((event) {
       if (!mounted) return;
-      if (['carpool_created', 'carpool_updated', 'carpool_deleted', 'carpool_joined', 'carpool_left'].contains(event['type'])) {
+      if ([
+        'carpool_created',
+        'carpool_updated',
+        'carpool_deleted',
+        'carpool_joined',
+        'carpool_left',
+      ].contains(event['type'])) {
         _loadCarpools();
       }
     });
@@ -157,7 +163,10 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
     }
   }
 
-  Future<void> _updateCarpool(int carpoolId, CarpoolPatchPayload payload) async {
+  Future<void> _updateCarpool(
+    int carpoolId,
+    CarpoolPatchPayload payload,
+  ) async {
     setState(() => _editingCarpoolId = carpoolId);
     try {
       await _carpoolsApi.updateCarpool(
@@ -184,9 +193,11 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.deleteCarpool),
-        content: Text(carpool.passengers.isNotEmpty
-            ? l10n.deleteCarpoolWithPassengersConfirm
-            : l10n.deleteCarpoolConfirm),
+        content: Text(
+          carpool.passengers.isNotEmpty
+              ? l10n.deleteCarpoolWithPassengersConfirm
+              : l10n.deleteCarpoolConfirm,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -300,7 +311,9 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
       if (carpool.driverHandle?.toLowerCase() == userHandleLower) {
         return true;
       }
-      if (carpool.passengers.any((p) => p.handle?.toLowerCase() == userHandleLower)) {
+      if (carpool.passengers.any(
+        (p) => p.handle?.toLowerCase() == userHandleLower,
+      )) {
         return true;
       }
     }
@@ -321,10 +334,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.zero,
             children: [
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: BackButton(),
-              ),
+              const Align(alignment: Alignment.centerLeft, child: BackButton()),
               const SizedBox(height: 4),
               Row(
                 children: [
@@ -394,7 +404,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
 
   Widget _buildCreateSection(S l10n, bool canCreate) {
     final userIsInAnyCarpool = _userIsInAnyCarpool;
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -403,10 +413,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.directions_car,
-                  color: FiestaaaPalette.primary,
-                ),
+                Icon(Icons.directions_car, color: FiestaaaPalette.primary),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -423,9 +430,9 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
               userIsInAnyCarpool
                   ? l10n.alreadyInCarpoolForEvent
                   : l10n.proposeACarpoolDescription,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey.shade600,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -436,11 +443,16 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Icon(Icons.add),
                 label: Text(
-                  userIsInAnyCarpool ? l10n.alreadyInCarpool : l10n.proposeCarpool,
+                  userIsInAnyCarpool
+                      ? l10n.alreadyInCarpool
+                      : l10n.proposeCarpool,
                 ),
               ),
             ),
@@ -484,19 +496,17 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
           const SizedBox(height: 16),
           Text(
             l10n.noCarpoolsAvailable,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
-            _canInteract
-                ? l10n.beFirstToPropose
-                : l10n.acceptInvitationToJoin,
+            _canInteract ? l10n.beFirstToPropose : l10n.acceptInvitationToJoin,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey.shade600,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
           ),
         ],
       ),
@@ -505,21 +515,21 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
 
   Widget _buildCarpoolsGrid(S l10n) {
     final userHandle = widget.session.handle?.toLowerCase();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           l10n.carpoolsCount(_carpools!.length),
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: Colors.grey.shade600,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.labelLarge?.copyWith(color: Colors.grey.shade600),
         ),
         const SizedBox(height: 12),
         LayoutBuilder(
           builder: (context, constraints) {
             final screenWidth = constraints.maxWidth;
-            
+
             // Mobile: 1 column, Tablet: 2, Desktop: 3
             int crossAxisCount = 1;
             if (screenWidth >= 1100) {
@@ -532,24 +542,36 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
             // Calculate width for each item to fit the count
             // Total width = (count * itemWidth) + ((count - 1) * spacing)
             // itemWidth = (Total width - ((count - 1) * spacing)) / count
-            final itemWidth = (screenWidth - (crossAxisCount - 1) * spacing) / crossAxisCount;
+            final itemWidth =
+                (screenWidth - (crossAxisCount - 1) * spacing) / crossAxisCount;
 
             return Wrap(
               spacing: spacing,
               runSpacing: spacing,
               children: _carpools!.map((carpool) {
-                final isDriver = userHandle != null &&
+                final isDriver =
+                    userHandle != null &&
                     carpool.driverHandle?.toLowerCase() == userHandle;
-                final isPassenger = userHandle != null &&
-                    carpool.passengers.any((p) => p.handle?.toLowerCase() == userHandle);
-                final isDriverOfAnother = _carpools!.any((c) =>
-                    c.driverHandle?.toLowerCase() == userHandle &&
-                    c.carpoolId != carpool.carpoolId);
-                final isPassengerInAnother = _carpools!.any((c) =>
-                    c.carpoolId != carpool.carpoolId &&
-                    c.passengers.any((p) => p.handle?.toLowerCase() == userHandle));
+                final isPassenger =
+                    userHandle != null &&
+                    carpool.passengers.any(
+                      (p) => p.handle?.toLowerCase() == userHandle,
+                    );
+                final isDriverOfAnother = _carpools!.any(
+                  (c) =>
+                      c.driverHandle?.toLowerCase() == userHandle &&
+                      c.carpoolId != carpool.carpoolId,
+                );
+                final isPassengerInAnother = _carpools!.any(
+                  (c) =>
+                      c.carpoolId != carpool.carpoolId &&
+                      c.passengers.any(
+                        (p) => p.handle?.toLowerCase() == userHandle,
+                      ),
+                );
 
-                final canJoin = _canInteract &&
+                final canJoin =
+                    _canInteract &&
                     !isDriver &&
                     !isPassenger &&
                     !isDriverOfAnother &&
@@ -583,9 +605,15 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
                     unavailableReason: unavailableReason,
                     isJoining: _joiningCarpoolId == carpool.carpoolId,
                     isLeaving: _leavingCarpoolId == carpool.carpoolId,
-                    onJoin: canJoin ? () => _joinCarpool(carpool.carpoolId) : null,
-                    onLeave: canLeave ? () => _leaveCarpool(carpool.carpoolId) : null,
-                    onEdit: canEdit ? () => _openCarpoolCreatePage(existing: carpool) : null,
+                    onJoin: canJoin
+                        ? () => _joinCarpool(carpool.carpoolId)
+                        : null,
+                    onLeave: canLeave
+                        ? () => _leaveCarpool(carpool.carpoolId)
+                        : null,
+                    onEdit: canEdit
+                        ? () => _openCarpoolCreatePage(existing: carpool)
+                        : null,
                     onDelete: canDelete ? () => _deleteCarpool(carpool) : null,
                   ),
                 );
@@ -601,14 +629,16 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isActive = _sortBy != null;
-    
+
     return Container(
       decoration: BoxDecoration(
-        color: isActive 
+        color: isActive
             ? FiestaaaPalette.primary.withValues(alpha: 0.12)
-            : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade100),
+            : (isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.grey.shade100),
         borderRadius: BorderRadius.circular(12),
-        border: isActive 
+        border: isActive
             ? Border.all(color: FiestaaaPalette.primary.withValues(alpha: 0.3))
             : null,
       ),
@@ -706,11 +736,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
             ),
           ),
           if (isSelected)
-            Icon(
-              Icons.check,
-              size: 18,
-              color: FiestaaaPalette.primary,
-            ),
+            Icon(Icons.check, size: 18, color: FiestaaaPalette.primary),
         ],
       ),
     );

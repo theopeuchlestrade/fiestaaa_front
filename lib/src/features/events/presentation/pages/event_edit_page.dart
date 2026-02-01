@@ -67,10 +67,7 @@ class _EventEditPageState extends State<EventEditPage> {
     _selectedDate = event.date;
     _invitationDeadline = event.invitationDeadline;
     final startDate = event.startDateTime;
-    _selectedTime = TimeOfDay(
-      hour: startDate.hour,
-      minute: startDate.minute,
-    );
+    _selectedTime = TimeOfDay(hour: startDate.hour, minute: startDate.minute);
     if (event.latitude != null && event.longitude != null) {
       _selectedSuggestion = AddressSuggestion(
         label: event.address,
@@ -169,8 +166,7 @@ class _EventEditPageState extends State<EventEditPage> {
 
   Future<void> _pickInvitationDeadline() async {
     final now = DateTime.now();
-    final lastDate =
-        _selectedDate.isBefore(now) ? now : _selectedDate;
+    final lastDate = _selectedDate.isBefore(now) ? now : _selectedDate;
     var initial = _invitationDeadline ?? lastDate;
     if (initial.isBefore(now)) {
       initial = now;
@@ -343,7 +339,8 @@ class _EventEditPageState extends State<EventEditPage> {
       return S.of(context).linkRequired;
     }
     final provider = _providerById(_selectedProviderId);
-    final regExp = provider?.compiledValidationRegex ??
+    final regExp =
+        provider?.compiledValidationRegex ??
         RegExp(PaymentProviderModel.defaultValidationRegex);
     if (!regExp.hasMatch(text)) {
       return S.of(context).linkFormatInvalid(provider?.name ?? '');
@@ -376,8 +373,9 @@ class _EventEditPageState extends State<EventEditPage> {
               tooltip: S.of(context).search,
             ),
           ),
-          validator: (value) =>
-              value == null || value.trim().isEmpty ? S.of(context).fieldRequired : null,
+          validator: (value) => value == null || value.trim().isEmpty
+              ? S.of(context).fieldRequired
+              : null,
           onFieldSubmitted: (_) => _searchAddress(),
         ),
         if (_addressSearchError != null) ...[
@@ -395,8 +393,7 @@ class _EventEditPageState extends State<EventEditPage> {
               shrinkWrap: true,
               physics: const ClampingScrollPhysics(),
               itemCount: _addressSuggestions.length,
-              separatorBuilder: (context, index) =>
-                  const Divider(height: 1),
+              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final suggestion = _addressSuggestions[index];
                 return ListTile(
@@ -449,10 +446,7 @@ class _EventEditPageState extends State<EventEditPage> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _providersError!,
-            style: TextStyle(color: Colors.red.shade400),
-          ),
+          Text(_providersError!, style: TextStyle(color: Colors.red.shade400)),
           TextButton.icon(
             onPressed: _loadPaymentProviders,
             icon: const Icon(Icons.refresh),
@@ -463,10 +457,7 @@ class _EventEditPageState extends State<EventEditPage> {
     }
 
     final items = <DropdownMenuItem<int?>>[
-      DropdownMenuItem<int?>(
-        value: null,
-        child: Text(S.of(context).noPayment),
-      ),
+      DropdownMenuItem<int?>(value: null, child: Text(S.of(context).noPayment)),
       ..._providers.map(
         (provider) => DropdownMenuItem<int?>(
           value: provider.id,
@@ -506,15 +497,17 @@ class _EventEditPageState extends State<EventEditPage> {
       children: [
         Text(
           S.of(context).contributionType,
-          style: Theme.of(context)
-              .textTheme
-              .labelLarge
-              ?.copyWith(color: Colors.grey.shade700),
+          style: Theme.of(
+            context,
+          ).textTheme.labelLarge?.copyWith(color: Colors.grey.shade700),
         ),
         const SizedBox(height: 8),
         SegmentedButton<bool>(
           segments: [
-            ButtonSegment(value: false, label: Text(S.of(context).globalObjective)),
+            ButtonSegment(
+              value: false,
+              label: Text(S.of(context).globalObjective),
+            ),
             ButtonSegment(value: true, label: Text(S.of(context).perPerson)),
           ],
           selected: {_paymentPerPerson},
@@ -531,9 +524,13 @@ class _EventEditPageState extends State<EventEditPage> {
   Widget _buildInvitationDeadlineField() {
     final subtitle = _invitationDeadline == null
         ? S.of(context).optionalDeadlineHelper
-        : S.of(context).responseExpectedBefore(
-            DateFormat.yMMMMd(Localizations.localeOf(context).toString())
-                .format(_invitationDeadline!));
+        : S
+              .of(context)
+              .responseExpectedBefore(
+                DateFormat.yMMMMd(
+                  Localizations.localeOf(context).toString(),
+                ).format(_invitationDeadline!),
+              );
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 420;
@@ -551,7 +548,10 @@ class _EventEditPageState extends State<EventEditPage> {
             OutlinedButton(
               onPressed: _pickInvitationDeadline,
               child: Text(
-                  _invitationDeadline == null ? S.of(context).define : S.of(context).modify),
+                _invitationDeadline == null
+                    ? S.of(context).define
+                    : S.of(context).modify,
+              ),
             ),
           ],
         );
@@ -559,14 +559,8 @@ class _EventEditPageState extends State<EventEditPage> {
         final subtitleWidget = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              subtitle,
-              style: TextStyle(color: Colors.grey.shade700),
-            ),
-            if (isCompact) ...[
-              const SizedBox(height: 8),
-              actions,
-            ],
+            Text(subtitle, style: TextStyle(color: Colors.grey.shade700)),
+            if (isCompact) ...[const SizedBox(height: 8), actions],
           ],
         );
 
@@ -591,14 +585,9 @@ class _EventEditPageState extends State<EventEditPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: BackButton(),
-              ),
+              const Align(alignment: Alignment.centerLeft, child: BackButton()),
               const SizedBox(height: 4),
-              FiestaaaPageHeader(
-                title: S.of(context).editFiestaaa,
-              ),
+              FiestaaaPageHeader(title: S.of(context).editFiestaaa),
               Form(
                 key: _formKey,
                 child: Column(
@@ -609,7 +598,8 @@ class _EventEditPageState extends State<EventEditPage> {
                         labelText: S.of(context).fiestaaaName,
                         prefixIcon: const Icon(Icons.celebration),
                       ),
-                      validator: (value) => value == null || value.trim().isEmpty
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
                           ? S.of(context).fieldRequired
                           : null,
                     ),
@@ -623,7 +613,8 @@ class _EventEditPageState extends State<EventEditPage> {
                         alignLabelWithHint: true,
                         prefixIcon: const Icon(Icons.description),
                       ),
-                      validator: (value) => value == null || value.trim().isEmpty
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
                           ? S.of(context).fieldRequired
                           : null,
                     ),
@@ -637,8 +628,9 @@ class _EventEditPageState extends State<EventEditPage> {
                             onPressed: _pickDate,
                             icon: const Icon(Icons.event),
                             label: Text(
-                              DateFormat.yMMMMd(Localizations.localeOf(context).toString())
-                                  .format(_selectedDate),
+                              DateFormat.yMMMMd(
+                                Localizations.localeOf(context).toString(),
+                              ).format(_selectedDate),
                             ),
                           ),
                         ),
@@ -680,8 +672,9 @@ class _EventEditPageState extends State<EventEditPage> {
                             ? S.of(context).amountPerPersonHelper
                             : S.of(context).totalAmountHelper,
                       ),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       enabled: _selectedProviderId != null,
                       validator: (value) {
                         if (_selectedProviderId == null) {
@@ -691,7 +684,9 @@ class _EventEditPageState extends State<EventEditPage> {
                         if (raw.isEmpty) {
                           return null;
                         }
-                        final parsed = double.tryParse(raw.replaceAll(',', '.'));
+                        final parsed = double.tryParse(
+                          raw.replaceAll(',', '.'),
+                        );
                         if (parsed == null || parsed < 0) {
                           return S.of(context).enterPositiveAmount;
                         }
@@ -707,7 +702,9 @@ class _EventEditPageState extends State<EventEditPage> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : Text(S.of(context).save),
                       ),

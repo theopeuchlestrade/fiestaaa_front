@@ -163,9 +163,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
       setState(() => _polls = data);
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _pollsError = e.statusCode == 403
-          ? S.of(context).acceptInvitationBeforeVoting
-          : e.message);
+      setState(
+        () => _pollsError = e.statusCode == 403
+            ? S.of(context).acceptInvitationBeforeVoting
+            : e.message,
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _pollsError = S.of(context).unableToLoadPolls);
@@ -334,8 +336,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   Future<void> _openCreatePollSheet() async {
     final questionController = TextEditingController();
-    final optionControllers =
-        List.generate(3, (_) => TextEditingController());
+    final optionControllers = List.generate(3, (_) => TextEditingController());
     int selectedDuration = 60;
     bool useCustomDuration = false;
     final customDurationController = TextEditingController(text: '48');
@@ -393,38 +394,37 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                     const SizedBox(height: 6),
-                    ...optionControllers.asMap().entries.map(
-                      (entry) {
-                        final index = entry.key;
-                        final controller = entry.value;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: controller,
-                                  decoration: InputDecoration(
-                                    labelText: S.of(context).optionNumber(index + 1),
-                                    prefixIcon:
-                                        const Icon(Icons.circle_outlined),
-                                  ),
+                    ...optionControllers.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final controller = entry.value;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: controller,
+                                decoration: InputDecoration(
+                                  labelText: S
+                                      .of(context)
+                                      .optionNumber(index + 1),
+                                  prefixIcon: const Icon(Icons.circle_outlined),
                                 ),
                               ),
-                              if (optionControllers.length > 2)
-                                IconButton(
-                                  onPressed: () {
-                                    setModalState(() {
-                                      optionControllers.removeAt(index);
-                                    });
-                                  },
-                                  icon: const Icon(Icons.delete_outline),
-                                ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                            ),
+                            if (optionControllers.length > 2)
+                              IconButton(
+                                onPressed: () {
+                                  setModalState(() {
+                                    optionControllers.removeAt(index);
+                                  });
+                                },
+                                icon: const Icon(Icons.delete_outline),
+                              ),
+                          ],
+                        ),
+                      );
+                    }),
                     if (optionControllers.length < 8)
                       Align(
                         alignment: Alignment.centerLeft,
@@ -451,8 +451,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         ...durations.map(
                           (d) => ChoiceChip(
                             label: Text(
-                                d >= 60 ? '${(d / 60).round()} h' : '$d min'),
-                            selected: !useCustomDuration && selectedDuration == d,
+                              d >= 60 ? '${(d / 60).round()} h' : '$d min',
+                            ),
+                            selected:
+                                !useCustomDuration && selectedDuration == d,
                             onSelected: (_) => setModalState(() {
                               useCustomDuration = false;
                               selectedDuration = d;
@@ -477,8 +479,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         decoration: InputDecoration(
                           labelText: S.of(context).durationInHours,
                           prefixIcon: const Icon(Icons.schedule),
-                          helperText:
-                              S.of(context).durationHelperText,
+                          helperText: S.of(context).durationHelperText,
                         ),
                       ),
                     ],
@@ -499,8 +500,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         const Spacer(),
                         ElevatedButton.icon(
                           onPressed: () {
-                            final question =
-                                questionController.text.trim();
+                            final question = questionController.text.trim();
                             final rawOptions = optionControllers
                                 .map((c) => c.text.trim())
                                 .where((txt) => txt.isNotEmpty)
@@ -534,11 +534,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             }
                             int durationMinutes;
                             if (useCustomDuration) {
-                              final hours = int.tryParse(
-                                      customDurationController.text.trim()) ??
+                              final hours =
+                                  int.tryParse(
+                                    customDurationController.text.trim(),
+                                  ) ??
                                   0;
                               if (hours <= 24) {
-                                  _showSnack(
+                                _showSnack(
                                   S.of(context).durationMustBeOver24h,
                                   isError: true,
                                 );
@@ -548,14 +550,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             } else {
                               durationMinutes = selectedDuration;
                             }
-                            durationMinutes =
-                                durationMinutes.clamp(15, maxDurationMinutes);
-                            Navigator.of(context).pop(_NewPollData(
-                              question: question,
-                              options: options,
-                              durationMinutes: durationMinutes,
-                              allowMultiple: allowMultiple,
-                            ));
+                            durationMinutes = durationMinutes.clamp(
+                              15,
+                              maxDurationMinutes,
+                            );
+                            Navigator.of(context).pop(
+                              _NewPollData(
+                                question: question,
+                                options: options,
+                                durationMinutes: durationMinutes,
+                                allowMultiple: allowMultiple,
+                              ),
+                            );
                           },
                           icon: const Icon(Icons.send),
                           label: Text(S.of(context).createThePoll),
@@ -590,12 +596,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                    Text(
-                      S.of(context).votesFor(poll.question),
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w800),
+                  Text(
+                    S.of(context).votesFor(poll.question),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Expanded(
@@ -629,12 +634,15 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                   ),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 6),
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                          color: Colors.grey.shade300),
+                                        color: Colors.grey.shade300,
+                                      ),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -656,9 +664,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                               if (option.voters.isEmpty)
                                 Text(
                                   S.of(context).noVotesYet,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
+                                  style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(color: Colors.grey.shade600),
                                 )
                               else
@@ -666,8 +672,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                   spacing: 8,
                                   runSpacing: 8,
                                   children: option.voters.map((voter) {
-                                    final displayName =
-                                        _displayName(context,voter.handle);
+                                    final displayName = _displayName(
+                                      context,
+                                      voter.handle,
+                                    );
                                     return Chip(
                                       avatar: CircleAvatar(
                                         backgroundColor: Colors.grey.shade300,
@@ -676,17 +684,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                             : NetworkImage(voter.avatarUrl!),
                                         child: voter.avatarUrl == null
                                             ? Text(
-                                                _displayInitial(context,voter.handle),
+                                                _displayInitial(
+                                                  context,
+                                                  voter.handle,
+                                                ),
                                                 style: const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.w700),
+                                                  fontWeight: FontWeight.w700,
+                                                ),
                                               )
                                             : null,
                                       ),
                                       label: Text(
                                         displayName,
                                         style: const TextStyle(
-                                            fontWeight: FontWeight.w700),
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                       ),
                                     );
                                   }).toList(),
@@ -780,8 +792,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
       _loadingMyInvitation = true;
     });
     try {
-      final mine =
-          await _invitationsApi.fetchMyInvitations(widget.session.token);
+      final mine = await _invitationsApi.fetchMyInvitations(
+        widget.session.token,
+      );
       if (!mounted) return;
       InvitationModel? match;
       for (final inv in mine) {
@@ -811,8 +824,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
     final nameController = TextEditingController();
     final quantityController = TextEditingController();
     final formKey = GlobalKey<FormState>();
-    EventItemKind selectedKind =
-        _isOwner ? EventItemKind.need : EventItemKind.bring;
+    EventItemKind selectedKind = _isOwner
+        ? EventItemKind.need
+        : EventItemKind.bring;
     final unitOptions = <String>['pièce', 'g', 'kg', 'ml', 'L'];
     String selectedUnit = unitOptions.first;
 
@@ -862,8 +876,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         ),
                         validator: (value) =>
                             value == null || value.trim().isEmpty
-                                ? S.of(context).fieldRequired
-                                : null,
+                            ? S.of(context).fieldRequired
+                            : null,
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -913,7 +927,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        value: selectedUnit,
+                        initialValue: selectedUnit,
                         decoration: InputDecoration(
                           labelText: S.of(context).unit,
                           prefixIcon: const Icon(Icons.straighten),
@@ -945,8 +959,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                 return;
                               }
                               final name = nameController.text.trim();
-                              final qty =
-                                  int.parse(quantityController.text.trim());
+                              final qty = int.parse(
+                                quantityController.text.trim(),
+                              );
                               Navigator.of(context).pop(
                                 _NewEventItemData(
                                   name,
@@ -1018,9 +1033,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(S.of(context).deleteItemTitle(item.name)),
-        content: Text(
-          S.of(context).deleteItemWarning,
-        ),
+        content: Text(S.of(context).deleteItemWarning),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -1082,8 +1095,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _paymentProvidersError =
-            S.of(context).unableToLoadPaymentProviders;
+        _paymentProvidersError = S.of(context).unableToLoadPaymentProviders;
         _loadingPaymentProviders = false;
       });
     }
@@ -1099,7 +1111,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
       if (!mounted) return;
       _notifyInvitationStatus(status);
       _showSnack(
-        status == 'Accepted' ? S.of(context).invitationAccepted : S.of(context).invitationDeclined,
+        status == 'Accepted'
+            ? S.of(context).invitationAccepted
+            : S.of(context).invitationDeclined,
       );
       if (status == 'Declined') {
         widget.onEventRemoved?.call(_currentEvent.id);
@@ -1131,9 +1145,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(S.of(context).deleteFiestaaaTitle),
-        content: Text(
-          S.of(context).deleteFiestaaaWarning,
-        ),
+        content: Text(S.of(context).deleteFiestaaaWarning),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -1195,10 +1207,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  Future<void> _reserveQuantity(
-    EventItemModel item,
-    int quantity,
-  ) async {
+  Future<void> _reserveQuantity(EventItemModel item, int quantity) async {
     setState(() {
       _reservingItemId = item.itemId;
     });
@@ -1246,11 +1255,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  S.of(context).promised(item.reservedQuantity, item.maxQuantity, item.unitLabel),
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: Colors.grey.shade600),
+                  S
+                      .of(context)
+                      .promised(
+                        item.reservedQuantity,
+                        item.maxQuantity,
+                        item.unitLabel,
+                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -1314,8 +1328,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
       IconButton(
         onPressed: _openInvitations,
         icon: const Icon(Icons.people_alt),
-        tooltip:
-            _isOwner ? S.of(context).manageInvitations : S.of(context).viewParticipants,
+        tooltip: _isOwner
+            ? S.of(context).manageInvitations
+            : S.of(context).viewParticipants,
       ),
       if (_isOwner || _hasAcceptedInvitation)
         IconButton(
@@ -1383,9 +1398,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ],
         ),
         const SizedBox(height: 4),
-        FiestaaaPageHeader(
-          title: _currentEvent.name,
-        ),
+        FiestaaaPageHeader(title: _currentEvent.name),
       ],
     );
   }
@@ -1425,9 +1438,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 _DetailTile(
                   icon: Icons.hourglass_bottom,
                   label: S.of(context).responseBefore,
-                  value: _currentEvent.formattedInvitationDeadline ??
-                      DateFormat.yMMMMd('fr_FR')
-                          .format(_currentEvent.invitationDeadline!),
+                  value:
+                      _currentEvent.formattedInvitationDeadline ??
+                      DateFormat.yMMMMd(
+                        'fr_FR',
+                      ).format(_currentEvent.invitationDeadline!),
                 ),
               _buildLocationSection(),
               _DetailTile(
@@ -1456,8 +1471,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
       );
     }
 
-    final target =
-        LatLng(_currentEvent.latitude ?? 0, _currentEvent.longitude ?? 0);
+    final target = LatLng(
+      _currentEvent.latitude ?? 0,
+      _currentEvent.longitude ?? 0,
+    );
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 10),
@@ -1475,12 +1492,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                        Text(
-                          S.of(context).address,
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelLarge
-                            ?.copyWith(color: Colors.grey.shade600),
+                      Text(
+                        S.of(context).address,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -1502,7 +1518,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     initialCenter: target,
                     initialZoom: 15,
                     interactionOptions: const InteractionOptions(
-                      flags: InteractiveFlag.drag |
+                      flags:
+                          InteractiveFlag.drag |
                           InteractiveFlag.pinchZoom |
                           InteractiveFlag.doubleTapZoom |
                           InteractiveFlag.scrollWheelZoom,
@@ -1580,7 +1597,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         : S.of(context).amountNotSpecified;
     final identifier = _currentEvent.paymentIdentifier?.trim();
     final paymentUri = _buildPaymentUri(provider);
-    final linkLabel = paymentUri?.toString() ??
+    final linkLabel =
+        paymentUri?.toString() ??
         (identifier == null || identifier.isEmpty
             ? S.of(context).notProvided
             : identifier);
@@ -1601,12 +1619,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                        Text(
-                          S.of(context).payment,
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelLarge
-                            ?.copyWith(color: Colors.grey.shade600),
+                      Text(
+                        S.of(context).payment,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -1619,13 +1636,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ],
             ),
             const SizedBox(height: 12),
-            Text(_currentEvent.paymentPerPerson
-                ? S.of(context).contributionPerPerson(amountText)
-                : S.of(context).targetAmount(amountText)),
-            const SizedBox(height: 4),
             Text(
-              S.of(context).link(linkLabel),
+              _currentEvent.paymentPerPerson
+                  ? S.of(context).contributionPerPerson(amountText)
+                  : S.of(context).targetAmount(amountText),
             ),
+            const SizedBox(height: 4),
+            Text(S.of(context).link(linkLabel)),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -1723,7 +1740,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
     // On Android, try geo: scheme to let the OS/app chooser handle it directly.
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       final geo = Uri.parse(
-          'geo:${target.latitude},${target.longitude}?q=${target.latitude},${target.longitude}');
+        'geo:${target.latitude},${target.longitude}?q=${target.latitude},${target.longitude}',
+      );
       try {
         final opened = await launchUrl(
           geo,
@@ -1739,8 +1757,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
     if (provider == null) return;
     final uri = _uriForProvider(provider, target);
     try {
-      final success =
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final success = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
       if (!success && mounted) {
         _showSnack(S.of(context).unableToOpenMap, isError: true);
       }
@@ -1785,22 +1805,22 @@ class _EventDetailPageState extends State<EventDetailPage> {
     switch (provider) {
       case 'google':
         return Uri.parse(
-            'https://www.google.com/maps/search/?api=1&query=$lat,$lon');
+          'https://www.google.com/maps/search/?api=1&query=$lat,$lon',
+        );
       case 'apple':
         return Uri.parse('https://maps.apple.com/?ll=$lat,$lon');
       default:
         return Uri.parse(
-            'https://www.openstreetmap.org/?mlat=$lat&mlon=$lon#map=17/$lat/$lon');
+          'https://www.openstreetmap.org/?mlat=$lat&mlon=$lon#map=17/$lat/$lon',
+        );
     }
   }
 
   Future<void> _openEditEvent() async {
     final updated = await Navigator.of(context).push<EventModel>(
       MaterialPageRoute(
-        builder: (_) => EventEditPage(
-          session: widget.session,
-          initialEvent: _currentEvent,
-        ),
+        builder: (_) =>
+            EventEditPage(session: widget.session, initialEvent: _currentEvent),
       ),
     );
 
@@ -1889,11 +1909,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.add_circle_outline),
-                label: Text(_creatingPoll ? S.of(context).creating : S.of(context).newPoll),
+                label: Text(
+                  _creatingPoll
+                      ? S.of(context).creating
+                      : S.of(context).newPoll,
+                ),
               ),
             IconButton(
-              onPressed: () =>
-                  setState(() => _pollsExpanded = !_pollsExpanded),
+              onPressed: () => setState(() => _pollsExpanded = !_pollsExpanded),
               icon: Icon(
                 _pollsExpanded ? Icons.expand_less : Icons.expand_more,
               ),
@@ -1903,15 +1926,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
         const SizedBox(height: 6),
         Text(
           S.of(context).collectQuickFeedback,
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.6),
-              ),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
         ),
         const SizedBox(height: 12),
         AnimatedCrossFade(
@@ -1947,8 +1966,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       final theme = Theme.of(context);
       final surface = theme.colorScheme.surface;
       final border = theme.dividerColor;
-      final textColor =
-          theme.colorScheme.onSurface.withValues(alpha: 0.75);
+      final textColor = theme.colorScheme.onSurface.withValues(alpha: 0.75);
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
@@ -1959,10 +1977,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ),
         child: Text(
           S.of(context).noPollsYet,
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(color: textColor),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: textColor),
         ),
       );
     }
@@ -1977,8 +1994,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
               canVote: _canVotePolls && !_isWaitingInvitation,
               remainingLabel: poll.isExpired
                   ? S.of(context).expired
-                  : S.of(context).expiresIn(_formatRemaining(poll.timeRemaining)),
-              onDelete: (_isOwner ||
+                  : S
+                        .of(context)
+                        .expiresIn(_formatRemaining(poll.timeRemaining)),
+              onDelete:
+                  (_isOwner ||
                       (poll.createdByEmail != null &&
                           poll.createdByEmail!.toLowerCase() ==
                               widget.session.email.toLowerCase()))
@@ -2045,12 +2065,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       )
                     : const Icon(Icons.add),
                 label: Text(
-                  _creatingCustomItem ? S.of(context).adding : S.of(context).add,
+                  _creatingCustomItem
+                      ? S.of(context).adding
+                      : S.of(context).add,
                 ),
               ),
             IconButton(
-              onPressed: () =>
-                  setState(() => _itemsExpanded = !_itemsExpanded),
+              onPressed: () => setState(() => _itemsExpanded = !_itemsExpanded),
               icon: Icon(
                 _itemsExpanded ? Icons.expand_less : Icons.expand_more,
               ),
@@ -2063,10 +2084,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               S.of(context).acceptInvitationToContribute,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.red.shade700),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.red.shade700),
             ),
           ),
         if (!_isOwner && _isExpiredInvitation)
@@ -2074,10 +2094,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               S.of(context).invitationExpiredNoContributions,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.red.shade700),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.red.shade700),
             ),
           ),
         const SizedBox(height: 12),
@@ -2232,8 +2251,14 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
       return;
     }
     final now = DateTime.now();
-    final endOfDay =
-        DateTime(deadline.year, deadline.month, deadline.day, 23, 59, 59);
+    final endOfDay = DateTime(
+      deadline.year,
+      deadline.month,
+      deadline.day,
+      23,
+      59,
+      59,
+    );
     if (now.isAfter(endOfDay)) {
       setState(() {
         _timeRemaining = null;
@@ -2315,15 +2340,17 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                 Text(
                   statusLabel,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: accent,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: accent,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const Spacer(),
                 if (waiting && widget.deadline != null)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: accent.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
@@ -2331,18 +2358,21 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.timer_outlined,
-                            size: 16, color: accent.withValues(alpha: 0.9)),
+                        Icon(
+                          Icons.timer_outlined,
+                          size: 16,
+                          color: accent.withValues(alpha: 0.9),
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           _deadlinePassed
                               ? S.of(context).deadlineExpiredHelper
                               : (_timeRemaining ?? S.of(context).loading),
-                          style:
-                              Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: accent.withValues(alpha: 0.9),
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color: accent.withValues(alpha: 0.9),
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                       ],
                     ),
@@ -2384,29 +2414,26 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
             ] else if (expired) ...[
               Text(
                 S.of(context).deadlinePassedInactive,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: accent),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: accent),
               ),
             ] else
               Text(
                 accepted
                     ? S.of(context).acceptedMessage
                     : S.of(context).declinedMessage,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: accent),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: accent),
               ),
             if (accepted) ...[
               const SizedBox(height: 12),
               Text(
                 S.of(context).leaveFiestaaaPrompt,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Colors.grey.shade800),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade800),
               ),
               const SizedBox(height: 8),
               TextButton.icon(
@@ -2415,9 +2442,7 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                     context: context,
                     builder: (context) => AlertDialog(
                       title: Text(S.of(context).leaveFiestaaaTitle),
-                      content: Text(
-                        S.of(context).leaveFiestaaaContent,
-                      ),
+                      content: Text(S.of(context).leaveFiestaaaContent),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(false),
@@ -2492,8 +2517,9 @@ class _PollCard extends StatelessWidget {
     final textColor = theme.colorScheme.onSurface;
     final fadedText = textColor.withValues(alpha: 0.6);
     final subtleText = textColor.withValues(alpha: 0.5);
-    final surfaceButton =
-        isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade100;
+    final surfaceButton = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.grey.shade100;
     final accentGreen = Colors.green.shade500;
     final maxVotes = poll.maxVotes == 0 ? 1 : poll.maxVotes;
     final timeText = DateFormat.Hm('fr_FR').format(poll.expiresAt);
@@ -2535,11 +2561,12 @@ class _PollCard extends StatelessWidget {
                 ),
                 if (poll.isExpired)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: Colors.red
-                          .withValues(alpha: isDark ? 0.2 : 0.08),
+                      color: Colors.red.withValues(alpha: isDark ? 0.2 : 0.08),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -2557,11 +2584,7 @@ class _PollCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(
-                  Icons.done_all,
-                  size: 18,
-                  color: fadedText,
-                ),
+                Icon(Icons.done_all, size: 18, color: fadedText),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -2609,9 +2632,7 @@ class _PollCard extends StatelessWidget {
                   remainingLabel,
                   style: TextStyle(
                     color: poll.isExpired
-                        ? (isDark
-                            ? Colors.red.shade300
-                            : Colors.red.shade400)
+                        ? (isDark ? Colors.red.shade300 : Colors.red.shade400)
                         : fadedText,
                     fontWeight: FontWeight.w700,
                   ),
@@ -2639,13 +2660,16 @@ class _PollCard extends StatelessWidget {
                   const SizedBox(width: 10),
                   TextButton(
                     style: TextButton.styleFrom(
-                      backgroundColor: Colors.red
-                          .withValues(alpha: isDark ? 0.2 : 0.08),
+                      backgroundColor: Colors.red.withValues(
+                        alpha: isDark ? 0.2 : 0.08,
+                      ),
                       foregroundColor: isDark
                           ? Colors.red.shade300
                           : Colors.red.shade500,
                       padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 14),
+                        vertical: 12,
+                        horizontal: 14,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -2657,8 +2681,7 @@ class _PollCard extends StatelessWidget {
                             height: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation(Colors.white),
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
                             ),
                           )
                         : const Icon(Icons.delete_outline),
@@ -2735,8 +2758,7 @@ class _PollOptionTile extends StatelessWidget {
                       ),
                     ),
                     child: selected
-                        ? const Icon(Icons.check,
-                            color: Colors.white, size: 16)
+                        ? const Icon(Icons.check, color: Colors.white, size: 16)
                         : null,
                   ),
                   const SizedBox(width: 10),
@@ -2763,7 +2785,7 @@ class _PollOptionTile extends StatelessWidget {
                               : NetworkImage(firstVoter.avatarUrl!),
                           child: firstVoter.avatarUrl == null
                               ? Text(
-                                  _displayInitial(context,firstVoter.handle),
+                                  _displayInitial(context, firstVoter.handle),
                                   style: TextStyle(
                                     color: avatarForeground,
                                     fontWeight: FontWeight.w700,
@@ -2947,8 +2969,7 @@ class _EventItemsList extends StatelessWidget {
       final theme = Theme.of(context);
       final surface = theme.colorScheme.surface;
       final border = theme.dividerColor;
-      final textColor =
-          theme.colorScheme.onSurface.withValues(alpha: 0.75);
+      final textColor = theme.colorScheme.onSurface.withValues(alpha: 0.75);
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
@@ -2959,10 +2980,9 @@ class _EventItemsList extends StatelessWidget {
         ),
         child: Text(
           emptyLabel,
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(color: textColor),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: textColor),
         ),
       );
     }
@@ -2982,10 +3002,9 @@ class _EventItemsList extends StatelessWidget {
                 if (showTypeHeader) ...[
                   Text(
                     entry.key,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -3034,7 +3053,9 @@ class _EventItemTile extends StatelessWidget {
   final String currentUserEmail;
 
   void _showContributors(
-      BuildContext context, List<ItemContributionModel> list) {
+    BuildContext context,
+    List<ItemContributionModel> list,
+  ) {
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -3059,10 +3080,9 @@ class _EventItemTile extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       S.of(context).participations,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
@@ -3072,7 +3092,7 @@ class _EventItemTile extends StatelessWidget {
                 else
                   ...list.map(
                     (c) => ListTile(
-                      title: Text(_displayName(context,c.handle)),
+                      title: Text(_displayName(context, c.handle)),
                       contentPadding: EdgeInsets.zero,
                       leading: CircleAvatar(
                         backgroundColor: avatarBackground,
@@ -3081,7 +3101,7 @@ class _EventItemTile extends StatelessWidget {
                             : NetworkImage(c.avatarUrl!),
                         child: c.avatarUrl == null
                             ? Text(
-                                _displayInitial(context,c.handle),
+                                _displayInitial(context, c.handle),
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   color: avatarForeground,
@@ -3108,8 +3128,9 @@ class _EventItemTile extends StatelessWidget {
     final borderColor = theme.dividerColor;
     final textColor = theme.colorScheme.onSurface;
     final mutedText = textColor.withValues(alpha: 0.6);
-    final actionBackground =
-        isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade100;
+    final actionBackground = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.grey.shade100;
     final actionForeground = textColor;
     final avatarBackground = isDark
         ? surface.withValues(alpha: 0.9)
@@ -3122,8 +3143,9 @@ class _EventItemTile extends StatelessWidget {
     final shadow = isDark
         ? Colors.black.withValues(alpha: 0.25)
         : const Color.fromARGB(30, 0, 0, 0);
-    final ratio =
-        item.maxQuantity == 0 ? 0.0 : item.reservedQuantity / item.maxQuantity;
+    final ratio = item.maxQuantity == 0
+        ? 0.0
+        : item.reservedQuantity / item.maxQuantity;
     final available = item.remaining;
     final contributors = contributions;
     final myContribution = contributors
@@ -3162,10 +3184,7 @@ class _EventItemTile extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: accentGreen.withValues(alpha: 0.15),
-                  border: Border.all(
-                    color: accentGreen,
-                    width: 2,
-                  ),
+                  border: Border.all(color: accentGreen, width: 2),
                 ),
                 child: Icon(
                   Icons.volunteer_activism_outlined,
@@ -3188,7 +3207,8 @@ class _EventItemTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      S.of(context)
+                      S
+                          .of(context)
                           .bringQuantityLabel(item.maxQuantity, item.unitLabel),
                       style: TextStyle(
                         color: mutedText,
@@ -3241,12 +3261,16 @@ class _EventItemTile extends StatelessWidget {
               if (onDelete != null)
                 TextButton(
                   style: TextButton.styleFrom(
-                    backgroundColor:
-                        Colors.red.withValues(alpha: isDark ? 0.2 : 0.08),
-                    foregroundColor:
-                        isDark ? Colors.red.shade300 : Colors.red.shade400,
+                    backgroundColor: Colors.red.withValues(
+                      alpha: isDark ? 0.2 : 0.08,
+                    ),
+                    foregroundColor: isDark
+                        ? Colors.red.shade300
+                        : Colors.red.shade400,
                     padding: const EdgeInsets.symmetric(
-                        vertical: 12, horizontal: 14),
+                      vertical: 12,
+                      horizontal: 14,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -3276,11 +3300,7 @@ class _EventItemTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
         boxShadow: [
-          BoxShadow(
-            color: shadow,
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
+          BoxShadow(color: shadow, blurRadius: 12, offset: const Offset(0, 6)),
         ],
       ),
       child: Padding(
@@ -3343,29 +3363,33 @@ class _EventItemTile extends StatelessWidget {
                                     .asMap()
                                     .entries
                                     .map((entry) {
-                                  final idx = entry.key;
-                                  final c = entry.value;
-                                  final left = idx * 22.0;
-                                  return Positioned(
-                                    left: left,
-                                    child: CircleAvatar(
-                                      radius: 14,
-                                      backgroundColor: avatarBackground,
-                                      backgroundImage: c.avatarUrl == null
-                                          ? null
-                                          : NetworkImage(c.avatarUrl!),
-                                      child: c.avatarUrl == null
-                                          ? Text(
-                                              _displayInitial(context,c.handle),
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w700,
-                                                color: avatarForeground,
-                                              ),
-                                            )
-                                          : null,
-                                    ),
-                                  );
-                                }).toList(),
+                                      final idx = entry.key;
+                                      final c = entry.value;
+                                      final left = idx * 22.0;
+                                      return Positioned(
+                                        left: left,
+                                        child: CircleAvatar(
+                                          radius: 14,
+                                          backgroundColor: avatarBackground,
+                                          backgroundImage: c.avatarUrl == null
+                                              ? null
+                                              : NetworkImage(c.avatarUrl!),
+                                          child: c.avatarUrl == null
+                                              ? Text(
+                                                  _displayInitial(
+                                                    context,
+                                                    c.handle,
+                                                  ),
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w700,
+                                                    color: avatarForeground,
+                                                  ),
+                                                )
+                                              : null,
+                                        ),
+                                      );
+                                    })
+                                    .toList(),
                               ),
                             ),
                           Text(
@@ -3383,8 +3407,10 @@ class _EventItemTile extends StatelessWidget {
                 TextButton.icon(
                   style: TextButton.styleFrom(
                     foregroundColor: textColor.withValues(alpha: 0.75),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
                     textStyle: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   onPressed: contributors.isEmpty
@@ -3410,7 +3436,13 @@ class _EventItemTile extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               available > 0
-                  ? S.of(context).remainingAvailable(available, item.unitLabel, available > 1 ? 's' : '')
+                  ? S
+                        .of(context)
+                        .remainingAvailable(
+                          available,
+                          item.unitLabel,
+                          available > 1 ? 's' : '',
+                        )
                   : S.of(context).quotaFilled,
               style: TextStyle(
                 color: isFull ? accentGreen : mutedText,
@@ -3439,7 +3471,8 @@ class _EventItemTile extends StatelessWidget {
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation(
-                                    actionForeground),
+                                  actionForeground,
+                                ),
                               ),
                             )
                           : Icon(
@@ -3454,8 +3487,8 @@ class _EventItemTile extends StatelessWidget {
                         isLoading
                             ? S.of(context).sending
                             : (hasContributed
-                                ? S.of(context).editContribution
-                                : S.of(context).iContribute),
+                                  ? S.of(context).editContribution
+                                  : S.of(context).iContribute),
                       ),
                     ),
                   ),
@@ -3463,13 +3496,16 @@ class _EventItemTile extends StatelessWidget {
                     const SizedBox(width: 10),
                     TextButton(
                       style: TextButton.styleFrom(
-                        backgroundColor: Colors.red
-                            .withValues(alpha: isDark ? 0.2 : 0.08),
+                        backgroundColor: Colors.red.withValues(
+                          alpha: isDark ? 0.2 : 0.08,
+                        ),
                         foregroundColor: isDark
                             ? Colors.red.shade300
                             : Colors.red.shade400,
                         padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 14),
+                          vertical: 12,
+                          horizontal: 14,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -3481,8 +3517,9 @@ class _EventItemTile extends StatelessWidget {
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation(Colors.white),
+                                valueColor: AlwaysStoppedAnimation(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : const Icon(Icons.delete_outline),
@@ -3525,16 +3562,12 @@ class _DetailTile extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: Theme.of(context)
-                        .textTheme
-                        .labelLarge
-                        ?.copyWith(color: Colors.grey.shade600),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    value,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                  Text(value, style: Theme.of(context).textTheme.titleMedium),
                 ],
               ),
             ),

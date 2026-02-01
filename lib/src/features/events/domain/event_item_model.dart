@@ -3,9 +3,9 @@ enum EventItemKind {
   bring;
 
   String get apiValue => switch (this) {
-        EventItemKind.need => 'need',
-        EventItemKind.bring => 'bring',
-      };
+    EventItemKind.need => 'need',
+    EventItemKind.bring => 'bring',
+  };
 
   static EventItemKind fromJson(String? value) {
     final normalized = (value ?? 'need').toLowerCase();

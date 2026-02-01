@@ -19,15 +19,13 @@ class EventsApi {
     required String query,
     int limit = 5,
   }) async {
-    final uri = Uri.parse('$apiBaseUrl/geo/address-search').replace(
-      queryParameters: {
-        'q': query,
-        'limit': '$limit',
-      },
+    final uri = Uri.parse(
+      '$apiBaseUrl/geo/address-search',
+    ).replace(queryParameters: {'q': query, 'limit': '$limit'});
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
     );
-    final response = await _client.get(uri, headers: {
-      'Authorization': 'Bearer $token',
-    });
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body) as List<dynamic>;
@@ -45,9 +43,7 @@ class EventsApi {
   Future<List<EventModel>> fetchEvents({required String token}) async {
     final response = await _client.get(
       Uri.parse('$apiBaseUrl/events'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body) as List<dynamic>;
@@ -55,8 +51,10 @@ class EventsApi {
           .map((e) => EventModel.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-    throw ApiException('Impossible de récupérer les fiestaaa',
-        statusCode: response.statusCode);
+    throw ApiException(
+      'Impossible de récupérer les fiestaaa',
+      statusCode: response.statusCode,
+    );
   }
 
   Future<EventModel> createEvent({
@@ -74,7 +72,8 @@ class EventsApi {
 
     if (response.statusCode == 201) {
       return EventModel.fromJson(
-          jsonDecode(response.body) as Map<String, dynamic>);
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
     }
 
     throw ApiException(
@@ -115,9 +114,7 @@ class EventsApi {
   }) async {
     final response = await _client.get(
       Uri.parse('$apiBaseUrl/events/$eventId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
@@ -133,8 +130,9 @@ class EventsApi {
   }
 
   Future<List<EventItemModel>> fetchEventItems(int eventId) async {
-    final response =
-        await _client.get(Uri.parse('$apiBaseUrl/events/$eventId/items'));
+    final response = await _client.get(
+      Uri.parse('$apiBaseUrl/events/$eventId/items'),
+    );
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body) as List<dynamic>;
       return decoded
@@ -269,8 +267,10 @@ class EventsApi {
           .map((e) => ItemContributionModel.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-    throw ApiException('Impossible de charger les contributions',
-        statusCode: response.statusCode);
+    throw ApiException(
+      'Impossible de charger les contributions',
+      statusCode: response.statusCode,
+    );
   }
 
   Future<EventItemModel> reserveEventItem({
@@ -341,9 +341,7 @@ class EventsApi {
   }) async {
     final response = await _client.delete(
       Uri.parse('$apiBaseUrl/events/$eventId/items/$itemId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
@@ -362,9 +360,7 @@ class EventsApi {
   }) async {
     final response = await _client.post(
       Uri.parse('$apiBaseUrl/events/$eventId/share'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 201) {
@@ -409,9 +405,7 @@ class EventsApi {
   }) async {
     final response = await _client.delete(
       Uri.parse('$apiBaseUrl/events/$eventId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {

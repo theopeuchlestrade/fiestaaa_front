@@ -135,8 +135,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       );
       if (!mounted) return;
       setState(() {
-        _invitations =
-            all.where((inv) => inv.eventId == widget.eventId).toList();
+        _invitations = all
+            .where((inv) => inv.eventId == widget.eventId)
+            .toList();
         _pruneSelectedFriendHandles(
           _buildInvitedIdentifiers(_invitations),
           _friends,
@@ -183,10 +184,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 410) {
-        _showSnack(
-          S.of(context).deadlineExpired,
-          isError: true,
-        );
+        _showSnack(S.of(context).deadlineExpired, isError: true);
         await _fetch();
         return;
       }
@@ -272,8 +270,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   }
 
   bool _isFriendWith(String identifier) {
-    return _friends
-        .any((f) => _identifierMatches(identifier, f.handle, f.email));
+    return _friends.any(
+      (f) => _identifierMatches(identifier, f.handle, f.email),
+    );
   }
 
   bool _hasPendingFriendRequestWith(String identifier) {
@@ -289,9 +288,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   Widget _statusIcon(IconData icon, Color color) {
     return SizedBox.square(
       dimension: kMinInteractiveDimension,
-      child: Center(
-        child: Icon(icon, color: color),
-      ),
+      child: Center(child: Icon(icon, color: color)),
     );
   }
 
@@ -339,11 +336,8 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       setState(() {
         _selectedFriendHandles.clear();
       });
-        if (deadlineExpired) {
-        _showSnack(
-          S.of(context).deadlineExpired,
-          isError: true,
-        );
+      if (deadlineExpired) {
+        _showSnack(S.of(context).deadlineExpired, isError: true);
         return;
       }
       if (successCount > 0) {
@@ -365,11 +359,13 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   }
 
   Future<void> _sendFriendRequestForInvitation(
-      InvitationModel invitation) async {
-    final identifier = (invitation.handle?.isNotEmpty == true
-            ? invitation.handle!
-            : invitation.email)
-        .trim();
+    InvitationModel invitation,
+  ) async {
+    final identifier =
+        (invitation.handle?.isNotEmpty == true
+                ? invitation.handle!
+                : invitation.email)
+            .trim();
     if (identifier.isEmpty || _isFriendWith(identifier)) return;
 
     setState(() => _sendingFriendAsk = true);
@@ -412,13 +408,15 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       } else if (_hasPendingFriendRequestWith(identifier)) {
         actions.add(_statusIcon(Icons.hourglass_top, Colors.orange));
       } else {
-        actions.add(IconButton(
-          onPressed: _sendingFriendAsk
-              ? null
-              : () => _sendFriendRequestForInvitation(invitation),
-          icon: const Icon(Icons.person_add_alt_1),
-          tooltip: S.of(context).addAsFriend,
-        ));
+        actions.add(
+          IconButton(
+            onPressed: _sendingFriendAsk
+                ? null
+                : () => _sendFriendRequestForInvitation(invitation),
+            icon: const Icon(Icons.person_add_alt_1),
+            tooltip: S.of(context).addAsFriend,
+          ),
+        );
       }
     }
 
@@ -463,14 +461,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.zero,
             children: [
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: BackButton(),
-              ),
+              const Align(alignment: Alignment.centerLeft, child: BackButton()),
               const SizedBox(height: 4),
-              FiestaaaPageHeader(
-                title: S.of(context).invitations,
-              ),
+              FiestaaaPageHeader(title: S.of(context).invitations),
               if (_isOwner) ...[
                 _InviteForm(
                   emailController: _emailController,
@@ -507,9 +500,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
                   ],
                 )
               else if (_invitations.isEmpty)
-                Center(
-                  child: Text(S.of(context).noInvitationForNow),
-                )
+                Center(child: Text(S.of(context).noInvitationForNow))
               else
                 ..._buildInvitationSections(),
             ],
@@ -603,7 +594,9 @@ class _InviteForm extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.send),
-            label: Text(submitting ? S.of(context).sending : S.of(context).sendInvitation),
+            label: Text(
+              submitting ? S.of(context).sending : S.of(context).sendInvitation,
+            ),
           ),
         ),
       ],
@@ -639,10 +632,12 @@ class _FriendsInviteCard extends StatelessWidget {
     final buttonLabel = inviting
         ? S.of(context).sending
         : (selectedHandles.isEmpty
-            ? S.of(context).invite
-            : (selectedHandles.length == 1
-                ? S.of(context).inviteFriend
-                : S.of(context).inviteFriendsCount(selectedHandles.length)));
+              ? S.of(context).invite
+              : (selectedHandles.length == 1
+                    ? S.of(context).inviteFriend
+                    : S
+                          .of(context)
+                          .inviteFriendsCount(selectedHandles.length)));
 
     return Card(
       child: Padding(
@@ -659,10 +654,9 @@ class _FriendsInviteCard extends StatelessWidget {
                     S.of(context).inviteFromFriends,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -675,10 +669,9 @@ class _FriendsInviteCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               S.of(context).searchAndSelectFriends,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.grey.shade700),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade700),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -700,10 +693,7 @@ class _FriendsInviteCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    error!,
-                    style: const TextStyle(color: Colors.red),
-                  ),
+                  Text(error!, style: const TextStyle(color: Colors.red)),
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
                     onPressed: onRefresh,

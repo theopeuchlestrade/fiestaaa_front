@@ -1,9 +1,5 @@
 class PollOptionVoterModel {
-  PollOptionVoterModel({
-    required this.email,
-    this.handle,
-    this.avatarUrl,
-  });
+  PollOptionVoterModel({required this.email, this.handle, this.avatarUrl});
 
   final String email;
   final String? handle;
@@ -38,8 +34,7 @@ class PollOptionModel {
       label: json['label'] as String,
       voteCount: (json['vote_count'] as num).toInt(),
       voters: votersJson
-          .map((v) =>
-              PollOptionVoterModel.fromJson(v as Map<String, dynamic>))
+          .map((v) => PollOptionVoterModel.fromJson(v as Map<String, dynamic>))
           .toList(),
     );
   }
@@ -75,7 +70,10 @@ class PollModel {
   bool get isExpired => hasExpired || expiresAt.isBefore(DateTime.now());
 
   int get maxVotes => options.fold<int>(
-      0, (currentMax, option) => option.voteCount > currentMax ? option.voteCount : currentMax);
+    0,
+    (currentMax, option) =>
+        option.voteCount > currentMax ? option.voteCount : currentMax,
+  );
 
   Duration get timeRemaining => expiresAt.difference(DateTime.now());
 
