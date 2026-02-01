@@ -810,122 +810,183 @@ class _EventDetailPageState extends State<EventDetailPage> {
   Future<void> _openAddItemDialog() async {
     final nameController = TextEditingController();
     final quantityController = TextEditingController();
-    final unitController = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    EventItemKind selectedKind =
+        _isOwner ? EventItemKind.need : EventItemKind.bring;
+    final unitOptions = <String>['pièce', 'g', 'kg', 'ml', 'L'];
+    String selectedUnit = unitOptions.first;
 
     final result = await showModalBottomSheet<_NewEventItemData>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (context) {
-        final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            bottom: bottomInset + 16,
-            top: 12,
-          ),
-          child: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                bottom: bottomInset + 16,
+                top: 12,
+              ),
+              child: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                        Expanded(
-                          child: Text(
-                            S.of(context).newItem,
-                            style: Theme.of(context).textTheme.titleLarge,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              S.of(context).newItem,
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
                           ),
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: nameController,
+                        autofocus: true,
+                        decoration: InputDecoration(
+                          labelText: S.of(context).itemName,
+                          prefixIcon: const Icon(Icons.shopping_bag),
                         ),
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: nameController,
-                      autofocus: true,
-                      decoration: InputDecoration(
-                        labelText: S.of(context).itemName,
-                        prefixIcon: const Icon(Icons.shopping_bag),
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                                ? S.of(context).fieldRequired
+                                : null,
                       ),
-                      validator: (value) => value == null || value.trim().isEmpty
-                          ? S.of(context).fieldRequired
-                          : null,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: quantityController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: S.of(context).desiredQuantity,
-                        prefixIcon: const Icon(Icons.format_list_numbered),
+                      const SizedBox(height: 12),
+                      Text(
+                        S.of(context).itemKindLabel,
+                        style: Theme.of(context).textTheme.labelLarge,
                       ),
-                    validator: (value) {
-                      final text = value?.trim() ?? '';
-                        if (text.isEmpty) {
-                          return S.of(context).fieldRequired;
-                        }
-                        final parsed = int.tryParse(text);
-                        if (parsed == null || parsed <= 0) {
-                          return S.of(context).positiveNumberRequired;
-                        }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                    TextFormField(
-                      controller: unitController,
-                      decoration: InputDecoration(
-                        labelText: S.of(context).unit,
-                        prefixIcon: const Icon(Icons.straighten),
-                      ),
-                      validator: (value) => value == null || value.trim().isEmpty
-                          ? S.of(context).fieldRequired
-                          : null,
-                    ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Annuler'),
-                      ),
-                      const Spacer(),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          if (formKey.currentState?.validate() != true) return;
-                          final name = nameController.text.trim();
-                          final qty = int.parse(quantityController.text.trim());
-                          final unit = unitController.text.trim();
-                          Navigator.of(context)
-                              .pop(_NewEventItemData(name, qty, unit));
+                      const SizedBox(height: 8),
+                      SegmentedButton<EventItemKind>(
+                        segments: [
+                          ButtonSegment(
+                            value: EventItemKind.bring,
+                            label: Text(S.of(context).itemKindBring),
+                            icon: const Icon(Icons.volunteer_activism_outlined),
+                          ),
+                          ButtonSegment(
+                            value: EventItemKind.need,
+                            label: Text(S.of(context).itemKindNeed),
+                            icon: const Icon(Icons.playlist_add_check),
+                            enabled: _isOwner,
+                          ),
+                        ],
+                        selected: {selectedKind},
+                        onSelectionChanged: (value) {
+                          if (value.isEmpty) return;
+                          setModalState(() => selectedKind = value.first);
                         },
-                        icon: const Icon(Icons.add),
-                          label: Text(S.of(context).addTheItem),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: quantityController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: S.of(context).desiredQuantity,
+                          prefixIcon: const Icon(Icons.format_list_numbered),
+                        ),
+                        validator: (value) {
+                          final text = value?.trim() ?? '';
+                          if (text.isEmpty) {
+                            return S.of(context).fieldRequired;
+                          }
+                          final parsed = int.tryParse(text);
+                          if (parsed == null || parsed <= 0) {
+                            return S.of(context).positiveNumberRequired;
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: selectedUnit,
+                        decoration: InputDecoration(
+                          labelText: S.of(context).unit,
+                          prefixIcon: const Icon(Icons.straighten),
+                        ),
+                        items: unitOptions
+                            .map(
+                              (unit) => DropdownMenuItem(
+                                value: unit,
+                                child: Text(unit),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setModalState(() => selectedUnit = value);
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('Annuler'),
+                          ),
+                          const Spacer(),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              if (formKey.currentState?.validate() != true) {
+                                return;
+                              }
+                              final name = nameController.text.trim();
+                              final qty =
+                                  int.parse(quantityController.text.trim());
+                              Navigator.of(context).pop(
+                                _NewEventItemData(
+                                  name,
+                                  qty,
+                                  selectedUnit,
+                                  selectedKind,
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.add),
+                            label: Text(S.of(context).addTheItem),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
 
     if (result != null) {
-      await _createCustomItem(result.name, result.quantity, result.unit);
+      await _createCustomItem(
+        result.name,
+        result.quantity,
+        result.unit,
+        result.kind,
+      );
     }
   }
 
-  Future<void> _createCustomItem(String name, int quantity, String unit) async {
+  Future<void> _createCustomItem(
+    String name,
+    int quantity,
+    String unit,
+    EventItemKind kind,
+  ) async {
     setState(() => _creatingCustomItem = true);
     try {
       await _eventsApi.createCustomEventItem(
@@ -934,6 +995,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         name: name,
         maxQuantity: quantity,
         unitLabel: unit,
+        itemKind: kind,
       );
       if (!mounted) return;
       _showSnack(S.of(context).itemAdded);
@@ -1930,6 +1992,37 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Widget _buildItemsBlock() {
+    final items = _eventItems ?? const <EventItemModel>[];
+    final ownerEmail = _currentEvent.ownerEmail.toLowerCase();
+    bool isBringItem(EventItemModel item) {
+      if (item.kind == EventItemKind.bring) return true;
+      final createdBy = item.createdByEmail?.toLowerCase();
+      if (createdBy == null) return false;
+      return createdBy != ownerEmail;
+    }
+
+    final currentUserEmail = widget.session.email.toLowerCase();
+    final bringItems = items.where(isBringItem).toList()
+      ..sort((a, b) {
+        final aMine =
+            (a.createdByEmail?.toLowerCase() ?? '') == currentUserEmail;
+        final bMine =
+            (b.createdByEmail?.toLowerCase() ?? '') == currentUserEmail;
+        if (aMine != bMine) {
+          return aMine ? -1 : 1;
+        }
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
+    final needItems = items.where((item) => !isBringItem(item)).toList()
+      ..sort((a, b) {
+        final aFull = a.remaining <= 0;
+        final bFull = b.remaining <= 0;
+        if (aFull != bFull) {
+          return aFull ? 1 : -1;
+        }
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1965,18 +2058,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ],
         ),
         const SizedBox(height: 6),
-        Text(
-          S.of(context).chooseWhatYouBring,
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.6),
-              ),
-        ),
         if (!_isOwner && _isWaitingInvitation)
           Padding(
             padding: const EdgeInsets.only(top: 8),
@@ -2022,16 +2103,58 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   ],
                 )
               else
-                _EventItemsList(
-                  items: _eventItems ?? const [],
-                  reservingItemId: _reservingItemId,
-                  deletingItemId: _deletingItemId,
-                  onReserve: _openQuantityDialog,
-                  onDelete: _deleteEventItem,
-                  isOwner: _isOwner,
-                  currentUserEmail: widget.session.email,
-                  canReserveItems: _canContributeItems,
-                  contributions: _contributions,
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWide = constraints.maxWidth >= 760;
+                    final bringSection = _EventItemsSection(
+                      title: S.of(context).bringSectionTitle,
+                      subtitle: S.of(context).chooseWhatYouBring,
+                      items: bringItems,
+                      emptyLabel: S.of(context).noBringItemsYet,
+                      reservingItemId: _reservingItemId,
+                      deletingItemId: _deletingItemId,
+                      onReserve: _openQuantityDialog,
+                      onDelete: _deleteEventItem,
+                      isOwner: _isOwner,
+                      currentUserEmail: widget.session.email,
+                      canReserveItems: _canContributeItems,
+                      contributions: _contributions,
+                    );
+                    final needSection = _EventItemsSection(
+                      title: S.of(context).needSectionTitle,
+                      subtitle: S.of(context).needItemsSubtitle,
+                      items: needItems,
+                      emptyLabel: S.of(context).noNeedItemsYet,
+                      reservingItemId: _reservingItemId,
+                      deletingItemId: _deletingItemId,
+                      onReserve: _openQuantityDialog,
+                      onDelete: _deleteEventItem,
+                      isOwner: _isOwner,
+                      currentUserEmail: widget.session.email,
+                      canReserveItems: _canContributeItems,
+                      contributions: _contributions,
+                    );
+
+                    if (isWide) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: bringSection),
+                          const SizedBox(width: 16),
+                          Expanded(child: needSection),
+                        ],
+                      );
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        bringSection,
+                        const SizedBox(height: 20),
+                        needSection,
+                      ],
+                    );
+                  },
                 ),
             ],
           ),
@@ -2695,16 +2818,108 @@ class _PollOptionTile extends StatelessWidget {
 }
 
 class _NewEventItemData {
-  const _NewEventItemData(this.name, this.quantity, this.unit);
+  const _NewEventItemData(this.name, this.quantity, this.unit, this.kind);
 
   final String name;
   final int quantity;
   final String unit;
+  final EventItemKind kind;
+}
+
+class _EventItemsSection extends StatelessWidget {
+  const _EventItemsSection({
+    required this.title,
+    required this.subtitle,
+    required this.items,
+    required this.emptyLabel,
+    required this.reservingItemId,
+    required this.deletingItemId,
+    required this.onReserve,
+    required this.onDelete,
+    required this.isOwner,
+    required this.currentUserEmail,
+    required this.canReserveItems,
+    required this.contributions,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<EventItemModel> items;
+  final String emptyLabel;
+  final int? reservingItemId;
+  final int? deletingItemId;
+  final void Function(EventItemModel item) onReserve;
+  final void Function(EventItemModel item) onDelete;
+  final bool isOwner;
+  final String currentUserEmail;
+  final bool canReserveItems;
+  final Map<int, List<ItemContributionModel>> contributions;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textColor = theme.colorScheme.onSurface;
+    final badgeBackground = theme.colorScheme.primary.withValues(alpha: 0.12);
+    final badgeText = theme.colorScheme.primary;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: badgeBackground,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '${items.length}',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: badgeText,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          subtitle,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: textColor.withValues(alpha: 0.7),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _EventItemsList(
+          items: items,
+          emptyLabel: emptyLabel,
+          reservingItemId: reservingItemId,
+          deletingItemId: deletingItemId,
+          onReserve: onReserve,
+          onDelete: onDelete,
+          isOwner: isOwner,
+          currentUserEmail: currentUserEmail,
+          canReserveItems: canReserveItems,
+          contributions: contributions,
+        ),
+      ],
+    );
+  }
 }
 
 class _EventItemsList extends StatelessWidget {
   const _EventItemsList({
     required this.items,
+    required this.emptyLabel,
     required this.reservingItemId,
     required this.deletingItemId,
     required this.onReserve,
@@ -2716,6 +2931,7 @@ class _EventItemsList extends StatelessWidget {
   });
 
   final List<EventItemModel> items;
+  final String emptyLabel;
   final int? reservingItemId;
   final int? deletingItemId;
   final void Function(EventItemModel item) onReserve;
@@ -2742,7 +2958,7 @@ class _EventItemsList extends StatelessWidget {
           border: Border.all(color: border),
         ),
         child: Text(
-          S.of(context).noItemsYet,
+          emptyLabel,
           style: Theme.of(context)
               .textTheme
               .bodyMedium
@@ -2755,6 +2971,7 @@ class _EventItemsList extends StatelessWidget {
     for (final item in items) {
       grouped.putIfAbsent(item.typeName, () => []).add(item);
     }
+    final showTypeHeader = grouped.length > 1;
 
     return Column(
       children: grouped.entries
@@ -2762,14 +2979,16 @@ class _EventItemsList extends StatelessWidget {
             (entry) => Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  entry.key,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
+                if (showTypeHeader) ...[
+                  Text(
+                    entry.key,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 ...entry.value.map(
                   (item) => _EventItemTile(
                     item: item,
@@ -2912,7 +3131,143 @@ class _EventItemTile extends StatelessWidget {
         .toList();
     final isFull = available <= 0;
     final hasContributed = myContribution.isNotEmpty;
+    final isBring = item.kind == EventItemKind.bring;
     final accentGreen = Colors.green.shade500;
+
+    if (isBring) {
+      final creatorName = _displayName(context, item.createdByHandle);
+      final creatorInitial = _displayInitial(context, item.createdByHandle);
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor),
+          boxShadow: [
+            BoxShadow(
+              color: shadow,
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: accentGreen.withValues(alpha: 0.15),
+                  border: Border.all(
+                    color: accentGreen,
+                    width: 2,
+                  ),
+                ),
+                child: Icon(
+                  Icons.volunteer_activism_outlined,
+                  color: accentGreen,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name,
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      S.of(context)
+                          .bringQuantityLabel(item.maxQuantity, item.unitLabel),
+                      style: TextStyle(
+                        color: mutedText,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      S.of(context).bringPersonalLabel,
+                      style: TextStyle(
+                        color: accentGreen,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor: avatarBackground,
+                          backgroundImage: item.createdByAvatarUrl == null
+                              ? null
+                              : NetworkImage(item.createdByAvatarUrl!),
+                          child: item.createdByAvatarUrl == null
+                              ? Text(
+                                  creatorInitial,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: avatarForeground,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            creatorName,
+                            style: TextStyle(
+                              color: mutedText,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (onDelete != null)
+                TextButton(
+                  style: TextButton.styleFrom(
+                    backgroundColor:
+                        Colors.red.withValues(alpha: isDark ? 0.2 : 0.08),
+                    foregroundColor:
+                        isDark ? Colors.red.shade300 : Colors.red.shade400,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: isDeleting ? null : onDelete,
+                  child: isDeleting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
+                          ),
+                        )
+                      : const Icon(Icons.delete_outline),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -2936,22 +3291,26 @@ class _EventItemTile extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: hasContributed ? accentGreen : Colors.transparent,
-                    border: Border.all(
-                      color: (hasContributed || isFull)
-                          ? accentGreen
-                          : textColor.withValues(alpha: 0.35),
-                      width: 2,
+                InkWell(
+                  onTap: (!isLoading && canReserve) ? onTap : null,
+                  customBorder: const CircleBorder(),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: hasContributed ? accentGreen : Colors.transparent,
+                      border: Border.all(
+                        color: (hasContributed || isFull)
+                            ? accentGreen
+                            : textColor.withValues(alpha: 0.35),
+                        width: 2,
+                      ),
                     ),
+                    child: hasContributed
+                        ? const Icon(Icons.check, color: Colors.white, size: 18)
+                        : null,
                   ),
-                  child: hasContributed
-                      ? const Icon(Icons.check, color: Colors.white, size: 18)
-                      : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(

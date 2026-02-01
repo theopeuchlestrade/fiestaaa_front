@@ -1,3 +1,21 @@
+enum EventItemKind {
+  need,
+  bring;
+
+  String get apiValue => switch (this) {
+        EventItemKind.need => 'need',
+        EventItemKind.bring => 'bring',
+      };
+
+  static EventItemKind fromJson(String? value) {
+    final normalized = (value ?? 'need').toLowerCase();
+    return switch (normalized) {
+      'bring' => EventItemKind.bring,
+      _ => EventItemKind.need,
+    };
+  }
+}
+
 class EventItemModel {
   EventItemModel({
     required this.eventId,
@@ -8,7 +26,10 @@ class EventItemModel {
     required this.maxQuantity,
     required this.reservedQuantity,
     required this.unitLabel,
+    required this.kind,
     required this.createdByEmail,
+    required this.createdByHandle,
+    required this.createdByAvatarUrl,
   });
 
   final int eventId;
@@ -19,7 +40,10 @@ class EventItemModel {
   final int maxQuantity;
   final int reservedQuantity;
   final String unitLabel;
+  final EventItemKind kind;
   final String? createdByEmail;
+  final String? createdByHandle;
+  final String? createdByAvatarUrl;
 
   int get remaining => (maxQuantity - reservedQuantity).clamp(0, maxQuantity);
 
@@ -38,7 +62,10 @@ class EventItemModel {
       maxQuantity: (json['max_quantity'] as num).toInt(),
       reservedQuantity: (json['reserved_quantity'] as num).toInt(),
       unitLabel: (json['unit_label'] as String?) ?? 'pièce',
+      kind: EventItemKind.fromJson(json['item_kind'] as String?),
       createdByEmail: json['created_by_email'] as String?,
+      createdByHandle: json['created_by_handle'] as String?,
+      createdByAvatarUrl: json['created_by_avatar_url'] as String?,
     );
   }
 }

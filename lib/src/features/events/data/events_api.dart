@@ -306,6 +306,7 @@ class EventsApi {
     required String name,
     required int maxQuantity,
     required String unitLabel,
+    EventItemKind? itemKind,
   }) async {
     final response = await _client.post(
       Uri.parse('$apiBaseUrl/events/$eventId/items/custom'),
@@ -317,6 +318,7 @@ class EventsApi {
         'name_item': name,
         'max_quantity': maxQuantity,
         'unit_label': unitLabel,
+        if (itemKind != null) 'item_kind': itemKind.apiValue,
       }),
     );
 
