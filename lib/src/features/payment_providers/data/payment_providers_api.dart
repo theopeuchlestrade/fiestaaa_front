@@ -7,13 +7,14 @@ import 'package:http/http.dart' as http;
 
 class PaymentProvidersApi {
   PaymentProvidersApi({http.Client? client})
-      : _client = client ?? http.Client();
+    : _client = client ?? http.Client();
 
   final http.Client _client;
 
   Future<List<PaymentProviderModel>> fetchProviders() async {
-    final response =
-        await _client.get(Uri.parse('$apiBaseUrl/payment-providers'));
+    final response = await _client.get(
+      Uri.parse('$apiBaseUrl/payment-providers'),
+    );
     if (response.statusCode != 200) {
       throw ApiException(
         'Chargement des cagnottes impossible (${response.statusCode})',
@@ -23,8 +24,9 @@ class PaymentProvidersApi {
 
     final decoded = jsonDecode(response.body) as List<dynamic>;
     return decoded
-        .map((item) =>
-            PaymentProviderModel.fromJson(item as Map<String, dynamic>))
+        .map(
+          (item) => PaymentProviderModel.fromJson(item as Map<String, dynamic>),
+        )
         .toList();
   }
 

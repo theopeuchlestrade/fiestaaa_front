@@ -364,10 +364,26 @@
   },
   "noVotesYet": "No votes yet.",
 
-  "availableItems": "Available items",
+  "availableItems": "Contributions & needs",
+  "bringSectionTitle": "What we bring",
+  "needSectionTitle": "What we need",
+  "needItemsSubtitle": "Needs listed by the organizer.",
+  "noBringItemsYet": "No one has shared what they bring yet.",
+  "noNeedItemsYet": "No needs listed yet.",
+  "itemKindLabel": "Item type",
+  "itemKindBring": "Bring",
+  "itemKindNeed": "Need",
+  "bringPersonalLabel": "Personal contribution",
+  "bringQuantityLabel": "Brought quantity: {quantity} {unit}",
+  "@bringQuantityLabel": {
+    "placeholders": {
+      "quantity": {"type": "int"},
+      "unit": {"type": "String"}
+    }
+  },
   "add": "Add",
   "adding": "Adding...",
-  "chooseWhatYouBring": "Choose what you're bringing. Quantities are shared among all participants.",
+  "chooseWhatYouBring": "Choose what you're bringing.",
   "acceptInvitationToContribute": "Accept the invitation before contributing to items.",
   "invitationExpiredNoContributions": "Invitation expired: contributions are no longer possible.",
   "newItem": "New item",

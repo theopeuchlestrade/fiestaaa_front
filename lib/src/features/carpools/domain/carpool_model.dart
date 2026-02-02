@@ -49,8 +49,12 @@ class CarpoolModel {
       notes: json['notes'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
-      passengers: (json['passengers'] as List<dynamic>?)
-              ?.map((e) => CarpoolPassengerModel.fromJson(e as Map<String, dynamic>))
+      passengers:
+          (json['passengers'] as List<dynamic>?)
+              ?.map(
+                (e) =>
+                    CarpoolPassengerModel.fromJson(e as Map<String, dynamic>),
+              )
               .toList() ??
           [],
     );

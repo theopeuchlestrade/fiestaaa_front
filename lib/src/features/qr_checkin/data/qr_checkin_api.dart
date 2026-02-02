@@ -17,9 +17,7 @@ class QRCheckinApi {
   }) async {
     final response = await _client.get(
       Uri.parse('$apiBaseUrl/events/$eventId/my-qr-code'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
@@ -75,10 +73,7 @@ class QRCheckinApi {
         // It's a QRScanResponse with details
         return QRScanResult.fromJson(decoded);
       }
-      throw ApiException(
-        'Non autorisé',
-        statusCode: response.statusCode,
-      );
+      throw ApiException('Non autorisé', statusCode: response.statusCode);
     }
 
     if (response.statusCode == 404) {
@@ -101,9 +96,7 @@ class QRCheckinApi {
   }) async {
     final response = await _client.get(
       Uri.parse('$apiBaseUrl/events/$eventId/qr-scan-stats'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {

@@ -4,31 +4,53 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
-const String firebaseProjectId =
-    String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: '');
-const String firebaseStorageBucket =
-    String.fromEnvironment('FIREBASE_STORAGE_BUCKET', defaultValue: '');
-const String firebaseMessagingSenderId =
-    String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID', defaultValue: '');
+const String firebaseProjectId = String.fromEnvironment(
+  'FIREBASE_PROJECT_ID',
+  defaultValue: '',
+);
+const String firebaseStorageBucket = String.fromEnvironment(
+  'FIREBASE_STORAGE_BUCKET',
+  defaultValue: '',
+);
+const String firebaseMessagingSenderId = String.fromEnvironment(
+  'FIREBASE_MESSAGING_SENDER_ID',
+  defaultValue: '',
+);
 
-const String firebaseWebApiKey =
-    String.fromEnvironment('FIREBASE_WEB_API_KEY', defaultValue: '');
-const String firebaseWebAppId =
-    String.fromEnvironment('FIREBASE_WEB_APP_ID', defaultValue: '');
-const String firebaseWebMeasurementId =
-    String.fromEnvironment('FIREBASE_WEB_MEASUREMENT_ID', defaultValue: '');
+const String firebaseWebApiKey = String.fromEnvironment(
+  'FIREBASE_WEB_API_KEY',
+  defaultValue: '',
+);
+const String firebaseWebAppId = String.fromEnvironment(
+  'FIREBASE_WEB_APP_ID',
+  defaultValue: '',
+);
+const String firebaseWebMeasurementId = String.fromEnvironment(
+  'FIREBASE_WEB_MEASUREMENT_ID',
+  defaultValue: '',
+);
 
-const String firebaseAndroidApiKey =
-    String.fromEnvironment('FIREBASE_ANDROID_API_KEY', defaultValue: '');
-const String firebaseAndroidAppId =
-    String.fromEnvironment('FIREBASE_ANDROID_APP_ID', defaultValue: '');
+const String firebaseAndroidApiKey = String.fromEnvironment(
+  'FIREBASE_ANDROID_API_KEY',
+  defaultValue: '',
+);
+const String firebaseAndroidAppId = String.fromEnvironment(
+  'FIREBASE_ANDROID_APP_ID',
+  defaultValue: '',
+);
 
-const String firebaseIosApiKey =
-    String.fromEnvironment('FIREBASE_IOS_API_KEY', defaultValue: '');
-const String firebaseIosAppId =
-    String.fromEnvironment('FIREBASE_IOS_APP_ID', defaultValue: '');
-const String firebaseIosBundleId =
-    String.fromEnvironment('FIREBASE_IOS_BUNDLE_ID', defaultValue: '');
+const String firebaseIosApiKey = String.fromEnvironment(
+  'FIREBASE_IOS_API_KEY',
+  defaultValue: '',
+);
+const String firebaseIosAppId = String.fromEnvironment(
+  'FIREBASE_IOS_APP_ID',
+  defaultValue: '',
+);
+const String firebaseIosBundleId = String.fromEnvironment(
+  'FIREBASE_IOS_BUNDLE_ID',
+  defaultValue: '',
+);
 
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {

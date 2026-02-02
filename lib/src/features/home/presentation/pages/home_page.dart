@@ -124,8 +124,9 @@ class _HomePageState extends State<HomePage> {
     _loadPendingBadges();
     _startRealtime();
     if (widget.initialShareToken != null) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _claimShareIfNeeded());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _claimShareIfNeeded(),
+      );
     }
   }
 
@@ -139,8 +140,9 @@ class _HomePageState extends State<HomePage> {
     }
     if (widget.initialShareToken != oldWidget.initialShareToken &&
         widget.initialShareToken != null) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _claimShareIfNeeded());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _claimShareIfNeeded(),
+      );
     }
   }
 
@@ -209,9 +211,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showSnack(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   @override
@@ -225,10 +225,7 @@ class _HomePageState extends State<HomePage> {
         onPendingInvitesChanged: (count) =>
             setState(() => _pendingEventInvites = count),
       ),
-      EventCreatePage(
-        session: _session,
-        onEventCreated: _handleEventCreated,
-      ),
+      EventCreatePage(session: _session, onEventCreated: _handleEventCreated),
       FriendsPage(
         session: _session,
         onPendingRequestsChanged: (count) =>
@@ -252,10 +249,7 @@ class _HomePageState extends State<HomePage> {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: pages,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: pages),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

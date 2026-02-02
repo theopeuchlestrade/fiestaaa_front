@@ -16,8 +16,10 @@ class ProfileInfo {
     return ProfileInfo(
       email: json['email'] as String,
       handle: json['handle'] as String,
-      expiration: DateTime.fromMillisecondsSinceEpoch(expTs * 1000, isUtc: true)
-          .toLocal(),
+      expiration: DateTime.fromMillisecondsSinceEpoch(
+        expTs * 1000,
+        isUtc: true,
+      ).toLocal(),
       avatarUrl: json['avatar_url'] as String?,
     );
   }

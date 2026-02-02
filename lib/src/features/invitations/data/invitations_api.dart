@@ -16,9 +16,7 @@ class InvitationsApi {
   }) async {
     final response = await _client.get(
       Uri.parse('$apiBaseUrl/events/$eventId/invitations'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
@@ -36,9 +34,7 @@ class InvitationsApi {
   Future<List<InvitationModel>> fetchMyInvitations(String token) async {
     final response = await _client.get(
       Uri.parse('$apiBaseUrl/my/invitations'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body) as List<dynamic>;
@@ -63,10 +59,7 @@ class InvitationsApi {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({
-        'event_id': eventId,
-        'identifier': identifier,
-      }),
+      body: jsonEncode({'event_id': eventId, 'identifier': identifier}),
     );
     if (response.statusCode == 201) {
       return InvitationCreationResult.invitation(
@@ -82,8 +75,8 @@ class InvitationsApi {
         message: status == null
             ? null
             : (status == 'email_sent'
-                ? 'Invitation envoyée par email'
-                : status),
+                  ? 'Invitation envoyée par email'
+                  : status),
       );
     }
     throw _apiError(
@@ -111,8 +104,10 @@ class InvitationsApi {
         jsonDecode(response.body) as Map<String, dynamic>,
       );
     }
-    throw ApiException('Impossible de mettre à jour l’invitation',
-        statusCode: response.statusCode);
+    throw ApiException(
+      'Impossible de mettre à jour l’invitation',
+      statusCode: response.statusCode,
+    );
   }
 
   Future<void> deleteInvitation({
@@ -124,9 +119,7 @@ class InvitationsApi {
       Uri.parse(
         '$apiBaseUrl/events/$eventId/invitations/${Uri.encodeComponent(email)}',
       ),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode != 200) {
       throw _apiError(response, fallbackMessage: 'Suppression impossible');

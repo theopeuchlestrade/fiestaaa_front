@@ -32,13 +32,13 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
   final _originController = TextEditingController();
   final _notesController = TextEditingController();
   final _addressFocus = FocusNode();
-  
+
   final _eventsApi = EventsApi();
   List<AddressSuggestion> _addressSuggestions = [];
   AddressSuggestion? _selectedSuggestion;
   bool _searchingAddress = false;
   String? _addressSearchError;
-  
+
   DateTime? _departAt;
   int _seatsTotal = 4;
 
@@ -83,7 +83,7 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
   Future<void> _searchAddress() async {
     final query = _originController.text.trim();
     final l10n = S.of(context);
-    
+
     if (query.length < 3) {
       setState(() {
         _addressSearchError = l10n.enterAtLeast3Chars;
@@ -141,38 +141,42 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
 
   Future<void> _selectDateTime() async {
     final now = DateTime.now();
-    
+
     // We want to limit the carpool date to:
     // Min: Now
     // Max: Event Date (end of day maybe? or exact event date?)
-    // User requested "not after the event". 
+    // User requested "not after the event".
     // Let's assume the carpool must arrive BEFORE or arguably ON the event day.
     // Let's set lastDate to the event date.
 
     // Constraint: firstDate must be <= lastDate.
     // If event is in the past, effectively we can't create a carpool?
     // Or if event is today, lastDate might be before now?
-    
+
     // Safety check: if eventDate is before now, allows selecting today?
     // But usually we plan carpools for future events.
-    
+
     final lastDate = widget.eventDate;
     // We need to ensure we don't crash if lastDate < now (e.g. event is today but started 2 hours ago, or we are late).
     // Let's allow picking dates up to the event date, even if "now" is close.
     // But if lastDate is strictly before now (e.g. yesterday), we might have an issue.
     // Assuming effective constraint is: Start at Now, End at EventDate.
-    
+
     final effectiveFirstDate = now;
     // Ensure lastDate is at least firstDate.
-    final effectiveLastDate = lastDate.isBefore(effectiveFirstDate) 
-        ? effectiveFirstDate 
+    final effectiveLastDate = lastDate.isBefore(effectiveFirstDate)
+        ? effectiveFirstDate
         : lastDate;
 
     final selectedDate = await showDatePicker(
       context: context,
-      initialDate: _departAt ?? (effectiveLastDate.isBefore(effectiveFirstDate) ? effectiveFirstDate : effectiveLastDate), 
-      // If prompt logic: default to event date if not set? 
-      // Actually usually carpool is slightly before. 
+      initialDate:
+          _departAt ??
+          (effectiveLastDate.isBefore(effectiveFirstDate)
+              ? effectiveFirstDate
+              : effectiveLastDate),
+      // If prompt logic: default to event date if not set?
+      // Actually usually carpool is slightly before.
       // Let's keep existing logic or default to now.
       firstDate: effectiveFirstDate,
       lastDate: effectiveLastDate,
@@ -206,7 +210,7 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
       );
       return;
     }
-    
+
     setState(() {
       _departAt = result;
     });
@@ -215,7 +219,7 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
   void _submit() {
     if (_formKey.currentState!.validate()) {
       if (_departAt == null) return;
-      
+
       final payload = widget.existingCarpool != null
           ? CarpoolPatchPayload(
               origin: _originController.text.trim(),
@@ -291,8 +295,7 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
                 padding: EdgeInsets.zero,
                 physics: const ClampingScrollPhysics(),
                 itemCount: _addressSuggestions.length,
-                separatorBuilder: (context, index) =>
-                    const Divider(height: 1),
+                separatorBuilder: (context, index) => const Divider(height: 1),
                 itemBuilder: (context, index) {
                   final suggestion = _addressSuggestions[index];
                   return ListTile(
@@ -338,13 +341,15 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
                 decoration: InputDecoration(
                   labelText: l10n.carpoolDepartureDateTime,
                   prefixIcon: const Icon(Icons.access_time),
-                  errorText: _departAt == null ? l10n.carpoolDateTimeRequired : null,
+                  errorText: _departAt == null
+                      ? l10n.carpoolDateTimeRequired
+                      : null,
                 ),
                 child: Text(
                   _departAt != null
-                      ? DateFormat.yMMMMEEEEd(Localizations.localeOf(context).toString())
-                          .add_Hm()
-                          .format(_departAt!)
+                      ? DateFormat.yMMMMEEEEd(
+                          Localizations.localeOf(context).toString(),
+                        ).add_Hm().format(_departAt!)
                       : l10n.carpoolSelectDateTime,
                   style: TextStyle(
                     color: _departAt != null ? null : Colors.grey.shade600,
@@ -387,7 +392,9 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _submit,
-              child: Text(isEditing ? l10n.carpoolUpdateAction : l10n.carpoolCreateAction),
+              child: Text(
+                isEditing ? l10n.carpoolUpdateAction : l10n.carpoolCreateAction,
+              ),
             ),
           ],
         ),

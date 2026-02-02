@@ -33,11 +33,8 @@ class EventModel {
   final String ownerEmail;
   final DateTime? invitationDeadline;
 
-  DateTime get startDateTime => DateTime(
-        date.year,
-        date.month,
-        date.day,
-      ).add(startTime);
+  DateTime get startDateTime =>
+      DateTime(date.year, date.month, date.day).add(startTime);
 
   String get formattedDate =>
       DateFormat.yMMMMd('fr_FR').format(date); // locale friendly
@@ -68,14 +65,14 @@ class EventModel {
       longitude: _parseNullableDouble(json['longitude']),
       paymentProviderId: (json['payment_provider_id'] as num?)?.toInt(),
       paymentIdentifier: json['payment_identifier'] as String?,
-      paymentRequestedAmount:
-          (json['payment_requested_amount'] as num?)?.toDouble(),
+      paymentRequestedAmount: (json['payment_requested_amount'] as num?)
+          ?.toDouble(),
       paymentPerPerson: (json['payment_per_person'] as bool?) ?? false,
       ownerEmail: json['owner_email'] as String? ?? '',
       invitationDeadline:
           (json['invitation_deadline'] as String?)?.isEmpty ?? true
-              ? null
-              : DateTime.parse(json['invitation_deadline'] as String),
+          ? null
+          : DateTime.parse(json['invitation_deadline'] as String),
     );
   }
 

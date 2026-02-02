@@ -83,7 +83,7 @@ class EventsListPageState extends State<EventsListPage> {
       setState(() {
         _events = events;
         _myInvitations = {
-          for (final invitation in invitations) invitation.eventId: invitation
+          for (final invitation in invitations) invitation.eventId: invitation,
         };
         _notifyPendingInvites();
       });
@@ -103,8 +103,9 @@ class EventsListPageState extends State<EventsListPage> {
 
   void _notifyPendingInvites() {
     if (widget.onPendingInvitesChanged == null) return;
-    final pending =
-        _myInvitations.values.where((inv) => inv.status == 'Waiting').length;
+    final pending = _myInvitations.values
+        .where((inv) => inv.status == 'Waiting')
+        .length;
     widget.onPendingInvitesChanged!(pending);
   }
 
@@ -179,9 +180,11 @@ class _EventsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pendingInvites =
-        invitations.values.where((inv) => inv.status == 'Waiting').length;
-    final sortedEvents = [...events]..sort((a, b) {
+    final pendingInvites = invitations.values
+        .where((inv) => inv.status == 'Waiting')
+        .length;
+    final sortedEvents = [...events]
+      ..sort((a, b) {
         final waitingA = invitations[a.id]?.status == 'Waiting';
         final waitingB = invitations[b.id]?.status == 'Waiting';
         if (waitingA == waitingB) return 0;
@@ -198,8 +201,8 @@ class _EventsGrid extends StatelessWidget {
           final crossAxisCount = constraints.maxWidth > 1080
               ? 3
               : constraints.maxWidth > 720
-                  ? 2
-                  : 1;
+              ? 2
+              : 1;
           final childAspectRatio = isTablet ? 1.9 : 1.3;
           return CustomScrollView(
             physics: const BouncingScrollPhysics(
@@ -208,14 +211,18 @@ class _EventsGrid extends StatelessWidget {
             slivers: [
               if (pendingInvites > 0)
                 SliverPadding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   sliver: SliverToBoxAdapter(
                     child: Card(
                       color: Colors.orange.shade50,
                       child: ListTile(
-                        leading: const Icon(Icons.mark_email_unread,
-                            color: Colors.orange),
+                        leading: const Icon(
+                          Icons.mark_email_unread,
+                          color: Colors.orange,
+                        ),
                         title: Text(
                           S.of(context).invitationsWaitingCount(pendingInvites),
                           style: const TextStyle(fontWeight: FontWeight.w700),
@@ -226,14 +233,18 @@ class _EventsGrid extends StatelessWidget {
                   ),
                 ),
               SliverPadding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 24,
+                ),
                 sliver: SliverToBoxAdapter(
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: FiestaaaPalette.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(14),
@@ -241,18 +252,20 @@ class _EventsGrid extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.auto_awesome,
-                                color: FiestaaaPalette.primary
-                                    .withValues(alpha: 0.8)),
+                            Icon(
+                              Icons.auto_awesome,
+                              color: FiestaaaPalette.primary.withValues(
+                                alpha: 0.8,
+                              ),
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               S.of(context).yourFiestaaa,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
+                              style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.onSurface,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
                                     fontWeight: FontWeight.w700,
                                   ),
                             ),
@@ -264,8 +277,10 @@ class _EventsGrid extends StatelessWidget {
                 ),
               ),
               SliverPadding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 sliver: SliverGrid(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
@@ -273,20 +288,17 @@ class _EventsGrid extends StatelessWidget {
                     crossAxisSpacing: 16,
                     childAspectRatio: childAspectRatio,
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final event = sortedEvents[index];
-                      return _EventBubble(
-                        event: event,
-                        sessionEmail: sessionEmail,
-                        invitation: invitations[event.id],
-                        onTap: () {
-                          onEventSelected(event);
-                        },
-                      );
-                    },
-                    childCount: sortedEvents.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final event = sortedEvents[index];
+                    return _EventBubble(
+                      event: event,
+                      sessionEmail: sessionEmail,
+                      invitation: invitations[event.id],
+                      onTap: () {
+                        onEventSelected(event);
+                      },
+                    );
+                  }, childCount: sortedEvents.length),
                 ),
               ),
             ],
@@ -323,14 +335,14 @@ class _EventBubble extends StatelessWidget {
             Theme.of(context).brightness,
           ),
           borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: FiestaaaPalette.primary.withValues(alpha: 0.14),
-                blurRadius: 18,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
+          boxShadow: [
+            BoxShadow(
+              color: FiestaaaPalette.primary.withValues(alpha: 0.14),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
         child: Stack(
           children: [
             Positioned(
@@ -361,11 +373,11 @@ class _EventBubble extends StatelessWidget {
                       Expanded(
                         child: Text(
                           event.name,
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -384,11 +396,7 @@ class _EventBubble extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
-                                  badge.icon,
-                                  size: 16,
-                                  color: badge.color,
-                                ),
+                                Icon(badge.icon, size: 16, color: badge.color),
                                 const SizedBox(width: 6),
                                 Flexible(
                                   child: Text(
@@ -418,11 +426,11 @@ class _EventBubble extends StatelessWidget {
                         child: Text(
                           '${event.formattedDate} • ${event.formattedTime}',
                           overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.92),
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.92),
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                       ),
                     ],
@@ -435,10 +443,10 @@ class _EventBubble extends StatelessWidget {
                       Expanded(
                         child: Text(
                           event.address,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                  ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.9),
+                              ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -452,8 +460,8 @@ class _EventBubble extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
                     ),
                   ),
                 ],
@@ -469,12 +477,12 @@ class _EventBubble extends StatelessWidget {
     final isOwner =
         sessionEmail.toLowerCase() == event.ownerEmail.toLowerCase();
     if (isOwner) {
-        return _EventBadgeData(
-          label: S.of(context).organizer,
-          color: FiestaaaPalette.primary,
-          background: FiestaaaPalette.primary.withValues(alpha: 0.12),
-          icon: Icons.emoji_events,
-        );
+      return _EventBadgeData(
+        label: S.of(context).organizer,
+        color: FiestaaaPalette.primary,
+        background: FiestaaaPalette.primary.withValues(alpha: 0.12),
+        icon: Icons.emoji_events,
+      );
     }
 
     if (invitation == null) {
@@ -524,10 +532,7 @@ class _EventBadgeData {
 }
 
 class _DecorativeWave extends StatelessWidget {
-  const _DecorativeWave({
-    required this.color,
-    required this.size,
-  });
+  const _DecorativeWave({required this.color, required this.size});
 
   final Color color;
   final double size;

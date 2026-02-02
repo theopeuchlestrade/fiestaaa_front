@@ -73,8 +73,9 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       setState(() {
         _handleAvailable = available;
-        _handleStatus =
-            available ? l10n.identifierAvailable : l10n.identifierTaken;
+        _handleStatus = available
+            ? l10n.identifierAvailable
+            : l10n.identifierTaken;
       });
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -204,7 +205,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _showLanguageDialog() async {
     final l10n = S.of(context);
-    final currentLocale = widget.localeService?.locale?.languageCode ??
+    final currentLocale =
+        widget.localeService?.locale?.languageCode ??
         Localizations.localeOf(context).languageCode;
 
     final selected = await showDialog<String>(
@@ -217,8 +219,10 @@ class _ProfilePageState extends State<ProfilePage> {
               leading: currentLocale == locale.languageCode
                   ? const Icon(Icons.check, color: Colors.green)
                   : const SizedBox(width: 24),
-              title: Text(widget.localeService?.getLanguageName(locale.languageCode) ??
-                  locale.languageCode),
+              title: Text(
+                widget.localeService?.getLanguageName(locale.languageCode) ??
+                    locale.languageCode,
+              ),
               onTap: () => Navigator.of(ctx).pop(locale.languageCode),
             ),
         ],
@@ -300,9 +304,7 @@ class _ProfilePageState extends State<ProfilePage> {
       });
       if (widget.onSessionUpdated != null) {
         await widget.onSessionUpdated!(
-          widget.session.copyWith(
-            handle: updated.handle,
-          ),
+          widget.session.copyWith(handle: updated.handle),
         );
       }
       _showSnack(l10n.photoUpdated);
@@ -323,7 +325,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     final l10n = S.of(context);
     final locale = Localizations.localeOf(context).languageCode;
-    
+
     return FiestaaaPageLayout(
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -337,150 +339,241 @@ class _ProfilePageState extends State<ProfilePage> {
             FutureBuilder<ProfileInfo>(
               future: _future,
               builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const SizedBox(
-                      height: 240,
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return Column(
-                      children: [
-                        Text(l10n.profileLoadFailed),
-                        const SizedBox(height: 8),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              _future = _api.fetchProfile(widget.session.token);
-                            });
-                          },
-                          icon: const Icon(Icons.refresh),
-                          label: Text(l10n.retry),
-                        ),
-                      ],
-                    );
-                  }
-
-                  final profile = snapshot.data;
-                  if (profile == null) {
-                    return Text(l10n.profileNotFound);
-                  }
-
-                  if (_handleController.text.isEmpty) {
-                    _handleController.text = profile.handle;
-                  }
-
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 240,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                if (snapshot.hasError) {
                   return Column(
                     children: [
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: CircleAvatar(
-                                  radius: 26,
-                                  backgroundColor:
-                                      FiestaaaPalette.primary
-                                          .withValues(alpha: 0.14),
-                                  foregroundColor: FiestaaaPalette.primary,
-                                  backgroundImage: profile.avatarUrl == null
+                      Text(l10n.profileLoadFailed),
+                      const SizedBox(height: 8),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _future = _api.fetchProfile(widget.session.token);
+                          });
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: Text(l10n.retry),
+                      ),
+                    ],
+                  );
+                }
+
+                final profile = snapshot.data;
+                if (profile == null) {
+                  return Text(l10n.profileNotFound);
+                }
+
+                if (_handleController.text.isEmpty) {
+                  _handleController.text = profile.handle;
+                }
+
+                return Column(
+                  children: [
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: CircleAvatar(
+                                radius: 26,
+                                backgroundColor: FiestaaaPalette.primary
+                                    .withValues(alpha: 0.14),
+                                foregroundColor: FiestaaaPalette.primary,
+                                backgroundImage: profile.avatarUrl == null
+                                    ? null
+                                    : NetworkImage(profile.avatarUrl!),
+                                child: profile.avatarUrl == null
+                                    ? Text(
+                                        profile.email
+                                            .substring(0, 1)
+                                            .toUpperCase(),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              title: Text(
+                                profile.email,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              subtitle: Text(
+                                l10n.tokenValidUntil(
+                                  DateFormat.yMMMMd(
+                                    locale,
+                                  ).format(profile.expiration),
+                                  DateFormat.Hm().format(profile.expiration),
+                                ),
+                              ),
+                              trailing: Chip(
+                                label: Text(
+                                  l10n.connected,
+                                  style: const TextStyle(
+                                    color: FiestaaaPalette.primary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                backgroundColor: FiestaaaPalette.primary
+                                    .withValues(alpha: 0.12),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                Chip(
+                                  avatar: const Icon(Icons.tag, size: 18),
+                                  label: Text(profile.handle),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: _updatingHandle
                                       ? null
-                                      : NetworkImage(profile.avatarUrl!),
-                                  child: profile.avatarUrl == null
-                                      ? Text(
-                                          profile.email
-                                              .substring(0, 1)
-                                              .toUpperCase(),
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w800,
+                                      : () => _pickAndUploadAvatar(profile),
+                                  icon: _updatingHandle
+                                      ? const SizedBox(
+                                          width: 14,
+                                          height: 14,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
                                           ),
                                         )
-                                      : null,
-                                ),
-                                title: Text(
-                                  profile.email,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.w700),
-                                ),
-                                subtitle: Text(
-                                  l10n.tokenValidUntil(
-                                    DateFormat.yMMMMd(locale).format(profile.expiration),
-                                    DateFormat.Hm().format(profile.expiration),
-                                  ),
-                                ),
-                                trailing: Chip(
+                                      : const Icon(Icons.image),
                                   label: Text(
-                                    l10n.connected,
-                                    style: const TextStyle(
-                                      color: FiestaaaPalette.primary,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  backgroundColor: FiestaaaPalette.primary
-                                      .withValues(alpha: 0.12),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  Chip(
-                                    avatar: const Icon(Icons.tag, size: 18),
-                                    label: Text(profile.handle),
-                                  ),
-                                  OutlinedButton.icon(
-                                    onPressed: _updatingHandle
-                                        ? null
-                                        : () => _pickAndUploadAvatar(profile),
-                                    icon: _updatingHandle
-                                        ? const SizedBox(
-                                            width: 14,
-                                            height: 14,
-                                            child: CircularProgressIndicator(
-                                                strokeWidth: 2),
-                                          )
-                                        : const Icon(Icons.image),
-                                    label: Text(_updatingHandle
+                                    _updatingHandle
                                         ? l10n.uploading
-                                        : l10n.changePhoto),
+                                        : l10n.changePhoto,
                                   ),
-                                  OutlinedButton.icon(
-                                    onPressed: _deletingAccount
-                                        ? null
-                                        : _confirmDeleteAccount,
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.red,
-                                      side: const BorderSide(color: Colors.red),
-                                    ),
-                                    icon: _deletingAccount
-                                        ? const SizedBox(
-                                            width: 14,
-                                            height: 14,
-                                            child: CircularProgressIndicator(
-                                                strokeWidth: 2),
-                                          )
-                                        : const Icon(Icons.delete_forever),
-                                    label: Text(l10n.deleteMyAccount),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: _deletingAccount
+                                      ? null
+                                      : _confirmDeleteAccount,
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                    side: const BorderSide(color: Colors.red),
                                   ),
-                                  OutlinedButton.icon(
-                                    onPressed: widget.onLogout,
-                                    icon: const Icon(Icons.logout),
-                                    label: Text(l10n.logout),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                                  icon: _deletingAccount
+                                      ? const SizedBox(
+                                          width: 14,
+                                          height: 14,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Icon(Icons.delete_forever),
+                                  label: Text(l10n.deleteMyAccount),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: widget.onLogout,
+                                  icon: const Icon(Icons.logout),
+                                  label: Text(l10n.logout),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 12),
+                    ),
+                    const SizedBox(height: 12),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.edit_outlined,
+                                  color: Colors.deepPurple,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  l10n.updateIdentifier,
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                                const Spacer(),
+                                if (_checkingHandle || _updatingHandle)
+                                  const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _handleController,
+                              enabled: !_updatingHandle,
+                              decoration: InputDecoration(
+                                labelText: l10n.identifierExample,
+                                helperText: l10n.identifierHelperText,
+                                prefixIcon: const Icon(Icons.alternate_email),
+                                suffixIcon: _handleAvailable == true
+                                    ? const Icon(
+                                        Icons.check_circle,
+                                        color: Colors.green,
+                                      )
+                                    : null,
+                              ),
+                            ),
+                            if (_handleStatus != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  _handleStatus!,
+                                  style: TextStyle(
+                                    color: _handleAvailable == false
+                                        ? Colors.red.shade700
+                                        : Colors.green.shade700,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                OutlinedButton.icon(
+                                  onPressed: _checkingHandle
+                                      ? null
+                                      : _checkHandleAvailability,
+                                  icon: const Icon(Icons.search),
+                                  label: Text(l10n.check),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton.icon(
+                                  onPressed: _updatingHandle
+                                      ? null
+                                      : () => _updateHandle(profile),
+                                  icon: const Icon(Icons.save_outlined),
+                                  label: Text(
+                                    _updatingHandle
+                                        ? l10n.updating
+                                        : l10n.update,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (widget.themeService != null)
                       Card(
                         child: Padding(
                           padding: const EdgeInsets.all(16),
@@ -489,161 +582,84 @@ class _ProfilePageState extends State<ProfilePage> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.edit_outlined,
-                                      color: Colors.deepPurple),
+                                  Icon(
+                                    Icons.dark_mode,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    l10n.updateIdentifier,
+                                    l10n.changeTheme,
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium
                                         ?.copyWith(fontWeight: FontWeight.w700),
                                   ),
-                                  const Spacer(),
-                                  if (_checkingHandle || _updatingHandle)
-                                    const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2),
-                                    ),
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              TextField(
-                                controller: _handleController,
-                                enabled: !_updatingHandle,
-                                decoration: InputDecoration(
-                                  labelText: l10n.identifierExample,
-                                  helperText: l10n.identifierHelperText,
-                                  prefixIcon: const Icon(Icons.alternate_email),
-                                  suffixIcon: _handleAvailable == true
-                                      ? const Icon(Icons.check_circle,
-                                          color: Colors.green)
-                                      : null,
-                                ),
-                              ),
-                              if (_handleStatus != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Text(
-                                    _handleStatus!,
-                                    style: TextStyle(
-                                      color: _handleAvailable == false
-                                          ? Colors.red.shade700
-                                          : Colors.green.shade700,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                              OutlinedButton.icon(
+                                onPressed: _showThemeDialog,
+                                icon: const Icon(Icons.brightness_6_outlined),
+                                label: Text(
+                                  _themeLabel(
+                                    widget.themeService?.mode ??
+                                        ThemeMode.system,
+                                    l10n,
                                   ),
                                 ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  OutlinedButton.icon(
-                                    onPressed: _checkingHandle
-                                        ? null
-                                        : _checkHandleAvailability,
-                                    icon: const Icon(Icons.search),
-                                    label: Text(l10n.check),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  ElevatedButton.icon(
-                                    onPressed: _updatingHandle
-                                        ? null
-                                        : () => _updateHandle(profile),
-                                    icon: const Icon(Icons.save_outlined),
-                                    label: Text(_updatingHandle
-                                        ? l10n.updating
-                                        : l10n.update),
-                                  ),
-                                ],
                               ),
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      if (widget.themeService != null)
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.dark_mode,
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      l10n.changeTheme,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(fontWeight: FontWeight.w700),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                OutlinedButton.icon(
-                                  onPressed: _showThemeDialog,
-                                  icon: const Icon(Icons.brightness_6_outlined),
-                                  label: Text(
-                                    _themeLabel(
-                                      widget.themeService?.mode ??
-                                          ThemeMode.system,
-                                      l10n,
-                                    ),
+                    const SizedBox(height: 12),
+                    if (widget.localeService != null)
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.language,
+                                    color: Colors.deepPurple,
                                   ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    l10n.changeLanguage,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              OutlinedButton.icon(
+                                onPressed: _showLanguageDialog,
+                                icon: const Icon(Icons.translate),
+                                label: Text(
+                                  widget.localeService?.getLanguageName(
+                                        widget
+                                                .localeService
+                                                ?.locale
+                                                ?.languageCode ??
+                                            locale,
+                                      ) ??
+                                      l10n.french,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
-                      const SizedBox(height: 12),
-                      if (widget.localeService != null)
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(Icons.language,
-                                        color: Colors.deepPurple),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      l10n.changeLanguage,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(fontWeight: FontWeight.w700),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                OutlinedButton.icon(
-                                  onPressed: _showLanguageDialog,
-                                  icon: const Icon(Icons.translate),
-                                  label: Text(
-                                    widget.localeService?.getLanguageName(
-                                          widget.localeService?.locale?.languageCode ??
-                                              locale,
-                                        ) ??
-                                        l10n.french,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: 12),
-                    ],
-                  );
+                      ),
+                    const SizedBox(height: 12),
+                  ],
+                );
               },
             ),
           ],

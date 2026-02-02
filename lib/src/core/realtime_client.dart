@@ -5,18 +5,16 @@ import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class RealtimeClient {
-  RealtimeClient({
-    required this.token,
-    this.eventId,
-  });
+  RealtimeClient({required this.token, this.eventId});
 
   final String token;
   int? eventId;
 
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
-  final _controller =
-      StreamController<Map<String, dynamic>>.broadcast(sync: true);
+  final _controller = StreamController<Map<String, dynamic>>.broadcast(
+    sync: true,
+  );
   bool _manuallyClosed = false;
 
   Stream<Map<String, dynamic>> get stream => _controller.stream;

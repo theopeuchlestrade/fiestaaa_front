@@ -31,7 +31,10 @@ class NotificationsApi {
       }),
     );
     if (resp.statusCode >= 200 && resp.statusCode < 300) return;
-    throw ApiException('Enregistrement du device impossible', statusCode: resp.statusCode);
+    throw ApiException(
+      'Enregistrement du device impossible',
+      statusCode: resp.statusCode,
+    );
   }
 
   Future<void> refreshDevice({
@@ -57,7 +60,10 @@ class NotificationsApi {
       }),
     );
     if (resp.statusCode >= 200 && resp.statusCode < 300) return;
-    throw ApiException('Rafraîchissement du device impossible', statusCode: resp.statusCode);
+    throw ApiException(
+      'Rafraîchissement du device impossible',
+      statusCode: resp.statusCode,
+    );
   }
 
   Future<void> deleteDevice({
@@ -66,11 +72,12 @@ class NotificationsApi {
   }) async {
     final resp = await _client.delete(
       Uri.parse('$apiBaseUrl/me/devices/$fcmToken'),
-      headers: {
-        'Authorization': 'Bearer $authToken',
-      },
+      headers: {'Authorization': 'Bearer $authToken'},
     );
     if (resp.statusCode >= 200 && resp.statusCode < 300) return;
-    throw ApiException('Suppression du device impossible', statusCode: resp.statusCode);
+    throw ApiException(
+      'Suppression du device impossible',
+      statusCode: resp.statusCode,
+    );
   }
 }
