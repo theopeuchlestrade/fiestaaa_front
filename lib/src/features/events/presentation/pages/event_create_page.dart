@@ -8,6 +8,7 @@ import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_pro
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 class EventCreatePage extends StatefulWidget {
@@ -359,25 +360,34 @@ class _EventCreatePageState extends State<EventCreatePage> {
   }
 
   Widget _buildPlaylistSection() {
-    final isCompact = MediaQuery.of(context).size.width < 520;
-    final providerItems = <DropdownMenuItem<String?>>[
-      DropdownMenuItem<String?>(
-        value: null,
-        child: Text(S.of(context).noPlaylist),
-      ),
-      const DropdownMenuItem<String?>(
-        value: 'spotify',
-        child: Text('Spotify'),
-      ),
-      const DropdownMenuItem<String?>(
-        value: 'apple_music',
-        child: Text('Apple Music'),
-      ),
-      const DropdownMenuItem<String?>(
-        value: 'deezer',
-        child: Text('Deezer'),
-      ),
+    final providerOptions = <MapEntry<String?, String>>[
+      MapEntry(null, S.of(context).noPlaylist),
+      const MapEntry('spotify', 'Spotify'),
+      const MapEntry('apple_music', 'Apple Music'),
+      const MapEntry('deezer', 'Deezer'),
     ];
+    final providerItems = providerOptions
+        .map(
+          (option) => DropdownMenuItem<String?>(
+            value: option.key,
+            child: Text(
+              option.value,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        )
+        .toList();
+    final selectedItems = providerOptions
+        .map(
+          (option) => Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              option.value,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        )
+        .toList();
 
     final urlField = TextFormField(
       controller: _playlistUrlController,
@@ -421,82 +431,104 @@ class _EventCreatePageState extends State<EventCreatePage> {
           style: Theme.of(context)
               .textTheme
               .titleMedium
-              ?.copyWith(fontWeight: FontWeight.w600, color: Colors.white),
+              ?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
         ),
         const SizedBox(height: 8),
-        if (isCompact) ...[
-          DropdownButtonFormField<String?>(
-            value: _selectedPlaylistProvider,
-            items: providerItems,
-            decoration: InputDecoration(
-              labelText: S.of(context).provider,
-              prefixIcon: const Icon(Icons.music_note),
-              isDense: true,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            ),
-            validator: (value) {
-              if (_playlistUrlController.text.trim().isNotEmpty &&
-                  value == null) {
-                return S.of(context).selectProvider;
-              }
-              return null;
-            },
-            onChanged: (value) {
-              setState(() {
-                _selectedPlaylistProvider = value;
-                _playlistChanged = true;
-                if (value == null) {
-                  _playlistUrlController.clear();
-                }
-              });
-            },
-          ),
-          const SizedBox(height: 12),
-          urlField,
-        ] else
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<String?>(
-                  value: _selectedPlaylistProvider,
-                  items: providerItems,
-                  decoration: InputDecoration(
-                    labelText: S.of(context).provider,
-                    prefixIcon: const Icon(Icons.music_note),
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 12),
-                  ),
-                  validator: (value) {
-                    if (_playlistUrlController.text.trim().isNotEmpty &&
-                        value == null) {
-                      return S.of(context).selectProvider;
-                    }
-                    return null;
-                  },
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedPlaylistProvider = value;
-                      _playlistChanged = true;
-                      if (value == null) {
-                        _playlistUrlController.clear();
-                      }
-                    });
-                  },
-                ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final stacked = constraints.maxWidth < 420;
+            final providerField = DropdownButtonFormField<String?>(
+              value: _selectedPlaylistProvider,
+              items: providerItems,
+              selectedItemBuilder: (_) => selectedItems,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: S.of(context).provider,
+                // prefixIcon: _playlistProviderLogo(
+                //   _selectedPlaylistProvider,
+                //   size: 18,
+                // ),
+                isDense: true,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               ),
-              const SizedBox(width: 12),
-              Expanded(flex: 2, child: urlField),
-            ],
-          ),
+              validator: (value) {
+                if (_playlistUrlController.text.trim().isNotEmpty &&
+                    value == null) {
+                  return S.of(context).selectProvider;
+                }
+                return null;
+              },
+              onChanged: (value) {
+                setState(() {
+                  _selectedPlaylistProvider = value;
+                  _playlistChanged = true;
+                  if (value == null) {
+                    _playlistUrlController.clear();
+                  }
+                });
+              },
+            );
+
+            if (stacked) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  providerField,
+                  const SizedBox(height: 12),
+                  urlField,
+                ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: providerField),
+                const SizedBox(width: 12),
+                Expanded(flex: 2, child: urlField),
+              ],
+            );
+          },
+        ),
         const SizedBox(height: 6),
         Text(
           S.of(context).playlistHelperText,
           style: TextStyle(color: Colors.grey.shade600),
         ),
       ],
+    );
+  }
+
+  Widget _playlistProviderLogo(String? provider, {double size = 20}) {
+    final assetPath = switch (provider) {
+      'spotify' => 'assets/logos/spotify.svg',
+      'apple_music' => 'assets/logos/apple_music.svg',
+      'deezer' => 'assets/logos/deezer.svg',
+      _ => null,
+    };
+
+    if (assetPath == null) {
+      return Icon(
+        Icons.music_note,
+        size: size,
+        color: Colors.grey.shade700,
+      );
+    }
+
+    return SvgPicture.asset(
+      assetPath,
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      placeholderBuilder: (_) => Icon(
+        Icons.music_note,
+        size: size,
+        color: Colors.grey.shade700,
+      ),
     );
   }
 
@@ -823,7 +855,10 @@ class _EventCreatePageState extends State<EventCreatePage> {
                         style: Theme.of(context)
                             .textTheme
                             .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600, color: Colors.white),
+                            ?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                       ),
                       const SizedBox(height: 8),
                       _buildPaymentProviderField(),

@@ -19,6 +19,7 @@ import 'package:fiestaaa_front/src/features/qr_checkin/presentation/pages/qr_sca
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -1171,30 +1172,32 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
-  IconData _iconForPlaylistProvider(String? provider) {
-    switch (provider) {
-      case 'spotify':
-        return Icons.music_note;
-      case 'apple_music':
-        return Icons.apple;
-      case 'deezer':
-        return Icons.album;
-      default:
-        return Icons.music_note;
+  Widget _buildPlaylistProviderLogo(String? provider, {double size = 22}) {
+    final assetPath = switch (provider) {
+      'spotify' => 'assets/logos/spotify.svg',
+      'apple_music' => 'assets/logos/apple_music.svg',
+      'deezer' => 'assets/logos/deezer.svg',
+      _ => null,
+    };
+    if (assetPath == null) {
+      return Icon(
+        Icons.music_note,
+        size: size,
+        color: Colors.grey.shade700,
+      );
     }
-  }
 
-  String _labelForPlaylistProvider(String? provider) {
-    switch (provider) {
-      case 'spotify':
-        return 'Spotify';
-      case 'apple_music':
-        return 'Apple Music';
-      case 'deezer':
-        return 'Deezer';
-      default:
-        return S.of(context).selectProvider;
-    }
+    return SvgPicture.asset(
+      assetPath,
+      width: provider == 'deezer' ? size * 1.2 : size,
+      height: provider == 'deezer' ? size * 1.2 : size,
+      fit: BoxFit.contain,
+      placeholderBuilder: (_) => Icon(
+        Icons.music_note,
+        size: size,
+        color: Colors.grey.shade700,
+      ),
+    );
   }
 
   Future<void> _openPlaylist() async {
@@ -1227,8 +1230,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  _iconForPlaylistProvider(provider),
+                const Icon(
+                  Icons.music_note,
                   color: FiestaaaPalette.primary,
                 ),
                 const SizedBox(width: 16),
@@ -1241,7 +1244,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         style: Theme.of(context)
                             .textTheme
                             .labelLarge
-                            ?.copyWith(color: Colors.grey.shade600),
+                            ?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
                       ),
                       const SizedBox(height: 6),
                       if (isEmpty)
@@ -1255,11 +1260,55 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              _labelForPlaylistProvider(provider),
-                              style: Theme.of(context).textTheme.titleMedium,
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                final stacked = constraints.maxWidth < 420;
+                                final logo = Semantics(
+                                  label: provider == null
+                                      ? S.of(context).selectProvider
+                                      : provider == 'spotify'
+                                          ? 'Spotify'
+                                          : provider == 'apple_music'
+                                              ? 'Apple Music'
+                                              : provider == 'deezer'
+                                                  ? 'Deezer'
+                                                  : S.of(context).selectProvider,
+                                  child: _buildPlaylistProviderLogo(
+                                    provider,
+                                    size: 28,
+                                  ),
+                                );
+                                final openButton = ElevatedButton.icon(
+                                  onPressed: _openPlaylist,
+                                  icon: const Icon(Icons.open_in_new),
+                                  label: Text(S.of(context).openPlaylist),
+                                );
+
+                                if (stacked) {
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      logo,
+                                      const SizedBox(height: 8),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: openButton,
+                                      ),
+                                    ],
+                                  );
+                                }
+
+                                return Row(
+                                  children: [
+                                    logo,
+                                    const SizedBox(width: 12),
+                                    openButton,
+                                  ],
+                                );
+                              },
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 8),
                             Text(
                               url,
                               maxLines: 1,
@@ -1268,41 +1317,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                 color: Colors.grey.shade800,
                               ),
                             ),
-                            const SizedBox(height: 12),
-                            LayoutBuilder(
-                              builder: (context, constraints) {
-                                final stacked = constraints.maxWidth < 520;
-                                final openButton = ElevatedButton.icon(
-                                  onPressed: _openPlaylist,
-                                  icon: const Icon(Icons.open_in_new),
-                                  label: Text(S.of(context).openPlaylist),
-                                );
-                                final editButton = OutlinedButton.icon(
-                                  onPressed: canEdit ? _openEditEvent : null,
-                                  icon: const Icon(Icons.edit),
-                                  label: Text(S.of(context).edit),
-                                );
-                                if (stacked) {
-                                  return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    children: [
-                                      openButton,
-                                      if (canEdit) ...[
-                                        const SizedBox(height: 8),
-                                        editButton,
-                                      ],
-                                    ],
-                                  );
-                                }
-                                return Row(
-                                  children: [
-                                    openButton,
-                                    const SizedBox(width: 12),
-                                    if (canEdit) editButton,
-                                  ],
-                                );
-                              },
-                            ),
+                            const SizedBox(height: 4),
                           ],
                         ),
                     ],
@@ -1784,7 +1799,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         style: Theme.of(context)
                             .textTheme
                             .labelLarge
-                            ?.copyWith(color: Colors.grey.shade600),
+                            ?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
                       ),
                       const SizedBox(height: 6),
                       Text(

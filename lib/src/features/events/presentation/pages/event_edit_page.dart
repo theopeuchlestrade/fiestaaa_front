@@ -443,7 +443,10 @@ class _EventEditPageState extends State<EventEditPage> {
           style: Theme.of(context)
               .textTheme
               .titleMedium
-              ?.copyWith(fontWeight: FontWeight.w600, color: Colors.white),
+              ?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
         ),
         const SizedBox(height: 8),
         if (isCompact) ...[
@@ -844,7 +847,10 @@ class _EventEditPageState extends State<EventEditPage> {
                       style: Theme.of(context)
                           .textTheme
                           .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600, color: Colors.white),
+                          ?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                     ),
                     const SizedBox(height: 8),
                     _buildPaymentProviderField(),
