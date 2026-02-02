@@ -21,8 +21,10 @@ class FriendsApi {
           .map((e) => FriendModel.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-    throw ApiException('Impossible de charger vos amis',
-        statusCode: response.statusCode);
+    throw ApiException(
+      'Impossible de charger vos amis',
+      statusCode: response.statusCode,
+    );
   }
 
   Future<List<FriendRequestModel>> fetchRequests(String token) async {
@@ -36,16 +38,19 @@ class FriendsApi {
           .map((e) => FriendRequestModel.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-    throw ApiException('Impossible de charger les demandes d’ami',
-        statusCode: response.statusCode);
+    throw ApiException(
+      'Impossible de charger les demandes d’ami',
+      statusCode: response.statusCode,
+    );
   }
 
   Future<List<FriendSearchResult>> searchFriends(
     String token,
     String query,
   ) async {
-    final uri = Uri.parse('$apiBaseUrl/friends/search')
-        .replace(queryParameters: {'q': query});
+    final uri = Uri.parse(
+      '$apiBaseUrl/friends/search',
+    ).replace(queryParameters: {'q': query});
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -76,8 +81,10 @@ class FriendsApi {
         jsonDecode(response.body) as Map<String, dynamic>,
       );
     }
-    throw ApiException('Impossible d’envoyer la demande',
-        statusCode: response.statusCode);
+    throw ApiException(
+      'Impossible d’envoyer la demande',
+      statusCode: response.statusCode,
+    );
   }
 
   Future<FriendRequestModel> respondToRequest({
@@ -110,8 +117,10 @@ class FriendsApi {
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode != 200) {
-      throw ApiException('Suppression impossible',
-          statusCode: response.statusCode);
+      throw ApiException(
+        'Suppression impossible',
+        statusCode: response.statusCode,
+      );
     }
   }
 

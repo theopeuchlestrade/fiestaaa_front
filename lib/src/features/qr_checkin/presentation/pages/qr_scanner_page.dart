@@ -22,8 +22,9 @@ class QRScannerPage extends StatefulWidget {
 
 class _QRScannerPageState extends State<QRScannerPage> {
   final QRCheckinApi _api = QRCheckinApi();
-  final MobileScannerController _scannerController =
-      MobileScannerController(autoStart: false);
+  final MobileScannerController _scannerController = MobileScannerController(
+    autoStart: false,
+  );
 
   QRScanStats? _stats;
   QRScanResult? _lastScanResult;
@@ -135,7 +136,10 @@ class _QRScannerPageState extends State<QRScannerPage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(S.of(context).scanner, style: const TextStyle(color: Colors.white)),
+        title: Text(
+          S.of(context).scanner,
+          style: const TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -212,7 +216,9 @@ class _QRScannerPageState extends State<QRScannerPage> {
               height: 300,
               decoration: BoxDecoration(
                 border: Border.all(
-                    color: Theme.of(context).colorScheme.primary, width: 3),
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 3,
+                ),
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
@@ -237,9 +243,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
             ),
 
           if (_isScanning && _lastScanResult == null)
-            const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
+            const Center(child: CircularProgressIndicator(color: Colors.white)),
         ],
       ),
     );
@@ -269,13 +273,17 @@ class _QRScannerPageState extends State<QRScannerPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildStatItem(S.of(context).invited, '${_stats!.totalInvited}',
-              textColor: onPrimaryColor),
+          _buildStatItem(
+            S.of(context).invited,
+            '${_stats!.totalInvited}',
+            textColor: onPrimaryColor,
+          ),
           Container(
-              height: 24,
-              width: 1,
-              color: onPrimaryColor.withValues(alpha: 0.3),
-              margin: const EdgeInsets.symmetric(horizontal: 20)),
+            height: 24,
+            width: 1,
+            color: onPrimaryColor.withValues(alpha: 0.3),
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+          ),
           _buildStatItem(
             S.of(context).present,
             '${_stats!.totalCheckedIn}',
@@ -283,20 +291,27 @@ class _QRScannerPageState extends State<QRScannerPage> {
             isHighlight: true,
           ),
           Container(
-              height: 24,
-              width: 1,
-              color: onPrimaryColor.withValues(alpha: 0.3),
-              margin: const EdgeInsets.symmetric(horizontal: 20)),
-          _buildStatItem(S.of(context).remaining,
-              '${_stats!.totalInvited - _stats!.totalCheckedIn}',
-              textColor: onPrimaryColor),
+            height: 24,
+            width: 1,
+            color: onPrimaryColor.withValues(alpha: 0.3),
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+          ),
+          _buildStatItem(
+            S.of(context).remaining,
+            '${_stats!.totalInvited - _stats!.totalCheckedIn}',
+            textColor: onPrimaryColor,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(String label, String value,
-      {required Color textColor, bool isHighlight = false}) {
+  Widget _buildStatItem(
+    String label,
+    String value, {
+    required Color textColor,
+    bool isHighlight = false,
+  }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -354,7 +369,9 @@ class _QRScannerPageState extends State<QRScannerPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            isSuccess ? S.of(context).accessGranted : S.of(context).accessDenied,
+            isSuccess
+                ? S.of(context).accessGranted
+                : S.of(context).accessDenied,
             style: TextStyle(
               color: color,
               fontSize: 24,
@@ -365,10 +382,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
           Text(
             _lastScanResult!.message,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey[800],
-              fontSize: 16,
-            ),
+            style: TextStyle(color: Colors.grey[800], fontSize: 16),
           ),
           if (_lastScanResult!.userEmail != null) ...[
             const SizedBox(height: 16),
@@ -392,17 +406,11 @@ class _QRScannerPageState extends State<QRScannerPage> {
             const SizedBox(height: 8),
             Text(
               _lastScanResult!.userHandle ?? S.of(context).unknownUser,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             Text(
               _lastScanResult!.userEmail!,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
             ),
           ],
           const SizedBox(height: 24),

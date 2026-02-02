@@ -58,8 +58,8 @@ class FiestaaaPalette {
 
   static LinearGradient backgroundGradientFor(Brightness brightness) =>
       brightness == Brightness.dark
-          ? darkBackgroundGradient
-          : lightBackgroundGradient;
+      ? darkBackgroundGradient
+      : lightBackgroundGradient;
 
   static LinearGradient cardGradientFor(Brightness brightness) =>
       brightness == Brightness.dark ? darkCardGradient : lightCardGradient;
@@ -87,17 +87,20 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
   final bodyText = textColor.withValues(alpha: isDark ? 0.78 : 0.82);
   final inputLabelColor = isDark ? mutedText : Colors.grey.shade700;
 
-  final colorScheme = ColorScheme.fromSeed(
-    seedColor: FiestaaaPalette.primary,
-    brightness: brightness,
-  ).copyWith(
-    primary: FiestaaaPalette.primary,
-    secondary: FiestaaaPalette.secondary,
-    surface: surfaceRaised,
-    onSurface: textColor,
-    onPrimary: Colors.white,
-    onSecondary: isDark ? FiestaaaPalette.darkSurface : FiestaaaPalette.lightText,
-  );
+  final colorScheme =
+      ColorScheme.fromSeed(
+        seedColor: FiestaaaPalette.primary,
+        brightness: brightness,
+      ).copyWith(
+        primary: FiestaaaPalette.primary,
+        secondary: FiestaaaPalette.secondary,
+        surface: surfaceRaised,
+        onSurface: textColor,
+        onPrimary: Colors.white,
+        onSecondary: isDark
+            ? FiestaaaPalette.darkSurface
+            : FiestaaaPalette.lightText,
+      );
 
   final baseTextTheme = GoogleFonts.manropeTextTheme().apply(
     bodyColor: textColor,
@@ -118,10 +121,7 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
       fontWeight: FontWeight.w700,
       color: textColor,
     ),
-    bodyLarge: baseTextTheme.bodyLarge?.copyWith(
-      color: bodyText,
-      height: 1.4,
-    ),
+    bodyLarge: baseTextTheme.bodyLarge?.copyWith(color: bodyText, height: 1.4),
     bodyMedium: baseTextTheme.bodyMedium?.copyWith(
       color: mutedText,
       height: 1.4,
@@ -149,9 +149,7 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
       color: surfaceRaised,
       surfaceTintColor: surfaceRaised,
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
@@ -169,8 +167,10 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide:
-            const BorderSide(color: FiestaaaPalette.primary, width: 1.6),
+        borderSide: const BorderSide(
+          color: FiestaaaPalette.primary,
+          width: 1.6,
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -212,16 +212,16 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
     chipTheme: ChipThemeData(
       backgroundColor: surfaceRaised,
       labelStyle: TextStyle(fontWeight: FontWeight.w600, color: textColor),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
     ),
     dividerColor: dividerColor,
   );
 }
 
-const EdgeInsets fiestaaaPagePadding =
-    EdgeInsets.symmetric(horizontal: 16, vertical: 20);
+const EdgeInsets fiestaaaPagePadding = EdgeInsets.symmetric(
+  horizontal: 16,
+  vertical: 20,
+);
 
 class FiestaaaPageLayout extends StatelessWidget {
   const FiestaaaPageLayout({
@@ -264,8 +264,7 @@ class FiestaaaPageHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style:
-              textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+          style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
         ),
         if (subtitle != null) ...[
           SizedBox(height: subtitleSpacing),
@@ -278,11 +277,7 @@ class FiestaaaPageHeader extends StatelessWidget {
 }
 
 class FiestaaaBackground extends StatelessWidget {
-  const FiestaaaBackground({
-    super.key,
-    required this.child,
-    this.padding,
-  });
+  const FiestaaaBackground({super.key, required this.child, this.padding});
 
   final Widget child;
   final EdgeInsets? padding;
@@ -290,8 +285,9 @@ class FiestaaaBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final paddedChild =
-        padding != null ? Padding(padding: padding!, child: child) : child;
+    final paddedChild = padding != null
+        ? Padding(padding: padding!, child: child)
+        : child;
     return Container(
       decoration: BoxDecoration(
         gradient: FiestaaaPalette.backgroundGradientFor(brightness),
@@ -303,8 +299,9 @@ class FiestaaaBackground extends StatelessWidget {
             left: -60,
             child: _AccentBlob(
               size: 220,
-              color: FiestaaaPalette.primary
-                  .withValues(alpha: brightness == Brightness.dark ? 0.22 : 0.16),
+              color: FiestaaaPalette.primary.withValues(
+                alpha: brightness == Brightness.dark ? 0.22 : 0.16,
+              ),
             ),
           ),
           Positioned(
@@ -312,8 +309,9 @@ class FiestaaaBackground extends StatelessWidget {
             right: -40,
             child: _AccentBlob(
               size: 200,
-              color: FiestaaaPalette.secondary
-                  .withValues(alpha: brightness == Brightness.dark ? 0.26 : 0.22),
+              color: FiestaaaPalette.secondary.withValues(
+                alpha: brightness == Brightness.dark ? 0.26 : 0.22,
+              ),
             ),
           ),
           paddedChild,

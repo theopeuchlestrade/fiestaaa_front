@@ -71,7 +71,10 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(S.of(context).myTicket, style: const TextStyle(color: Colors.white)),
+        title: Text(
+          S.of(context).myTicket,
+          style: const TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -90,10 +93,11 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
         child: SafeArea(
           child: _isLoading
               ? const Center(
-                  child: CircularProgressIndicator(color: Colors.white))
+                  child: CircularProgressIndicator(color: Colors.white),
+                )
               : _error != null
-                  ? _buildErrorView()
-                  : _buildTicketView(),
+              ? _buildErrorView()
+              : _buildTicketView(),
         ),
       ),
     );
@@ -105,24 +109,21 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
         padding: const EdgeInsets.all(24.0),
         child: Card(
           elevation: 8,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(32.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Colors.red[300],
-                ),
+                Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
                 const SizedBox(height: 16),
                 Text(
                   S.of(context).oops,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -172,20 +173,18 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primaryContainer
-                          .withValues(alpha: 0.1),
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(24)),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer.withValues(alpha: 0.1),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
                     ),
                     child: Column(
                       children: [
                         Text(
                           widget.eventName,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
+                          style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: Theme.of(context).colorScheme.primary,
@@ -195,12 +194,13 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withValues(alpha: 0.1),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -234,10 +234,8 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                         const SizedBox(height: 24),
                         Text(
                           S.of(context).presentCodeAtEntrance,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.grey[600],
-                                  ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: Colors.grey[600]),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -253,9 +251,11 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                         child: DecoratedBox(
                           decoration: BoxDecoration(
                             color: Color(
-                                0xFFEEEEEE), // Match background if possible, or grey
+                              0xFFEEEEEE,
+                            ), // Match background if possible, or grey
                             borderRadius: BorderRadius.horizontal(
-                                right: Radius.circular(20)),
+                              right: Radius.circular(20),
+                            ),
                           ),
                         ),
                       ),
@@ -289,7 +289,8 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                           decoration: BoxDecoration(
                             color: Color(0xFFEEEEEE),
                             borderRadius: BorderRadius.horizontal(
-                                left: Radius.circular(20)),
+                              left: Radius.circular(20),
+                            ),
                           ),
                         ),
                       ),
@@ -316,8 +317,11 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.warning_amber_rounded,
-                                  color: Colors.amber[800], size: 20),
+                              Icon(
+                                Icons.warning_amber_rounded,
+                                color: Colors.amber[800],
+                                size: 20,
+                              ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
@@ -354,8 +358,11 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
     );
   }
 
-  Widget _buildInfoRow(
-      {required IconData icon, required String label, required String value}) {
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Row(
       children: [
         Icon(icon, size: 20, color: Colors.grey[400]),
@@ -365,10 +372,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
           children: [
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
             ),
             Text(
               value,

@@ -46,17 +46,11 @@ class AuthApi {
   }) async {
     final response = await _post(
       '/auth/login',
-      body: {
-        'identifier': identifier,
-        'password': password,
-      },
+      body: {'identifier': identifier, 'password': password},
     );
 
     if (response.statusCode == 200) {
-      return _sessionFromResponse(
-        response,
-        fallbackIdentifier: identifier,
-      );
+      return _sessionFromResponse(response, fallbackIdentifier: identifier);
     }
 
     throw _apiError(response);
@@ -86,10 +80,7 @@ class AuthApi {
     );
 
     if (response.statusCode == 200) {
-      return _sessionFromResponse(
-        response,
-        fallbackIdentifier: email,
-      );
+      return _sessionFromResponse(response, fallbackIdentifier: email);
     }
 
     throw _apiError(response);
@@ -98,9 +89,7 @@ class AuthApi {
   Future<SessionData?> validateSession(String token) async {
     final response = await _client.get(
       Uri.parse('$apiBaseUrl/me'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
@@ -164,10 +153,6 @@ class AuthApi {
         statusCode: response.statusCode,
       );
     }
-    return SessionData(
-      token: token,
-      email: email,
-      handle: handle,
-    );
+    return SessionData(token: token, email: email, handle: handle);
   }
 }

@@ -32,12 +32,12 @@ class InvitationModel {
 
 class InvitationCreationResult {
   InvitationCreationResult.invitation(this.invitation)
-      : emailSent = false,
-        message = null;
+    : emailSent = false,
+      message = null;
 
   InvitationCreationResult.emailSent({this.message})
-      : invitation = null,
-        emailSent = true;
+    : invitation = null,
+      emailSent = true;
 
   final InvitationModel? invitation;
   final bool emailSent;
