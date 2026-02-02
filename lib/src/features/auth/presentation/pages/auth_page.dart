@@ -149,10 +149,7 @@ Bug report
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack(
-        S.of(context).googleLoginFailed,
-        isError: true,
-      );
+      _showSnack(S.of(context).googleLoginFailed, isError: true);
     } finally {
       if (manageState && mounted) {
         setState(() {
@@ -167,10 +164,7 @@ Bug report
     if (_isSubmitting) return;
 
     if (kIsWeb && googleWebClientId.isEmpty) {
-      _showSnack(
-        S.of(context).missingGoogleConfig,
-        isError: true,
-      );
+      _showSnack(S.of(context).missingGoogleConfig, isError: true);
       return;
     }
 
@@ -212,9 +206,8 @@ Bug report
         if (idToken == null || idToken.isEmpty) {
           // Some setups return no idToken; fallback to access token.
           final authClient = account.authorizationClient;
-          final authz = await authClient.authorizationForScopes(
-                const ['email'],
-              ) ??
+          final authz =
+              await authClient.authorizationForScopes(const ['email']) ??
               await authClient.authorizeScopes(const ['email']);
           accessToken = authz.accessToken;
         }
@@ -256,10 +249,7 @@ Bug report
       if (!mounted) return;
       // Log the full error for debugging but show a friendly message
       debugPrint('Google Sign In Error: $e');
-      _showSnack(
-        S.of(context).googleLoginTechnicalError,
-        isError: true,
-      );
+      _showSnack(S.of(context).googleLoginTechnicalError, isError: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -274,18 +264,12 @@ Bug report
     if (_isSubmitting) return;
 
     if (!_shouldShowAppleButton) {
-      _showSnack(
-        S.of(context).appleNotAvailable,
-        isError: true,
-      );
+      _showSnack(S.of(context).appleNotAvailable, isError: true);
       return;
     }
 
     if (kIsWeb && (appleServiceId.isEmpty || appleRedirectUri.isEmpty)) {
-      _showSnack(
-        S.of(context).missingAppleConfig,
-        isError: true,
-      );
+      _showSnack(S.of(context).missingAppleConfig, isError: true);
       return;
     }
 
@@ -338,10 +322,7 @@ Bug report
       _showSnack(e.message, isError: true);
     } catch (_) {
       if (!mounted) return;
-      _showSnack(
-        S.of(context).appleLoginFailed,
-        isError: true,
-      );
+      _showSnack(S.of(context).appleLoginFailed, isError: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -439,10 +420,10 @@ Bug report
     final l10n = S.of(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final cardColor =
-        isDark ? FiestaaaPalette.darkSurfaceRaised : Colors.white;
-    final inputFill =
-        isDark ? FiestaaaPalette.darkSurface : Colors.grey.shade50;
+    final cardColor = isDark ? FiestaaaPalette.darkSurfaceRaised : Colors.white;
+    final inputFill = isDark
+        ? FiestaaaPalette.darkSurface
+        : Colors.grey.shade50;
     final mutedText = isDark
         ? theme.colorScheme.onSurface.withValues(alpha: 0.72)
         : Colors.grey.shade600;
@@ -452,9 +433,7 @@ Bug report
         : Colors.grey.shade500;
     return Container(
       decoration: BoxDecoration(
-        gradient: FiestaaaPalette.cardGradientFor(
-          Theme.of(context).brightness,
-        ),
+        gradient: FiestaaaPalette.cardGradientFor(Theme.of(context).brightness),
       ),
       child: SafeArea(
         child: Center(
@@ -481,10 +460,10 @@ Bug report
                   Text(
                     'Fiestaaa',
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -1,
-                        ),
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -1,
+                    ),
                   ),
                   const SizedBox(height: 40),
                   // Floating White Card
@@ -501,8 +480,9 @@ Bug report
                           offset: const Offset(0, 20),
                         ),
                         BoxShadow(
-                          color:
-                              FiestaaaPalette.primary.withValues(alpha: 0.15),
+                          color: FiestaaaPalette.primary.withValues(
+                            alpha: 0.15,
+                          ),
                           blurRadius: 40,
                           spreadRadius: -5,
                           offset: const Offset(0, 15),
@@ -518,12 +498,9 @@ Bug report
                               ? l10n.welcomeBack
                               : l10n.welcomeNew,
                           textAlign: TextAlign.center,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineSmall
-                                  ?.copyWith(
-                                color:
-                                    Theme.of(context).colorScheme.onSurface,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontWeight: FontWeight.w800,
                               ),
                         ),
@@ -533,10 +510,9 @@ Bug report
                               ? l10n.loginToContinue
                               : l10n.createAccountFree,
                           textAlign: TextAlign.center,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: mutedText,
-                                  ),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.copyWith(color: mutedText),
                         ),
                         const SizedBox(height: 12),
                         _buildAlphaBanner(compact: true),
@@ -567,8 +543,9 @@ Bug report
                                         : l10n.pleaseEnterEmail;
                                   }
                                   if (_mode == AuthMode.login) return null;
-                                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
-                                      .hasMatch(email)) {
+                                  if (!RegExp(
+                                    r'^[^@]+@[^@]+\.[^@]+',
+                                  ).hasMatch(email)) {
                                     return l10n.invalidEmail;
                                   }
                                   return null;
@@ -588,8 +565,9 @@ Bug report
                                   validator: (value) {
                                     final handle = value?.trim() ?? '';
                                     if (handle.isEmpty) return null;
-                                    if (!RegExp(r'^[a-z0-9._-]{4,32}$')
-                                        .hasMatch(handle)) {
+                                    if (!RegExp(
+                                      r'^[a-z0-9._-]{4,32}$',
+                                    ).hasMatch(handle)) {
                                       return l10n.identifierFormat;
                                     }
                                     return null;
@@ -605,16 +583,17 @@ Bug report
                                   prefixIcon: const Icon(Icons.lock_outline),
                                   filled: true,
                                   fillColor: inputFill,
-                                  helperText:
-                                      l10n.passwordHelperText,
+                                  helperText: l10n.passwordHelperText,
                                   suffixIcon: IconButton(
                                     icon: Icon(
                                       _obscurePassword
                                           ? Icons.visibility
                                           : Icons.visibility_off,
                                     ),
-                                    onPressed: () => setState(() =>
-                                        _obscurePassword = !_obscurePassword),
+                                    onPressed: () => setState(
+                                      () =>
+                                          _obscurePassword = !_obscurePassword,
+                                    ),
                                   ),
                                 ),
                                 validator: _validatePassword,
@@ -635,8 +614,10 @@ Bug report
                                             ? Icons.visibility
                                             : Icons.visibility_off,
                                       ),
-                                      onPressed: () => setState(() =>
-                                          _obscureConfirm = !_obscureConfirm),
+                                      onPressed: () => setState(
+                                        () =>
+                                            _obscureConfirm = !_obscureConfirm,
+                                      ),
                                     ),
                                   ),
                                   validator: (value) {
@@ -655,7 +636,8 @@ Bug report
                                   onPressed: _isSubmitting ? null : _submit,
                                   style: ElevatedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
-                                        vertical: 18),
+                                      vertical: 18,
+                                    ),
                                     backgroundColor: FiestaaaPalette.primary,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(14),
@@ -669,7 +651,8 @@ Bug report
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
                                             valueColor: AlwaysStoppedAnimation(
-                                                Colors.white),
+                                              Colors.white,
+                                            ),
                                           ),
                                         )
                                       : Text(
@@ -690,11 +673,11 @@ Bug report
                         const SizedBox(height: 20),
                         Row(
                           children: [
-                            Expanded(
-                                child: Divider(color: dividerColor)),
+                            Expanded(child: Divider(color: dividerColor)),
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
                               child: Text(
                                 l10n.orContinueWith,
                                 style: TextStyle(
@@ -703,8 +686,7 @@ Bug report
                                 ),
                               ),
                             ),
-                            Expanded(
-                                child: Divider(color: dividerColor)),
+                            Expanded(child: Divider(color: dividerColor)),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -715,10 +697,10 @@ Bug report
                           onPressed: _isSubmitting
                               ? null
                               : () => setState(() {
-                                    _mode = _mode == AuthMode.login
-                                        ? AuthMode.register
-                                        : AuthMode.login;
-                                  }),
+                                  _mode = _mode == AuthMode.login
+                                      ? AuthMode.register
+                                      : AuthMode.login;
+                                }),
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
@@ -827,9 +809,7 @@ Bug report
                         const SizedBox(height: 32),
                         Text(
                           'Fiestaaa',
-                          style: Theme.of(context)
-                              .textTheme
-                              .displayMedium
+                          style: Theme.of(context).textTheme.displayMedium
                               ?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
@@ -839,12 +819,12 @@ Bug report
                         const SizedBox(height: 16),
                         Text(
                           l10n.appTagline,
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                    fontWeight: FontWeight.w500,
-                                    height: 1.5,
-                                  ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.9),
+                                fontWeight: FontWeight.w500,
+                                height: 1.5,
+                              ),
                         ),
                         const SizedBox(height: 40),
                         _buildFeatureItem(
@@ -874,9 +854,7 @@ Bug report
           // Right side - Auth Form
           Expanded(
             flex: 5,
-            child: SingleChildScrollView(
-              child: _buildAuthForm(context, 48),
-            ),
+            child: SingleChildScrollView(child: _buildAuthForm(context, 48)),
           ),
         ],
       ),
@@ -897,11 +875,7 @@ Bug report
             color: Colors.white.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(
-            icon,
-            color: Colors.white,
-            size: 24,
-          ),
+          child: Icon(icon, color: Colors.white, size: 24),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -933,14 +907,17 @@ Bug report
 
   Widget _buildSocialButtons(BuildContext context) {
     const double buttonHeight = 48;
-    final shape =
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(24));
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(24),
+    );
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final socialBackground =
-        isDark ? FiestaaaPalette.darkSurfaceRaised : Colors.white;
-    final socialForeground =
-        isDark ? theme.colorScheme.onSurface : Colors.black87;
+    final socialBackground = isDark
+        ? FiestaaaPalette.darkSurfaceRaised
+        : Colors.white;
+    final socialForeground = isDark
+        ? theme.colorScheme.onSurface
+        : Colors.black87;
     final socialBorder = isDark ? Colors.white12 : Colors.grey.shade300;
     final appleColor = isDark ? Colors.white : Colors.black87;
 
@@ -984,9 +961,7 @@ Bug report
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        wrapSocial(
-          googleButton,
-        ),
+        wrapSocial(googleButton),
         const SizedBox(height: 12),
         if (_shouldShowAppleButton)
           wrapSocial(
@@ -1007,8 +982,9 @@ Bug report
     final l10n = S.of(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final toggleBackground =
-        isDark ? FiestaaaPalette.darkSurface : Colors.grey.shade100;
+    final toggleBackground = isDark
+        ? FiestaaaPalette.darkSurface
+        : Colors.grey.shade100;
     final toggleBorder = isDark ? Colors.white12 : Colors.grey.shade300;
     final toggleInactive = isDark
         ? theme.colorScheme.onSurface.withValues(alpha: 0.7)
@@ -1044,7 +1020,9 @@ Bug report
                     label: Text(l10n.login),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 12),
+                        vertical: 14,
+                        horizontal: 12,
+                      ),
                       foregroundColor: _mode == AuthMode.login
                           ? FiestaaaPalette.primary
                           : toggleInactive,
@@ -1067,7 +1045,9 @@ Bug report
                     label: Text(l10n.register),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 12),
+                        vertical: 14,
+                        horizontal: 12,
+                      ),
                       foregroundColor: _mode == AuthMode.register
                           ? FiestaaaPalette.primary
                           : toggleInactive,
@@ -1120,8 +1100,7 @@ Bug report
                     controller: _handleController,
                     decoration: InputDecoration(
                       labelText: l10n.identifierPublicOptional,
-                      helperText:
-                          l10n.identifierAutoGenerated,
+                      helperText: l10n.identifierAutoGenerated,
                       prefixIcon: const Icon(Icons.tag),
                     ),
                     validator: (value) {
@@ -1141,8 +1120,7 @@ Bug report
                   decoration: InputDecoration(
                     labelText: l10n.password,
                     prefixIcon: const Icon(Icons.lock_outline),
-                    helperText:
-                        l10n.passwordHelperText,
+                    helperText: l10n.passwordHelperText,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
@@ -1201,9 +1179,7 @@ Bug report
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation(
-                                Colors.white,
-                              ),
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
                             ),
                           )
                         : Text(
@@ -1225,10 +1201,7 @@ Bug report
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
                   l10n.orContinueWith,
-                  style: TextStyle(
-                    color: dividerText,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: dividerText, fontSize: 13),
                 ),
               ),
               Expanded(child: Divider(color: dividerColor)),
@@ -1242,10 +1215,10 @@ Bug report
               onPressed: _isSubmitting
                   ? null
                   : () => _toggleMode(
-                        _mode == AuthMode.login
-                            ? AuthMode.register
-                            : AuthMode.login,
-                      ),
+                      _mode == AuthMode.login
+                          ? AuthMode.register
+                          : AuthMode.login,
+                    ),
               child: Text(
                 _mode == AuthMode.login
                     ? l10n.newToFiestaaa
@@ -1262,19 +1235,22 @@ Bug report
     final l10n = S.of(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bannerBackground =
-        isDark ? const Color(0xFF2A1A0E) : Colors.orange.shade50;
-    final bannerBorder =
-        isDark ? Colors.orange.withValues(alpha: 0.35) : Colors.orange.shade200;
+    final bannerBackground = isDark
+        ? const Color(0xFF2A1A0E)
+        : Colors.orange.shade50;
+    final bannerBorder = isDark
+        ? Colors.orange.withValues(alpha: 0.35)
+        : Colors.orange.shade200;
     final bannerShadow = isDark
         ? Colors.orange.withValues(alpha: 0.18)
         : Colors.orange.shade200.withValues(alpha: 0.4);
-    final bannerTitle =
-        isDark ? Colors.orange.shade100 : Colors.orange.shade900;
-    final bannerText =
-        isDark ? Colors.orange.shade200 : Colors.orange.shade800;
-    final bannerIconBackground =
-        isDark ? Colors.orange.withValues(alpha: 0.2) : Colors.orange.shade100;
+    final bannerTitle = isDark
+        ? Colors.orange.shade100
+        : Colors.orange.shade900;
+    final bannerText = isDark ? Colors.orange.shade200 : Colors.orange.shade800;
+    final bannerIconBackground = isDark
+        ? Colors.orange.withValues(alpha: 0.2)
+        : Colors.orange.shade100;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(

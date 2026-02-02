@@ -129,20 +129,20 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       home: _loadingSession
           ? const _SplashScreen()
           : _session == null
-              ? AuthPage(onAuthenticated: _handleAuthenticated)
-              : HomePage(
-                  session: _session!,
-                  onLogout: _handleLogout,
-                  onSessionUpdated: _handleAuthenticated,
-                  initialShareToken: _pendingShareToken,
-                  onShareTokenConsumed: () {
-                    setState(() {
-                      _pendingShareToken = null;
-                    });
-                  },
-                  localeService: _localeService,
-                  themeService: _themeService,
-                ),
+          ? AuthPage(onAuthenticated: _handleAuthenticated)
+          : HomePage(
+              session: _session!,
+              onLogout: _handleLogout,
+              onSessionUpdated: _handleAuthenticated,
+              initialShareToken: _pendingShareToken,
+              onShareTokenConsumed: () {
+                setState(() {
+                  _pendingShareToken = null;
+                });
+              },
+              localeService: _localeService,
+              themeService: _themeService,
+            ),
     );
   }
 }
@@ -152,10 +152,6 @@ class _SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

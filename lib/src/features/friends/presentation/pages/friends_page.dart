@@ -68,10 +68,7 @@ class _FriendsPageState extends State<FriendsPage> {
   }
 
   Future<void> _refreshAll() async {
-    await Future.wait([
-      _fetchFriends(),
-      _fetchRequests(),
-    ]);
+    await Future.wait([_fetchFriends(), _fetchRequests()]);
   }
 
   void _handleRealtime(Map<String, dynamic> message) {
@@ -132,7 +129,8 @@ class _FriendsPageState extends State<FriendsPage> {
     if (widget.onPendingRequestsChanged == null) return;
     final pending = list
         .where(
-            (r) => r.status == 'Pending' && r.isIncoming(widget.session.email))
+          (r) => r.status == 'Pending' && r.isIncoming(widget.session.email),
+        )
         .length;
     widget.onPendingRequestsChanged!(pending);
   }
@@ -209,7 +207,10 @@ class _FriendsPageState extends State<FriendsPage> {
       await _fetchFriends();
       if (!mounted) return;
       _showSnack(
-          status == 'Accepted' ? S.of(context).requestAccepted : S.of(context).friendRequestDeclined);
+        status == 'Accepted'
+            ? S.of(context).requestAccepted
+            : S.of(context).friendRequestDeclined,
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
@@ -275,10 +276,12 @@ class _FriendsPageState extends State<FriendsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final incoming =
-        _requests.where((r) => r.isIncoming(widget.session.email)).toList();
-    final outgoing =
-        _requests.where((r) => !r.isIncoming(widget.session.email)).toList();
+    final incoming = _requests
+        .where((r) => r.isIncoming(widget.session.email))
+        .toList();
+    final outgoing = _requests
+        .where((r) => !r.isIncoming(widget.session.email))
+        .toList();
 
     return FiestaaaPageLayout(
       child: RefreshIndicator(
@@ -397,9 +400,11 @@ class _SearchCard extends StatelessWidget {
                         leading: _AvatarCircle(url: suggestion.avatarUrl),
                         title: Text(label),
                         subtitle: Text(suggestion.email),
-                        onTap: () => onSend(suggestion.handle.isNotEmpty
-                            ? suggestion.handle
-                            : suggestion.email),
+                        onTap: () => onSend(
+                          suggestion.handle.isNotEmpty
+                              ? suggestion.handle
+                              : suggestion.email,
+                        ),
                       );
                     },
                   ),
@@ -417,7 +422,9 @@ class _SearchCard extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.send),
-                label: Text(sending ? S.of(context).sending : S.of(context).sendRequest),
+                label: Text(
+                  sending ? S.of(context).sending : S.of(context).sendRequest,
+                ),
               ),
             ),
           ],
@@ -455,12 +462,11 @@ class _RequestsCard extends StatelessWidget {
     final incomingBackground = isDark
         ? Colors.green.withValues(alpha: 0.12)
         : Colors.green.shade50;
-    final incomingIcon =
-        isDark ? Colors.green.shade200 : Colors.green.shade800;
-    final outgoingBackground =
-        isDark ? Colors.blue.withValues(alpha: 0.12) : Colors.blue.shade50;
-    final outgoingIcon =
-        isDark ? Colors.blue.shade200 : Colors.blue.shade700;
+    final incomingIcon = isDark ? Colors.green.shade200 : Colors.green.shade800;
+    final outgoingBackground = isDark
+        ? Colors.blue.withValues(alpha: 0.12)
+        : Colors.blue.shade50;
+    final outgoingIcon = isDark ? Colors.blue.shade200 : Colors.blue.shade700;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -574,126 +580,135 @@ class _RequestSection extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 title,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w800),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(width: 8),
               if (requests.isEmpty)
-                Text(S.of(context).noRequest, style: TextStyle(color: mutedText)),
+                Text(
+                  S.of(context).noRequest,
+                  style: TextStyle(color: mutedText),
+                ),
             ],
           ),
           if (requests.isNotEmpty) const SizedBox(height: 10),
           ...requests.map((req) {
-          final counterpartHandle =
-              req.isIncoming(userEmail) ? req.senderHandle : req.receiverHandle;
-          final counterpartEmail =
-              req.isIncoming(userEmail) ? req.senderEmail : req.receiverEmail;
-          final avatarUrl = req.isIncoming(userEmail)
-              ? req.senderAvatarUrl
-              : req.receiverAvatarUrl;
-          final label = counterpartHandle.isNotEmpty
-              ? '@$counterpartHandle'
-              : counterpartEmail;
-          final subtitle = req.isIncoming(userEmail)
-              ? S.of(context).receivedOn(formatter.format(req.createdAt.toLocal()))
-              : S.of(context).sentOnDate(formatter.format(req.createdAt.toLocal()));
-          final isPending = req.status == 'Pending';
+            final counterpartHandle = req.isIncoming(userEmail)
+                ? req.senderHandle
+                : req.receiverHandle;
+            final counterpartEmail = req.isIncoming(userEmail)
+                ? req.senderEmail
+                : req.receiverEmail;
+            final avatarUrl = req.isIncoming(userEmail)
+                ? req.senderAvatarUrl
+                : req.receiverAvatarUrl;
+            final label = counterpartHandle.isNotEmpty
+                ? '@$counterpartHandle'
+                : counterpartEmail;
+            final subtitle = req.isIncoming(userEmail)
+                ? S
+                      .of(context)
+                      .receivedOn(formatter.format(req.createdAt.toLocal()))
+                : S
+                      .of(context)
+                      .sentOnDate(formatter.format(req.createdAt.toLocal()));
+            final isPending = req.status == 'Pending';
 
-          final actions = isPending && onAccept != null && onDecline != null
-              ? Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    TextButton(
-                      onPressed: () => onDecline!(req),
-                      child: Text(S.of(context).decline),
-                    ),
-                    ElevatedButton(
-                      onPressed: () => onAccept!(req),
-                      child: Text(S.of(context).accept),
-                    ),
-                  ],
-                )
-              : Chip(
-                  label: Text(
-                    req.status,
-                    style: TextStyle(
-                      color: req.status == 'Accepted'
-                          ? (isDark
-                              ? Colors.green.shade200
-                              : Colors.green.shade800)
-                          : req.status == 'Declined'
-                              ? (isDark
-                                  ? theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.75)
+            final actions = isPending && onAccept != null && onDecline != null
+                ? Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      TextButton(
+                        onPressed: () => onDecline!(req),
+                        child: Text(S.of(context).decline),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => onAccept!(req),
+                        child: Text(S.of(context).accept),
+                      ),
+                    ],
+                  )
+                : Chip(
+                    label: Text(
+                      req.status,
+                      style: TextStyle(
+                        color: req.status == 'Accepted'
+                            ? (isDark
+                                  ? Colors.green.shade200
+                                  : Colors.green.shade800)
+                            : req.status == 'Declined'
+                            ? (isDark
+                                  ? theme.colorScheme.onSurface.withValues(
+                                      alpha: 0.75,
+                                    )
                                   : Colors.grey.shade800)
-                              : (isDark
+                            : (isDark
                                   ? Colors.orange.shade200
                                   : Colors.orange.shade800),
-                      fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  backgroundColor: req.status == 'Accepted'
-                      ? (isDark
-                          ? Colors.green.withValues(alpha: 0.2)
-                          : Colors.green.shade100)
-                      : req.status == 'Declined'
-                          ? (isDark
+                    backgroundColor: req.status == 'Accepted'
+                        ? (isDark
+                              ? Colors.green.withValues(alpha: 0.2)
+                              : Colors.green.shade100)
+                        : req.status == 'Declined'
+                        ? (isDark
                               ? Colors.white.withValues(alpha: 0.08)
                               : Colors.grey.shade200)
-                          : (isDark
+                        : (isDark
                               ? Colors.orange.withValues(alpha: 0.2)
                               : Colors.orange.shade100),
-                );
+                  );
 
-          return Column(
-            children: [
-              _BubbleTile(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isCompact = constraints.maxWidth < 420;
-                    final subtitleWidget = isCompact
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                subtitle,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 8),
-                              actions,
-                            ],
-                          )
-                        : Text(subtitle);
+            return Column(
+              children: [
+                _BubbleTile(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isCompact = constraints.maxWidth < 420;
+                      final subtitleWidget = isCompact
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  subtitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 8),
+                                actions,
+                              ],
+                            )
+                          : Text(subtitle);
 
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 6,
-                        horizontal: 4,
-                      ),
-                      leading: _AvatarCircle(
-                        url: avatarUrl,
-                        fallbackText: counterpartHandle,
-                      ),
-                      title: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: subtitleWidget,
-                      trailing: isCompact ? null : actions,
-                      isThreeLine: isCompact,
-                    );
-                  },
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 6,
+                          horizontal: 4,
+                        ),
+                        leading: _AvatarCircle(
+                          url: avatarUrl,
+                          fallbackText: counterpartHandle,
+                        ),
+                        title: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: subtitleWidget,
+                        trailing: isCompact ? null : actions,
+                        isThreeLine: isCompact,
+                      );
+                    },
+                  ),
                 ),
-              ),
-              if (req != requests.last) const SizedBox(height: 10),
-            ],
-          );
-        }),
+                if (req != requests.last) const SizedBox(height: 10),
+              ],
+            );
+          }),
         ],
       ),
     );
@@ -758,10 +773,9 @@ class _FriendsList extends StatelessWidget {
               Text(
                 S.of(context).addFirstFriends,
                 style: TextStyle(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               )
             else
@@ -780,12 +794,20 @@ class _FriendsList extends StatelessWidget {
                       ),
                       title: Text('@${friend.handle}'),
                       subtitle: Text(
-                        S.of(context).friendSince(DateFormat.yMMMMd(S.of(context).localeName).format(friend.since)),
+                        S
+                            .of(context)
+                            .friendSince(
+                              DateFormat.yMMMMd(
+                                S.of(context).localeName,
+                              ).format(friend.since),
+                            ),
                       ),
                       trailing: IconButton(
                         onPressed: () => onRemove(friend),
-                        icon: const Icon(Icons.remove_circle_outline,
-                            color: Colors.redAccent),
+                        icon: const Icon(
+                          Icons.remove_circle_outline,
+                          color: Colors.redAccent,
+                        ),
                       ),
                     ),
                   ),
@@ -815,23 +837,22 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, color: iconColor, size: 20),
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
             title,
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(fontWeight: FontWeight.w800),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
         ),
         if (trailing != null) trailing!,
@@ -857,16 +878,9 @@ class _BubbleTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: border,
-          width: 1,
-        ),
+        border: Border.all(color: border, width: 1),
         boxShadow: [
-          BoxShadow(
-            color: shadow,
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
+          BoxShadow(color: shadow, blurRadius: 12, offset: const Offset(0, 6)),
         ],
       ),
       child: child,
@@ -897,14 +911,14 @@ class _AvatarCircle extends StatelessWidget {
         ? theme.colorScheme.onSurface.withValues(alpha: 0.8)
         : Colors.grey.shade800;
     Widget placeholder() => CircleAvatar(
-          radius: size / 2,
-          backgroundColor: bg,
-          foregroundColor: fg,
-          child: Text(
-            letter.isNotEmpty ? letter : '?',
-            style: const TextStyle(fontWeight: FontWeight.w800),
-          ),
-        );
+      radius: size / 2,
+      backgroundColor: bg,
+      foregroundColor: fg,
+      child: Text(
+        letter.isNotEmpty ? letter : '?',
+        style: const TextStyle(fontWeight: FontWeight.w800),
+      ),
+    );
 
     if (url == null || url!.isEmpty) {
       return placeholder();

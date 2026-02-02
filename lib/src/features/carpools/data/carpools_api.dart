@@ -15,14 +15,12 @@ class CarpoolsApi {
     required int eventId,
     String? sortBy,
   }) async {
-    final uri = Uri.parse('$apiBaseUrl/events/$eventId/carpools').replace(
-      queryParameters: sortBy != null ? {'sort': sortBy} : null,
-    );
+    final uri = Uri.parse(
+      '$apiBaseUrl/events/$eventId/carpools',
+    ).replace(queryParameters: sortBy != null ? {'sort': sortBy} : null);
     final response = await _client.get(
       uri,
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
@@ -96,9 +94,7 @@ class CarpoolsApi {
   }) async {
     final response = await _client.delete(
       Uri.parse('$apiBaseUrl/carpools/$carpoolId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode != 200) {
@@ -115,9 +111,7 @@ class CarpoolsApi {
   }) async {
     final response = await _client.post(
       Uri.parse('$apiBaseUrl/carpools/$carpoolId/join'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode != 200) {
@@ -134,9 +128,7 @@ class CarpoolsApi {
   }) async {
     final response = await _client.delete(
       Uri.parse('$apiBaseUrl/carpools/$carpoolId/join'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode != 200) {

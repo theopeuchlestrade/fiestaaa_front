@@ -60,26 +60,26 @@ class GoogleAuthImpl extends GoogleAuthHelper {
 
             if (userInfoResponse.statusCode == 200) {
               final userData = jsonDecode(userInfoResponse.body);
-              safeComplete(GoogleAuthResult(
-                accessToken: response.access_token,
-                email: userData['email'],
-                displayName: userData['name'],
-                photoUrl: userData['picture'],
-                idToken: null, // Token flow gives access_token primarily
-              ));
+              safeComplete(
+                GoogleAuthResult(
+                  accessToken: response.access_token,
+                  email: userData['email'],
+                  displayName: userData['name'],
+                  photoUrl: userData['picture'],
+                  idToken: null, // Token flow gives access_token primarily
+                ),
+              );
             } else {
               // Even if userinfo fails, we have the token, so we can might still proceed?
               // But usually we need at least the email to update the UI.
               // Let's assume validation happens on backend.
-              safeComplete(GoogleAuthResult(
-                accessToken: response.access_token,
-              ));
+              safeComplete(
+                GoogleAuthResult(accessToken: response.access_token),
+              );
             }
           } catch (e) {
             // Fallback: return just the token
-            safeComplete(GoogleAuthResult(
-              accessToken: response.access_token,
-            ));
+            safeComplete(GoogleAuthResult(accessToken: response.access_token));
           }
         } else {
           safeComplete(null);

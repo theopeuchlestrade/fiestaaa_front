@@ -40,10 +40,9 @@ class InvitationStatusSection extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   title,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const Spacer(),
                 if (invitations.isNotEmpty)
@@ -58,13 +57,14 @@ class InvitationStatusSection extends StatelessWidget {
             if (invitations.isEmpty)
               Text(
                 emptyLabel,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: Colors.grey.shade600),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
               )
             else
-              ...invitations.map((invitation) => _buildTile(context, invitation)),
+              ...invitations.map(
+                (invitation) => _buildTile(context, invitation),
+              ),
           ],
         ),
       ),
@@ -80,11 +80,7 @@ class InvitationStatusSection extends StatelessWidget {
     final title = Row(
       children: [
         Flexible(
-          child: Text(
-            display,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          child: Text(display, maxLines: 1, overflow: TextOverflow.ellipsis),
         ),
         if (isOwner) ...[
           const SizedBox(width: 8),
@@ -117,7 +113,13 @@ class InvitationStatusSection extends StatelessWidget {
       ),
       title: title,
       subtitle: Text(
-        S.of(context).sentOn(DateFormat.yMMMMd(Localizations.localeOf(context).toString()).format(invitation.dateInvi)),
+        S
+            .of(context)
+            .sentOn(
+              DateFormat.yMMMMd(
+                Localizations.localeOf(context).toString(),
+              ).format(invitation.dateInvi),
+            ),
       ),
       trailing: trailing,
     );
@@ -139,13 +141,13 @@ class _AvatarCircle extends StatelessWidget {
         .toString()
         .toUpperCase();
     Widget placeholder() => CircleAvatar(
-          backgroundColor: Colors.grey.shade200,
-          foregroundColor: Colors.grey.shade800,
-          child: Text(
-            letter.isNotEmpty ? letter : '?',
-            style: const TextStyle(fontWeight: FontWeight.w800),
-          ),
-        );
+      backgroundColor: Colors.grey.shade200,
+      foregroundColor: Colors.grey.shade800,
+      child: Text(
+        letter.isNotEmpty ? letter : '?',
+        style: const TextStyle(fontWeight: FontWeight.w800),
+      ),
+    );
     if (url == null || url!.isEmpty) return placeholder();
     return CircleAvatar(
       backgroundColor: Colors.grey.shade200,

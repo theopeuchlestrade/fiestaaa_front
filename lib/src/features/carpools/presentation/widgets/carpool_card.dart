@@ -117,7 +117,7 @@ class CarpoolCard extends StatelessWidget {
                   // Simple check: longer than ~60 chars might need expansion?
                   // Or just use the truncation and allow tap to expand.
                   final isLong = notes.length > 50 || notes.contains('\n');
-                  
+
                   return InkWell(
                     onTap: () => _showFullNotes(context, notes),
                     borderRadius: BorderRadius.circular(12),
@@ -143,7 +143,9 @@ class CarpoolCard extends StatelessWidget {
                               Icon(
                                 Icons.chat_bubble_outline,
                                 size: 16,
-                                color: FiestaaaPalette.primary.withValues(alpha: 0.7),
+                                color: FiestaaaPalette.primary.withValues(
+                                  alpha: 0.7,
+                                ),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
@@ -171,7 +173,7 @@ class CarpoolCard extends StatelessWidget {
                                 ),
                               ),
                             ),
-                          ]
+                          ],
                         ],
                       ),
                     ),
@@ -235,7 +237,10 @@ class CarpoolCard extends StatelessWidget {
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Icon(Icons.add, size: 18),
               label: Text(
@@ -276,7 +281,11 @@ class CarpoolCard extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.info_outline, size: 16, color: Colors.grey.shade600),
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: Colors.grey.shade600,
+                  ),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
@@ -325,12 +334,12 @@ class CarpoolCard extends StatelessWidget {
 
     // On Android, try geo: scheme to let the OS/app chooser handle it directly.
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-       Uri geo;
-       if (lat != null && lon != null) {
-         geo = Uri.parse('geo:$lat,$lon?q=$lat,$lon');
-       } else {
-         geo = Uri.parse('geo:0,0?q=$encoded');
-       }
+      Uri geo;
+      if (lat != null && lon != null) {
+        geo = Uri.parse('geo:$lat,$lon?q=$lat,$lon');
+      } else {
+        geo = Uri.parse('geo:0,0?q=$encoded');
+      }
       try {
         final opened = await launchUrl(
           geo,
@@ -346,9 +355,12 @@ class CarpoolCard extends StatelessWidget {
     final provider = await _pickMapProvider(context);
     if (provider == null) return;
     final uri = _uriForProvider(provider, encoded, lat, lon);
-    
+
     try {
-      final success = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final success = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
       if (!success && context.mounted) {
         // Simple snackbar since we are in a stateless widget, ideally we'd show a proper error
         // But preventing crash is key.
@@ -388,13 +400,22 @@ class CarpoolCard extends StatelessWidget {
     );
   }
 
-  Uri _uriForProvider(String provider, String encodedAddress, double? lat, double? lon) {
+  Uri _uriForProvider(
+    String provider,
+    String encodedAddress,
+    double? lat,
+    double? lon,
+  ) {
     switch (provider) {
       case 'google':
         if (lat != null && lon != null) {
-          return Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lon');
+          return Uri.parse(
+            'https://www.google.com/maps/search/?api=1&query=$lat,$lon',
+          );
         }
-        return Uri.parse('https://www.google.com/maps/search/?api=1&query=$encodedAddress');
+        return Uri.parse(
+          'https://www.google.com/maps/search/?api=1&query=$encodedAddress',
+        );
       case 'apple':
         if (lat != null && lon != null) {
           return Uri.parse('https://maps.apple.com/?ll=$lat,$lon');
@@ -402,9 +423,13 @@ class CarpoolCard extends StatelessWidget {
         return Uri.parse('https://maps.apple.com/?q=$encodedAddress');
       default:
         if (lat != null && lon != null) {
-          return Uri.parse('https://www.openstreetmap.org/?mlat=$lat&mlon=$lon#map=17/$lat/$lon');
+          return Uri.parse(
+            'https://www.openstreetmap.org/?mlat=$lat&mlon=$lon#map=17/$lat/$lon',
+          );
         }
-        return Uri.parse('https://www.openstreetmap.org/search?query=$encodedAddress');
+        return Uri.parse(
+          'https://www.openstreetmap.org/search?query=$encodedAddress',
+        );
     }
   }
 
@@ -426,8 +451,8 @@ class CarpoolCard extends StatelessWidget {
     } else if (difference.inHours < 24) {
       final hours = difference.inHours;
       final minutes = difference.inMinutes % 60;
-      return minutes > 0 
-          ? l10n.inHoursAndMinutes(hours, minutes) 
+      return minutes > 0
+          ? l10n.inHoursAndMinutes(hours, minutes)
           : l10n.inHours(hours);
     } else if (difference.inDays == 1) {
       return l10n.tomorrow;
@@ -447,9 +472,7 @@ class CarpoolCard extends StatelessWidget {
             Text(S.of(context).carpoolNotes),
           ],
         ),
-        content: SingleChildScrollView(
-          child: Text(notes),
-        ),
+        content: SingleChildScrollView(child: Text(notes)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -503,11 +526,7 @@ class _DriverAvatar extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
               ),
-              child: const Icon(
-                Icons.check,
-                size: 8,
-                color: Colors.white,
-              ),
+              child: const Icon(Icons.check, size: 8, color: Colors.white),
             ),
           ),
       ],
@@ -599,7 +618,9 @@ class _InfoRow extends StatelessWidget {
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w500,
                   decoration: onTap != null ? TextDecoration.underline : null,
-                  decorationColor: theme.colorScheme.primary.withValues(alpha: 0.5),
+                  decorationColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.5,
+                  ),
                 ),
               ),
               if (secondaryText != null)
@@ -616,8 +637,8 @@ class _InfoRow extends StatelessWidget {
         if (onTap != null) ...[
           const SizedBox(width: 8),
           Icon(
-            actionIcon ?? Icons.open_in_new, 
-            size: 16, 
+            actionIcon ?? Icons.open_in_new,
+            size: 16,
             color: theme.colorScheme.primary,
           ),
         ],
@@ -646,10 +667,7 @@ class _SeatsIndicator extends StatelessWidget {
   final int seatsTaken;
   final int seatsTotal;
 
-  const _SeatsIndicator({
-    required this.seatsTaken,
-    required this.seatsTotal,
-  });
+  const _SeatsIndicator({required this.seatsTaken, required this.seatsTotal});
 
   @override
   Widget build(BuildContext context) {
@@ -661,14 +679,10 @@ class _SeatsIndicator extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: isFull
-            ? Colors.red.shade50
-            : Colors.green.shade50,
+        color: isFull ? Colors.red.shade50 : Colors.green.shade50,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isFull
-              ? Colors.red.shade200
-              : Colors.green.shade200,
+          color: isFull ? Colors.red.shade200 : Colors.green.shade200,
         ),
       ),
       child: Column(
@@ -718,10 +732,7 @@ class _PassengerChip extends StatelessWidget {
   final String? handle;
   final String? avatarUrl;
 
-  const _PassengerChip({
-    required this.handle,
-    required this.avatarUrl,
-  });
+  const _PassengerChip({required this.handle, required this.avatarUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -740,10 +751,14 @@ class _PassengerChip extends StatelessWidget {
           CircleAvatar(
             radius: 12,
             backgroundColor: FiestaaaPalette.secondary.withValues(alpha: 0.2),
-            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+            backgroundImage: avatarUrl != null
+                ? NetworkImage(avatarUrl!)
+                : null,
             child: avatarUrl == null
                 ? Text(
-                    (handle?.isNotEmpty == true) ? handle![0].toUpperCase() : '?',
+                    (handle?.isNotEmpty == true)
+                        ? handle![0].toUpperCase()
+                        : '?',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
@@ -755,10 +770,7 @@ class _PassengerChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             handle ?? l10n.anonymous,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -792,10 +804,7 @@ class _ActionIconButton extends StatelessWidget {
         icon: Icon(icon, size: 20),
         color: buttonColor,
         tooltip: tooltip,
-        constraints: const BoxConstraints(
-          minWidth: 44,
-          minHeight: 44,
-        ),
+        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
       ),
     );
   }

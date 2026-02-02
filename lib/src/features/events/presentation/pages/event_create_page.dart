@@ -143,14 +143,13 @@ class _EventCreatePageState extends State<EventCreatePage> {
 
   Future<void> _pickInvitationDeadline() async {
     final now = DateTime.now();
-    final lastDate =
-        _selectedDate.isBefore(now) ? now : _selectedDate;
+    final lastDate = _selectedDate.isBefore(now) ? now : _selectedDate;
     var initial = _invitationDeadline ?? lastDate;
     if (initial.isBefore(now)) {
-        initial = now;
+      initial = now;
     }
     if (initial.isAfter(lastDate)) {
-        initial = lastDate;
+      initial = lastDate;
     }
 
     final picked = await showDatePicker(
@@ -264,10 +263,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
     );
 
     try {
-      await _api.createEvent(
-        token: widget.session.token,
-        payload: payload,
-      );
+      await _api.createEvent(token: widget.session.token, payload: payload);
       if (!mounted) return;
       _showSnack(S.of(context).eventCreated);
       widget.onEventCreated();
@@ -322,7 +318,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
       return S.of(context).linkRequired;
     }
     final provider = _providerById(_selectedProviderId);
-    final regExp = provider?.compiledValidationRegex ??
+    final regExp =
+        provider?.compiledValidationRegex ??
         RegExp(PaymentProviderModel.defaultValidationRegex);
     if (!regExp.hasMatch(text)) {
       return S.of(context).linkFormatInvalid(provider?.name ?? 'attendu');
@@ -358,10 +355,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _providersError!,
-            style: TextStyle(color: Colors.red.shade400),
-          ),
+          Text(_providersError!, style: TextStyle(color: Colors.red.shade400)),
           TextButton.icon(
             onPressed: _loadPaymentProviders,
             icon: const Icon(Icons.refresh),
@@ -372,10 +366,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
     }
 
     final items = <DropdownMenuItem<int?>>[
-      DropdownMenuItem<int?>(
-        value: null,
-        child: Text(S.of(context).noPayment),
-      ),
+      DropdownMenuItem<int?>(value: null, child: Text(S.of(context).noPayment)),
       ..._providers.map(
         (provider) => DropdownMenuItem<int?>(
           value: provider.id,
@@ -415,15 +406,17 @@ class _EventCreatePageState extends State<EventCreatePage> {
       children: [
         Text(
           S.of(context).contributionType,
-          style: Theme.of(context)
-              .textTheme
-              .labelLarge
-              ?.copyWith(color: Colors.grey.shade700),
+          style: Theme.of(
+            context,
+          ).textTheme.labelLarge?.copyWith(color: Colors.grey.shade700),
         ),
         const SizedBox(height: 8),
         SegmentedButton<bool>(
           segments: [
-            ButtonSegment(value: false, label: Text(S.of(context).globalObjective)),
+            ButtonSegment(
+              value: false,
+              label: Text(S.of(context).globalObjective),
+            ),
             ButtonSegment(value: true, label: Text(S.of(context).perPerson)),
           ],
           selected: {_paymentPerPerson},
@@ -441,7 +434,13 @@ class _EventCreatePageState extends State<EventCreatePage> {
     final accent = Theme.of(context).colorScheme.primary;
     final subtitle = _invitationDeadline == null
         ? S.of(context).optionalDeadlineHelper
-        : S.of(context).responseExpectedBefore(DateFormat.yMMMMd(S.of(context).localeName).format(_invitationDeadline!));
+        : S
+              .of(context)
+              .responseExpectedBefore(
+                DateFormat.yMMMMd(
+                  S.of(context).localeName,
+                ).format(_invitationDeadline!),
+              );
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 420;
@@ -462,7 +461,11 @@ class _EventCreatePageState extends State<EventCreatePage> {
                 foregroundColor: accent,
                 side: BorderSide(color: accent.withValues(alpha: 0.4)),
               ),
-              child: Text(_invitationDeadline == null ? S.of(context).define : S.of(context).modify),
+              child: Text(
+                _invitationDeadline == null
+                    ? S.of(context).define
+                    : S.of(context).modify,
+              ),
             ),
           ],
         );
@@ -470,14 +473,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
         final subtitleWidget = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              subtitle,
-              style: TextStyle(color: Colors.grey.shade700),
-            ),
-            if (isCompact) ...[
-              const SizedBox(height: 8),
-              actions,
-            ],
+            Text(subtitle, style: TextStyle(color: Colors.grey.shade700)),
+            if (isCompact) ...[const SizedBox(height: 8), actions],
           ],
         );
 
@@ -486,10 +483,10 @@ class _EventCreatePageState extends State<EventCreatePage> {
           leading: Icon(Icons.hourglass_bottom, color: accent),
           title: Text(
             S.of(context).responseDeadline,
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(color: accent, fontWeight: FontWeight.w700),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           subtitle: subtitleWidget,
           trailing: isCompact ? null : actions,
@@ -524,8 +521,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
               tooltip: S.of(context).search,
             ),
           ),
-          validator: (value) =>
-              value == null || value.trim().isEmpty ? S.of(context).fieldRequired : null,
+          validator: (value) => value == null || value.trim().isEmpty
+              ? S.of(context).fieldRequired
+              : null,
           onFieldSubmitted: (_) => _searchAddress(),
         ),
         if (_addressSearchError != null) ...[
@@ -543,8 +541,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
               shrinkWrap: true,
               physics: const ClampingScrollPhysics(),
               itemCount: _addressSuggestions.length,
-              separatorBuilder: (context, index) =>
-                  const Divider(height: 1),
+              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final suggestion = _addressSuggestions[index];
                 return ListTile(
@@ -607,8 +604,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
                         ),
                         validator: (value) =>
                             value == null || value.trim().isEmpty
-                                ? S.of(context).fieldRequired
-                                : null,
+                            ? S.of(context).fieldRequired
+                            : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -622,8 +619,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
                         ),
                         validator: (value) =>
                             value == null || value.trim().isEmpty
-                                ? S.of(context).fieldRequired
-                                : null,
+                            ? S.of(context).fieldRequired
+                            : null,
                       ),
                       const SizedBox(height: 16),
                       _buildAddressField(),
@@ -635,8 +632,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
                               onPressed: _pickDate,
                               icon: const Icon(Icons.event),
                               label: Text(
-                                DateFormat.yMMMMd(S.of(context).localeName)
-                                    .format(_selectedDate),
+                                DateFormat.yMMMMd(
+                                  S.of(context).localeName,
+                                ).format(_selectedDate),
                               ),
                             ),
                           ),
@@ -680,7 +678,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
                               : S.of(context).totalAmountHelper,
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
+                          decimal: true,
+                        ),
                         enabled: _selectedProviderId != null,
                         validator: (value) {
                           if (_selectedProviderId == null) {
@@ -690,8 +689,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
                           if (raw.isEmpty) {
                             return null;
                           }
-                          final parsed =
-                              double.tryParse(raw.replaceAll(',', '.'));
+                          final parsed = double.tryParse(
+                            raw.replaceAll(',', '.'),
+                          );
                           if (parsed == null || parsed < 0) {
                             return S.of(context).enterPositiveAmount;
                           }
@@ -707,8 +707,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
                               ? const SizedBox(
                                   width: 18,
                                   height: 18,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 )
                               : Text(S.of(context).createTheFiestaaa),
                         ),
