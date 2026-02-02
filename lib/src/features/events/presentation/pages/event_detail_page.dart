@@ -118,6 +118,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
   bool get _canContributeItems => _isOwner || _hasAcceptedInvitation;
   bool get _canVotePolls => _isOwner || _hasAcceptedInvitation;
 
+  String? get _playlistUrl => _currentEvent.playlistUrl?.trim();
+  String? get _playlistProvider => _currentEvent.playlistProvider?.trim();
+
   Future<void> _loadItems({bool showLoading = true}) async {
     setState(() {
       if (showLoading) _loadingItems = true;
@@ -1168,6 +1171,162 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
+  IconData _iconForPlaylistProvider(String? provider) {
+    switch (provider) {
+      case 'spotify':
+        return Icons.music_note;
+      case 'apple_music':
+        return Icons.apple;
+      case 'deezer':
+        return Icons.album;
+      default:
+        return Icons.music_note;
+    }
+  }
+
+  String _labelForPlaylistProvider(String? provider) {
+    switch (provider) {
+      case 'spotify':
+        return 'Spotify';
+      case 'apple_music':
+        return 'Apple Music';
+      case 'deezer':
+        return 'Deezer';
+      default:
+        return S.of(context).selectProvider;
+    }
+  }
+
+  Future<void> _openPlaylist() async {
+    final url = _playlistUrl;
+    if (url == null || url.isEmpty) return;
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      _showSnack(S.of(context).invalidPlaylistUrl, isError: true);
+      return;
+    }
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) {
+      _showSnack(S.of(context).invalidPlaylistUrl, isError: true);
+    }
+  }
+
+  Widget _buildPlaylistSection() {
+    final url = _playlistUrl ?? '';
+    final provider = _playlistProvider;
+    final isEmpty = url.isEmpty;
+    final canEdit = _isOwner;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  _iconForPlaylistProvider(provider),
+                  color: FiestaaaPalette.primary,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        S.of(context).sharedPlaylist,
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelLarge
+                            ?.copyWith(color: Colors.grey.shade600),
+                      ),
+                      const SizedBox(height: 6),
+                      if (isEmpty)
+                        Text(
+                          canEdit
+                              ? S.of(context).playlistEmptyOwner
+                              : S.of(context).playlistEmptyParticipant,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        )
+                      else
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _labelForPlaylistProvider(provider),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              url,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.grey.shade800,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                final stacked = constraints.maxWidth < 520;
+                                final openButton = ElevatedButton.icon(
+                                  onPressed: _openPlaylist,
+                                  icon: const Icon(Icons.open_in_new),
+                                  label: Text(S.of(context).openPlaylist),
+                                );
+                                final editButton = OutlinedButton.icon(
+                                  onPressed: canEdit ? _openEditEvent : null,
+                                  icon: const Icon(Icons.edit),
+                                  label: Text(S.of(context).edit),
+                                );
+                                if (stacked) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      openButton,
+                                      if (canEdit) ...[
+                                        const SizedBox(height: 8),
+                                        editButton,
+                                      ],
+                                    ],
+                                  );
+                                }
+                                return Row(
+                                  children: [
+                                    openButton,
+                                    const SizedBox(width: 12),
+                                    if (canEdit) editButton,
+                                  ],
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (isEmpty && canEdit) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _openEditEvent,
+                  icon: const Icon(Icons.add_link),
+                  label: Text(S.of(context).add),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _deleteEvent() async {
     setState(() => _deletingEvent = true);
     try {
@@ -1450,6 +1609,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 label: S.of(context).description,
                 value: _currentEvent.description,
               ),
+              _buildPlaylistSection(),
               _buildPaymentSection(),
               const SizedBox(height: 16),
               _buildPollsBlock(),
@@ -1621,11 +1781,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     children: [
                       Text(
                         S.of(context).payment,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Colors.grey.shade600,
-                        ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelLarge
+                            ?.copyWith(color: Colors.grey.shade600),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Text(
                         providerName,
                         style: Theme.of(context).textTheme.titleMedium,
@@ -1636,6 +1797,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ],
             ),
             const SizedBox(height: 12),
+            Text(_currentEvent.paymentPerPerson
+                ? S.of(context).contributionPerPerson(amountText)
+                : S.of(context).targetAmount(amountText)),
+            const SizedBox(height: 4),
             Text(
               _currentEvent.paymentPerPerson
                   ? S.of(context).contributionPerPerson(amountText)

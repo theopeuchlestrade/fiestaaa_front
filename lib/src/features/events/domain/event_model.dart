@@ -15,6 +15,8 @@ class EventModel {
     required this.paymentRequestedAmount,
     required this.paymentPerPerson,
     required this.ownerEmail,
+    required this.playlistUrl,
+    required this.playlistProvider,
     this.invitationDeadline,
   });
 
@@ -31,6 +33,8 @@ class EventModel {
   final double? paymentRequestedAmount;
   final bool paymentPerPerson;
   final String ownerEmail;
+  final String? playlistUrl;
+  final String? playlistProvider;
   final DateTime? invitationDeadline;
 
   DateTime get startDateTime =>
@@ -69,6 +73,8 @@ class EventModel {
           ?.toDouble(),
       paymentPerPerson: (json['payment_per_person'] as bool?) ?? false,
       ownerEmail: json['owner_email'] as String? ?? '',
+      playlistUrl: json['playlist_url'] as String?,
+      playlistProvider: json['playlist_provider'] as String?,
       invitationDeadline:
           (json['invitation_deadline'] as String?)?.isEmpty ?? true
           ? null
@@ -105,6 +111,8 @@ class EventPayload {
     this.paymentIdentifier,
     this.paymentRequestedAmount,
     this.paymentPerPerson = false,
+    this.playlistUrl,
+    this.playlistProvider,
   });
 
   final String name;
@@ -119,6 +127,8 @@ class EventPayload {
   final String? paymentIdentifier;
   final double? paymentRequestedAmount;
   final bool paymentPerPerson;
+  final String? playlistUrl;
+  final String? playlistProvider;
 
   Map<String, dynamic> toJson() {
     return {
@@ -136,6 +146,8 @@ class EventPayload {
       'payment_identifier': paymentIdentifier,
       'payment_requested_amount': paymentRequestedAmount,
       'payment_per_person': paymentPerPerson,
+      'playlist_url': playlistUrl,
+      'playlist_provider': playlistProvider,
     };
   }
 
