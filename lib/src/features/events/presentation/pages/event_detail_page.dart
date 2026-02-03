@@ -1180,11 +1180,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       _ => null,
     };
     if (assetPath == null) {
-      return Icon(
-        Icons.music_note,
-        size: size,
-        color: Colors.grey.shade700,
-      );
+      return Icon(Icons.music_note, size: size, color: Colors.grey.shade700);
     }
 
     return SvgPicture.asset(
@@ -1192,11 +1188,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
       width: provider == 'deezer' ? size * 1.2 : size,
       height: provider == 'deezer' ? size * 1.2 : size,
       fit: BoxFit.contain,
-      placeholderBuilder: (_) => Icon(
-        Icons.music_note,
-        size: size,
-        color: Colors.grey.shade700,
-      ),
+      placeholderBuilder: (_) =>
+          Icon(Icons.music_note, size: size, color: Colors.grey.shade700),
     );
   }
 
@@ -1230,10 +1223,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.music_note,
-                  color: FiestaaaPalette.primary,
-                ),
+                const Icon(Icons.music_note, color: FiestaaaPalette.primary),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -1241,12 +1231,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     children: [
                       Text(
                         S.of(context).sharedPlaylist,
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelLarge
-                            ?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       if (isEmpty)
@@ -1267,12 +1254,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                   label: provider == null
                                       ? S.of(context).selectProvider
                                       : provider == 'spotify'
-                                          ? 'Spotify'
-                                          : provider == 'apple_music'
-                                              ? 'Apple Music'
-                                              : provider == 'deezer'
-                                                  ? 'Deezer'
-                                                  : S.of(context).selectProvider,
+                                      ? 'Spotify'
+                                      : provider == 'apple_music'
+                                      ? 'Apple Music'
+                                      : provider == 'deezer'
+                                      ? 'Deezer'
+                                      : S.of(context).selectProvider,
                                   child: _buildPlaylistProviderLogo(
                                     provider,
                                     size: 28,
@@ -1313,9 +1300,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                               url,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.grey.shade800,
-                              ),
+                              style: TextStyle(color: Colors.grey.shade800),
                             ),
                             const SizedBox(height: 4),
                           ],
@@ -1796,12 +1781,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     children: [
                       Text(
                         S.of(context).payment,
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelLarge
-                            ?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Text(
@@ -1814,9 +1796,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ],
             ),
             const SizedBox(height: 12),
-            Text(_currentEvent.paymentPerPerson
-                ? S.of(context).contributionPerPerson(amountText)
-                : S.of(context).targetAmount(amountText)),
+            Text(
+              _currentEvent.paymentPerPerson
+                  ? S.of(context).contributionPerPerson(amountText)
+                  : S.of(context).targetAmount(amountText),
+            ),
             const SizedBox(height: 4),
             Text(
               _currentEvent.paymentPerPerson

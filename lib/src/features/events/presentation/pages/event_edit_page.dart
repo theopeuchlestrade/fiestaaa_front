@@ -281,7 +281,9 @@ class _EventEditPageState extends State<EventEditPage> {
     final playlistProvider = _selectedPlaylistProvider;
     final shouldClearPlaylist = _playlistChanged && playlistUrl.isEmpty;
     final shouldPreservePlaylist = !_playlistChanged;
-    if (!shouldClearPlaylist && playlistUrl.isNotEmpty && playlistProvider == null) {
+    if (!shouldClearPlaylist &&
+        playlistUrl.isNotEmpty &&
+        playlistProvider == null) {
       _showSnack(S.of(context).selectProvider, isError: true);
       setState(() => _submitting = false);
       return;
@@ -307,13 +309,13 @@ class _EventEditPageState extends State<EventEditPage> {
       playlistUrl: shouldPreservePlaylist
           ? widget.initialEvent.playlistUrl
           : shouldClearPlaylist
-              ? null
-              : playlistUrl,
+          ? null
+          : playlistUrl,
       playlistProvider: shouldPreservePlaylist
           ? widget.initialEvent.playlistProvider
           : shouldClearPlaylist
-              ? null
-              : playlistProvider,
+          ? null
+          : playlistProvider,
     );
 
     try {
@@ -387,18 +389,12 @@ class _EventEditPageState extends State<EventEditPage> {
         value: null,
         child: Text(S.of(context).noPlaylist),
       ),
-      const DropdownMenuItem<String?>(
-        value: 'spotify',
-        child: Text('Spotify'),
-      ),
+      const DropdownMenuItem<String?>(value: 'spotify', child: Text('Spotify')),
       const DropdownMenuItem<String?>(
         value: 'apple_music',
         child: Text('Apple Music'),
       ),
-      const DropdownMenuItem<String?>(
-        value: 'deezer',
-        child: Text('Deezer'),
-      ),
+      const DropdownMenuItem<String?>(value: 'deezer', child: Text('Deezer')),
     ];
 
     final urlField = TextFormField(
@@ -407,8 +403,10 @@ class _EventEditPageState extends State<EventEditPage> {
         labelText: S.of(context).playlistLink,
         prefixIcon: const Icon(Icons.link),
         isDense: true,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
       ),
       validator: (value) {
         final url = value?.trim() ?? '';
@@ -440,25 +438,24 @@ class _EventEditPageState extends State<EventEditPage> {
       children: [
         Text(
           S.of(context).sharedPlaylist,
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
         const SizedBox(height: 8),
         if (isCompact) ...[
           DropdownButtonFormField<String?>(
-            value: _selectedPlaylistProvider,
+            initialValue: _selectedPlaylistProvider,
             items: providerItems,
             decoration: InputDecoration(
               labelText: S.of(context).provider,
               prefixIcon: const Icon(Icons.music_note),
               isDense: true,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
             ),
             validator: (value) {
               if (_playlistUrlController.text.trim().isNotEmpty &&
@@ -485,14 +482,16 @@ class _EventEditPageState extends State<EventEditPage> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String?>(
-                  value: _selectedPlaylistProvider,
+                  initialValue: _selectedPlaylistProvider,
                   items: providerItems,
                   decoration: InputDecoration(
                     labelText: S.of(context).provider,
                     prefixIcon: const Icon(Icons.music_note),
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 12),
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
                   ),
                   validator: (value) {
                     if (_playlistUrlController.text.trim().isNotEmpty &&
@@ -844,13 +843,10 @@ class _EventEditPageState extends State<EventEditPage> {
                     const SizedBox(height: 16),
                     Text(
                       S.of(context).payment,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     _buildPaymentProviderField(),

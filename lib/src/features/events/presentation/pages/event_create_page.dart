@@ -8,7 +8,6 @@ import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_pro
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 class EventCreatePage extends StatefulWidget {
@@ -255,7 +254,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
     final playlistUrl = _playlistUrlController.text.trim();
     final playlistProvider = _selectedPlaylistProvider;
     final shouldClearPlaylist = _playlistChanged && playlistUrl.isEmpty;
-    if (!shouldClearPlaylist && playlistUrl.isNotEmpty && playlistProvider == null) {
+    if (!shouldClearPlaylist &&
+        playlistUrl.isNotEmpty &&
+        playlistProvider == null) {
       _showSnack(S.of(context).selectProvider, isError: true);
       setState(() => _submitting = false);
       return;
@@ -370,10 +371,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
         .map(
           (option) => DropdownMenuItem<String?>(
             value: option.key,
-            child: Text(
-              option.value,
-              overflow: TextOverflow.ellipsis,
-            ),
+            child: Text(option.value, overflow: TextOverflow.ellipsis),
           ),
         )
         .toList();
@@ -381,10 +379,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
         .map(
           (option) => Align(
             alignment: Alignment.centerLeft,
-            child: Text(
-              option.value,
-              overflow: TextOverflow.ellipsis,
-            ),
+            child: Text(option.value, overflow: TextOverflow.ellipsis),
           ),
         )
         .toList();
@@ -395,8 +390,10 @@ class _EventCreatePageState extends State<EventCreatePage> {
         labelText: S.of(context).playlistLink,
         prefixIcon: const Icon(Icons.link),
         isDense: true,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
       ),
       validator: (value) {
         final url = value?.trim() ?? '';
@@ -428,20 +425,17 @@ class _EventCreatePageState extends State<EventCreatePage> {
       children: [
         Text(
           S.of(context).sharedPlaylist,
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
         const SizedBox(height: 8),
         LayoutBuilder(
           builder: (context, constraints) {
             final stacked = constraints.maxWidth < 420;
             final providerField = DropdownButtonFormField<String?>(
-              value: _selectedPlaylistProvider,
+              initialValue: _selectedPlaylistProvider,
               items: providerItems,
               selectedItemBuilder: (_) => selectedItems,
               isExpanded: true,
@@ -452,8 +446,10 @@ class _EventCreatePageState extends State<EventCreatePage> {
                 //   size: 18,
                 // ),
                 isDense: true,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
               ),
               validator: (value) {
                 if (_playlistUrlController.text.trim().isNotEmpty &&
@@ -476,11 +472,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
             if (stacked) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  providerField,
-                  const SizedBox(height: 12),
-                  urlField,
-                ],
+                children: [providerField, const SizedBox(height: 12), urlField],
               );
             }
 
@@ -500,35 +492,6 @@ class _EventCreatePageState extends State<EventCreatePage> {
           style: TextStyle(color: Colors.grey.shade600),
         ),
       ],
-    );
-  }
-
-  Widget _playlistProviderLogo(String? provider, {double size = 20}) {
-    final assetPath = switch (provider) {
-      'spotify' => 'assets/logos/spotify.svg',
-      'apple_music' => 'assets/logos/apple_music.svg',
-      'deezer' => 'assets/logos/deezer.svg',
-      _ => null,
-    };
-
-    if (assetPath == null) {
-      return Icon(
-        Icons.music_note,
-        size: size,
-        color: Colors.grey.shade700,
-      );
-    }
-
-    return SvgPicture.asset(
-      assetPath,
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
-      placeholderBuilder: (_) => Icon(
-        Icons.music_note,
-        size: size,
-        color: Colors.grey.shade700,
-      ),
     );
   }
 
@@ -852,9 +815,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
                       const SizedBox(height: 16),
                       Text(
                         S.of(context).payment,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
+                        style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: Theme.of(context).colorScheme.onSurface,
