@@ -31,6 +31,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
   final _addressController = TextEditingController();
   final _paymentIdentifierController = TextEditingController();
   final _paymentAmountController = TextEditingController();
+  final _playlistUrlController = TextEditingController();
   final _addressFocus = FocusNode();
   List<AddressSuggestion> _addressSuggestions = [];
   AddressSuggestion? _selectedSuggestion;
@@ -48,11 +49,14 @@ class _EventCreatePageState extends State<EventCreatePage> {
   List<PaymentProviderModel> _providers = [];
   int? _selectedProviderId;
   bool _paymentPerPerson = false;
+  String? _selectedPlaylistProvider;
+  bool _playlistChanged = false;
 
   @override
   void initState() {
     super.initState();
     _addressController.addListener(_onAddressChanged);
+    _playlistUrlController.addListener(_onPlaylistChanged);
     _loadPaymentProviders();
   }
 
@@ -64,10 +68,15 @@ class _EventCreatePageState extends State<EventCreatePage> {
     _addressController.dispose();
     _paymentIdentifierController.dispose();
     _paymentAmountController.dispose();
+    _playlistUrlController.dispose();
     _addressFocus.dispose();
     _api.dispose();
     _paymentProvidersApi.dispose();
     super.dispose();
+  }
+
+  void _onPlaylistChanged() {
+    _playlistChanged = true;
   }
 
   Future<void> _loadPaymentProviders() async {
@@ -242,6 +251,16 @@ class _EventCreatePageState extends State<EventCreatePage> {
     setState(() => _submitting = true);
     final requestedAmount = _requestedAmountValue();
     final selectedAddress = _selectedSuggestion!;
+    final playlistUrl = _playlistUrlController.text.trim();
+    final playlistProvider = _selectedPlaylistProvider;
+    final shouldClearPlaylist = _playlistChanged && playlistUrl.isEmpty;
+    if (!shouldClearPlaylist &&
+        playlistUrl.isNotEmpty &&
+        playlistProvider == null) {
+      _showSnack(S.of(context).selectProvider, isError: true);
+      setState(() => _submitting = false);
+      return;
+    }
     final payload = EventPayload(
       name: _nameController.text.trim(),
       description: _descriptionController.text.trim(),
@@ -260,6 +279,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
           : _paymentIdentifierController.text.trim(),
       paymentRequestedAmount: requestedAmount,
       paymentPerPerson: _selectedProviderId != null ? _paymentPerPerson : false,
+      playlistUrl: shouldClearPlaylist ? null : playlistUrl,
+      playlistProvider: shouldClearPlaylist ? null : playlistProvider,
     );
 
     try {
@@ -273,12 +294,15 @@ class _EventCreatePageState extends State<EventCreatePage> {
       _addressController.clear();
       _paymentIdentifierController.clear();
       _paymentAmountController.clear();
+      _playlistUrlController.clear();
       setState(() {
         _selectedProviderId = null;
         _selectedSuggestion = null;
         _addressSuggestions = [];
         _addressSearchError = null;
         _invitationDeadline = null;
+        _selectedPlaylistProvider = null;
+        _playlistChanged = false;
       });
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -333,6 +357,141 @@ class _EventCreatePageState extends State<EventCreatePage> {
         content: Text(text),
         backgroundColor: isError ? Colors.red.shade400 : null,
       ),
+    );
+  }
+
+  Widget _buildPlaylistSection() {
+    final providerOptions = <MapEntry<String?, String>>[
+      MapEntry(null, S.of(context).noPlaylist),
+      const MapEntry('spotify', 'Spotify'),
+      const MapEntry('apple_music', 'Apple Music'),
+      const MapEntry('deezer', 'Deezer'),
+    ];
+    final providerItems = providerOptions
+        .map(
+          (option) => DropdownMenuItem<String?>(
+            value: option.key,
+            child: Text(option.value, overflow: TextOverflow.ellipsis),
+          ),
+        )
+        .toList();
+    final selectedItems = providerOptions
+        .map(
+          (option) => Align(
+            alignment: Alignment.centerLeft,
+            child: Text(option.value, overflow: TextOverflow.ellipsis),
+          ),
+        )
+        .toList();
+
+    final urlField = TextFormField(
+      controller: _playlistUrlController,
+      decoration: InputDecoration(
+        labelText: S.of(context).playlistLink,
+        prefixIcon: const Icon(Icons.link),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
+      ),
+      validator: (value) {
+        final url = value?.trim() ?? '';
+        final provider = _selectedPlaylistProvider;
+        if (provider == null) {
+          return null;
+        }
+        if (url.isEmpty) {
+          return S.of(context).playlistLinkRequired;
+        }
+        final regExp = switch (provider) {
+          'spotify' => RegExp(r'^https?://open\.spotify\.com/.+$'),
+          'apple_music' => RegExp(r'^https?://music\.apple\.com/.+$'),
+          'deezer' => RegExp(r'^https?://(www\.)?deezer\.com/.+$'),
+          _ => RegExp(r'^https?://.+$'),
+        };
+        if (!regExp.hasMatch(url)) {
+          return S.of(context).invalidPlaylistUrl;
+        }
+        return null;
+      },
+      keyboardType: TextInputType.url,
+      textInputAction: TextInputAction.done,
+      enabled: _selectedPlaylistProvider != null,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          S.of(context).sharedPlaylist,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: 8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final stacked = constraints.maxWidth < 420;
+            final providerField = DropdownButtonFormField<String?>(
+              initialValue: _selectedPlaylistProvider,
+              items: providerItems,
+              selectedItemBuilder: (_) => selectedItems,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: S.of(context).provider,
+                // prefixIcon: _playlistProviderLogo(
+                //   _selectedPlaylistProvider,
+                //   size: 18,
+                // ),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+              validator: (value) {
+                if (_playlistUrlController.text.trim().isNotEmpty &&
+                    value == null) {
+                  return S.of(context).selectProvider;
+                }
+                return null;
+              },
+              onChanged: (value) {
+                setState(() {
+                  _selectedPlaylistProvider = value;
+                  _playlistChanged = true;
+                  if (value == null) {
+                    _playlistUrlController.clear();
+                  }
+                });
+              },
+            );
+
+            if (stacked) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [providerField, const SizedBox(height: 12), urlField],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: providerField),
+                const SizedBox(width: 12),
+                Expanded(flex: 2, child: urlField),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 6),
+        Text(
+          S.of(context).playlistHelperText,
+          style: TextStyle(color: Colors.grey.shade600),
+        ),
+      ],
     );
   }
 
@@ -595,6 +754,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
                 child: Form(
                   key: _formKey,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       TextFormField(
                         controller: _nameController,
@@ -651,6 +811,17 @@ class _EventCreatePageState extends State<EventCreatePage> {
                       const SizedBox(height: 16),
                       _buildInvitationDeadlineField(),
                       const SizedBox(height: 12),
+                      _buildPlaylistSection(),
+                      const SizedBox(height: 16),
+                      Text(
+                        S.of(context).payment,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
                       _buildPaymentProviderField(),
                       const SizedBox(height: 16),
                       _buildPaymentModeToggle(),
