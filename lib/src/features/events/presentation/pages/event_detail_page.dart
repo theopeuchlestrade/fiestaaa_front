@@ -19,6 +19,7 @@ import 'package:fiestaaa_front/src/features/qr_checkin/presentation/pages/qr_sca
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -117,6 +118,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
   bool get _isExpiredInvitation => _myInvitation?.status == 'Expired';
   bool get _canContributeItems => _isOwner || _hasAcceptedInvitation;
   bool get _canVotePolls => _isOwner || _hasAcceptedInvitation;
+
+  String? get _playlistUrl => _currentEvent.playlistUrl?.trim();
+  String? get _playlistProvider => _currentEvent.playlistProvider?.trim();
 
   Future<void> _loadItems({bool showLoading = true}) async {
     setState(() {
@@ -1168,6 +1172,161 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
+  Widget _buildPlaylistProviderLogo(String? provider, {double size = 22}) {
+    final assetPath = switch (provider) {
+      'spotify' => 'assets/logos/spotify.svg',
+      'apple_music' => 'assets/logos/apple_music.svg',
+      'deezer' => 'assets/logos/deezer.svg',
+      _ => null,
+    };
+    if (assetPath == null) {
+      return Icon(Icons.music_note, size: size, color: Colors.grey.shade700);
+    }
+
+    return SvgPicture.asset(
+      assetPath,
+      width: provider == 'deezer' ? size * 1.2 : size,
+      height: provider == 'deezer' ? size * 1.2 : size,
+      fit: BoxFit.contain,
+      placeholderBuilder: (_) =>
+          Icon(Icons.music_note, size: size, color: Colors.grey.shade700),
+    );
+  }
+
+  Future<void> _openPlaylist() async {
+    final url = _playlistUrl;
+    if (url == null || url.isEmpty) return;
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      _showSnack(S.of(context).invalidPlaylistUrl, isError: true);
+      return;
+    }
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) {
+      _showSnack(S.of(context).invalidPlaylistUrl, isError: true);
+    }
+  }
+
+  Widget _buildPlaylistSection() {
+    final url = _playlistUrl ?? '';
+    final provider = _playlistProvider;
+    final isEmpty = url.isEmpty;
+    final canEdit = _isOwner;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.music_note, color: FiestaaaPalette.primary),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        S.of(context).sharedPlaylist,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      if (isEmpty)
+                        Text(
+                          canEdit
+                              ? S.of(context).playlistEmptyOwner
+                              : S.of(context).playlistEmptyParticipant,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        )
+                      else
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                final stacked = constraints.maxWidth < 420;
+                                final logo = Semantics(
+                                  label: provider == null
+                                      ? S.of(context).selectProvider
+                                      : provider == 'spotify'
+                                      ? 'Spotify'
+                                      : provider == 'apple_music'
+                                      ? 'Apple Music'
+                                      : provider == 'deezer'
+                                      ? 'Deezer'
+                                      : S.of(context).selectProvider,
+                                  child: _buildPlaylistProviderLogo(
+                                    provider,
+                                    size: 28,
+                                  ),
+                                );
+                                final openButton = ElevatedButton.icon(
+                                  onPressed: _openPlaylist,
+                                  icon: const Icon(Icons.open_in_new),
+                                  label: Text(S.of(context).openPlaylist),
+                                );
+
+                                if (stacked) {
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      logo,
+                                      const SizedBox(height: 8),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: openButton,
+                                      ),
+                                    ],
+                                  );
+                                }
+
+                                return Row(
+                                  children: [
+                                    logo,
+                                    const SizedBox(width: 12),
+                                    openButton,
+                                  ],
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              url,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: Colors.grey.shade800),
+                            ),
+                            const SizedBox(height: 4),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (isEmpty && canEdit) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _openEditEvent,
+                  icon: const Icon(Icons.add_link),
+                  label: Text(S.of(context).add),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _deleteEvent() async {
     setState(() => _deletingEvent = true);
     try {
@@ -1450,6 +1609,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 label: S.of(context).description,
                 value: _currentEvent.description,
               ),
+              _buildPlaylistSection(),
               _buildPaymentSection(),
               const SizedBox(height: 16),
               _buildPollsBlock(),
@@ -1622,10 +1782,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       Text(
                         S.of(context).payment,
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Colors.grey.shade600,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Text(
                         providerName,
                         style: Theme.of(context).textTheme.titleMedium,
@@ -1636,6 +1796,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ],
             ),
             const SizedBox(height: 12),
+            Text(
+              _currentEvent.paymentPerPerson
+                  ? S.of(context).contributionPerPerson(amountText)
+                  : S.of(context).targetAmount(amountText),
+            ),
+            const SizedBox(height: 4),
             Text(
               _currentEvent.paymentPerPerson
                   ? S.of(context).contributionPerPerson(amountText)

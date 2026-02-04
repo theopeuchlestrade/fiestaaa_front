@@ -339,6 +339,18 @@
   "linkCopiedToClipboard": "Lien copié dans le presse-papiers",
   "unableToGenerateLink": "Impossible de générer le lien",
 
+  "sharedPlaylist": "Playlist partagée",
+  "playlistLink": "Lien de la playlist",
+  "playlistHelperText": "Ajoutez un lien Spotify, Apple Music ou Deezer",
+  "selectProvider": "Sélectionnez un provider",
+  "provider": "Provider",
+  "noPlaylist": "Aucune playlist",
+  "playlistLinkRequired": "Lien de playlist requis",
+  "openPlaylist": "Ouvrir la playlist",
+  "playlistEmptyOwner": "Ajoutez une playlist pour que vos invités puissent écouter la même musique.",
+  "playlistEmptyParticipant": "Le créateur n’a pas encore partagé de playlist.",
+  "invalidPlaylistUrl": "Le lien de playlist est invalide",
+
   "ephemeralPolls": "Sondages éphémères",
   "newPoll": "Nouveau sondage",
   "creating": "Création...",

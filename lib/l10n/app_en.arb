@@ -324,6 +324,18 @@
   "linkCopiedToClipboard": "Link copied to clipboard",
   "unableToGenerateLink": "Unable to generate link",
 
+  "sharedPlaylist": "Shared playlist",
+  "playlistLink": "Playlist link",
+  "playlistHelperText": "Add a Spotify, Apple Music, or Deezer link",
+  "selectProvider": "Select a provider",
+  "provider": "Provider",
+  "noPlaylist": "No playlist",
+  "playlistLinkRequired": "Playlist link required",
+  "openPlaylist": "Open playlist",
+  "playlistEmptyOwner": "Add a playlist so guests can listen to the same music.",
+  "playlistEmptyParticipant": "The organizer hasn’t shared a playlist yet.",
+  "invalidPlaylistUrl": "Playlist link is invalid",
+
   "ephemeralPolls": "Ephemeral polls",
   "newPoll": "New poll",
   "creating": "Creating...",
