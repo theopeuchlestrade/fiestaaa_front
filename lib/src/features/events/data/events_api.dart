@@ -145,6 +145,28 @@ class EventsApi {
     );
   }
 
+  Future<List<EventItemCategorySummaryModel>> fetchEventItemsSummary(
+    int eventId,
+  ) async {
+    final response = await _client.get(
+      Uri.parse('$apiBaseUrl/events/$eventId/items/summary'),
+    );
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body) as List<dynamic>;
+      return decoded
+          .map(
+            (e) => EventItemCategorySummaryModel.fromJson(
+              e as Map<String, dynamic>,
+            ),
+          )
+          .toList();
+    }
+    throw ApiException(
+      'Impossible de récupérer le résumé des items (${response.statusCode})',
+      statusCode: response.statusCode,
+    );
+  }
+
   Future<List<PollModel>> fetchEventPolls({
     required String token,
     required int eventId,
@@ -307,6 +329,7 @@ class EventsApi {
     required int maxQuantity,
     required String unitLabel,
     EventItemKind? itemKind,
+    EventItemCategory? itemCategory,
   }) async {
     final response = await _client.post(
       Uri.parse('$apiBaseUrl/events/$eventId/items/custom'),
@@ -319,6 +342,7 @@ class EventsApi {
         'max_quantity': maxQuantity,
         'unit_label': unitLabel,
         if (itemKind != null) 'item_kind': itemKind.apiValue,
+        if (itemCategory != null) 'item_category': itemCategory.apiValue,
       }),
     );
 

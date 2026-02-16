@@ -385,6 +385,34 @@
   "itemKindLabel": "Item type",
   "itemKindBring": "Bring",
   "itemKindNeed": "Need",
+  "itemCategoryLabel": "Category",
+  "itemCategoriesLabel": "Filter by category",
+  "allCategories": "All",
+  "itemCategorySoft": "Soft",
+  "itemCategoryAlcool": "Alcohol",
+  "itemCategorySale": "Savory",
+  "itemCategorySucre": "Sweet",
+  "itemCategoryAutre": "Other",
+  "itemSummaryTitle": "Item summary",
+  "itemsCoveredProgress": "{covered}/{total} covered",
+  "@itemsCoveredProgress": {
+    "placeholders": {
+      "covered": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "itemsCount": "{count} items",
+  "@itemsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "noItemsForCategory": "No items in {category}.",
+  "@noItemsForCategory": {
+    "placeholders": {
+      "category": {"type": "String"}
+    }
+  },
   "bringPersonalLabel": "Personal contribution",
   "bringQuantityLabel": "Brought quantity: {quantity} {unit}",
   "@bringQuantityLabel": {

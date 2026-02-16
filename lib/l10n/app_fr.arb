@@ -400,6 +400,34 @@
   "itemKindLabel": "Type d'item",
   "itemKindBring": "Apport",
   "itemKindNeed": "Besoin",
+  "itemCategoryLabel": "Categorie",
+  "itemCategoriesLabel": "Filtrer par categorie",
+  "allCategories": "Toutes",
+  "itemCategorySoft": "Soft",
+  "itemCategoryAlcool": "Alcool",
+  "itemCategorySale": "Sale",
+  "itemCategorySucre": "Sucre",
+  "itemCategoryAutre": "Autre",
+  "itemSummaryTitle": "Resume des items",
+  "itemsCoveredProgress": "{covered}/{total} couverts",
+  "@itemsCoveredProgress": {
+    "placeholders": {
+      "covered": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "itemsCount": "{count} items",
+  "@itemsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "noItemsForCategory": "Aucun item pour la categorie {category}.",
+  "@noItemsForCategory": {
+    "placeholders": {
+      "category": {"type": "String"}
+    }
+  },
   "bringPersonalLabel": "Apport personnel",
   "bringQuantityLabel": "Quantité apportée : {quantity} {unit}",
   "@bringQuantityLabel": {

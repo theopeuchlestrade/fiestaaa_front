@@ -9,6 +9,7 @@ import 'package:fiestaaa_front/src/features/events/domain/event_poll_model.dart'
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_edit_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_invitations_page.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_items_grid.dart';
 import 'package:fiestaaa_front/src/features/carpools/presentation/pages/event_carpools_page.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
@@ -38,6 +39,16 @@ String _displayInitial(BuildContext context, String? handle) {
   return name.isEmpty ? '?' : name[0].toUpperCase();
 }
 
+String _itemCategoryLabel(BuildContext context, EventItemCategory category) {
+  return switch (category) {
+    EventItemCategory.soft => S.of(context).itemCategorySoft,
+    EventItemCategory.alcool => S.of(context).itemCategoryAlcool,
+    EventItemCategory.sale => S.of(context).itemCategorySale,
+    EventItemCategory.sucre => S.of(context).itemCategorySucre,
+    EventItemCategory.autre => S.of(context).itemCategoryAutre,
+  };
+}
+
 class EventDetailPage extends StatefulWidget {
   const EventDetailPage({
     super.key,
@@ -64,6 +75,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
   final _paymentProvidersApi = PaymentProvidersApi();
   late EventModel _currentEvent;
   List<EventItemModel>? _eventItems;
+  List<EventItemCategorySummaryModel> _itemCategorySummary = const [];
+  EventItemCategory? _selectedItemCategory;
   Map<int, List<ItemContributionModel>> _contributions = {};
   bool _loadingItems = true;
   String? _itemsError;
@@ -128,10 +141,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
       _itemsError = null;
     });
     try {
-      final data = await _eventsApi.fetchEventItems(widget.event.id);
+      final data = await _eventsApi.fetchEventItems(_currentEvent.id);
+      final summary = EventItemCategorySummaryModel.fromItems(data);
       if (!mounted) return;
       setState(() {
         _eventItems = data;
+        _itemCategorySummary = summary;
+        if (_selectedItemCategory != null &&
+            !data.any((item) => item.category == _selectedItemCategory)) {
+          _selectedItemCategory = null;
+        }
       });
       await _loadContributions();
     } on ApiException catch (e) {
@@ -831,6 +850,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     EventItemKind selectedKind = _isOwner
         ? EventItemKind.need
         : EventItemKind.bring;
+    EventItemCategory selectedCategory = EventItemCategory.autre;
     final unitOptions = <String>['pièce', 'g', 'kg', 'ml', 'L'];
     String selectedUnit = unitOptions.first;
 
@@ -910,6 +930,28 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         },
                       ),
                       const SizedBox(height: 12),
+                      DropdownButtonFormField<EventItemCategory>(
+                        initialValue: selectedCategory,
+                        decoration: InputDecoration(
+                          labelText: S.of(context).itemCategoryLabel,
+                          prefixIcon: const Icon(Icons.category_outlined),
+                        ),
+                        items: EventItemCategory.values
+                            .map(
+                              (category) => DropdownMenuItem(
+                                value: category,
+                                child: Text(
+                                  _itemCategoryLabel(context, category),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setModalState(() => selectedCategory = value);
+                        },
+                      ),
+                      const SizedBox(height: 12),
                       TextFormField(
                         controller: quantityController,
                         keyboardType: TextInputType.number,
@@ -972,6 +1014,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                   qty,
                                   selectedUnit,
                                   selectedKind,
+                                  selectedCategory,
                                 ),
                               );
                             },
@@ -996,6 +1039,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         result.quantity,
         result.unit,
         result.kind,
+        result.category,
       );
     }
   }
@@ -1005,6 +1049,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     int quantity,
     String unit,
     EventItemKind kind,
+    EventItemCategory category,
   ) async {
     setState(() => _creatingCustomItem = true);
     try {
@@ -1015,6 +1060,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         maxQuantity: quantity,
         unitLabel: unit,
         itemKind: kind,
+        itemCategory: category,
       );
       if (!mounted) return;
       _showSnack(S.of(context).itemAdded);
@@ -2179,35 +2225,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   Widget _buildItemsBlock() {
     final items = _eventItems ?? const <EventItemModel>[];
-    final ownerEmail = _currentEvent.ownerEmail.toLowerCase();
-    bool isBringItem(EventItemModel item) {
-      if (item.kind == EventItemKind.bring) return true;
-      final createdBy = item.createdByEmail?.toLowerCase();
-      if (createdBy == null) return false;
-      return createdBy != ownerEmail;
-    }
-
-    final currentUserEmail = widget.session.email.toLowerCase();
-    final bringItems = items.where(isBringItem).toList()
-      ..sort((a, b) {
-        final aMine =
-            (a.createdByEmail?.toLowerCase() ?? '') == currentUserEmail;
-        final bMine =
-            (b.createdByEmail?.toLowerCase() ?? '') == currentUserEmail;
-        if (aMine != bMine) {
-          return aMine ? -1 : 1;
-        }
-        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-      });
-    final needItems = items.where((item) => !isBringItem(item)).toList()
-      ..sort((a, b) {
-        final aFull = a.remaining <= 0;
-        final bFull = b.remaining <= 0;
-        if (aFull != bFull) {
-          return aFull ? 1 : -1;
-        }
-        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-      });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2288,58 +2305,25 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   ],
                 )
               else
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isWide = constraints.maxWidth >= 760;
-                    final bringSection = _EventItemsSection(
-                      title: S.of(context).bringSectionTitle,
-                      subtitle: S.of(context).chooseWhatYouBring,
-                      items: bringItems,
-                      emptyLabel: S.of(context).noBringItemsYet,
-                      reservingItemId: _reservingItemId,
-                      deletingItemId: _deletingItemId,
-                      onReserve: _openQuantityDialog,
-                      onDelete: _deleteEventItem,
-                      isOwner: _isOwner,
-                      currentUserEmail: widget.session.email,
-                      canReserveItems: _canContributeItems,
-                      contributions: _contributions,
-                    );
-                    final needSection = _EventItemsSection(
-                      title: S.of(context).needSectionTitle,
-                      subtitle: S.of(context).needItemsSubtitle,
-                      items: needItems,
-                      emptyLabel: S.of(context).noNeedItemsYet,
-                      reservingItemId: _reservingItemId,
-                      deletingItemId: _deletingItemId,
-                      onReserve: _openQuantityDialog,
-                      onDelete: _deleteEventItem,
-                      isOwner: _isOwner,
-                      currentUserEmail: widget.session.email,
-                      canReserveItems: _canContributeItems,
-                      contributions: _contributions,
-                    );
-
-                    if (isWide) {
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: bringSection),
-                          const SizedBox(width: 16),
-                          Expanded(child: needSection),
-                        ],
-                      );
-                    }
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        bringSection,
-                        const SizedBox(height: 20),
-                        needSection,
-                      ],
+                EventItemsGrid(
+                  items: items,
+                  summary: _itemCategorySummary,
+                  selectedCategory: _selectedItemCategory,
+                  contributions: _contributions,
+                  reservingItemId: _reservingItemId,
+                  deletingItemId: _deletingItemId,
+                  currentUserEmail: widget.session.email,
+                  canReserveItems: _canContributeItems,
+                  canDelete: (item) =>
+                      _isOwner || item.isCreatedBy(widget.session.email),
+                  onCategoryChanged: (category) {
+                    setState(() => _selectedItemCategory = category);
+                    debugPrint(
+                      'category_filter_click event_id=${_currentEvent.id} category=${category?.apiValue ?? 'all'}',
                     );
                   },
+                  onReserve: _openQuantityDialog,
+                  onDelete: _deleteEventItem,
                 ),
             ],
           ),
@@ -3006,14 +2990,22 @@ class _PollOptionTile extends StatelessWidget {
 }
 
 class _NewEventItemData {
-  const _NewEventItemData(this.name, this.quantity, this.unit, this.kind);
+  const _NewEventItemData(
+    this.name,
+    this.quantity,
+    this.unit,
+    this.kind,
+    this.category,
+  );
 
   final String name;
   final int quantity;
   final String unit;
   final EventItemKind kind;
+  final EventItemCategory category;
 }
 
+// ignore: unused_element
 class _EventItemsSection extends StatelessWidget {
   const _EventItemsSection({
     required this.title,
