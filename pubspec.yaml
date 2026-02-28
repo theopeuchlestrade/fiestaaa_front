@@ -58,6 +58,7 @@ dependencies:
   google_identity_services_web: ^0.3.3+1
   sign_in_with_apple: ^7.0.1
   web: ^1.1.1
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
