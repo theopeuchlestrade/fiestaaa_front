@@ -22,10 +22,10 @@ import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
-import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 
@@ -1936,6 +1936,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _shareEvent() async {
+    final l10n = S.of(context);
     setState(() => _sharingLink = true);
     try {
       final token = await _eventsApi.createShareLink(
@@ -1943,9 +1944,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
         eventId: _currentEvent.id,
       );
       final link = _buildShareUrl(token);
-      await Clipboard.setData(ClipboardData(text: link));
+      final shareText = l10n.shareFiestaaaMessage(_currentEvent.name, link);
+      await Share.share(shareText, subject: _currentEvent.name);
       if (!mounted) return;
-      _showSnack(S.of(context).linkCopiedToClipboard);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
