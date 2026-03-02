@@ -17,6 +17,7 @@ import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_pro
 import 'package:fiestaaa_front/src/features/qr_checkin/presentation/pages/my_qr_code_page.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/presentation/pages/qr_scanner_page.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
+import 'package:fiestaaa_front/src/core/presentation/widgets/quasi_fullscreen_modal.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -62,6 +63,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   final _eventsApi = EventsApi();
   final _invitationsApi = InvitationsApi();
   final _paymentProvidersApi = PaymentProvidersApi();
+  final ValueNotifier<int> _modalRefreshTick = ValueNotifier<int>(0);
   late EventModel _currentEvent;
   List<EventItemModel>? _eventItems;
   Map<int, List<ItemContributionModel>> _contributions = {};
@@ -89,6 +91,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
   bool _itemsExpanded = true;
 
   @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    if (mounted) {
+      _modalRefreshTick.value++;
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
     _currentEvent = widget.event;
@@ -106,6 +116,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     _paymentProvidersApi.dispose();
     _realtimeSub?.cancel();
     _realtime?.dispose();
+    _modalRefreshTick.dispose();
     super.dispose();
   }
 
@@ -1484,19 +1495,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
           icon: const Icon(Icons.edit),
           tooltip: S.of(context).editFiestaaa,
         ),
-      IconButton(
-        onPressed: _openInvitations,
-        icon: const Icon(Icons.people_alt),
-        tooltip: _isOwner
-            ? S.of(context).manageInvitations
-            : S.of(context).viewParticipants,
-      ),
-      if (_isOwner || _hasAcceptedInvitation)
-        IconButton(
-          onPressed: _openCarpools,
-          icon: const Icon(Icons.directions_car),
-          tooltip: 'Covoiturage',
-        ),
       if (_isOwner)
         IconButton(
           onPressed: _sharingLink ? null : _shareEvent,
@@ -1611,12 +1609,78 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ),
               _buildPlaylistSection(),
               _buildPaymentSection(),
-              const SizedBox(height: 16),
-              _buildPollsBlock(),
-              const SizedBox(height: 24),
-              _buildItemsBlock(),
+              const SizedBox(height: 20),
+              _buildFeatureActionsSection(),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureActionsSection() {
+    final l10n = S.of(context);
+    final actions = <_EventDetailFeatureActionData>[
+      _EventDetailFeatureActionData(
+        icon: Icons.directions_car_filled_outlined,
+        label: l10n.carpools,
+        onPressed: _openCarpools,
+      ),
+      _EventDetailFeatureActionData(
+        icon: Icons.poll_outlined,
+        label: l10n.ephemeralPolls,
+        onPressed: _openPollsModal,
+      ),
+      _EventDetailFeatureActionData(
+        icon: Icons.inventory_2_outlined,
+        label: l10n.availableItems,
+        onPressed: _openItemsModal,
+      ),
+      _EventDetailFeatureActionData(
+        icon: Icons.groups_2_outlined,
+        label: l10n.participants,
+        onPressed: _openInvitations,
+      ),
+    ];
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 120,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.65),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxWidth < 700;
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: actions.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: isCompact ? 2 : 4,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                    childAspectRatio: isCompact ? 2.8 : 3.8,
+                  ),
+                  itemBuilder: (context, index) =>
+                      _EventDetailFeatureActionButton(data: actions[index]),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -2001,14 +2065,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _openInvitations() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => EventInvitationsPage(
-          session: widget.session,
-          eventId: _currentEvent.id,
-          ownerEmail: _currentEvent.ownerEmail,
-          realtimeStream: _realtime?.stream,
-        ),
+    await showQuasiFullscreenModal<void>(
+      context: context,
+      builder: (_) => EventInvitationsPage(
+        session: widget.session,
+        eventId: _currentEvent.id,
+        ownerEmail: _currentEvent.ownerEmail,
+        realtimeStream: _realtime?.stream,
       ),
     );
     await _loadItems();
@@ -2039,34 +2102,110 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _openCarpools() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => EventCarpoolsPage(
-          eventId: _currentEvent.id,
-          eventName: _currentEvent.name,
-          eventDate: _currentEvent.startDateTime,
-          session: widget.session,
-          isOwner: _isOwner,
-          hasAcceptedInvitation: _hasAcceptedInvitation,
+    await showQuasiFullscreenModal<void>(
+      context: context,
+      builder: (_) => EventCarpoolsPage(
+        eventId: _currentEvent.id,
+        eventName: _currentEvent.name,
+        eventDate: _currentEvent.startDateTime,
+        session: widget.session,
+        isOwner: _isOwner,
+        hasAcceptedInvitation: _hasAcceptedInvitation,
+      ),
+    );
+  }
+
+  Future<void> _openPollsModal() async {
+    await showQuasiFullscreenModal<void>(
+      context: context,
+      builder: (_) => ValueListenableBuilder<int>(
+        valueListenable: _modalRefreshTick,
+        builder: (context, _, child) => QuasiFullscreenModalScaffold(
+          title: S.of(context).ephemeralPolls,
+          trailing: IconButton(
+            onPressed: _loadingPolls
+                ? null
+                : () => _loadPolls(showLoading: true),
+            icon: const Icon(Icons.refresh),
+            tooltip: S.of(context).refresh,
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+            child: _buildPollsBlock(showTitle: false, collapsible: false),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildPollsBlock() {
+  Future<void> _openItemsModal() async {
+    await showQuasiFullscreenModal<void>(
+      context: context,
+      builder: (_) => ValueListenableBuilder<int>(
+        valueListenable: _modalRefreshTick,
+        builder: (context, _, child) => QuasiFullscreenModalScaffold(
+          title: S.of(context).availableItems,
+          trailing: IconButton(
+            onPressed: _loadingItems
+                ? null
+                : () => _loadItems(showLoading: true),
+            icon: const Icon(Icons.refresh),
+            tooltip: S.of(context).refresh,
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+            child: _buildItemsBlock(showTitle: false, collapsible: false),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPollsBlock({bool showTitle = true, bool collapsible = true}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                S.of(context).ephemeralPolls,
-                style: Theme.of(context).textTheme.titleLarge,
+        if (showTitle)
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  S.of(context).ephemeralPolls,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
               ),
-            ),
-            if (_isOwner)
-              TextButton.icon(
+              if (_isOwner)
+                TextButton.icon(
+                  onPressed: _creatingPoll ? null : _openCreatePollSheet,
+                  icon: _creatingPoll
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.add_circle_outline),
+                  label: Text(
+                    _creatingPoll
+                        ? S.of(context).creating
+                        : S.of(context).newPoll,
+                  ),
+                ),
+              if (collapsible)
+                IconButton(
+                  onPressed: () =>
+                      setState(() => _pollsExpanded = !_pollsExpanded),
+                  icon: Icon(
+                    _pollsExpanded ? Icons.expand_less : Icons.expand_more,
+                  ),
+                ),
+            ],
+          )
+        else if (_isOwner)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
                 onPressed: _creatingPoll ? null : _openCreatePollSheet,
                 icon: _creatingPoll
                     ? const SizedBox(
@@ -2081,14 +2220,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       : S.of(context).newPoll,
                 ),
               ),
-            IconButton(
-              onPressed: () => setState(() => _pollsExpanded = !_pollsExpanded),
-              icon: Icon(
-                _pollsExpanded ? Icons.expand_less : Icons.expand_more,
-              ),
             ),
-          ],
-        ),
+          ),
         const SizedBox(height: 6),
         Text(
           S.of(context).collectQuickFeedback,
@@ -2099,14 +2232,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ),
         ),
         const SizedBox(height: 12),
-        AnimatedCrossFade(
-          duration: const Duration(milliseconds: 200),
-          crossFadeState: _pollsExpanded
-              ? CrossFadeState.showFirst
-              : CrossFadeState.showSecond,
-          firstChild: _buildPollsContent(),
-          secondChild: const SizedBox.shrink(),
-        ),
+        if (collapsible)
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 200),
+            crossFadeState: _pollsExpanded
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            firstChild: _buildPollsContent(),
+            secondChild: const SizedBox.shrink(),
+          )
+        else
+          _buildPollsContent(),
       ],
     );
   }
@@ -2177,7 +2313,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  Widget _buildItemsBlock() {
+  Widget _buildItemsBlock({bool showTitle = true, bool collapsible = true}) {
     final items = _eventItems ?? const <EventItemModel>[];
     final ownerEmail = _currentEvent.ownerEmail.toLowerCase();
     bool isBringItem(EventItemModel item) {
@@ -2212,16 +2348,47 @@ class _EventDetailPageState extends State<EventDetailPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                S.of(context).availableItems,
-                style: Theme.of(context).textTheme.titleLarge,
+        if (showTitle)
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  S.of(context).availableItems,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
               ),
-            ),
-            if (_canContributeItems)
-              TextButton.icon(
+              if (_canContributeItems)
+                TextButton.icon(
+                  onPressed: _creatingCustomItem ? null : _openAddItemDialog,
+                  icon: _creatingCustomItem
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.add),
+                  label: Text(
+                    _creatingCustomItem
+                        ? S.of(context).adding
+                        : S.of(context).add,
+                  ),
+                ),
+              if (collapsible)
+                IconButton(
+                  onPressed: () =>
+                      setState(() => _itemsExpanded = !_itemsExpanded),
+                  icon: Icon(
+                    _itemsExpanded ? Icons.expand_less : Icons.expand_more,
+                  ),
+                ),
+            ],
+          )
+        else if (_canContributeItems)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
                 onPressed: _creatingCustomItem ? null : _openAddItemDialog,
                 icon: _creatingCustomItem
                     ? const SizedBox(
@@ -2236,14 +2403,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       : S.of(context).add,
                 ),
               ),
-            IconButton(
-              onPressed: () => setState(() => _itemsExpanded = !_itemsExpanded),
-              icon: Icon(
-                _itemsExpanded ? Icons.expand_less : Icons.expand_more,
-              ),
             ),
-          ],
-        ),
+          ),
         const SizedBox(height: 6),
         if (!_isOwner && _isWaitingInvitation)
           Padding(
@@ -2266,12 +2427,88 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
           ),
         const SizedBox(height: 12),
-        AnimatedCrossFade(
-          duration: const Duration(milliseconds: 200),
-          crossFadeState: _itemsExpanded
-              ? CrossFadeState.showFirst
-              : CrossFadeState.showSecond,
-          firstChild: Column(
+        if (collapsible)
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 200),
+            crossFadeState: _itemsExpanded
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            firstChild: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_loadingItems)
+                  const Center(child: CircularProgressIndicator())
+                else if (_itemsError != null)
+                  Column(
+                    children: [
+                      Text(_itemsError!),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: _loadItems,
+                        child: Text(S.of(context).retry),
+                      ),
+                    ],
+                  )
+                else
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isWide = constraints.maxWidth >= 760;
+                      final bringSection = _EventItemsSection(
+                        title: S.of(context).bringSectionTitle,
+                        subtitle: S.of(context).chooseWhatYouBring,
+                        items: bringItems,
+                        emptyLabel: S.of(context).noBringItemsYet,
+                        reservingItemId: _reservingItemId,
+                        deletingItemId: _deletingItemId,
+                        onReserve: _openQuantityDialog,
+                        onDelete: _deleteEventItem,
+                        isOwner: _isOwner,
+                        currentUserEmail: widget.session.email,
+                        canReserveItems: _canContributeItems,
+                        contributions: _contributions,
+                      );
+                      final needSection = _EventItemsSection(
+                        title: S.of(context).needSectionTitle,
+                        subtitle: S.of(context).needItemsSubtitle,
+                        items: needItems,
+                        emptyLabel: S.of(context).noNeedItemsYet,
+                        reservingItemId: _reservingItemId,
+                        deletingItemId: _deletingItemId,
+                        onReserve: _openQuantityDialog,
+                        onDelete: _deleteEventItem,
+                        isOwner: _isOwner,
+                        currentUserEmail: widget.session.email,
+                        canReserveItems: _canContributeItems,
+                        contributions: _contributions,
+                      );
+
+                      if (isWide) {
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: bringSection),
+                            const SizedBox(width: 16),
+                            Expanded(child: needSection),
+                          ],
+                        );
+                      }
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          bringSection,
+                          const SizedBox(height: 20),
+                          needSection,
+                        ],
+                      );
+                    },
+                  ),
+              ],
+            ),
+            secondChild: const SizedBox.shrink(),
+          )
+        else
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (_loadingItems)
@@ -2343,9 +2580,52 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 ),
             ],
           ),
-          secondChild: const SizedBox.shrink(),
-        ),
       ],
+    );
+  }
+}
+
+class _EventDetailFeatureActionData {
+  const _EventDetailFeatureActionData({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+}
+
+class _EventDetailFeatureActionButton extends StatelessWidget {
+  const _EventDetailFeatureActionButton({required this.data});
+
+  final _EventDetailFeatureActionData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return OutlinedButton(
+      onPressed: data.onPressed,
+      style: OutlinedButton.styleFrom(
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.4)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      child: Row(
+        children: [
+          Icon(data.icon, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              data.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
