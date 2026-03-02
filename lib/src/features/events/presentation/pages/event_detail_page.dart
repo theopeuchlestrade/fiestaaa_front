@@ -1504,7 +1504,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Icon(Icons.ios_share),
+              : const Icon(Icons.share_outlined),
           tooltip: S.of(context).shareFiestaaa,
         ),
       if (_isOwner)
