@@ -1945,7 +1945,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
       );
       final link = _buildShareUrl(token);
       final shareText = l10n.shareFiestaaaMessage(_currentEvent.name, link);
-      await Share.share(shareText, subject: _currentEvent.name);
+      await SharePlus.instance.share(
+        ShareParams(text: shareText, subject: _currentEvent.name),
+      );
       if (!mounted) return;
     } on ApiException catch (e) {
       if (!mounted) return;
