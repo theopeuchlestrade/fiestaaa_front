@@ -399,6 +399,13 @@
   "noVotesYet": "Aucun vote pour le moment.",
 
   "availableItems": "Apports & besoins",
+  "itemsFilterAll": "Tous",
+  "itemsFilterMine": "Mes contributions",
+  "itemsFilterToCover": "À couvrir",
+  "itemsFilterCompleted": "Complétés",
+  "itemsSortSmart": "Intelligent",
+  "itemsSortNameAsc": "Nom (A-Z)",
+  "itemsSortRemainingDesc": "Reste à couvrir",
   "bringSectionTitle": "Ce qu'on apporte",
   "needSectionTitle": "Ce dont on a besoin",
   "needItemsSubtitle": "Besoins définis par l'organisateur.",
