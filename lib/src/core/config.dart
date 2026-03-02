@@ -3,6 +3,11 @@ const String apiBaseUrl = String.fromEnvironment(
   defaultValue: 'http://127.0.0.1:8080',
 );
 
+const String appBaseUrl = String.fromEnvironment(
+  'FIESTAAA_APP_BASE_URL',
+  defaultValue: 'https://fiestaaa.app',
+);
+
 const String googleWebClientId = String.fromEnvironment(
   'FIESTAAA_GOOGLE_WEB_CLIENT_ID',
   defaultValue: '',
