@@ -323,7 +323,7 @@
   "unableToOpenMap": "Unable to open map",
   "linkCopiedToClipboard": "Link copied to clipboard",
   "unableToGenerateLink": "Unable to generate link",
-  "shareFiestaaaMessage": "Join the fiestaaa \"{eventName}\" on Fiestaaa!\n{link}",
+  "shareFiestaaaMessage": "Join the event \"{eventName}\" on Fiestaaa!\n{link}",
   "@shareFiestaaaMessage": {
     "placeholders": {
       "eventName": {"type": "String"},

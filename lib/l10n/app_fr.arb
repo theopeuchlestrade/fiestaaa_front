@@ -338,7 +338,7 @@
   "unableToOpenMap": "Impossible d'ouvrir la carte",
   "linkCopiedToClipboard": "Lien copié dans le presse-papiers",
   "unableToGenerateLink": "Impossible de générer le lien",
-  "shareFiestaaaMessage": "Rejoins la fiestaaa \"{eventName}\" sur Fiestaaa !\n{link}",
+  "shareFiestaaaMessage": "Rejoins l'évènement \"{eventName}\" sur Fiestaaa !\n{link}",
   "@shareFiestaaaMessage": {
     "placeholders": {
       "eventName": {"type": "String"},
