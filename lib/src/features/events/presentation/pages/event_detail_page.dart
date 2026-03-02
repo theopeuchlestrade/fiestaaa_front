@@ -19,6 +19,7 @@ import 'package:fiestaaa_front/src/features/qr_checkin/presentation/pages/qr_sca
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/quasi_fullscreen_modal.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
+import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
@@ -1963,7 +1964,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   String _buildShareUrl(String token) {
-    final base = Uri.base;
+    final base = Uri.parse(appBaseUrl);
     final params = Map<String, String>.from(base.queryParameters);
     params['shareToken'] = token;
     return base.replace(queryParameters: params).toString();
