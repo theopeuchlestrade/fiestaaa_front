@@ -18,12 +18,14 @@ class EventInvitationsPage extends StatefulWidget {
     required this.eventId,
     required this.ownerEmail,
     this.realtimeStream,
+    this.compactModal = false,
   });
 
   final SessionData session;
   final int eventId;
   final String ownerEmail;
   final Stream<Map<String, dynamic>>? realtimeStream;
+  final bool compactModal;
 
   @override
   State<EventInvitationsPage> createState() => _EventInvitationsPageState();
@@ -451,63 +453,75 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   @override
   Widget build(BuildContext context) {
     final filteredFriends = _filteredFriends;
-    return Scaffold(
-      body: FiestaaaPageLayout(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            await Future.wait([_fetch(), _loadFriendsAndRequests()]);
-          },
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.zero,
+
+    final content = RefreshIndicator(
+      onRefresh: () async {
+        await Future.wait([_fetch(), _loadFriendsAndRequests()]);
+      },
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        shrinkWrap: widget.compactModal,
+        padding: EdgeInsets.zero,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Align(alignment: Alignment.centerLeft, child: BackButton()),
-              const SizedBox(height: 4),
-              FiestaaaPageHeader(title: S.of(context).invitations),
-              if (_isOwner) ...[
-                _InviteForm(
-                  emailController: _emailController,
-                  onSubmit: _submitting ? null : _createInvitation,
-                  submitting: _submitting,
-                ),
-                const SizedBox(height: 16),
-                _FriendsInviteCard(
-                  loading: _loadingFriends,
-                  error: _friendsError,
-                  friends: filteredFriends,
-                  selectedHandles: _selectedFriendHandles,
-                  filterController: _friendFilterController,
-                  onToggle: _toggleFriendSelection,
-                  onInvite: _selectedFriendHandles.isEmpty || _invitingFriends
-                      ? null
-                      : _inviteSelectedFriends,
-                  inviting: _invitingFriends,
-                  onRefresh: _loadFriendsAndRequests,
-                ),
-                const SizedBox(height: 24),
-              ],
-              if (_loading)
-                const Center(child: CircularProgressIndicator())
-              else if (_error != null)
-                Column(
-                  children: [
-                    Text(_error!),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: _fetch,
-                      child: Text(S.of(context).retry),
-                    ),
-                  ],
-                )
-              else if (_invitations.isEmpty)
-                Center(child: Text(S.of(context).noInvitationForNow))
-              else
-                ..._buildInvitationSections(),
+              Expanded(
+                child: FiestaaaPageHeader(title: S.of(context).invitations),
+              ),
+              IconButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                icon: const Icon(Icons.close),
+              ),
             ],
           ),
-        ),
+          if (_isOwner) ...[
+            _InviteForm(
+              emailController: _emailController,
+              onSubmit: _submitting ? null : _createInvitation,
+              submitting: _submitting,
+            ),
+            const SizedBox(height: 16),
+            _FriendsInviteCard(
+              loading: _loadingFriends,
+              error: _friendsError,
+              friends: filteredFriends,
+              selectedHandles: _selectedFriendHandles,
+              filterController: _friendFilterController,
+              onToggle: _toggleFriendSelection,
+              onInvite: _selectedFriendHandles.isEmpty || _invitingFriends
+                  ? null
+                  : _inviteSelectedFriends,
+              inviting: _invitingFriends,
+              onRefresh: _loadFriendsAndRequests,
+            ),
+            const SizedBox(height: 24),
+          ],
+          if (_loading)
+            const Center(child: CircularProgressIndicator())
+          else if (_error != null)
+            Column(
+              children: [
+                Text(_error!),
+                const SizedBox(height: 8),
+                ElevatedButton(
+                  onPressed: _fetch,
+                  child: Text(S.of(context).retry),
+                ),
+              ],
+            )
+          else if (_invitations.isEmpty)
+            Center(child: Text(S.of(context).noInvitationForNow))
+          else
+            ..._buildInvitationSections(),
+        ],
       ),
     );
+
+    if (widget.compactModal) return content;
+
+    return Scaffold(body: FiestaaaPageLayout(child: content));
   }
 
   List<Widget> _buildInvitationSections() {

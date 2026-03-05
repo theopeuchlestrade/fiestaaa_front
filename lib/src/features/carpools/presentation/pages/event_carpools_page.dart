@@ -17,6 +17,7 @@ class EventCarpoolsPage extends StatefulWidget {
     required this.session,
     required this.isOwner,
     required this.hasAcceptedInvitation,
+    this.compactModal = false,
   });
 
   final int eventId;
@@ -25,6 +26,7 @@ class EventCarpoolsPage extends StatefulWidget {
   final SessionData session;
   final bool isOwner;
   final bool hasAcceptedInvitation;
+  final bool compactModal;
 
   @override
   State<EventCarpoolsPage> createState() => _EventCarpoolsPageState();
@@ -326,54 +328,59 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
     final userIsInAnyCarpool = _userIsInAnyCarpool;
     final canCreateCarpool = _canInteract && !userIsInAnyCarpool;
 
-    return Scaffold(
-      body: FiestaaaPageLayout(
-        child: RefreshIndicator(
-          onRefresh: _loadCarpools,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.zero,
+    final content = RefreshIndicator(
+      onRefresh: _loadCarpools,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        shrinkWrap: widget.compactModal,
+        padding: EdgeInsets.zero,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Align(alignment: Alignment.centerLeft, child: BackButton()),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Expanded(
-                    child: FiestaaaPageHeader(
-                      title: l10n.carpools,
-                      subtitle: l10n.carpoolsSubtitle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  _buildSortMenu(l10n),
-                ],
+              Expanded(
+                child: FiestaaaPageHeader(
+                  title: l10n.carpools,
+                  subtitle: l10n.carpoolsSubtitle,
+                ),
               ),
-              if (!_canInteract) ...[
-                _buildWarningBanner(l10n),
-                const SizedBox(height: 16),
-              ],
-              if (_canInteract) ...[
-                _buildCreateSection(l10n, canCreateCarpool),
-                const SizedBox(height: 24),
-              ],
-              if (_loading)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 32),
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              else if (_error != null)
-                _buildErrorSection(l10n)
-              else if (_carpools == null || _carpools!.isEmpty)
-                _buildEmptyState(l10n)
-              else
-                _buildCarpoolsGrid(l10n),
+              const SizedBox(width: 8),
+              _buildSortMenu(l10n),
+              IconButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                icon: const Icon(Icons.close),
+              ),
             ],
           ),
-        ),
+          if (!_canInteract) ...[
+            _buildWarningBanner(l10n),
+            const SizedBox(height: 16),
+          ],
+          if (_canInteract) ...[
+            _buildCreateSection(l10n, canCreateCarpool),
+            const SizedBox(height: 24),
+          ],
+          if (_loading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 32),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_error != null)
+            _buildErrorSection(l10n)
+          else if (_carpools == null || _carpools!.isEmpty)
+            _buildEmptyState(l10n)
+          else
+            _buildCarpoolsGrid(l10n),
+        ],
       ),
     );
+
+    if (widget.compactModal) return content;
+
+    return Scaffold(body: FiestaaaPageLayout(child: content));
   }
 
   Widget _buildWarningBanner(S l10n) {
