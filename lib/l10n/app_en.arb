@@ -548,9 +548,11 @@
   "unableToLoadFriends": "Unable to load your friends.",
   "unableToLoadRequests": "Unable to load your requests.",
   "addFirstFriends": "Add your first friends to invite them quickly.",
+  "noFriendsMatchSearch": "No friends match your search.",
 
   "fiestaaaTab": "Fiestaaa",
   "friendsTab": "Friends",
+  "requestsShort": "Requests",
   "noPendingInvitation": "No pending invitation.",
   "noRequestForNow": "No request for now.",
   "nothingForNow": "Nothing for now",
