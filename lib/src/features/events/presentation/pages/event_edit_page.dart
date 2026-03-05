@@ -51,6 +51,7 @@ class _EventEditPageState extends State<EventEditPage> {
   bool _paymentPerPerson = false;
   String? _selectedPlaylistProvider;
   bool _playlistChanged = false;
+  final Set<String> _enabledFeatures = <String>{};
 
   @override
   void initState() {
@@ -71,6 +72,7 @@ class _EventEditPageState extends State<EventEditPage> {
       text: event.playlistUrl ?? '',
     );
     _selectedPlaylistProvider = event.playlistProvider;
+    _enabledFeatures.addAll(event.enabledFeatures);
     _selectedDate = event.date;
     _invitationDeadline = event.invitationDeadline;
     final startDate = event.startDateTime;
@@ -83,7 +85,6 @@ class _EventEditPageState extends State<EventEditPage> {
       );
     }
     _addressController.addListener(_onAddressChanged);
-    _playlistUrlController.addListener(_onPlaylistChanged);
     _loadPaymentProviders();
   }
 
@@ -102,8 +103,33 @@ class _EventEditPageState extends State<EventEditPage> {
     super.dispose();
   }
 
-  void _onPlaylistChanged() {
-    _playlistChanged = true;
+  bool get _hasPlaylistConfig =>
+      _selectedPlaylistProvider != null &&
+      _playlistUrlController.text.trim().isNotEmpty;
+
+  bool get _hasPaymentConfig =>
+      _selectedProviderId != null &&
+      _paymentIdentifierController.text.trim().isNotEmpty;
+
+  void _toggleFeature(String feature, bool enabled) {
+    setState(() {
+      if (enabled) {
+        _enabledFeatures.add(feature);
+      } else {
+        _enabledFeatures.remove(feature);
+      }
+    });
+  }
+
+  List<String> _orderedEnabledFeatures() {
+    const order = <String>[
+      eventFeatureCarpools,
+      eventFeaturePolls,
+      eventFeatureItems,
+      eventFeaturePlaylist,
+      eventFeaturePayment,
+    ];
+    return order.where(_enabledFeatures.contains).toList(growable: false);
   }
 
   Future<void> _loadPaymentProviders() async {
@@ -281,10 +307,21 @@ class _EventEditPageState extends State<EventEditPage> {
     final playlistProvider = _selectedPlaylistProvider;
     final shouldClearPlaylist = _playlistChanged && playlistUrl.isEmpty;
     final shouldPreservePlaylist = !_playlistChanged;
+    final enabledFeatures = _orderedEnabledFeatures();
     if (!shouldClearPlaylist &&
         playlistUrl.isNotEmpty &&
         playlistProvider == null) {
       _showSnack(S.of(context).selectProvider, isError: true);
+      setState(() => _submitting = false);
+      return;
+    }
+    if (enabledFeatures.contains(eventFeaturePlaylist) && !_hasPlaylistConfig) {
+      _showSnack(S.of(context).playlistLinkRequired, isError: true);
+      setState(() => _submitting = false);
+      return;
+    }
+    if (enabledFeatures.contains(eventFeaturePayment) && !_hasPaymentConfig) {
+      _showSnack(S.of(context).linkRequired, isError: true);
       setState(() => _submitting = false);
       return;
     }
@@ -316,6 +353,7 @@ class _EventEditPageState extends State<EventEditPage> {
           : shouldClearPlaylist
           ? null
           : playlistProvider,
+      enabledFeatures: enabledFeatures,
     );
 
     try {
@@ -365,6 +403,9 @@ class _EventEditPageState extends State<EventEditPage> {
   }
 
   String? _validatePaymentLink(String? value) {
+    if (!_enabledFeatures.contains(eventFeaturePayment)) {
+      return null;
+    }
     if (_selectedProviderId == null) {
       return null;
     }
@@ -398,6 +439,7 @@ class _EventEditPageState extends State<EventEditPage> {
     ];
 
     final urlField = TextFormField(
+      key: const ValueKey('edit_playlist_link_field'),
       controller: _playlistUrlController,
       decoration: InputDecoration(
         labelText: S.of(context).playlistLink,
@@ -409,10 +451,13 @@ class _EventEditPageState extends State<EventEditPage> {
         ),
       ),
       validator: (value) {
+        if (!_enabledFeatures.contains(eventFeaturePlaylist)) {
+          return null;
+        }
         final url = value?.trim() ?? '';
         final provider = _selectedPlaylistProvider;
         if (provider == null) {
-          return null;
+          return S.of(context).selectProvider;
         }
         if (url.isEmpty) {
           return S.of(context).playlistLinkRequired;
@@ -431,21 +476,19 @@ class _EventEditPageState extends State<EventEditPage> {
       keyboardType: TextInputType.url,
       textInputAction: TextInputAction.done,
       enabled: _selectedPlaylistProvider != null,
+      onChanged: (_) {
+        setState(() {
+          _playlistChanged = true;
+        });
+      },
     );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          S.of(context).sharedPlaylist,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
         if (isCompact) ...[
           DropdownButtonFormField<String?>(
+            key: const ValueKey('edit_playlist_provider_field_true'),
             initialValue: _selectedPlaylistProvider,
             items: providerItems,
             decoration: InputDecoration(
@@ -458,7 +501,7 @@ class _EventEditPageState extends State<EventEditPage> {
               ),
             ),
             validator: (value) {
-              if (_playlistUrlController.text.trim().isNotEmpty &&
+              if (_enabledFeatures.contains(eventFeaturePlaylist) &&
                   value == null) {
                 return S.of(context).selectProvider;
               }
@@ -482,6 +525,7 @@ class _EventEditPageState extends State<EventEditPage> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String?>(
+                  key: const ValueKey('edit_playlist_provider_field_false'),
                   initialValue: _selectedPlaylistProvider,
                   items: providerItems,
                   decoration: InputDecoration(
@@ -494,7 +538,7 @@ class _EventEditPageState extends State<EventEditPage> {
                     ),
                   ),
                   validator: (value) {
-                    if (_playlistUrlController.text.trim().isNotEmpty &&
+                    if (_enabledFeatures.contains(eventFeaturePlaylist) &&
                         value == null) {
                       return S.of(context).selectProvider;
                     }
@@ -658,7 +702,6 @@ class _EventEditPageState extends State<EventEditPage> {
     ];
 
     return DropdownButtonFormField<int?>(
-      key: ValueKey(_selectedProviderId),
       initialValue: _selectedProviderId,
       items: items,
       decoration: InputDecoration(
@@ -675,6 +718,12 @@ class _EventEditPageState extends State<EventEditPage> {
             _paymentAmountController.clear();
           }
         });
+      },
+      validator: (value) {
+        if (_enabledFeatures.contains(eventFeaturePayment) && value == null) {
+          return S.of(context).choosePaymentProvider;
+        }
+        return null;
       },
     );
   }
@@ -707,6 +756,147 @@ class _EventEditPageState extends State<EventEditPage> {
               _paymentPerPerson = value.first;
             });
           },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeatureModulesSection() {
+    final l10n = S.of(context);
+    final theme = Theme.of(context);
+    final playlistEnabled = _enabledFeatures.contains(eventFeaturePlaylist);
+    final paymentEnabled = _enabledFeatures.contains(eventFeaturePayment);
+    final tiles = <Widget>[
+      SwitchListTile.adaptive(
+        title: Text(l10n.carpools),
+        secondary: const Icon(Icons.directions_car_filled_outlined),
+        value: _enabledFeatures.contains(eventFeatureCarpools),
+        onChanged: (value) => _toggleFeature(eventFeatureCarpools, value),
+      ),
+      const Divider(height: 1),
+      SwitchListTile.adaptive(
+        title: Text(l10n.ephemeralPolls),
+        secondary: const Icon(Icons.poll_outlined),
+        value: _enabledFeatures.contains(eventFeaturePolls),
+        onChanged: (value) => _toggleFeature(eventFeaturePolls, value),
+      ),
+      const Divider(height: 1),
+      SwitchListTile.adaptive(
+        title: Text(l10n.availableItems),
+        secondary: const Icon(Icons.inventory_2_outlined),
+        value: _enabledFeatures.contains(eventFeatureItems),
+        onChanged: (value) => _toggleFeature(eventFeatureItems, value),
+      ),
+      const Divider(height: 1),
+      SwitchListTile.adaptive(
+        title: Text(l10n.sharedPlaylist),
+        subtitle: playlistEnabled && !_hasPlaylistConfig
+            ? Text(l10n.playlistLinkRequired)
+            : null,
+        secondary: const Icon(Icons.playlist_add_check),
+        value: playlistEnabled,
+        onChanged: (value) => _toggleFeature(eventFeaturePlaylist, value),
+      ),
+      if (playlistEnabled)
+        Padding(
+          key: const ValueKey('edit_playlist_fields'),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: _buildPlaylistSection(),
+        ),
+      const Divider(height: 1),
+      SwitchListTile.adaptive(
+        title: Text(l10n.payment),
+        subtitle: !paymentEnabled || _hasPaymentConfig
+            ? null
+            : Text(
+                _selectedProviderId == null
+                    ? l10n.choosePaymentProvider
+                    : l10n.linkRequired,
+              ),
+        secondary: const Icon(Icons.payment),
+        value: paymentEnabled,
+        onChanged: (value) => _toggleFeature(eventFeaturePayment, value),
+      ),
+      if (paymentEnabled)
+        Padding(
+          key: const ValueKey('edit_payment_fields'),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildPaymentProviderField(),
+              const SizedBox(height: 12),
+              _buildPaymentModeToggle(),
+              if (_selectedProviderId != null) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  key: const ValueKey('edit_payment_link_field'),
+                  controller: _paymentIdentifierController,
+                  decoration: InputDecoration(
+                    labelText: l10n.paymentLink,
+                    prefixIcon: const Icon(Icons.link),
+                  ),
+                  enabled: _selectedProviderId != null,
+                  validator: _validatePaymentLink,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  key: const ValueKey('edit_payment_amount_field'),
+                  controller: _paymentAmountController,
+                  decoration: InputDecoration(
+                    labelText: _paymentPerPerson
+                        ? l10n.amountPerPerson
+                        : l10n.totalAmount,
+                    prefixIcon: const Icon(Icons.euro),
+                    helperText: _paymentPerPerson
+                        ? l10n.amountPerPersonHelper
+                        : l10n.totalAmountHelper,
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  enabled: _selectedProviderId != null,
+                  validator: (value) {
+                    if (!_enabledFeatures.contains(eventFeaturePayment) ||
+                        _selectedProviderId == null) {
+                      return null;
+                    }
+                    final raw = value?.trim() ?? '';
+                    if (raw.isEmpty) {
+                      return null;
+                    }
+                    final parsed = double.tryParse(raw.replaceAll(',', '.'));
+                    if (parsed == null || parsed < 0) {
+                      return l10n.enterPositiveAmount;
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.options,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.32),
+            ),
+          ),
+          child: Column(children: tiles),
         ),
       ],
     );
@@ -838,63 +1028,8 @@ class _EventEditPageState extends State<EventEditPage> {
                     ),
                     const SizedBox(height: 16),
                     _buildInvitationDeadlineField(),
-                    const SizedBox(height: 12),
-                    _buildPlaylistSection(),
                     const SizedBox(height: 16),
-                    Text(
-                      S.of(context).payment,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildPaymentProviderField(),
-                    const SizedBox(height: 16),
-                    _buildPaymentModeToggle(),
-                    if (_selectedProviderId != null) const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _paymentIdentifierController,
-                      decoration: InputDecoration(
-                        labelText: S.of(context).paymentLink,
-                        prefixIcon: const Icon(Icons.link),
-                      ),
-                      enabled: _selectedProviderId != null,
-                      validator: _validatePaymentLink,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _paymentAmountController,
-                      decoration: InputDecoration(
-                        labelText: _paymentPerPerson
-                            ? S.of(context).amountPerPerson
-                            : S.of(context).totalAmount,
-                        prefixIcon: const Icon(Icons.euro),
-                        helperText: _paymentPerPerson
-                            ? S.of(context).amountPerPersonHelper
-                            : S.of(context).totalAmountHelper,
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      enabled: _selectedProviderId != null,
-                      validator: (value) {
-                        if (_selectedProviderId == null) {
-                          return null;
-                        }
-                        final raw = value?.trim() ?? '';
-                        if (raw.isEmpty) {
-                          return null;
-                        }
-                        final parsed = double.tryParse(
-                          raw.replaceAll(',', '.'),
-                        );
-                        if (parsed == null || parsed < 0) {
-                          return S.of(context).enterPositiveAmount;
-                        }
-                        return null;
-                      },
-                    ),
+                    _buildFeatureModulesSection(),
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,

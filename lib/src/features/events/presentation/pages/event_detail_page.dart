@@ -137,6 +137,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   String? get _playlistUrl => _currentEvent.playlistUrl?.trim();
   String? get _playlistProvider => _currentEvent.playlistProvider?.trim();
+  bool _isFeatureEnabled(String feature) =>
+      _currentEvent.enabledFeatures.contains(feature);
+  bool get _canShowPlaylistFeature =>
+      _isFeatureEnabled(eventFeaturePlaylist) &&
+      (_playlistProvider?.isNotEmpty ?? false) &&
+      (_playlistUrl?.isNotEmpty ?? false);
+  bool get _canShowPaymentFeature =>
+      _isFeatureEnabled(eventFeaturePayment) &&
+      _currentEvent.paymentProviderId != null &&
+      (_currentEvent.paymentIdentifier?.trim().isNotEmpty ?? false);
 
   Future<void> _loadItems({bool showLoading = true}) async {
     setState(() {
@@ -1879,31 +1889,36 @@ class _EventDetailPageState extends State<EventDetailPage> {
   Widget _buildFeatureActionsSection() {
     final l10n = S.of(context);
     final actions = <_EventDetailFeatureActionData>[
-      _EventDetailFeatureActionData(
-        icon: Icons.directions_car_filled_outlined,
-        label: l10n.carpools,
-        onPressed: _openCarpools,
-      ),
-      _EventDetailFeatureActionData(
-        icon: Icons.poll_outlined,
-        label: l10n.ephemeralPolls,
-        onPressed: _openPollsModal,
-      ),
-      _EventDetailFeatureActionData(
-        icon: Icons.inventory_2_outlined,
-        label: l10n.availableItems,
-        onPressed: _openItemsModal,
-      ),
-      _EventDetailFeatureActionData(
-        icon: Icons.playlist_add_check,
-        label: l10n.sharedPlaylist,
-        onPressed: _openPlaylistFromMenu,
-      ),
-      _EventDetailFeatureActionData(
-        icon: Icons.payment,
-        label: l10n.payment,
-        onPressed: _openPaymentFromMenu,
-      ),
+      if (_isFeatureEnabled(eventFeatureCarpools))
+        _EventDetailFeatureActionData(
+          icon: Icons.directions_car_filled_outlined,
+          label: l10n.carpools,
+          onPressed: _openCarpools,
+        ),
+      if (_isFeatureEnabled(eventFeaturePolls))
+        _EventDetailFeatureActionData(
+          icon: Icons.poll_outlined,
+          label: l10n.ephemeralPolls,
+          onPressed: _openPollsModal,
+        ),
+      if (_isFeatureEnabled(eventFeatureItems))
+        _EventDetailFeatureActionData(
+          icon: Icons.inventory_2_outlined,
+          label: l10n.availableItems,
+          onPressed: _openItemsModal,
+        ),
+      if (_canShowPlaylistFeature)
+        _EventDetailFeatureActionData(
+          icon: Icons.playlist_add_check,
+          label: l10n.sharedPlaylist,
+          onPressed: _openPlaylistFromMenu,
+        ),
+      if (_canShowPaymentFeature)
+        _EventDetailFeatureActionData(
+          icon: Icons.payment,
+          label: l10n.payment,
+          onPressed: _openPaymentFromMenu,
+        ),
       _EventDetailFeatureActionData(
         icon: Icons.groups_2_outlined,
         label: l10n.participants,
