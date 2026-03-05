@@ -63,6 +63,11 @@ jobs:
 
       - name: Build image
         if: steps.image_exists.outputs.exists == 'false' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_build == 'true')
+        env:
+          DOCKER_BUILDKIT: 1
+          FIESTAAA_FCM_VAPID_KEY: ${{ secrets.FIESTAAA_FCM_VAPID_KEY }}
+          FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
         run: |
           docker build \
             -f Dockerfile \
@@ -71,15 +76,15 @@ jobs:
             --build-arg FIESTAAA_API_BASE_URL="${{ secrets.FIESTAAA_API_BASE_URL }}" \
             --build-arg FIESTAAA_APPLE_REDIRECT_URI="${{ secrets.FIESTAAA_APPLE_REDIRECT_URI }}" \
             --build-arg FIESTAAA_APPLE_SERVICE_ID="${{ secrets.FIESTAAA_APPLE_SERVICE_ID }}" \
-            --build-arg FIESTAAA_FCM_VAPID_KEY="${{ secrets.FIESTAAA_FCM_VAPID_KEY }}" \
             --build-arg FIESTAAA_GOOGLE_WEB_CLIENT_ID="${{ secrets.FIESTAAA_GOOGLE_WEB_CLIENT_ID }}" \
-            --build-arg FIREBASE_AUTH_DOMAIN="${{ secrets.FIREBASE_AUTH_DOMAIN }}" \
             --build-arg FIREBASE_MESSAGING_SENDER_ID="${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}" \
             --build-arg FIREBASE_PROJECT_ID="${{ secrets.FIREBASE_PROJECT_ID }}" \
             --build-arg FIREBASE_STORAGE_BUCKET="${{ secrets.FIREBASE_STORAGE_BUCKET }}" \
-            --build-arg FIREBASE_WEB_API_KEY="${{ secrets.FIREBASE_WEB_API_KEY }}" \
             --build-arg FIREBASE_WEB_APP_ID="${{ secrets.FIREBASE_WEB_APP_ID }}" \
             --build-arg FIREBASE_WEB_MEASUREMENT_ID="${{ secrets.FIREBASE_WEB_MEASUREMENT_ID }}" \
+            --secret id=FIESTAAA_FCM_VAPID_KEY, env=FIESTAAA_FCM_VAPID_KEY \
+            --secret id=FIREBASE_WEB_API_KEY,env=FIREBASE_WEB_API_KEY \
+            --secret id=FIREBASE_AUTH_DOMAIN,env=FIREBASE_AUTH_DOMAIN \
             .
 
       - name: Push image
