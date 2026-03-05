@@ -563,9 +563,11 @@
   "unableToLoadFriends": "Impossible de charger vos amis.",
   "unableToLoadRequests": "Impossible de charger vos demandes.",
   "addFirstFriends": "Ajoutez vos premiers amis pour les inviter rapidement.",
+  "noFriendsMatchSearch": "Aucun ami ne correspond à votre recherche.",
 
   "fiestaaaTab": "Fiestaaa",
   "friendsTab": "Amis",
+  "requestsShort": "Demandes",
   "noPendingInvitation": "Aucune invitation en attente.",
   "noRequestForNow": "Aucune demande pour le moment.",
   "nothingForNow": "Rien pour le moment",
