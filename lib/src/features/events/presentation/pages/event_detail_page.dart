@@ -7,8 +7,10 @@ import 'package:fiestaaa_front/src/features/events/domain/event_item_model.dart'
 import 'package:fiestaaa_front/src/features/events/domain/item_contribution_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_poll_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/event_items_filters.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_edit_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_invitations_page.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_items_filter_controls.dart';
 import 'package:fiestaaa_front/src/features/carpools/presentation/pages/event_carpools_page.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
@@ -90,6 +92,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
   bool _creatingPoll = false;
   bool _pollsExpanded = true;
   bool _itemsExpanded = true;
+  EventItemsScope _itemsScope = EventItemsScope.all;
+  EventItemsSort _itemsSort = EventItemsSort.smart;
 
   @override
   void setState(VoidCallback fn) {
@@ -140,7 +144,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
       _itemsError = null;
     });
     try {
-      final data = await _eventsApi.fetchEventItems(widget.event.id);
+      final data = await _eventsApi.fetchEventItems(
+        widget.event.id,
+        token: widget.session.token,
+        scope: _itemsScope.apiValue,
+      );
       if (!mounted) return;
       setState(() {
         _eventItems = data;
@@ -836,13 +844,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
-  Future<void> _openAddItemDialog() async {
+  Future<void> _openAddItemDialog({required EventItemKind kind}) async {
     final nameController = TextEditingController();
     final quantityController = TextEditingController();
     final formKey = GlobalKey<FormState>();
-    EventItemKind selectedKind = _isOwner
-        ? EventItemKind.need
-        : EventItemKind.bring;
+    final selectedKind = kind;
     final unitOptions = <String>['pièce', 'g', 'kg', 'ml', 'L'];
     String selectedUnit = unitOptions.first;
 
@@ -896,30 +902,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             : null,
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        S.of(context).itemKindLabel,
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      SegmentedButton<EventItemKind>(
-                        segments: [
-                          ButtonSegment(
-                            value: EventItemKind.bring,
-                            label: Text(S.of(context).itemKindBring),
-                            icon: const Icon(Icons.volunteer_activism_outlined),
+                      InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: S.of(context).itemKindLabel,
+                          prefixIcon: Icon(
+                            selectedKind == EventItemKind.bring
+                                ? Icons.volunteer_activism_outlined
+                                : Icons.playlist_add_check,
                           ),
-                          ButtonSegment(
-                            value: EventItemKind.need,
-                            label: Text(S.of(context).itemKindNeed),
-                            icon: const Icon(Icons.playlist_add_check),
-                            enabled: _isOwner,
-                          ),
-                        ],
-                        selected: {selectedKind},
-                        onSelectionChanged: (value) {
-                          if (value.isEmpty) return;
-                          setModalState(() => selectedKind = value.first);
-                        },
+                        ),
+                        child: Text(
+                          selectedKind == EventItemKind.bring
+                              ? S.of(context).itemKindBring
+                              : S.of(context).itemKindNeed,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
@@ -2317,6 +2314,51 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
+  String _itemsScopeLabel(S l10n, EventItemsScope scope) {
+    return switch (scope) {
+      EventItemsScope.all => l10n.itemsFilterAll,
+      EventItemsScope.mine => l10n.itemsFilterMine,
+      EventItemsScope.toCover => l10n.itemsFilterToCover,
+      EventItemsScope.completed => l10n.itemsFilterCompleted,
+    };
+  }
+
+  String _itemsSortLabel(S l10n, EventItemsSort sort) {
+    return switch (sort) {
+      EventItemsSort.smart => l10n.itemsSortSmart,
+      EventItemsSort.nameAsc => l10n.itemsSortNameAsc,
+      EventItemsSort.remainingDesc => l10n.itemsSortRemainingDesc,
+    };
+  }
+
+  List<EventItemModel> _sortBringItems(
+    List<EventItemModel> items,
+    String currentUserEmail,
+  ) => sortBringItems(
+    items: items,
+    sort: _itemsSort,
+    currentUserEmail: currentUserEmail,
+  );
+
+  List<EventItemModel> _sortNeedItems(List<EventItemModel> items) =>
+      sortNeedItems(items: items, sort: _itemsSort);
+
+  Widget _buildItemsScopeAndSortControls() {
+    final l10n = S.of(context);
+    return EventItemsFilterControls(
+      selectedScope: _itemsScope,
+      selectedSort: _itemsSort,
+      scopeLabelBuilder: (scope) => _itemsScopeLabel(l10n, scope),
+      sortLabelBuilder: (sort) => _itemsSortLabel(l10n, sort),
+      sortTooltip: l10n.sortBy,
+      onScopeChanged: (scope) {
+        setState(() => _itemsScope = scope);
+        _loadItems(showLoading: true);
+      },
+      onSortChanged: (sort) => setState(() => _itemsSort = sort),
+    );
+  }
+
   Widget _buildItemsBlock({bool showTitle = true, bool collapsible = true}) {
     final items = _eventItems ?? const <EventItemModel>[];
     final ownerEmail = _currentEvent.ownerEmail.toLowerCase();
@@ -2328,26 +2370,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
 
     final currentUserEmail = widget.session.email.toLowerCase();
-    final bringItems = items.where(isBringItem).toList()
-      ..sort((a, b) {
-        final aMine =
-            (a.createdByEmail?.toLowerCase() ?? '') == currentUserEmail;
-        final bMine =
-            (b.createdByEmail?.toLowerCase() ?? '') == currentUserEmail;
-        if (aMine != bMine) {
-          return aMine ? -1 : 1;
-        }
-        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-      });
-    final needItems = items.where((item) => !isBringItem(item)).toList()
-      ..sort((a, b) {
-        final aFull = a.remaining <= 0;
-        final bFull = b.remaining <= 0;
-        if (aFull != bFull) {
-          return aFull ? 1 : -1;
-        }
-        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-      });
+    final bringItems = _sortBringItems(
+      items.where(isBringItem).toList(),
+      currentUserEmail,
+    );
+    final needItems = _sortNeedItems(
+      items.where((item) => !isBringItem(item)).toList(),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2361,22 +2390,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
-              if (_canContributeItems)
-                TextButton.icon(
-                  onPressed: _creatingCustomItem ? null : _openAddItemDialog,
-                  icon: _creatingCustomItem
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.add),
-                  label: Text(
-                    _creatingCustomItem
-                        ? S.of(context).adding
-                        : S.of(context).add,
-                  ),
-                ),
               if (collapsible)
                 IconButton(
                   onPressed: () =>
@@ -2387,28 +2400,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 ),
             ],
           )
-        else if (_canContributeItems)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: _creatingCustomItem ? null : _openAddItemDialog,
-                icon: _creatingCustomItem
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.add),
-                label: Text(
-                  _creatingCustomItem
-                      ? S.of(context).adding
-                      : S.of(context).add,
-                ),
-              ),
-            ),
-          ),
+        else
+          const SizedBox.shrink(),
+        _buildItemsScopeAndSortControls(),
         const SizedBox(height: 6),
         if (!_isOwner && _isWaitingInvitation)
           Padding(
@@ -2461,6 +2455,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         title: S.of(context).bringSectionTitle,
                         subtitle: S.of(context).chooseWhatYouBring,
                         items: bringItems,
+                        addLabel: S.of(context).add,
+                        onAdd: _canContributeItems
+                            ? () =>
+                                  _openAddItemDialog(kind: EventItemKind.bring)
+                            : null,
+                        isAdding: _creatingCustomItem,
                         emptyLabel: S.of(context).noBringItemsYet,
                         reservingItemId: _reservingItemId,
                         deletingItemId: _deletingItemId,
@@ -2475,6 +2475,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         title: S.of(context).needSectionTitle,
                         subtitle: S.of(context).needItemsSubtitle,
                         items: needItems,
+                        addLabel: S.of(context).add,
+                        onAdd: _isOwner
+                            ? () => _openAddItemDialog(kind: EventItemKind.need)
+                            : null,
+                        isAdding: _creatingCustomItem,
                         emptyLabel: S.of(context).noNeedItemsYet,
                         reservingItemId: _reservingItemId,
                         deletingItemId: _deletingItemId,
@@ -2536,6 +2541,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       title: S.of(context).bringSectionTitle,
                       subtitle: S.of(context).chooseWhatYouBring,
                       items: bringItems,
+                      addLabel: S.of(context).add,
+                      onAdd: _canContributeItems
+                          ? () => _openAddItemDialog(kind: EventItemKind.bring)
+                          : null,
+                      isAdding: _creatingCustomItem,
                       emptyLabel: S.of(context).noBringItemsYet,
                       reservingItemId: _reservingItemId,
                       deletingItemId: _deletingItemId,
@@ -2550,6 +2560,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       title: S.of(context).needSectionTitle,
                       subtitle: S.of(context).needItemsSubtitle,
                       items: needItems,
+                      addLabel: S.of(context).add,
+                      onAdd: _isOwner
+                          ? () => _openAddItemDialog(kind: EventItemKind.need)
+                          : null,
+                      isAdding: _creatingCustomItem,
                       emptyLabel: S.of(context).noNeedItemsYet,
                       reservingItemId: _reservingItemId,
                       deletingItemId: _deletingItemId,
@@ -3303,6 +3318,9 @@ class _EventItemsSection extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.items,
+    required this.addLabel,
+    this.onAdd,
+    this.isAdding = false,
     required this.emptyLabel,
     required this.reservingItemId,
     required this.deletingItemId,
@@ -3317,6 +3335,9 @@ class _EventItemsSection extends StatelessWidget {
   final String title;
   final String subtitle;
   final List<EventItemModel> items;
+  final String addLabel;
+  final VoidCallback? onAdd;
+  final bool isAdding;
   final String emptyLabel;
   final int? reservingItemId;
   final int? deletingItemId;
@@ -3347,6 +3368,21 @@ class _EventItemsSection extends StatelessWidget {
                 ),
               ),
             ),
+            if (onAdd != null) ...[
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: isAdding ? null : onAdd,
+                icon: isAdding
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.add),
+                label: Text(addLabel),
+              ),
+            ],
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
