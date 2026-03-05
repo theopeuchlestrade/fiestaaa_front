@@ -129,9 +129,21 @@ class EventsApi {
     );
   }
 
-  Future<List<EventItemModel>> fetchEventItems(int eventId) async {
+  Future<List<EventItemModel>> fetchEventItems(
+    int eventId, {
+    String? token,
+    String? scope,
+  }) async {
+    final uri = Uri.parse(
+      '$apiBaseUrl/events/$eventId/items',
+    ).replace(queryParameters: scope == null ? null : {'scope': scope});
+    final headers = <String, String>{};
+    if (token != null && token.trim().isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/events/$eventId/items'),
+      uri,
+      headers: headers.isEmpty ? null : headers,
     );
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body) as List<dynamic>;

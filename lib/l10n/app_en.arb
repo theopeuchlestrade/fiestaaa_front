@@ -384,6 +384,13 @@
   "noVotesYet": "No votes yet.",
 
   "availableItems": "Contributions & needs",
+  "itemsFilterAll": "All",
+  "itemsFilterMine": "My contributions",
+  "itemsFilterToCover": "Still needed",
+  "itemsFilterCompleted": "Completed",
+  "itemsSortSmart": "Smart",
+  "itemsSortNameAsc": "Name (A-Z)",
+  "itemsSortRemainingDesc": "Most needed",
   "bringSectionTitle": "What we bring",
   "needSectionTitle": "What we need",
   "needItemsSubtitle": "Needs listed by the organizer.",
