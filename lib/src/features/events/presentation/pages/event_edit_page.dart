@@ -940,7 +940,7 @@ class _EventEditPageState extends State<EventEditPage> {
           key: const ValueKey('edit_playlist_fields'),
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           child: _buildPlaylistSection(),
-      ),
+        ),
       const Divider(height: 1),
       SwitchListTile.adaptive(
         title: Text(l10n.sharedExpenses),

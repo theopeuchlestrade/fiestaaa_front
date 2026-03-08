@@ -173,9 +173,8 @@ class EventExpensesSummaryModel {
       totalExpensesCents: (json['total_expenses_cents'] as num?)?.toInt() ?? 0,
       balances: balancesJson
           .map(
-            (raw) => EventExpenseBalanceModel.fromJson(
-              raw as Map<String, dynamic>,
-            ),
+            (raw) =>
+                EventExpenseBalanceModel.fromJson(raw as Map<String, dynamic>),
           )
           .toList(),
       settlements: settlementsJson

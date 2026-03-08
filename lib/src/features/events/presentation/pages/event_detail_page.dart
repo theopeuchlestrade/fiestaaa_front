@@ -136,7 +136,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
   bool get _isReadOnly => _currentEvent.isReadOnly;
   bool get _canContributeItems =>
       !_isReadOnly && (_isOwner || _hasAcceptedInvitation);
-  bool get _canVotePolls => !_isReadOnly && (_isOwner || _hasAcceptedInvitation);
+  bool get _canVotePolls =>
+      !_isReadOnly && (_isOwner || _hasAcceptedInvitation);
 
   String? get _playlistUrl => _currentEvent.playlistUrl?.trim();
   String? get _playlistProvider => _currentEvent.playlistProvider?.trim();
@@ -1854,12 +1855,15 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   String _scheduleValue() {
-    final start = '${_currentEvent.formattedDate} à ${_currentEvent.formattedTime}';
+    final start =
+        '${_currentEvent.formattedDate} à ${_currentEvent.formattedTime}';
     if (!_currentEvent.hasEndDateTime) {
       return start;
     }
-    final endDate = _currentEvent.formattedEndDate ?? _currentEvent.formattedDate;
-    final endTime = _currentEvent.formattedEndTime ?? _currentEvent.formattedTime;
+    final endDate =
+        _currentEvent.formattedEndDate ?? _currentEvent.formattedDate;
+    final endTime =
+        _currentEvent.formattedEndTime ?? _currentEvent.formattedTime;
     return '$start\n${S.of(context).untilLabel} $endDate à $endTime';
   }
 

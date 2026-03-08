@@ -107,9 +107,8 @@ class EventModel {
     return '$hours:$minutes';
   }
 
-  String? get formattedEndDate => endDate == null
-      ? null
-      : DateFormat.yMMMMd('fr_FR').format(endDate!);
+  String? get formattedEndDate =>
+      endDate == null ? null : DateFormat.yMMMMd('fr_FR').format(endDate!);
 
   String? get formattedEndTime {
     final value = endTime;
@@ -282,7 +281,9 @@ class EventPayload {
       'description': description,
       'date_event': DateFormat('yyyy-MM-dd').format(date),
       'start_time': _formatDuration(startTime),
-      'end_date': endDate == null ? null : DateFormat('yyyy-MM-dd').format(endDate!),
+      'end_date': endDate == null
+          ? null
+          : DateFormat('yyyy-MM-dd').format(endDate!),
       'end_time': endTime == null ? null : _formatDuration(endTime!),
       'address': address,
       'invitation_deadline': invitationDeadline == null

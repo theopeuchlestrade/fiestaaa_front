@@ -489,7 +489,10 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.lock_clock_outlined, color: Colors.orange.shade800),
+                  Icon(
+                    Icons.lock_clock_outlined,
+                    color: Colors.orange.shade800,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
