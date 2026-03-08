@@ -23,6 +23,7 @@ import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/quasi_fullscreen_modal.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
+import 'package:fiestaaa_front/src/core/external_uri_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
@@ -1396,7 +1397,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   Future<void> _openPlaylist() async {
     final url = _playlistUrl;
     if (url == null || url.isEmpty) return;
-    final uri = Uri.tryParse(url);
+    final uri = tryParseSafeAbsoluteHttpUri(url);
     if (uri == null) {
       _showSnack(S.of(context).invalidPlaylistUrl, isError: true);
       return;
@@ -2266,8 +2267,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
     if (identifier == null || identifier.isEmpty) {
       return null;
     }
-    final direct = Uri.tryParse(identifier);
-    if (direct != null && direct.hasScheme) {
+    final direct = tryParseSafeAbsoluteHttpUri(identifier);
+    if (direct != null) {
       return direct;
     }
     if (provider == null) {
@@ -2275,7 +2276,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
     final encoded = Uri.encodeComponent(identifier);
     final url = provider.urlTemplate.replaceAll('{identifier}', encoded);
-    return Uri.tryParse(url);
+    return tryParseSafeAbsoluteHttpUri(url);
   }
 
   Future<void> _openPaymentLink(Uri uri) async {
