@@ -80,6 +80,8 @@ void main() {
       'description': 'Sunday brunch',
       'date_event': '2030-05-04',
       'start_time': '11:05:00',
+      'end_date': null,
+      'end_time': null,
       'address': '10 Main Street',
       'invitation_deadline': '2030-05-01',
       'latitude': 48.0,
@@ -92,5 +94,61 @@ void main() {
       'playlist_provider': null,
       'enabled_features': ['items', 'polls'],
     });
+  });
+
+  test('fromJson parses end schedule and expenses feature', () {
+    final event = EventModel.fromJson({
+      'event_id': 3,
+      'name_event': 'Week-end',
+      'description': 'Maison de campagne',
+      'date_event': '2099-08-10',
+      'start_time': '09:00:00',
+      'end_date': '2099-08-12',
+      'end_time': '17:30:00',
+      'address': 'Rue des Lilas',
+      'latitude': null,
+      'longitude': null,
+      'payment_provider_id': null,
+      'payment_identifier': null,
+      'payment_requested_amount': null,
+      'payment_per_person': false,
+      'owner_email': 'owner@example.com',
+      'playlist_url': null,
+      'playlist_provider': null,
+      'enabled_features': ['expenses', 'items'],
+      'invitation_deadline': null,
+    });
+
+    expect(event.hasEndDateTime, isTrue);
+    expect(event.endDateTime, DateTime(2099, 8, 12, 17, 30));
+    expect(event.isUpcoming, isTrue);
+    expect(event.isReadOnly, isFalse);
+    expect(event.enabledFeatures, ['expenses', 'items']);
+  });
+
+  test('past events are exposed as finished and read-only', () {
+    final event = EventModel.fromJson({
+      'event_id': 4,
+      'name_event': 'Ancienne soirée',
+      'description': 'Déjà passée',
+      'date_event': '2020-01-01',
+      'start_time': '21:00:00',
+      'address': '1 rue du passé',
+      'latitude': null,
+      'longitude': null,
+      'payment_provider_id': null,
+      'payment_identifier': null,
+      'payment_requested_amount': null,
+      'payment_per_person': false,
+      'owner_email': 'owner@example.com',
+      'playlist_url': null,
+      'playlist_provider': null,
+      'enabled_features': ['expenses'],
+      'invitation_deadline': null,
+    });
+
+    expect(event.isFinished, isTrue);
+    expect(event.isReadOnly, isTrue);
+    expect(event.status, 'finished');
   });
 }

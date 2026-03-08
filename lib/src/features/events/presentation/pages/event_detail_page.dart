@@ -7,6 +7,7 @@ import 'package:fiestaaa_front/src/features/events/domain/event_item_model.dart'
 import 'package:fiestaaa_front/src/features/events/domain/item_contribution_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_poll_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/pages/event_expenses_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/event_items_filters.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_edit_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_invitations_page.dart';
@@ -132,8 +133,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
   bool get _hasAcceptedInvitation => _myInvitation?.status == 'Accepted';
   bool get _isWaitingInvitation => _myInvitation?.status == 'Waiting';
   bool get _isExpiredInvitation => _myInvitation?.status == 'Expired';
-  bool get _canContributeItems => _isOwner || _hasAcceptedInvitation;
-  bool get _canVotePolls => _isOwner || _hasAcceptedInvitation;
+  bool get _isReadOnly => _currentEvent.isReadOnly;
+  bool get _canContributeItems =>
+      !_isReadOnly && (_isOwner || _hasAcceptedInvitation);
+  bool get _canVotePolls => !_isReadOnly && (_isOwner || _hasAcceptedInvitation);
 
   String? get _playlistUrl => _currentEvent.playlistUrl?.trim();
   String? get _playlistProvider => _currentEvent.playlistProvider?.trim();
@@ -269,6 +272,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _toggleVote(PollModel poll, int optionId) async {
+    if (_isReadOnly) {
+      _showSnack(S.of(context).eventFinishedReadOnly, isError: true);
+      return;
+    }
     if (!_canVotePolls) {
       _showSnack(S.of(context).acceptInvitationBeforeVoting, isError: true);
       return;
@@ -323,6 +330,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _deletePoll(PollModel poll) async {
+    if (_isReadOnly) {
+      _showSnack(S.of(context).eventFinishedReadOnly, isError: true);
+      return;
+    }
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -369,6 +380,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _openCreatePollSheet() async {
+    if (_isReadOnly) {
+      _showSnack(S.of(context).eventFinishedReadOnly, isError: true);
+      return;
+    }
     final questionController = TextEditingController();
     final optionControllers = List.generate(3, (_) => TextEditingController());
     int selectedDuration = 60;
@@ -1125,6 +1140,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _respondInvitation(String status) async {
+    if (_isReadOnly) {
+      _showSnack(S.of(context).eventFinishedReadOnly, isError: true);
+      return;
+    }
     try {
       await _invitationsApi.respondInvitation(
         token: widget.session.token,
@@ -1541,7 +1560,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   Future<void> _openPlaylistFromMenu() async {
     await _openFeatureModal(
       title: S.of(context).sharedPlaylist,
-      headerActionsBuilder: _isOwner
+      headerActionsBuilder: _isOwner && !_isReadOnly
           ? (context) => [
               IconButton(
                 onPressed: _openEditEvent,
@@ -1560,7 +1579,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     final url = _playlistUrl ?? '';
     final playlistProvider = _playlistProvider;
     final isEmpty = url.isEmpty;
-    final canEdit = _isOwner;
+    final canEdit = _isOwner && !_isReadOnly;
     final providerName = _playlistProviderName(playlistProvider);
 
     return _buildFeaturePanel(
@@ -1677,6 +1696,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _openQuantityDialog(EventItemModel item) async {
+    if (_isReadOnly) {
+      _showSnack(S.of(context).eventFinishedReadOnly, isError: true);
+      return;
+    }
     if (!_canContributeItems) {
       _showSnack(S.of(context).acceptInvitationToContribute, isError: true);
       return;
@@ -1759,13 +1782,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   List<Widget> _buildHeaderActions() {
     return [
-      if (_isOwner)
+      if (_isOwner && !_isReadOnly)
         IconButton(
           onPressed: _openEditEvent,
           icon: const Icon(Icons.edit),
           tooltip: S.of(context).editFiestaaa,
         ),
-      if (_isOwner)
+      if (_isOwner && !_isReadOnly)
         IconButton(
           onPressed: _sharingLink ? null : _shareEvent,
           icon: _sharingLink
@@ -1777,7 +1800,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               : const Icon(Icons.share_outlined),
           tooltip: S.of(context).shareFiestaaa,
         ),
-      if (_isOwner)
+      if (_isOwner && !_isReadOnly)
         IconButton(
           onPressed: _deletingEvent ? null : _confirmDeleteEvent,
           icon: _deletingEvent
@@ -1789,13 +1812,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
               : const Icon(Icons.delete_outline),
           tooltip: S.of(context).deleteFiestaaa,
         ),
-      if (_isOwner)
+      if (_isOwner && !_isReadOnly)
         IconButton(
           onPressed: _openQRScanner,
           icon: const Icon(Icons.qr_code_scanner),
           tooltip: S.of(context).scanQRCodes,
         )
-      else if (_hasAcceptedInvitation || _isWaitingInvitation)
+      else if (!_isReadOnly && (_hasAcceptedInvitation || _isWaitingInvitation))
         IconButton(
           onPressed: _openMyQRCode,
           icon: const Icon(Icons.qr_code),
@@ -1830,6 +1853,43 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
+  String _scheduleValue() {
+    final start = '${_currentEvent.formattedDate} à ${_currentEvent.formattedTime}';
+    if (!_currentEvent.hasEndDateTime) {
+      return start;
+    }
+    final endDate = _currentEvent.formattedEndDate ?? _currentEvent.formattedDate;
+    final endTime = _currentEvent.formattedEndTime ?? _currentEvent.formattedTime;
+    return '$start\n${S.of(context).untilLabel} $endDate à $endTime';
+  }
+
+  Widget _buildReadOnlyBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.lock_clock_outlined, color: Colors.orange.shade800),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              S.of(context).eventFinishedReadOnly,
+              style: TextStyle(
+                color: Colors.orange.shade900,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1843,6 +1903,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             padding: EdgeInsets.zero,
             children: [
               _buildHeader(),
+              if (_isReadOnly) _buildReadOnlyBanner(),
               if (!_isOwner)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
@@ -1850,14 +1911,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     invitation: _myInvitation,
                     loading: _loadingMyInvitation,
                     onRespond: _respondInvitation,
+                    readOnly: _isReadOnly,
                     deadline: _currentEvent.invitationDeadline,
                   ),
                 ),
               _DetailTile(
                 icon: Icons.event,
                 label: S.of(context).dateAndTime,
-                value:
-                    '${_currentEvent.formattedDate} à ${_currentEvent.formattedTime}',
+                value: _scheduleValue(),
               ),
               if (_currentEvent.invitationDeadline != null &&
                   !_isOwner &&
@@ -1906,6 +1967,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
           icon: Icons.inventory_2_outlined,
           label: l10n.availableItems,
           onPressed: _openItemsModal,
+        ),
+      if (_isFeatureEnabled(eventFeatureExpenses))
+        _EventDetailFeatureActionData(
+          icon: Icons.receipt_long_outlined,
+          label: l10n.sharedExpenses,
+          onPressed: _openExpenses,
         ),
       if (_canShowPlaylistFeature)
         _EventDetailFeatureActionData(
@@ -2080,7 +2147,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         subtitle: null,
         accentColor: const Color(0xFF00695C),
         children: [
-          if (_isOwner)
+          if (_isOwner && !_isReadOnly)
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -2226,7 +2293,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     await _openFeatureModal(
       title: S.of(context).payment,
       headerActionsBuilder: (context) => [
-        if (_isOwner)
+        if (_isOwner && !_isReadOnly)
           IconButton(
             onPressed: _openEditEvent,
             tooltip: S.of(context).editFiestaaa,
@@ -2381,6 +2448,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         session: widget.session,
         eventId: _currentEvent.id,
         ownerEmail: _currentEvent.ownerEmail,
+        eventReadOnly: _isReadOnly,
         realtimeStream: _realtime?.stream,
         compactModal: true,
       ),
@@ -2421,6 +2489,23 @@ class _EventDetailPageState extends State<EventDetailPage> {
         session: widget.session,
         isOwner: _isOwner,
         hasAcceptedInvitation: _hasAcceptedInvitation,
+        eventReadOnly: _isReadOnly,
+        compactModal: true,
+      ),
+    );
+  }
+
+  Future<void> _openExpenses() async {
+    await _openDynamicPageModal(
+      pageBuilder: (_) => EventExpensesPage(
+        eventId: _currentEvent.id,
+        eventName: _currentEvent.name,
+        ownerEmail: _currentEvent.ownerEmail,
+        session: widget.session,
+        isOwner: _isOwner,
+        hasAcceptedInvitation: _hasAcceptedInvitation,
+        isReadOnly: _isReadOnly,
+        realtimeStream: _realtime?.stream,
         compactModal: true,
       ),
     );
@@ -2473,7 +2558,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
-              if (_isOwner)
+              if (_isOwner && !_isReadOnly)
                 TextButton.icon(
                   onPressed: _creatingPoll ? null : _openCreatePollSheet,
                   icon: _creatingPoll
@@ -2499,7 +2584,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 ),
             ],
           )
-        else if (_isOwner)
+        else if (_isOwner && !_isReadOnly)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Align(
@@ -2952,12 +3037,14 @@ class _InvitationStatusCard extends StatefulWidget {
     required this.invitation,
     required this.loading,
     required this.onRespond,
+    required this.readOnly,
     this.deadline,
   });
 
   final InvitationModel? invitation;
   final bool loading;
   final void Function(String status) onRespond;
+  final bool readOnly;
   final DateTime? deadline;
 
   @override
@@ -3143,7 +3230,7 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
               ],
             ),
             const SizedBox(height: 12),
-            if (waiting) ...[
+            if (waiting && !widget.readOnly) ...[
               Row(
                 children: [
                   Expanded(
@@ -3173,6 +3260,13 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
               Text(
                 S.of(context).confirmPresence,
                 style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ] else if (waiting && widget.readOnly) ...[
+              Text(
+                S.of(context).eventFinishedReadOnly,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: accent),
               ),
             ] else if (expired) ...[
               Text(

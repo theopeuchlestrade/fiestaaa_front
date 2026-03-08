@@ -474,6 +474,15 @@ class _EventBubble extends StatelessWidget {
   }
 
   _EventBadgeData? _badgeData(BuildContext context) {
+    if (event.isFinished) {
+      return _EventBadgeData(
+        label: S.of(context).finishedEvent,
+        color: Colors.orange.shade900,
+        background: Colors.orange.shade100,
+        icon: Icons.lock_clock_outlined,
+      );
+    }
+
     final isOwner =
         sessionEmail.toLowerCase() == event.ownerEmail.toLowerCase();
     if (isOwner) {
