@@ -29,14 +29,36 @@ const String fcmWebVapidKey = String.fromEnvironment(
   defaultValue: '',
 );
 
+Uri buildApiUri(String path, {Map<String, String>? queryParameters}) {
+  final base = Uri.parse(apiBaseUrl);
+  final normalizedPath = path.startsWith('/') ? path.substring(1) : path;
+  final pathSegments = <String>[
+    ...base.pathSegments.where((segment) => segment.isNotEmpty),
+    ...normalizedPath.split('/').where((segment) => segment.isNotEmpty),
+  ];
+
+  return base.replace(
+    pathSegments: pathSegments,
+    queryParameters: queryParameters == null || queryParameters.isEmpty
+        ? null
+        : queryParameters,
+  );
+}
+
 Uri buildWsUri(String path, {Map<String, String>? queryParameters}) {
   final base = Uri.parse(apiBaseUrl);
   final scheme = base.scheme == 'https' ? 'wss' : 'ws';
-  return Uri(
+  final normalizedPath = path.startsWith('/') ? path.substring(1) : path;
+  final pathSegments = <String>[
+    ...base.pathSegments.where((segment) => segment.isNotEmpty),
+    ...normalizedPath.split('/').where((segment) => segment.isNotEmpty),
+  ];
+
+  return base.replace(
     scheme: scheme,
-    host: base.host,
-    port: base.hasPort ? base.port : null,
-    path: path,
-    queryParameters: queryParameters,
+    pathSegments: pathSegments,
+    queryParameters: queryParameters == null || queryParameters.isEmpty
+        ? null
+        : queryParameters,
   );
 }
