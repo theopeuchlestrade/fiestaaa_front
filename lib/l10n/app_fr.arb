@@ -180,6 +180,7 @@
   "welcomeNew": "Bienvenue !",
   "loginToContinue": "Connectez-vous pour continuer",
   "createAccountFree": "Créez votre compte gratuitement",
+  "registerEmailOnlyHelper": "Commence avec ton email. On t’enverra un lien de vérification avant que tu choisisses ton mot de passe.",
   "emailOrIdentifier": "Email ou identifiant",
   "identifierOptional": "Identifiant (optionnel)",
   "identifierPublicOptional": "Identifiant public (optionnel)",
@@ -194,6 +195,10 @@
   "pleaseEnterIdentifierLogin": "Merci de renseigner votre identifiant",
   "invalidEmail": "Email invalide",
   "signIn": "Se connecter",
+  "sendVerificationLink": "Envoyer le lien de vérification",
+  "finishCreatingAccount": "Finalise ton compte",
+  "finishCreatingAccountSubtitle": "Ton email est vérifié. Choisis ton mot de passe et ton identifiant public.",
+  "finishAccountSetup": "Finaliser le compte",
   "orContinueWith": "ou continuez avec",
   "createNewAccount": "Créer un nouveau compte",
   "alreadyHaveAccountLogin": "J'ai déjà un compte",
@@ -920,5 +925,12 @@
     "placeholders": {
       "participants": {"type": "String"}
     }
-  }
+  },
+  "verificationEmailSent": "Vérifie ton email pour activer ton compte.",
+  "verificationPending": "Ton inscription est en attente de vérification email.",
+  "loginRequiresVerifiedEmail": "Vérifie ton email avant de te connecter.",
+  "completeRegistrationReady": "Ton email est vérifié. Choisis ton mot de passe pour terminer la création du compte.",
+  "registrationCompleted": "Compte finalisé. Bienvenue !",
+  "emailVerified": "Ton email est vérifié. Tu peux maintenant te connecter.",
+  "emailVerificationFailed": "Ce lien de vérification est invalide ou expiré."
 }

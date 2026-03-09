@@ -14,12 +14,21 @@ import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-enum AuthMode { login, register }
+enum AuthMode { login, register, completeRegistration }
 
 class AuthPage extends StatefulWidget {
-  const AuthPage({super.key, required this.onAuthenticated});
+  const AuthPage({
+    super.key,
+    required this.onAuthenticated,
+    this.flashCode,
+    this.flashIsError = false,
+    this.pendingRegistrationToken,
+  });
 
   final Future<void> Function(SessionData session) onAuthenticated;
+  final String? flashCode;
+  final bool flashIsError;
+  final String? pendingRegistrationToken;
 
   @override
   State<AuthPage> createState() => _AuthPageState();
@@ -39,6 +48,7 @@ class _AuthPageState extends State<AuthPage> {
   bool _obscureConfirm = true;
   bool _isSubmitting = false;
   String? _socialInProgress;
+  String? _lastFlashCode;
 
   static const String _feedbackEmail = 'feedback@fiestaaa.app';
   static const String _bugTemplate = '''
@@ -55,6 +65,12 @@ Bug report
   @override
   void initState() {
     super.initState();
+    if (_isCompletingRegistration) {
+      _mode = AuthMode.completeRegistration;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showFlashIfNeeded();
+    });
   }
 
   Future<void> _ensureGoogleInitialized() {
@@ -77,10 +93,41 @@ Bug report
   }
 
   void _toggleMode(AuthMode? mode) {
-    if (mode == null || mode == _mode || _isSubmitting) return;
+    if (mode == null ||
+        mode == _mode ||
+        _isSubmitting ||
+        _isCompletingRegistration) {
+      return;
+    }
     setState(() {
       _mode = mode;
+      _passwordController.clear();
+      _confirmPasswordController.clear();
+      _handleController.clear();
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant AuthPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.pendingRegistrationToken != oldWidget.pendingRegistrationToken) {
+      setState(() {
+        if (_isCompletingRegistration) {
+          _mode = AuthMode.completeRegistration;
+          _passwordController.clear();
+          _confirmPasswordController.clear();
+          _handleController.clear();
+        } else if (_mode == AuthMode.completeRegistration) {
+          _mode = AuthMode.login;
+        }
+      });
+    }
+    if (widget.flashCode != oldWidget.flashCode ||
+        widget.flashIsError != oldWidget.flashIsError) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showFlashIfNeeded();
+      });
+    }
   }
 
   bool get _shouldShowAppleButton {
@@ -90,6 +137,14 @@ Bug report
     return defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS;
   }
+
+  bool get _isLoginMode => _mode == AuthMode.login;
+
+  bool get _isRegisterMode => _mode == AuthMode.register;
+
+  bool get _isCompletingRegistration =>
+      widget.pendingRegistrationToken != null &&
+      widget.pendingRegistrationToken!.isNotEmpty;
 
   Future<void> _copyFeedbackEmail() async {
     await Clipboard.setData(const ClipboardData(text: _feedbackEmail));
@@ -101,6 +156,37 @@ Bug report
     await Clipboard.setData(const ClipboardData(text: _bugTemplate));
     if (!mounted) return;
     _showSnack(S.of(context).bugTemplateCopied);
+  }
+
+  void _showFlashIfNeeded() {
+    if (!mounted) return;
+    final code = widget.flashCode;
+    if (code == null || code.isEmpty || code == _lastFlashCode) {
+      return;
+    }
+
+    _lastFlashCode = code;
+    final l10n = S.of(context);
+    final message = switch (code) {
+      'email_verified' => l10n.emailVerified,
+      'complete_registration_ready' => l10n.completeRegistrationReady,
+      'email_verification_failed' => l10n.emailVerificationFailed,
+      _ => null,
+    };
+    if (message == null || message.isEmpty) {
+      return;
+    }
+    _showSnack(message, isError: widget.flashIsError);
+  }
+
+  String _mapApiMessage(String message, {String? code}) {
+    final l10n = S.of(context);
+    return switch (code ?? message) {
+      'email_not_verified' => l10n.loginRequiresVerifiedEmail,
+      'handle_taken' => l10n.identifierTaken,
+      'expired_token' || 'invalid_token' => l10n.emailVerificationFailed,
+      _ => message,
+    };
   }
 
   String? _validatePassword(String? value) {
@@ -117,6 +203,38 @@ Bug report
       return S.of(context).passwordRequirements;
     }
     return null;
+  }
+
+  String? _validatePasswordForCurrentMode(String? value) {
+    if (_isLoginMode) {
+      if ((value ?? '').isEmpty) return S.of(context).passwordRequired;
+      return null;
+    }
+    return _validatePassword(value);
+  }
+
+  String _titleForMode(S l10n) {
+    return switch (_mode) {
+      AuthMode.login => l10n.welcomeBack,
+      AuthMode.register => l10n.welcomeNew,
+      AuthMode.completeRegistration => l10n.finishCreatingAccount,
+    };
+  }
+
+  String _subtitleForMode(S l10n) {
+    return switch (_mode) {
+      AuthMode.login => l10n.loginToContinue,
+      AuthMode.register => l10n.registerEmailOnlyHelper,
+      AuthMode.completeRegistration => l10n.finishCreatingAccountSubtitle,
+    };
+  }
+
+  String _submitLabelForMode(S l10n) {
+    return switch (_mode) {
+      AuthMode.login => l10n.signIn,
+      AuthMode.register => l10n.sendVerificationLink,
+      AuthMode.completeRegistration => l10n.finishAccountSetup,
+    };
   }
 
   Future<void> _loginWithGoogleToken({
@@ -146,7 +264,7 @@ Bug report
       _showSnack(S.of(context).googleLoginSuccess);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(_mapApiMessage(e.message, code: e.code), isError: true);
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).googleLoginFailed, isError: true);
@@ -244,7 +362,7 @@ Bug report
       );
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(_mapApiMessage(e.message, code: e.code), isError: true);
     } catch (e) {
       if (!mounted) return;
       // Log the full error for debugging but show a friendly message
@@ -319,7 +437,7 @@ Bug report
       _showSnack(e.message, isError: true);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(_mapApiMessage(e.message, code: e.code), isError: true);
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).appleLoginFailed, isError: true);
@@ -341,21 +459,36 @@ Bug report
     });
 
     try {
-      if (_mode == AuthMode.register) {
-        await _api.register(
-          email: _emailController.text.trim(),
+      if (_isRegisterMode) {
+        final status = await _api.register(email: _emailController.text.trim());
+        if (!mounted) return;
+        final l10n = S.of(context);
+        final message = switch (status) {
+          'verification_email_sent' => l10n.verificationEmailSent,
+          _ => l10n.verificationPending,
+        };
+        _showSnack(message);
+        setState(() {
+          _mode = AuthMode.login;
+          _passwordController.clear();
+          _confirmPasswordController.clear();
+          _handleController.clear();
+        });
+      } else if (_mode == AuthMode.completeRegistration) {
+        final token = widget.pendingRegistrationToken;
+        if (token == null || token.isEmpty) {
+          throw ApiException(S.of(context).emailVerificationFailed);
+        }
+        final session = await _api.completeRegistration(
+          token: token,
           password: _passwordController.text,
           handle: _handleController.text.trim().isEmpty
               ? null
               : _handleController.text.trim(),
         );
+        await widget.onAuthenticated(session);
         if (!mounted) return;
-        _showSnack(S.of(context).accountCreated);
-        setState(() {
-          _mode = AuthMode.login;
-          _confirmPasswordController.clear();
-          _handleController.clear();
-        });
+        _showSnack(S.of(context).registrationCompleted);
       } else {
         final session = await _api.login(
           identifier: _emailController.text.trim(),
@@ -367,7 +500,7 @@ Bug report
       }
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(_mapApiMessage(e.message, code: e.code), isError: true);
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).networkError, isError: true);
@@ -494,9 +627,7 @@ Bug report
                       children: [
                         // Welcome Text
                         Text(
-                          _mode == AuthMode.login
-                              ? l10n.welcomeBack
-                              : l10n.welcomeNew,
+                          _titleForMode(l10n),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
@@ -506,9 +637,7 @@ Bug report
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          _mode == AuthMode.login
-                              ? l10n.loginToContinue
-                              : l10n.createAccountFree,
+                          _subtitleForMode(l10n),
                           textAlign: TextAlign.center,
                           style: Theme.of(
                             context,
@@ -524,43 +653,46 @@ Bug report
                           key: _formKey,
                           child: Column(
                             children: [
-                              TextFormField(
-                                controller: _emailController,
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: InputDecoration(
-                                  labelText: _mode == AuthMode.login
-                                      ? l10n.emailOrIdentifier
-                                      : l10n.email,
-                                  prefixIcon: const Icon(Icons.email_outlined),
-                                  filled: true,
-                                  fillColor: inputFill,
+                              if (!_isCompletingRegistration)
+                                TextFormField(
+                                  controller: _emailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: InputDecoration(
+                                    labelText: _isLoginMode
+                                        ? l10n.emailOrIdentifier
+                                        : l10n.email,
+                                    prefixIcon: const Icon(
+                                      Icons.email_outlined,
+                                    ),
+                                    filled: true,
+                                    fillColor: inputFill,
+                                  ),
+                                  validator: (value) {
+                                    final email = value?.trim() ?? '';
+                                    if (email.isEmpty) {
+                                      return _isLoginMode
+                                          ? l10n.pleaseEnterIdentifierLogin
+                                          : l10n.pleaseEnterEmail;
+                                    }
+                                    if (_isLoginMode) return null;
+                                    if (!RegExp(
+                                      r'^[^@]+@[^@]+\.[^@]+',
+                                    ).hasMatch(email)) {
+                                      return l10n.invalidEmail;
+                                    }
+                                    return null;
+                                  },
                                 ),
-                                validator: (value) {
-                                  final email = value?.trim() ?? '';
-                                  if (email.isEmpty) {
-                                    return _mode == AuthMode.login
-                                        ? l10n.pleaseEnterIdentifierLogin
-                                        : l10n.pleaseEnterEmail;
-                                  }
-                                  if (_mode == AuthMode.login) return null;
-                                  if (!RegExp(
-                                    r'^[^@]+@[^@]+\.[^@]+',
-                                  ).hasMatch(email)) {
-                                    return l10n.invalidEmail;
-                                  }
-                                  return null;
-                                },
-                              ),
-                              if (_mode == AuthMode.register) ...[
+                              if (_mode == AuthMode.completeRegistration) ...[
                                 const SizedBox(height: 16),
                                 TextFormField(
                                   controller: _handleController,
                                   decoration: InputDecoration(
-                                    labelText: l10n.identifierOptional,
+                                    labelText: l10n.identifierPublicOptional,
                                     prefixIcon: const Icon(Icons.tag),
                                     filled: true,
                                     fillColor: inputFill,
-                                    helperText: l10n.identifierFormat,
+                                    helperText: l10n.identifierAutoGenerated,
                                   ),
                                   validator: (value) {
                                     final handle = value?.trim() ?? '';
@@ -574,31 +706,36 @@ Bug report
                                   },
                                 ),
                               ],
-                              const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _passwordController,
-                                obscureText: _obscurePassword,
-                                decoration: InputDecoration(
-                                  labelText: l10n.password,
-                                  prefixIcon: const Icon(Icons.lock_outline),
-                                  filled: true,
-                                  fillColor: inputFill,
-                                  helperText: l10n.passwordHelperText,
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscurePassword
-                                          ? Icons.visibility
-                                          : Icons.visibility_off,
-                                    ),
-                                    onPressed: () => setState(
-                                      () =>
-                                          _obscurePassword = !_obscurePassword,
+                              if (!_isRegisterMode) ...[
+                                const SizedBox(height: 16),
+                                TextFormField(
+                                  controller: _passwordController,
+                                  obscureText: _obscurePassword,
+                                  decoration: InputDecoration(
+                                    labelText: l10n.password,
+                                    prefixIcon: const Icon(Icons.lock_outline),
+                                    filled: true,
+                                    fillColor: inputFill,
+                                    helperText:
+                                        _mode == AuthMode.completeRegistration
+                                        ? l10n.passwordHelperText
+                                        : null,
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscurePassword
+                                            ? Icons.visibility
+                                            : Icons.visibility_off,
+                                      ),
+                                      onPressed: () => setState(
+                                        () => _obscurePassword =
+                                            !_obscurePassword,
+                                      ),
                                     ),
                                   ),
+                                  validator: _validatePasswordForCurrentMode,
                                 ),
-                                validator: _validatePassword,
-                              ),
-                              if (_mode == AuthMode.register) ...[
+                              ],
+                              if (_mode == AuthMode.completeRegistration) ...[
                                 const SizedBox(height: 16),
                                 TextFormField(
                                   controller: _confirmPasswordController,
@@ -656,9 +793,7 @@ Bug report
                                           ),
                                         )
                                       : Text(
-                                          _mode == AuthMode.login
-                                              ? l10n.signIn
-                                              : l10n.createAccount,
+                                          _submitLabelForMode(l10n),
                                           style: const TextStyle(
                                             fontSize: 17,
                                             fontWeight: FontWeight.w700,
@@ -670,50 +805,55 @@ Bug report
                             ],
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(child: Divider(color: dividerColor)),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              child: Text(
-                                l10n.orContinueWith,
-                                style: TextStyle(
-                                  color: dividerText,
-                                  fontSize: 13,
+                        if (!_isCompletingRegistration) ...[
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              Expanded(child: Divider(color: dividerColor)),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                child: Text(
+                                  l10n.orContinueWith,
+                                  style: TextStyle(
+                                    color: dividerText,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
-                            ),
-                            Expanded(child: Divider(color: dividerColor)),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _buildSocialButtons(context),
-                        const SizedBox(height: 16),
-                        // Switch Mode Button
-                        TextButton(
-                          onPressed: _isSubmitting
-                              ? null
-                              : () => setState(() {
-                                  _mode = _mode == AuthMode.login
-                                      ? AuthMode.register
-                                      : AuthMode.login;
-                                }),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                              Expanded(child: Divider(color: dividerColor)),
+                            ],
                           ),
-                          child: Text(
-                            _mode == AuthMode.login
-                                ? l10n.createNewAccount
-                                : l10n.alreadyHaveAccountLogin,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
+                          const SizedBox(height: 16),
+                          _buildSocialButtons(context),
+                          const SizedBox(height: 16),
+                          // Switch Mode Button
+                          TextButton(
+                            onPressed: _isSubmitting
+                                ? null
+                                : () => setState(() {
+                                    _mode = _isLoginMode
+                                        ? AuthMode.register
+                                        : AuthMode.login;
+                                    _passwordController.clear();
+                                    _confirmPasswordController.clear();
+                                    _handleController.clear();
+                                  }),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: Text(
+                              _isLoginMode
+                                  ? l10n.createNewAccount
+                                  : l10n.alreadyHaveAccountLogin,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -1003,98 +1143,113 @@ Bug report
           if (_isSubmitting) const SizedBox(height: 12),
           _buildAlphaBanner(compact: false),
           const SizedBox(height: 20),
-          Container(
-            decoration: BoxDecoration(
-              color: toggleBackground,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: toggleBorder),
+          if (!_isCompletingRegistration) ...[
+            Container(
+              decoration: BoxDecoration(
+                color: toggleBackground,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: toggleBorder),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextButton.icon(
+                      onPressed: _isLoginMode
+                          ? null
+                          : () => _toggleMode(AuthMode.login),
+                      icon: const Icon(Icons.login),
+                      label: Text(l10n.login),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                          horizontal: 12,
+                        ),
+                        foregroundColor: _isLoginMode
+                            ? FiestaaaPalette.primary
+                            : toggleInactive,
+                        backgroundColor: _isLoginMode
+                            ? FiestaaaPalette.primary.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: TextButton.icon(
+                      onPressed: _isRegisterMode
+                          ? null
+                          : () => _toggleMode(AuthMode.register),
+                      icon: const Icon(Icons.person_add_alt_1),
+                      label: Text(l10n.register),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                          horizontal: 12,
+                        ),
+                        foregroundColor: _isRegisterMode
+                            ? FiestaaaPalette.primary
+                            : toggleInactive,
+                        backgroundColor: _isRegisterMode
+                            ? FiestaaaPalette.primary.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextButton.icon(
-                    onPressed: _mode == AuthMode.login
-                        ? null
-                        : () => _toggleMode(AuthMode.login),
-                    icon: const Icon(Icons.login),
-                    label: Text(l10n.login),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 14,
-                        horizontal: 12,
-                      ),
-                      foregroundColor: _mode == AuthMode.login
-                          ? FiestaaaPalette.primary
-                          : toggleInactive,
-                      backgroundColor: _mode == AuthMode.login
-                          ? FiestaaaPalette.primary.withValues(alpha: 0.12)
-                          : Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: TextButton.icon(
-                    onPressed: _mode == AuthMode.register
-                        ? null
-                        : () => _toggleMode(AuthMode.register),
-                    icon: const Icon(Icons.person_add_alt_1),
-                    label: Text(l10n.register),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 14,
-                        horizontal: 12,
-                      ),
-                      foregroundColor: _mode == AuthMode.register
-                          ? FiestaaaPalette.primary
-                          : toggleInactive,
-                      backgroundColor: _mode == AuthMode.register
-                          ? FiestaaaPalette.primary.withValues(alpha: 0.12)
-                          : Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-              ],
+            const SizedBox(height: 28),
+          ],
+          Text(
+            _titleForMode(l10n),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 8),
+          Text(
+            _subtitleForMode(l10n),
+            style: theme.textTheme.bodyMedium?.copyWith(color: dividerText),
+          ),
+          const SizedBox(height: 24),
           Form(
             key: _formKey,
             child: Column(
               children: [
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: _mode == AuthMode.login
-                        ? l10n.emailOrIdentifier
-                        : l10n.email,
-                    prefixIcon: const Icon(Icons.email_outlined),
-                  ),
-                  validator: (value) {
-                    final email = value?.trim() ?? '';
-                    if (email.isEmpty) {
-                      return _mode == AuthMode.login
-                          ? l10n.pleaseEnterIdentifierLogin
-                          : l10n.pleaseEnterEmail;
-                    }
-                    if (_mode == AuthMode.login) {
+                if (!_isCompletingRegistration)
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: _isLoginMode
+                          ? l10n.emailOrIdentifier
+                          : l10n.email,
+                      prefixIcon: const Icon(Icons.email_outlined),
+                    ),
+                    validator: (value) {
+                      final email = value?.trim() ?? '';
+                      if (email.isEmpty) {
+                        return _isLoginMode
+                            ? l10n.pleaseEnterIdentifierLogin
+                            : l10n.pleaseEnterEmail;
+                      }
+                      if (_isLoginMode) {
+                        return null;
+                      }
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+                        return l10n.invalidEmail;
+                      }
                       return null;
-                    }
-                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
-                      return l10n.invalidEmail;
-                    }
-                    return null;
-                  },
-                ),
-                if (_mode == AuthMode.register) ...[
+                    },
+                  ),
+                if (_mode == AuthMode.completeRegistration) ...[
                   const SizedBox(height: 18),
                   TextFormField(
                     controller: _handleController,
@@ -1113,30 +1268,34 @@ Bug report
                     },
                   ),
                 ],
-                const SizedBox(height: 18),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: l10n.password,
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    helperText: l10n.passwordHelperText,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                if (!_isRegisterMode) ...[
+                  const SizedBox(height: 18),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: l10n.password,
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      helperText: _mode == AuthMode.completeRegistration
+                          ? l10n.passwordHelperText
+                          : null,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
                     ),
+                    validator: _validatePasswordForCurrentMode,
                   ),
-                  validator: _validatePassword,
-                ),
-                if (_mode == AuthMode.register) ...[
+                ],
+                if (_mode == AuthMode.completeRegistration) ...[
                   const SizedBox(height: 18),
                   TextFormField(
                     controller: _confirmPasswordController,
@@ -1183,9 +1342,7 @@ Bug report
                             ),
                           )
                         : Text(
-                            _mode == AuthMode.login
-                                ? l10n.signIn
-                                : l10n.createAccount,
+                            _submitLabelForMode(l10n),
                             style: const TextStyle(fontSize: 16),
                           ),
                   ),
@@ -1193,39 +1350,37 @@ Bug report
               ],
             ),
           ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(child: Divider(color: dividerColor)),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+          if (!_isCompletingRegistration) ...[
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(child: Divider(color: dividerColor)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    l10n.orContinueWith,
+                    style: TextStyle(color: dividerText, fontSize: 13),
+                  ),
+                ),
+                Expanded(child: Divider(color: dividerColor)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildSocialButtons(context),
+            const SizedBox(height: 12),
+            Center(
+              child: TextButton(
+                onPressed: _isSubmitting
+                    ? null
+                    : () => _toggleMode(
+                        _isLoginMode ? AuthMode.register : AuthMode.login,
+                      ),
                 child: Text(
-                  l10n.orContinueWith,
-                  style: TextStyle(color: dividerText, fontSize: 13),
+                  _isLoginMode ? l10n.newToFiestaaa : l10n.alreadyRegistered,
                 ),
               ),
-              Expanded(child: Divider(color: dividerColor)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildSocialButtons(context),
-          const SizedBox(height: 12),
-          Center(
-            child: TextButton(
-              onPressed: _isSubmitting
-                  ? null
-                  : () => _toggleMode(
-                      _mode == AuthMode.login
-                          ? AuthMode.register
-                          : AuthMode.login,
-                    ),
-              child: Text(
-                _mode == AuthMode.login
-                    ? l10n.newToFiestaaa
-                    : l10n.alreadyRegistered,
-              ),
             ),
-          ),
+          ],
         ],
       ),
     );

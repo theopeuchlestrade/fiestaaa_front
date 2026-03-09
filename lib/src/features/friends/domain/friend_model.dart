@@ -22,19 +22,15 @@ class FriendModel {
 }
 
 class FriendSearchResult {
-  FriendSearchResult({
-    required this.email,
-    required this.handle,
-    this.avatarUrl,
-  });
+  FriendSearchResult({this.email, required this.handle, this.avatarUrl});
 
-  final String email;
+  final String? email;
   final String handle;
   final String? avatarUrl;
 
   factory FriendSearchResult.fromJson(Map<String, dynamic> json) {
     return FriendSearchResult(
-      email: json['email'] as String,
+      email: json['email'] as String?,
       handle: json['handle'] as String,
       avatarUrl: json['avatar_url'] as String?,
     );

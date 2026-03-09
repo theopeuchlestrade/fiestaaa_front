@@ -168,7 +168,7 @@ flutter gen-l10n
 
 1. Créez un fichier `.env` à la racine avec les clés Firebase web et OAuth :
   ```bash
-  FIESTAAA_API_BASE_URL=http://127.0.0.1:8080
+  FIESTAAA_API_BASE_URL=http://localhost:8080
   FIESTAAA_APPLE_SERVICE_ID=com.fiestaaa.web
   FIESTAAA_APPLE_REDIRECT_URI=http://localhost:5001/
   FIESTAAA_FCM_VAPID_KEY={fcm_vapid_key}
@@ -181,12 +181,16 @@ flutter gen-l10n
   FIREBASE_WEB_MEASUREMENT_ID={web_measurement}
   FIREBASE_AUTH_DOMAIN=fiestaaa-app.firebaseapp.com
   ```
-2. Générez le service worker avant `flutter build web` :
+2. En web, utilisez le meme host pour le front et l'API pendant le dev local.
+   Exemple: `localhost:5001` avec `FIESTAAA_API_BASE_URL=http://localhost:8080`.
+   N'utilisez pas `localhost` pour le front et `127.0.0.1` pour l'API, sinon le cookie de session `HttpOnly` ne sera pas renvoye.
+
+3. Générez le service worker avant `flutter build web` :
   ```bash
   dart run tool/generate_firebase_sw.dart
   ```
   Cela produit `web/firebase-messaging-sw.js` à partir de `web/firebase-messaging-sw.template.js` et de votre `.env`.
 
-3. Les mêmes valeurs doivent être passées en `--dart-define` (voir commandes ci-dessus) pour correspondre à `lib/firebase_options.dart`.
+4. Les mêmes valeurs doivent être passées en `--dart-define` (voir commandes ci-dessus) pour correspondre à `lib/firebase_options.dart`.
 
 > `web/firebase-messaging-sw.js` est ignoré par git : conservez les secrets uniquement dans `.env`/CI.***
