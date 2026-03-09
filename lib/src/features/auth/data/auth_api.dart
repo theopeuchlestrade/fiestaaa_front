@@ -1,40 +1,65 @@
 import 'dart:convert';
 
+import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class ApiException implements Exception {
-  ApiException(this.message, {this.statusCode});
+  ApiException(this.message, {this.statusCode, this.code});
 
   final String message;
   final int? statusCode;
+  final String? code;
 
   @override
-  String toString() => 'ApiException($statusCode): $message';
+  String toString() => 'ApiException($statusCode, $code): $message';
 }
 
 class AuthApi {
-  AuthApi({http.Client? client}) : _client = client ?? http.Client();
+  AuthApi({http.Client? client}) : _client = client ?? createApiHttpClient();
 
   final http.Client _client;
 
-  Future<void> register({
-    required String email,
+  Future<String> register({required String email}) async {
+    final response = await _post('/auth/register', body: {'email': email});
+
+    if (response.statusCode == 201) {
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      return decoded['status'] as String? ?? 'verification_pending';
+    }
+
+    throw _apiError(response);
+  }
+
+  Future<String> verifyEmail(String token) async {
+    final response = await _post('/auth/verify-email', body: {'token': token});
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      return decoded['status'] as String? ?? 'verified';
+    }
+
+    throw _apiError(response);
+  }
+
+  Future<SessionData> completeRegistration({
+    required String token,
     required String password,
     String? handle,
   }) async {
     final response = await _post(
-      '/auth/register',
+      '/auth/complete-registration',
       body: {
-        'email': email,
+        'token': token,
         'password': password,
         if (handle != null && handle.trim().isNotEmpty) 'handle': handle.trim(),
       },
     );
 
-    if (response.statusCode == 201) {
-      return;
+    if (response.statusCode == 200) {
+      return _sessionFromResponse(response);
     }
 
     throw _apiError(response);
@@ -89,7 +114,7 @@ class AuthApi {
   Future<SessionData?> validateSession(String token) async {
     final response = await _client.get(
       Uri.parse('$apiBaseUrl/me'),
-      headers: {'Authorization': 'Bearer $token'},
+      headers: token.isEmpty ? null : {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
@@ -97,7 +122,11 @@ class AuthApi {
       final email = decoded['email'] as String?;
       final handle = decoded['handle'] as String?;
       if (email == null) return null;
-      return SessionData(token: token, email: email, handle: handle);
+      return SessionData(
+        token: kIsWeb ? '' : token,
+        email: email,
+        handle: handle,
+      );
     }
     if (response.statusCode == 401) {
       return null;
@@ -118,6 +147,10 @@ class AuthApi {
     );
   }
 
+  Future<void> logout() async {
+    await _client.post(Uri.parse('$apiBaseUrl/auth/logout'));
+  }
+
   ApiException _apiError(http.Response response) {
     try {
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
@@ -126,6 +159,7 @@ class AuthApi {
       return ApiException(
         details?.isNotEmpty == true ? details! : error,
         statusCode: response.statusCode,
+        code: error,
       );
     } catch (_) {
       return ApiException(
@@ -147,12 +181,19 @@ class AuthApi {
     final token = decoded['token'] as String?;
     final email = decoded['email'] as String? ?? fallbackIdentifier;
     final handle = decoded['handle'] as String?;
-    if (token == null || token.isEmpty || email == null || email.isEmpty) {
+    final resolvedToken = kIsWeb ? '' : token;
+    if ((resolvedToken == null || resolvedToken.isEmpty) && !kIsWeb ||
+        email == null ||
+        email.isEmpty) {
       throw ApiException(
         'Réponse invalide du serveur',
         statusCode: response.statusCode,
       );
     }
-    return SessionData(token: token, email: email, handle: handle);
+    return SessionData(
+      token: resolvedToken ?? '',
+      email: email,
+      handle: handle,
+    );
   }
 }

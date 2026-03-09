@@ -170,6 +170,7 @@
   "welcomeNew": "Welcome!",
   "loginToContinue": "Log in to continue",
   "createAccountFree": "Create your account for free",
+  "registerEmailOnlyHelper": "Start with your email. We’ll send you a verification link before you choose a password.",
   "emailOrIdentifier": "Email or identifier",
   "identifierOptional": "Identifier (optional)",
   "identifierPublicOptional": "Public identifier (optional)",
@@ -184,6 +185,10 @@
   "pleaseEnterIdentifierLogin": "Please enter your identifier",
   "invalidEmail": "Invalid email",
   "signIn": "Sign in",
+  "sendVerificationLink": "Send verification link",
+  "finishCreatingAccount": "Finish creating your account",
+  "finishCreatingAccountSubtitle": "Your email is verified. Choose your password and public identifier.",
+  "finishAccountSetup": "Finish account setup",
   "orContinueWith": "or continue with",
   "createNewAccount": "Create a new account",
   "alreadyHaveAccountLogin": "I already have an account",
@@ -904,5 +909,12 @@
     "placeholders": {
       "participants": {"type": "String"}
     }
-  }
+  },
+  "verificationEmailSent": "Check your email to verify your account.",
+  "verificationPending": "Your registration is pending email verification.",
+  "loginRequiresVerifiedEmail": "Verify your email before signing in.",
+  "completeRegistrationReady": "Your email is verified. Choose your password to finish creating your account.",
+  "registrationCompleted": "Account setup complete. Welcome!",
+  "emailVerified": "Your email has been verified. You can now sign in.",
+  "emailVerificationFailed": "This verification link is invalid or expired."
 }

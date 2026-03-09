@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/item_contribution_model.dart';
@@ -11,7 +12,7 @@ import 'package:fiestaaa_front/src/features/events/domain/event_poll_model.dart'
 import 'package:http/http.dart' as http;
 
 class EventsApi {
-  EventsApi({http.Client? client}) : _client = client ?? http.Client();
+  EventsApi({http.Client? client}) : _client = client ?? createApiHttpClient();
 
   final http.Client _client;
 

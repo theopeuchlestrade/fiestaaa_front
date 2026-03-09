@@ -1,12 +1,13 @@
 import 'dart:convert';
 
+import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/profile/domain/profile_info.dart';
 import 'package:http/http.dart' as http;
 
 class ProfileApi {
-  ProfileApi({http.Client? client}) : _client = client ?? http.Client();
+  ProfileApi({http.Client? client}) : _client = client ?? createApiHttpClient();
 
   final http.Client _client;
 
@@ -81,7 +82,7 @@ class ProfileApi {
             http.MultipartFile.fromBytes('avatar', bytes, filename: filename),
           );
 
-    final streamed = await request.send();
+    final streamed = await _client.send(request);
     final response = await http.Response.fromStream(streamed);
     if (response.statusCode == 200) {
       return ProfileInfo.fromJson(
