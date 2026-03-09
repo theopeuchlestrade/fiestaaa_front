@@ -7,13 +7,14 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class ApiException implements Exception {
-  ApiException(this.message, {this.statusCode});
+  ApiException(this.message, {this.statusCode, this.code});
 
   final String message;
   final int? statusCode;
+  final String? code;
 
   @override
-  String toString() => 'ApiException($statusCode): $message';
+  String toString() => 'ApiException($statusCode, $code): $message';
 }
 
 class AuthApi {
@@ -21,19 +22,8 @@ class AuthApi {
 
   final http.Client _client;
 
-  Future<String> register({
-    required String email,
-    required String password,
-    String? handle,
-  }) async {
-    final response = await _post(
-      '/auth/register',
-      body: {
-        'email': email,
-        'password': password,
-        if (handle != null && handle.trim().isNotEmpty) 'handle': handle.trim(),
-      },
-    );
+  Future<String> register({required String email}) async {
+    final response = await _post('/auth/register', body: {'email': email});
 
     if (response.statusCode == 201) {
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
@@ -49,6 +39,27 @@ class AuthApi {
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
       return decoded['status'] as String? ?? 'verified';
+    }
+
+    throw _apiError(response);
+  }
+
+  Future<SessionData> completeRegistration({
+    required String token,
+    required String password,
+    String? handle,
+  }) async {
+    final response = await _post(
+      '/auth/complete-registration',
+      body: {
+        'token': token,
+        'password': password,
+        if (handle != null && handle.trim().isNotEmpty) 'handle': handle.trim(),
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return _sessionFromResponse(response);
     }
 
     throw _apiError(response);
@@ -148,6 +159,7 @@ class AuthApi {
       return ApiException(
         details?.isNotEmpty == true ? details! : error,
         statusCode: response.statusCode,
+        code: error,
       );
     } catch (_) {
       return ApiException(

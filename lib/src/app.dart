@@ -28,6 +28,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   bool _loadingSession = true;
   String? _pendingShareToken;
   String? _pendingEmailVerificationToken;
+  String? _pendingRegistrationCompletionToken;
   String? _authFlashCode;
   bool _authFlashIsError = false;
 
@@ -121,10 +122,21 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     }
 
     try {
-      await _authApi.verifyEmail(token);
-      _authFlashCode = 'email_verified';
-      _authFlashIsError = false;
+      final status = await _authApi.verifyEmail(token);
+      switch (status) {
+        case 'setup_required':
+          _pendingRegistrationCompletionToken = token;
+          _authFlashCode = 'complete_registration_ready';
+          _authFlashIsError = false;
+          break;
+        case 'already_verified':
+        default:
+          _authFlashCode = 'email_verified';
+          _authFlashIsError = false;
+          break;
+      }
     } catch (_) {
+      _pendingRegistrationCompletionToken = null;
       _authFlashCode = 'email_verification_failed';
       _authFlashIsError = true;
     } finally {
@@ -138,6 +150,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     if (!mounted) return;
     setState(() {
       _session = session;
+      _pendingRegistrationCompletionToken = null;
       _authFlashCode = null;
       _authFlashIsError = false;
     });
@@ -152,6 +165,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     if (!mounted) return;
     setState(() {
       _session = null;
+      _pendingRegistrationCompletionToken = null;
       _authFlashCode = null;
       _authFlashIsError = false;
     });
@@ -189,6 +203,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
               onAuthenticated: _handleAuthenticated,
               flashCode: _authFlashCode,
               flashIsError: _authFlashIsError,
+              pendingRegistrationToken: _pendingRegistrationCompletionToken,
             )
           : HomePage(
               session: _session!,
