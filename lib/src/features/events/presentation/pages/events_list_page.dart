@@ -217,15 +217,30 @@ class _EventsGrid extends StatelessWidget {
                   ),
                   sliver: SliverToBoxAdapter(
                     child: Card(
-                      color: Colors.orange.shade50,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Color.alphaBlend(
+                              FiestaaaPalette.primary.withValues(alpha: 0.14),
+                              Theme.of(context).colorScheme.surface,
+                            )
+                          : Colors.orange.shade50,
                       child: ListTile(
-                        leading: const Icon(
+                        leading: Icon(
                           Icons.mark_email_unread,
-                          color: Colors.orange,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFC0B0FF)
+                              : Colors.orange,
                         ),
                         title: Text(
                           S.of(context).invitationsWaitingCount(pendingInvites),
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color:
+                                    Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Theme.of(context).colorScheme.onSurface
+                                    : Colors.orange.shade900,
+                              ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
