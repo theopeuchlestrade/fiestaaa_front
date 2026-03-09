@@ -5,6 +5,7 @@ const String eventFeaturePolls = 'polls';
 const String eventFeatureItems = 'items';
 const String eventFeaturePlaylist = 'playlist';
 const String eventFeaturePayment = 'payment';
+const String eventFeatureExpenses = 'expenses';
 const List<String> defaultEventFeatures = <String>[
   eventFeatureCarpools,
   eventFeaturePolls,
@@ -18,6 +19,8 @@ class EventModel {
     required this.description,
     required this.date,
     required this.startTime,
+    required this.endDate,
+    required this.endTime,
     required this.address,
     required this.latitude,
     required this.longitude,
@@ -37,6 +40,8 @@ class EventModel {
   final String description;
   final DateTime date;
   final Duration startTime;
+  final DateTime? endDate;
+  final Duration? endTime;
   final String address;
   final double? latitude;
   final double? longitude;
@@ -53,12 +58,63 @@ class EventModel {
   DateTime get startDateTime =>
       DateTime(date.year, date.month, date.day).add(startTime);
 
+  DateTime? get endDateTime {
+    if (endDate == null || endTime == null) return null;
+    return DateTime(endDate!.year, endDate!.month, endDate!.day).add(endTime!);
+  }
+
+  bool get hasEndDateTime => endDate != null && endTime != null;
+
+  bool get isFinished {
+    final now = DateTime.now();
+    final computedEnd = endDateTime;
+    if (computedEnd != null) {
+      return now.isAfter(computedEnd);
+    }
+    if (now.isBefore(startDateTime)) {
+      return false;
+    }
+    return !_isSameDay(now, date);
+  }
+
+  bool get isOngoing {
+    if (isFinished) return false;
+    final now = DateTime.now();
+    if (now.isBefore(startDateTime)) return false;
+    final computedEnd = endDateTime;
+    if (computedEnd != null) {
+      return !now.isAfter(computedEnd);
+    }
+    return _isSameDay(now, date);
+  }
+
+  bool get isUpcoming => !isFinished && !isOngoing;
+
+  bool get isReadOnly => isFinished;
+
+  String get status {
+    if (isFinished) return 'finished';
+    if (isOngoing) return 'ongoing';
+    return 'upcoming';
+  }
+
   String get formattedDate =>
       DateFormat.yMMMMd('fr_FR').format(date); // locale friendly
 
   String get formattedTime {
     final hours = startTime.inHours.toString().padLeft(2, '0');
     final minutes = (startTime.inMinutes % 60).toString().padLeft(2, '0');
+    return '$hours:$minutes';
+  }
+
+  String? get formattedEndDate =>
+      endDate == null ? null : DateFormat.yMMMMd('fr_FR').format(endDate!);
+
+  String? get formattedEndTime {
+    final value = endTime;
+    if (value == null) return null;
+    final hours = value.inHours.toString().padLeft(2, '0');
+    final minutes = (value.inMinutes % 60).toString().padLeft(2, '0');
     return '$hours:$minutes';
   }
 
@@ -71,6 +127,8 @@ class EventModel {
   factory EventModel.fromJson(Map<String, dynamic> json) {
     final date = DateTime.parse(json['date_event'] as String);
     final startTime = _parseTime(json['start_time'] as String);
+    final endDateRaw = json['end_date'] as String?;
+    final endTimeRaw = json['end_time'] as String?;
     final paymentProviderId = (json['payment_provider_id'] as num?)?.toInt();
     final paymentIdentifier = json['payment_identifier'] as String?;
     final playlistUrl = json['playlist_url'] as String?;
@@ -81,6 +139,12 @@ class EventModel {
       description: json['description'] as String,
       date: date,
       startTime: startTime,
+      endDate: endDateRaw == null || endDateRaw.isEmpty
+          ? null
+          : DateTime.parse(endDateRaw),
+      endTime: endTimeRaw == null || endTimeRaw.isEmpty
+          ? null
+          : _parseTime(endTimeRaw),
       address: json['address'] as String,
       latitude: _parseNullableDouble(json['latitude']),
       longitude: _parseNullableDouble(json['longitude']),
@@ -120,6 +184,10 @@ class EventModel {
     return parsed;
   }
 
+  static bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
   static List<String> _parseEnabledFeatures(
     dynamic value, {
     required int? paymentProviderId,
@@ -133,6 +201,7 @@ class EventModel {
       eventFeatureItems,
       eventFeaturePlaylist,
       eventFeaturePayment,
+      eventFeatureExpenses,
     };
 
     if (value is List) {
@@ -173,6 +242,8 @@ class EventPayload {
     required this.description,
     required this.date,
     required this.startTime,
+    this.endDate,
+    this.endTime,
     required this.address,
     this.invitationDeadline,
     this.latitude,
@@ -190,6 +261,8 @@ class EventPayload {
   final String description;
   final DateTime date;
   final Duration startTime;
+  final DateTime? endDate;
+  final Duration? endTime;
   final String address;
   final DateTime? invitationDeadline;
   final double? latitude;
@@ -208,6 +281,10 @@ class EventPayload {
       'description': description,
       'date_event': DateFormat('yyyy-MM-dd').format(date),
       'start_time': _formatDuration(startTime),
+      'end_date': endDate == null
+          ? null
+          : DateFormat('yyyy-MM-dd').format(endDate!),
+      'end_time': endTime == null ? null : _formatDuration(endTime!),
       'address': address,
       'invitation_deadline': invitationDeadline == null
           ? null
