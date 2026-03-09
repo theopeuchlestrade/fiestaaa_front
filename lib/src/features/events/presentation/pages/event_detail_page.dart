@@ -3143,6 +3143,9 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
   @override
   Widget build(BuildContext context) {
     final invitation = widget.invitation;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     if (widget.loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -3153,30 +3156,61 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
     final waiting = invitation.status == 'Waiting';
     final accepted = invitation.status == 'Accepted';
     final expired = invitation.status == 'Expired';
+    Color tonedSurface(Color tint, double opacity) {
+      return Color.alphaBlend(
+        tint.withValues(alpha: opacity),
+        scheme.surface,
+      );
+    }
 
     Color background;
     Color accent;
+    Color bodyColor;
+    Color buttonOutlineColor;
+    Color leaveActionColor;
     IconData icon;
     String statusLabel;
 
     if (expired) {
-      background = Colors.grey.shade100;
-      accent = Colors.grey.shade700;
+      background = isDark
+          ? tonedSurface(const Color(0xFF90A4AE), 0.12)
+          : Colors.grey.shade100;
+      accent = isDark ? const Color(0xFFB0BEC5) : Colors.grey.shade700;
+      bodyColor = isDark ? scheme.onSurface : Colors.grey.shade800;
+      buttonOutlineColor = accent.withValues(alpha: isDark ? 0.45 : 0.22);
+      leaveActionColor = scheme.error;
       icon = Icons.hourglass_disabled;
       statusLabel = S.of(context).invitationExpired;
     } else if (waiting) {
-      background = Colors.orange.shade50;
-      accent = Colors.orange.shade800;
+      background = isDark
+          ? tonedSurface(FiestaaaPalette.primary, 0.14)
+          : Colors.orange.shade50;
+      accent = isDark ? const Color(0xFFC0B0FF) : Colors.orange.shade800;
+      bodyColor = isDark ? scheme.onSurface : Colors.orange.shade900;
+      buttonOutlineColor = isDark
+          ? scheme.error.withValues(alpha: 0.4)
+          : Colors.red.shade200;
+      leaveActionColor = scheme.error;
       icon = Icons.mark_email_unread;
       statusLabel = S.of(context).invitationStatusWaiting;
     } else if (accepted) {
-      background = Colors.green.shade50;
-      accent = Colors.green.shade800;
+      background = isDark
+          ? tonedSurface(FiestaaaPalette.secondary, 0.14)
+          : Colors.green.shade50;
+      accent = isDark ? const Color(0xFF9BE8FA) : Colors.green.shade800;
+      bodyColor = isDark ? scheme.onSurface : Colors.green.shade900;
+      buttonOutlineColor = scheme.error.withValues(alpha: isDark ? 0.42 : 0.22);
+      leaveActionColor = isDark ? const Color(0xFFFF8A80) : Colors.red.shade700;
       icon = Icons.check_circle;
       statusLabel = S.of(context).participationConfirmed;
     } else {
-      background = Colors.grey.shade200;
-      accent = Colors.grey.shade700;
+      background = isDark
+          ? tonedSurface(FiestaaaPalette.accent, 0.12)
+          : Colors.grey.shade200;
+      accent = isDark ? const Color(0xFFD4C4FF) : Colors.grey.shade700;
+      bodyColor = isDark ? scheme.onSurface : Colors.grey.shade800;
+      buttonOutlineColor = accent.withValues(alpha: isDark ? 0.4 : 0.24);
+      leaveActionColor = scheme.error;
       icon = Icons.cancel_outlined;
       statusLabel = S.of(context).invitationDeclined;
     }
@@ -3242,8 +3276,10 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                     child: OutlinedButton(
                       onPressed: () => widget.onRespond('Declined'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red.shade700,
-                        side: BorderSide(color: Colors.red.shade200),
+                        foregroundColor: isDark
+                            ? const Color(0xFFFFB4AB)
+                            : Colors.red.shade700,
+                        side: BorderSide(color: buttonOutlineColor),
                       ),
                       child: Text(S.of(context).decline),
                     ),
@@ -3253,7 +3289,9 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                     child: ElevatedButton(
                       onPressed: () => widget.onRespond('Accepted'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green.shade600,
+                        backgroundColor: isDark
+                            ? FiestaaaPalette.primary
+                            : Colors.green.shade600,
                         foregroundColor: Colors.white,
                       ),
                       child: Text(S.of(context).accept),
@@ -3264,38 +3302,30 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
               const SizedBox(height: 12),
               Text(
                 S.of(context).confirmPresence,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: theme.textTheme.bodyMedium?.copyWith(color: bodyColor),
               ),
             ] else if (waiting && widget.readOnly) ...[
               Text(
                 S.of(context).eventFinishedReadOnly,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: accent),
+                style: theme.textTheme.bodyMedium?.copyWith(color: bodyColor),
               ),
             ] else if (expired) ...[
               Text(
                 S.of(context).deadlinePassedInactive,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: accent),
+                style: theme.textTheme.bodyMedium?.copyWith(color: bodyColor),
               ),
             ] else
               Text(
                 accepted
                     ? S.of(context).acceptedMessage
                     : S.of(context).declinedMessage,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: accent),
+                style: theme.textTheme.bodyMedium?.copyWith(color: bodyColor),
               ),
             if (accepted) ...[
               const SizedBox(height: 12),
               Text(
                 S.of(context).leaveFiestaaaPrompt,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade800),
+                style: theme.textTheme.bodySmall?.copyWith(color: bodyColor),
               ),
               const SizedBox(height: 8),
               TextButton.icon(
@@ -3323,7 +3353,7 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                 },
                 icon: const Icon(Icons.logout),
                 style: TextButton.styleFrom(
-                  foregroundColor: Colors.red.shade700,
+                  foregroundColor: leaveActionColor,
                 ),
                 label: Text(S.of(context).leaveFiestaaaAction),
               ),
