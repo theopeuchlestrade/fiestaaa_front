@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:http/http.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class RealtimeClient {
   RealtimeClient({required this.token, this.eventId, http.Client? httpClient})
-    : _httpClient = httpClient ?? http.Client(),
+    : _httpClient = httpClient ?? createApiHttpClient(),
       _ownsHttpClient = httpClient == null;
 
   final String token;

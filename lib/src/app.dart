@@ -7,6 +7,7 @@ import 'package:fiestaaa_front/src/features/home/presentation/pages/home_page.da
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/src/core/push_notification_service.dart';
 import 'package:fiestaaa_front/src/core/theme_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
@@ -52,6 +53,24 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   Future<void> _restoreSession() async {
     final session = await SessionStorage.load();
     if (session == null) {
+      if (kIsWeb) {
+        SessionData? refreshed;
+        try {
+          refreshed = await _authApi.validateSession('');
+        } catch (_) {
+          refreshed = null;
+        }
+        if (!mounted) return;
+        setState(() {
+          _session = refreshed;
+          _loadingSession = false;
+        });
+        if (refreshed != null) {
+          await PushNotificationService.instance.syncSession(refreshed);
+          await SessionStorage.save(refreshed);
+        }
+        return;
+      }
       if (!mounted) return;
       setState(() {
         _session = null;
@@ -93,6 +112,9 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   }
 
   Future<void> _handleLogout() async {
+    try {
+      await _authApi.logout();
+    } catch (_) {}
     await PushNotificationService.instance.clearSession();
     await SessionStorage.clear();
     if (!mounted) return;
