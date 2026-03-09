@@ -1,4 +1,5 @@
 import 'package:fiestaaa_front/src/core/locale_service.dart';
+import 'package:fiestaaa_front/src/core/query_param_sanitizer.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/data/session_storage.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
@@ -26,11 +27,21 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   SessionData? _session;
   bool _loadingSession = true;
   String? _pendingShareToken;
+  String? _pendingEmailVerificationToken;
+  String? _authFlashCode;
+  bool _authFlashIsError = false;
 
   @override
   void initState() {
     super.initState();
     _pendingShareToken = Uri.base.queryParameters['shareToken'];
+    _pendingEmailVerificationToken =
+        Uri.base.queryParameters['verifyEmailToken'];
+    if (kIsWeb &&
+        (_pendingShareToken != null ||
+            _pendingEmailVerificationToken != null)) {
+      removeSensitiveQueryParameters(['shareToken', 'verifyEmailToken']);
+    }
     _localeService.addListener(_onLocaleChanged);
     _themeService.addListener(_onThemeChanged);
     _init();
@@ -39,6 +50,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   Future<void> _init() async {
     await _localeService.loadSavedLocale();
     await _themeService.loadSavedTheme();
+    await _consumeEmailVerificationToken();
     await _restoreSession();
   }
 
@@ -102,12 +114,32 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     }
   }
 
+  Future<void> _consumeEmailVerificationToken() async {
+    final token = _pendingEmailVerificationToken;
+    if (token == null || token.isEmpty) {
+      return;
+    }
+
+    try {
+      await _authApi.verifyEmail(token);
+      _authFlashCode = 'email_verified';
+      _authFlashIsError = false;
+    } catch (_) {
+      _authFlashCode = 'email_verification_failed';
+      _authFlashIsError = true;
+    } finally {
+      _pendingEmailVerificationToken = null;
+    }
+  }
+
   Future<void> _handleAuthenticated(SessionData session) async {
     await SessionStorage.save(session);
     await PushNotificationService.instance.syncSession(session);
     if (!mounted) return;
     setState(() {
       _session = session;
+      _authFlashCode = null;
+      _authFlashIsError = false;
     });
   }
 
@@ -120,6 +152,8 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     if (!mounted) return;
     setState(() {
       _session = null;
+      _authFlashCode = null;
+      _authFlashIsError = false;
     });
   }
 
@@ -151,7 +185,11 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       home: _loadingSession
           ? const _SplashScreen()
           : _session == null
-          ? AuthPage(onAuthenticated: _handleAuthenticated)
+          ? AuthPage(
+              onAuthenticated: _handleAuthenticated,
+              flashCode: _authFlashCode,
+              flashIsError: _authFlashIsError,
+            )
           : HomePage(
               session: _session!,
               onLogout: _handleLogout,

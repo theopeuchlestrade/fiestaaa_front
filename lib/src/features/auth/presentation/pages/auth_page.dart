@@ -17,9 +17,16 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 enum AuthMode { login, register }
 
 class AuthPage extends StatefulWidget {
-  const AuthPage({super.key, required this.onAuthenticated});
+  const AuthPage({
+    super.key,
+    required this.onAuthenticated,
+    this.flashCode,
+    this.flashIsError = false,
+  });
 
   final Future<void> Function(SessionData session) onAuthenticated;
+  final String? flashCode;
+  final bool flashIsError;
 
   @override
   State<AuthPage> createState() => _AuthPageState();
@@ -39,6 +46,7 @@ class _AuthPageState extends State<AuthPage> {
   bool _obscureConfirm = true;
   bool _isSubmitting = false;
   String? _socialInProgress;
+  String? _lastFlashCode;
 
   static const String _feedbackEmail = 'feedback@fiestaaa.app';
   static const String _bugTemplate = '''
@@ -55,6 +63,9 @@ Bug report
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showFlashIfNeeded();
+    });
   }
 
   Future<void> _ensureGoogleInitialized() {
@@ -83,6 +94,17 @@ Bug report
     });
   }
 
+  @override
+  void didUpdateWidget(covariant AuthPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.flashCode != oldWidget.flashCode ||
+        widget.flashIsError != oldWidget.flashIsError) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showFlashIfNeeded();
+      });
+    }
+  }
+
   bool get _shouldShowAppleButton {
     if (kIsWeb) {
       return appleServiceId.isNotEmpty && appleRedirectUri.isNotEmpty;
@@ -101,6 +123,26 @@ Bug report
     await Clipboard.setData(const ClipboardData(text: _bugTemplate));
     if (!mounted) return;
     _showSnack(S.of(context).bugTemplateCopied);
+  }
+
+  void _showFlashIfNeeded() {
+    if (!mounted) return;
+    final code = widget.flashCode;
+    if (code == null || code.isEmpty || code == _lastFlashCode) {
+      return;
+    }
+
+    _lastFlashCode = code;
+    final l10n = S.of(context);
+    final message = switch (code) {
+      'email_verified' => l10n.emailVerified,
+      'email_verification_failed' => l10n.emailVerificationFailed,
+      _ => null,
+    };
+    if (message == null || message.isEmpty) {
+      return;
+    }
+    _showSnack(message, isError: widget.flashIsError);
   }
 
   String? _validatePassword(String? value) {
@@ -342,7 +384,7 @@ Bug report
 
     try {
       if (_mode == AuthMode.register) {
-        await _api.register(
+        final status = await _api.register(
           email: _emailController.text.trim(),
           password: _passwordController.text,
           handle: _handleController.text.trim().isEmpty
@@ -350,7 +392,12 @@ Bug report
               : _handleController.text.trim(),
         );
         if (!mounted) return;
-        _showSnack(S.of(context).accountCreated);
+        final l10n = S.of(context);
+        final message = switch (status) {
+          'verification_email_sent' => l10n.verificationEmailSent,
+          _ => l10n.verificationPending,
+        };
+        _showSnack(message);
         setState(() {
           _mode = AuthMode.login;
           _confirmPasswordController.clear();

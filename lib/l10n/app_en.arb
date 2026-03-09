@@ -904,5 +904,9 @@
     "placeholders": {
       "participants": {"type": "String"}
     }
-  }
+  },
+  "verificationEmailSent": "Check your email to verify your account.",
+  "verificationPending": "Your registration is pending email verification.",
+  "emailVerified": "Your email has been verified. You can now sign in.",
+  "emailVerificationFailed": "This verification link is invalid or expired."
 }

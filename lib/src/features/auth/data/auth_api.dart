@@ -21,7 +21,7 @@ class AuthApi {
 
   final http.Client _client;
 
-  Future<void> register({
+  Future<String> register({
     required String email,
     required String password,
     String? handle,
@@ -36,7 +36,19 @@ class AuthApi {
     );
 
     if (response.statusCode == 201) {
-      return;
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      return decoded['status'] as String? ?? 'verification_pending';
+    }
+
+    throw _apiError(response);
+  }
+
+  Future<String> verifyEmail(String token) async {
+    final response = await _post('/auth/verify-email', body: {'token': token});
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      return decoded['status'] as String? ?? 'verified';
     }
 
     throw _apiError(response);

@@ -920,5 +920,9 @@
     "placeholders": {
       "participants": {"type": "String"}
     }
-  }
+  },
+  "verificationEmailSent": "Vérifie ton email pour activer ton compte.",
+  "verificationPending": "Ton inscription est en attente de vérification email.",
+  "emailVerified": "Ton email est vérifié. Tu peux maintenant te connecter.",
+  "emailVerificationFailed": "Ce lien de vérification est invalide ou expiré."
 }
