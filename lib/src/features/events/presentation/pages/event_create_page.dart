@@ -42,6 +42,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
 
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
+  bool _hasEndDateTime = false;
+  DateTime? _selectedEndDate;
+  TimeOfDay? _selectedEndTime;
   DateTime? _invitationDeadline;
   bool _submitting = false;
   bool _loadingProviders = true;
@@ -100,6 +103,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
       eventFeatureItems,
       eventFeaturePlaylist,
       eventFeaturePayment,
+      eventFeatureExpenses,
     ];
     return order.where(_enabledFeatures.contains).toList(growable: false);
   }
@@ -172,6 +176,34 @@ class _EventCreatePageState extends State<EventCreatePage> {
     );
     if (picked != null) {
       setState(() => _selectedTime = picked);
+    }
+  }
+
+  Future<void> _pickEndDate() async {
+    final initialDate = _selectedEndDate ?? _selectedDate;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate.isBefore(_selectedDate)
+          ? _selectedDate
+          : initialDate,
+      firstDate: _selectedDate,
+      lastDate: _selectedDate.add(const Duration(days: 365)),
+      locale: Localizations.localeOf(context),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedEndDate = picked;
+      });
+    }
+  }
+
+  Future<void> _pickEndTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedEndTime ?? _selectedTime,
+    );
+    if (picked != null) {
+      setState(() => _selectedEndTime = picked);
     }
   }
 
@@ -297,6 +329,18 @@ class _EventCreatePageState extends State<EventCreatePage> {
       setState(() => _submitting = false);
       return;
     }
+    final endDate = _hasEndDateTime ? _selectedEndDate : null;
+    final endTime = _hasEndDateTime && _selectedEndTime != null
+        ? Duration(
+            hours: _selectedEndTime!.hour,
+            minutes: _selectedEndTime!.minute,
+          )
+        : null;
+    if (_hasEndDateTime && (endDate == null || endTime == null)) {
+      _showSnack(S.of(context).selectEndDateAndTime, isError: true);
+      setState(() => _submitting = false);
+      return;
+    }
     final payload = EventPayload(
       name: _nameController.text.trim(),
       description: _descriptionController.text.trim(),
@@ -305,6 +349,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
         hours: _selectedTime.hour,
         minutes: _selectedTime.minute,
       ),
+      endDate: endDate,
+      endTime: endTime,
       invitationDeadline: _invitationDeadline,
       address: selectedAddress.label,
       latitude: selectedAddress.latitude,
@@ -337,6 +383,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
         _selectedSuggestion = null;
         _addressSuggestions = [];
         _addressSearchError = null;
+        _hasEndDateTime = false;
+        _selectedEndDate = null;
+        _selectedEndTime = null;
         _invitationDeadline = null;
         _selectedPlaylistProvider = null;
         _playlistChanged = false;
@@ -644,6 +693,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
     final theme = Theme.of(context);
     final playlistEnabled = _enabledFeatures.contains(eventFeaturePlaylist);
     final paymentEnabled = _enabledFeatures.contains(eventFeaturePayment);
+    final expensesEnabled = _enabledFeatures.contains(eventFeatureExpenses);
     final tiles = <Widget>[
       SwitchListTile.adaptive(
         title: Text(l10n.carpools),
@@ -681,6 +731,14 @@ class _EventCreatePageState extends State<EventCreatePage> {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           child: _buildPlaylistSection(),
         ),
+      const Divider(height: 1),
+      SwitchListTile.adaptive(
+        title: Text(l10n.sharedExpenses),
+        subtitle: expensesEnabled ? Text(l10n.sharedExpensesHelper) : null,
+        secondary: const Icon(Icons.receipt_long_outlined),
+        value: expensesEnabled,
+        onChanged: (value) => _toggleFeature(eventFeatureExpenses, value),
+      ),
       const Divider(height: 1),
       SwitchListTile.adaptive(
         title: Text(l10n.payment),
@@ -926,6 +984,90 @@ class _EventCreatePageState extends State<EventCreatePage> {
     );
   }
 
+  Widget _buildScheduleSection() {
+    final l10n = S.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _pickDate,
+                icon: const Icon(Icons.event),
+                label: Text(
+                  DateFormat.yMMMMd(l10n.localeName).format(_selectedDate),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _pickTime,
+                icon: const Icon(Icons.access_time),
+                label: Text(_selectedTime.format(context)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.eventHasEndDateTime),
+          subtitle: Text(
+            _hasEndDateTime
+                ? l10n.eventHasEndDateTimeHelper
+                : l10n.singleDateEventHelper,
+          ),
+          secondary: const Icon(Icons.timelapse_outlined),
+          value: _hasEndDateTime,
+          onChanged: (value) {
+            setState(() {
+              _hasEndDateTime = value;
+              if (value) {
+                _selectedEndDate ??= _selectedDate;
+                _selectedEndTime ??= _selectedTime;
+              } else {
+                _selectedEndDate = null;
+                _selectedEndTime = null;
+              }
+            });
+          },
+        ),
+        if (_hasEndDateTime)
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _pickEndDate,
+                  icon: const Icon(Icons.event_available),
+                  label: Text(
+                    _selectedEndDate == null
+                        ? l10n.endDate
+                        : DateFormat.yMMMMd(
+                            l10n.localeName,
+                          ).format(_selectedEndDate!),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _pickEndTime,
+                  icon: const Icon(Icons.schedule),
+                  label: Text(
+                    _selectedEndTime == null
+                        ? l10n.endTime
+                        : _selectedEndTime!.format(context),
+                  ),
+                ),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return FiestaaaPageLayout(
@@ -976,29 +1118,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
                       const SizedBox(height: 16),
                       _buildAddressField(),
                       const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _pickDate,
-                              icon: const Icon(Icons.event),
-                              label: Text(
-                                DateFormat.yMMMMd(
-                                  S.of(context).localeName,
-                                ).format(_selectedDate),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _pickTime,
-                              icon: const Icon(Icons.access_time),
-                              label: Text(_selectedTime.format(context)),
-                            ),
-                          ),
-                        ],
-                      ),
+                      _buildScheduleSection(),
                       const SizedBox(height: 16),
                       _buildInvitationDeadlineField(),
                       const SizedBox(height: 16),

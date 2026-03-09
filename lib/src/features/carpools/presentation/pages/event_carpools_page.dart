@@ -17,6 +17,7 @@ class EventCarpoolsPage extends StatefulWidget {
     required this.session,
     required this.isOwner,
     required this.hasAcceptedInvitation,
+    required this.eventReadOnly,
     this.compactModal = false,
   });
 
@@ -26,6 +27,7 @@ class EventCarpoolsPage extends StatefulWidget {
   final SessionData session;
   final bool isOwner;
   final bool hasAcceptedInvitation;
+  final bool eventReadOnly;
   final bool compactModal;
 
   @override
@@ -43,7 +45,8 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
   RealtimeClient? _realtime;
   String? _sortBy; // New: Current sort option
 
-  bool get _canInteract => widget.isOwner || widget.hasAcceptedInvitation;
+  bool get _canInteract =>
+      !widget.eventReadOnly && (widget.isOwner || widget.hasAcceptedInvitation);
 
   @override
   void initState() {
@@ -384,6 +387,9 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
   }
 
   Widget _buildWarningBanner(S l10n) {
+    final message = widget.eventReadOnly
+        ? l10n.eventFinishedReadOnly
+        : l10n.acceptInvitationForCarpool;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -397,7 +403,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              l10n.acceptInvitationForCarpool,
+              message,
               style: TextStyle(
                 color: Colors.amber.shade900,
                 fontWeight: FontWeight.w500,

@@ -4,6 +4,7 @@ import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/item_contribution_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/address_suggestion.dart';
+import 'package:fiestaaa_front/src/features/events/domain/event_expense_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_item_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_poll_model.dart';
@@ -428,6 +429,130 @@ class EventsApi {
       'Suppression impossible (${response.statusCode})',
       statusCode: response.statusCode,
     );
+  }
+
+  Future<List<EventExpenseModel>> fetchEventExpenses({
+    required String token,
+    required int eventId,
+  }) async {
+    final response = await _client.get(
+      Uri.parse('$apiBaseUrl/events/$eventId/expenses'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body) as List<dynamic>;
+      return decoded
+          .map((raw) => EventExpenseModel.fromJson(raw as Map<String, dynamic>))
+          .toList();
+    }
+
+    throw _apiError(
+      response,
+      fallbackMessage: 'Impossible de charger les dépenses',
+    );
+  }
+
+  Future<EventExpensesSummaryModel> fetchEventExpensesSummary({
+    required String token,
+    required int eventId,
+  }) async {
+    final response = await _client.get(
+      Uri.parse('$apiBaseUrl/events/$eventId/expenses/summary'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return EventExpensesSummaryModel.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    }
+
+    throw _apiError(
+      response,
+      fallbackMessage: 'Impossible de calculer le partage',
+    );
+  }
+
+  Future<EventExpenseModel> createEventExpense({
+    required String token,
+    required int eventId,
+    required String title,
+    required int amountCents,
+    required int paidByUserId,
+    required List<int> participantUserIds,
+    String? note,
+    DateTime? expenseDate,
+  }) async {
+    final response = await _client.post(
+      Uri.parse('$apiBaseUrl/events/$eventId/expenses'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'title': title,
+        'amount_cents': amountCents,
+        'paid_by_user_id': paidByUserId,
+        'participant_user_ids': participantUserIds,
+        'note': note,
+        if (expenseDate != null)
+          'expense_date': expenseDate.toUtc().toIso8601String(),
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return EventExpenseModel.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    }
+
+    throw _apiError(
+      response,
+      fallbackMessage: 'Impossible d’ajouter la dépense',
+    );
+  }
+
+  Future<void> deleteEventExpense({
+    required String token,
+    required int eventId,
+    required int expenseId,
+  }) async {
+    final response = await _client.delete(
+      Uri.parse('$apiBaseUrl/events/$eventId/expenses/$expenseId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return;
+    }
+
+    throw _apiError(
+      response,
+      fallbackMessage: 'Impossible de supprimer la dépense',
+    );
+  }
+
+  ApiException _apiError(
+    http.Response response, {
+    required String fallbackMessage,
+  }) {
+    try {
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final details = decoded['details'] as String?;
+      final error = decoded['error'] as String?;
+      final message = details?.isNotEmpty == true
+          ? details!
+          : (error?.isNotEmpty == true
+                ? error!
+                : '$fallbackMessage (${response.statusCode})');
+      return ApiException(message, statusCode: response.statusCode);
+    } catch (_) {
+      return ApiException(
+        '$fallbackMessage (${response.statusCode})',
+        statusCode: response.statusCode,
+      );
+    }
   }
 
   void dispose() {

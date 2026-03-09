@@ -17,6 +17,7 @@ class EventInvitationsPage extends StatefulWidget {
     required this.session,
     required this.eventId,
     required this.ownerEmail,
+    required this.eventReadOnly,
     this.realtimeStream,
     this.compactModal = false,
   });
@@ -24,6 +25,7 @@ class EventInvitationsPage extends StatefulWidget {
   final SessionData session;
   final int eventId;
   final String ownerEmail;
+  final bool eventReadOnly;
   final Stream<Map<String, dynamic>>? realtimeStream;
   final bool compactModal;
 
@@ -52,6 +54,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
 
   bool get _isOwner =>
       widget.session.email.toLowerCase() == widget.ownerEmail.toLowerCase();
+  bool get _canMutate => _isOwner && !widget.eventReadOnly;
 
   @override
   void initState() {
@@ -157,7 +160,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   }
 
   Future<void> _createInvitation() async {
-    if (!_isOwner) return;
+    if (!_canMutate) return;
     final email = _emailController.text.trim();
     if (email.isEmpty) {
       _showSnack(S.of(context).identifierRequired, isError: true);
@@ -202,7 +205,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   }
 
   Future<void> _deleteInvitation(InvitationModel invitation) async {
-    if (!_isOwner) return;
+    if (!_canMutate) return;
     try {
       await _api.deleteInvitation(
         token: widget.session.token,
@@ -305,7 +308,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   }
 
   Future<void> _inviteSelectedFriends() async {
-    if (_selectedFriendHandles.isEmpty || !_isOwner) return;
+    if (_selectedFriendHandles.isEmpty || !_canMutate) return;
     setState(() => _invitingFriends = true);
     var successCount = 0;
     String? firstError;
@@ -422,7 +425,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       }
     }
 
-    if (_isOwner && !isEventOwner) {
+    if (_canMutate && !isEventOwner) {
       actions.add(
         IconButton(
           onPressed: () => _deleteInvitation(invitation),
@@ -476,7 +479,36 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
               ),
             ],
           ),
-          if (_isOwner) ...[
+          if (widget.eventReadOnly) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.lock_clock_outlined,
+                    color: Colors.orange.shade800,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      S.of(context).eventFinishedReadOnly,
+                      style: TextStyle(
+                        color: Colors.orange.shade900,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (_canMutate) ...[
             _InviteForm(
               emailController: _emailController,
               onSubmit: _submitting ? null : _createInvitation,
