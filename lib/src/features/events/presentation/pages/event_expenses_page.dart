@@ -206,7 +206,7 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
     final titleController = TextEditingController();
     final amountController = TextEditingController();
     final noteController = TextEditingController();
-    final selectedUserIds = <int>{if (_currentUserId != null) _currentUserId!};
+    final selectedUserIds = <int>{?_currentUserId};
     int? selectedPayerUserId =
         _currentUserId ??
         (selectableMembers.isNotEmpty ? selectableMembers.first.userId : null);

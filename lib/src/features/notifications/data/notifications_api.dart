@@ -26,8 +26,8 @@ class NotificationsApi {
       body: jsonEncode({
         'token': fcmToken,
         'platform': platform,
-        if (locale != null) 'locale': locale,
-        if (appVersion != null) 'app_version': appVersion,
+        'locale': ?locale,
+        'app_version': ?appVersion,
       }),
     );
     if (resp.statusCode >= 200 && resp.statusCode < 300) return;
@@ -55,8 +55,8 @@ class NotificationsApi {
         'old_token': oldToken,
         'new_token': newToken,
         'platform': platform,
-        if (locale != null) 'locale': locale,
-        if (appVersion != null) 'app_version': appVersion,
+        'locale': ?locale,
+        'app_version': ?appVersion,
       }),
     );
     if (resp.statusCode >= 200 && resp.statusCode < 300) return;
