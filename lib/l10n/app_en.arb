@@ -820,5 +820,89 @@
     "placeholders": {
       "count": {"type": "int"}
     }
+  },
+  "finishedEvent": "Finished",
+  "eventFinishedReadOnly": "This fiestaaa is finished. All features are now read-only.",
+  "untilLabel": "until",
+  "eventHasEndDateTime": "Add an end date and time",
+  "eventHasEndDateTimeHelper": "Useful for trips, weekends or vacations.",
+  "singleDateEventHelper": "Disabled: this fiestaaa only keeps a start date and time.",
+  "endDate": "End date",
+  "endTime": "End time",
+  "selectEndDateAndTime": "Select an end date and time.",
+  "sharedExpenses": "Shared expenses",
+  "sharedExpensesHelper": "Everyone can add expenses so the final split is computed automatically.",
+  "sharedExpensesLoadFailed": "Unable to load shared expenses.",
+  "sharedExpensesLiveSubtitle": "Add expenses as the fiestaaa progresses.",
+  "sharedExpensesFinalSubtitle": "This fiestaaa is finished: here is the final read-only split.",
+  "addSharedExpense": "Add an expense",
+  "expenseTitle": "Expense title",
+  "expenseAmount": "Amount",
+  "expensePayer": "Who paid?",
+  "noteOptional": "Note (optional)",
+  "expenseParticipants": "Who is included?",
+  "expenseFormInvalid": "Enter a valid title and amount.",
+  "selectExpenseParticipants": "Select at least one participant.",
+  "expenseCreateFailed": "Unable to add the expense.",
+  "expenseCreated": "Expense added.",
+  "deleteExpenseTitle": "Delete expense",
+  "deleteExpenseWarning": "This expense will be removed from the shared calculation.",
+  "expenseDeleted": "Expense deleted.",
+  "expenseDeleteFailed": "Unable to delete the expense.",
+  "finalSplit": "Final split",
+  "currentSplitPreview": "Current split preview",
+  "totalSharedExpenses": "Total expenses: {amount}",
+  "@totalSharedExpenses": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "expensePaid": "Paid: {amount}",
+  "@expensePaid": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "expenseOwed": "Owed: {amount}",
+  "@expenseOwed": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "expenseReceives": "Should receive: {amount}",
+  "@expenseReceives": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "expenseOwes": "Should pay: {amount}",
+  "@expenseOwes": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "settlementSuggestions": "Suggested settlements",
+  "noSettlementNeeded": "No reimbursement needed.",
+  "settlementLine": "{fromUser} should pay {amount} to {toUser}",
+  "@settlementLine": {
+    "placeholders": {
+      "fromUser": {"type": "String"},
+      "toUser": {"type": "String"},
+      "amount": {"type": "String"}
+    }
+  },
+  "noSharedExpensesRecorded": "No expense has been recorded for this fiestaaa.",
+  "noSharedExpensesYet": "No shared expenses yet.",
+  "paidBy": "Paid by {user}",
+  "@paidBy": {
+    "placeholders": {
+      "user": {"type": "String"}
+    }
+  },
+  "concernedParticipants": "Participants: {participants}",
+  "@concernedParticipants": {
+    "placeholders": {
+      "participants": {"type": "String"}
+    }
   }
 }

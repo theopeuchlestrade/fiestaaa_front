@@ -71,8 +71,8 @@ class AuthApi {
     final response = await _post(
       '/auth/oauth/$provider',
       body: {
-        if (idToken != null) 'idToken': idToken,
-        if (accessToken != null) 'accessToken': accessToken,
+        'idToken': ?idToken,
+        'accessToken': ?accessToken,
         if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
         if (displayName != null && displayName.trim().isNotEmpty)
           'name': displayName.trim(),
