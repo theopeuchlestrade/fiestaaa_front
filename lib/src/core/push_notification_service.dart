@@ -180,7 +180,7 @@ class PushNotificationService {
       android: androidSettings,
       iOS: iosSettings,
     );
-    await _localNotifications.initialize(initSettings);
+    await _localNotifications.initialize(settings: initSettings);
 
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       final androidPlugin = _localNotifications
@@ -227,10 +227,10 @@ class PushNotificationService {
       iOS: iosDetails,
     );
     await _localNotifications.show(
-      notif.hashCode,
-      notif.title,
-      notif.body,
-      details,
+      id: notif.hashCode,
+      title: notif.title,
+      body: notif.body,
+      notificationDetails: details,
     );
   }
 }

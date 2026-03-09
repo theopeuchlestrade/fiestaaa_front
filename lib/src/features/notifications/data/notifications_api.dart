@@ -1,12 +1,14 @@
 import 'dart:convert';
 
+import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 
 class NotificationsApi {
-  NotificationsApi({http.Client? client}) : _client = client ?? http.Client();
+  NotificationsApi({http.Client? client})
+    : _client = client ?? createApiHttpClient();
 
   final http.Client _client;
 
@@ -70,9 +72,13 @@ class NotificationsApi {
     required String authToken,
     required String fcmToken,
   }) async {
-    final resp = await _client.delete(
-      Uri.parse('$apiBaseUrl/me/devices/$fcmToken'),
-      headers: {'Authorization': 'Bearer $authToken'},
+    final resp = await _client.post(
+      Uri.parse('$apiBaseUrl/me/devices/revoke'),
+      headers: {
+        'Authorization': 'Bearer $authToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'token': fcmToken}),
     );
     if (resp.statusCode >= 200 && resp.statusCode < 300) return;
     throw ApiException(

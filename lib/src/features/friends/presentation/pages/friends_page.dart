@@ -968,9 +968,10 @@ class _AddFriendTab extends StatelessWidget {
                       ),
                       itemBuilder: (context, index) {
                         final suggestion = suggestions[index];
+                        final email = suggestion.email?.trim() ?? '';
                         final title = suggestion.handle.isNotEmpty
                             ? '@${suggestion.handle}'
-                            : suggestion.email;
+                            : email;
                         return ListTile(
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 14,
@@ -980,7 +981,7 @@ class _AddFriendTab extends StatelessWidget {
                             url: suggestion.avatarUrl,
                             fallbackText: suggestion.handle.isNotEmpty
                                 ? suggestion.handle
-                                : suggestion.email,
+                                : email,
                             size: 40,
                           ),
                           title: Text(
@@ -988,11 +989,13 @@ class _AddFriendTab extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          subtitle: Text(
-                            suggestion.email,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          subtitle: email.isEmpty
+                              ? null
+                              : Text(
+                                  email,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                           trailing: const Icon(
                             Icons.arrow_forward_ios,
                             size: 16,
@@ -1000,7 +1003,7 @@ class _AddFriendTab extends StatelessWidget {
                           onTap: () => onSend(
                             suggestion.handle.isNotEmpty
                                 ? suggestion.handle
-                                : suggestion.email,
+                                : email,
                           ),
                         );
                       },

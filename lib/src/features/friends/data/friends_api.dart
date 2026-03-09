@@ -1,12 +1,13 @@
 import 'dart:convert';
 
+import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/friends/domain/friend_model.dart';
 import 'package:http/http.dart' as http;
 
 class FriendsApi {
-  FriendsApi({http.Client? client}) : _client = client ?? http.Client();
+  FriendsApi({http.Client? client}) : _client = client ?? createApiHttpClient();
 
   final http.Client _client;
 
