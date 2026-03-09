@@ -145,6 +145,14 @@ Bug report
     _showSnack(message, isError: widget.flashIsError);
   }
 
+  String _mapApiMessage(String message) {
+    final l10n = S.of(context);
+    return switch (message) {
+      'email_not_verified' => l10n.loginRequiresVerifiedEmail,
+      _ => message,
+    };
+  }
+
   String? _validatePassword(String? value) {
     final password = value ?? '';
     if (password.isEmpty) return S.of(context).passwordRequired;
@@ -188,7 +196,7 @@ Bug report
       _showSnack(S.of(context).googleLoginSuccess);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(_mapApiMessage(e.message), isError: true);
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).googleLoginFailed, isError: true);
@@ -361,7 +369,7 @@ Bug report
       _showSnack(e.message, isError: true);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(_mapApiMessage(e.message), isError: true);
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).appleLoginFailed, isError: true);
@@ -414,7 +422,7 @@ Bug report
       }
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(_mapApiMessage(e.message), isError: true);
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).networkError, isError: true);

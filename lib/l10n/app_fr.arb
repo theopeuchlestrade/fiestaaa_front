@@ -923,6 +923,7 @@
   },
   "verificationEmailSent": "Vérifie ton email pour activer ton compte.",
   "verificationPending": "Ton inscription est en attente de vérification email.",
+  "loginRequiresVerifiedEmail": "Vérifie ton email avant de te connecter.",
   "emailVerified": "Ton email est vérifié. Tu peux maintenant te connecter.",
   "emailVerificationFailed": "Ce lien de vérification est invalide ou expiré."
 }
