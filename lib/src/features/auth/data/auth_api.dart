@@ -147,8 +147,12 @@ class AuthApi {
     );
   }
 
-  Future<void> logout() async {
-    await _client.post(Uri.parse('$apiBaseUrl/auth/logout'));
+  Future<void> logout({String? token}) async {
+    final headers = <String, String>{};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+    await _client.post(Uri.parse('$apiBaseUrl/auth/logout'), headers: headers);
   }
 
   ApiException _apiError(http.Response response) {

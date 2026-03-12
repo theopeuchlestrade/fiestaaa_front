@@ -157,10 +157,11 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   }
 
   Future<void> _handleLogout() async {
-    try {
-      await _authApi.logout();
-    } catch (_) {}
+    final token = _session?.token;
     await PushNotificationService.instance.clearSession();
+    try {
+      await _authApi.logout(token: token);
+    } catch (_) {}
     await SessionStorage.clear();
     if (!mounted) return;
     setState(() {
