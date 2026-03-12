@@ -590,6 +590,15 @@
   "personalInvitation": "INVITATION PERSONNELLE",
   "presentCodeAtEntrance": "Présentez ce code à l'entrée",
   "generatedOn": "Généré le",
+  "expiresOn": "Expire le",
+  "codeExpiresIn": "Expire dans {duration}",
+  "@codeExpiresIn": {
+    "placeholders": {
+      "duration": {"type": "String"}
+    }
+  },
+  "qrCodeRefreshing": "Régénération du code...",
+  "qrCodeAutoRefresh": "Le code se renouvelle automatiquement toutes les 5 minutes.",
   "validForSingleEntry": "Valable pour une seule entrée",
 
   "scanner": "Scanner",
