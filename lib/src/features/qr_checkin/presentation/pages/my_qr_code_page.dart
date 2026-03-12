@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/data/qr_checkin_api.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/domain/qr_checkin_models.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 class MyQRCodePage extends StatefulWidget {
@@ -23,8 +26,12 @@ class MyQRCodePage extends StatefulWidget {
 class _MyQRCodePageState extends State<MyQRCodePage> {
   final QRCheckinApi _api = QRCheckinApi();
   QRCodeData? _qrData;
+  Timer? _countdownTimer;
+  Timer? _refreshTimer;
   bool _isLoading = true;
+  bool _isRefreshing = false;
   String? _error;
+  Duration _timeRemaining = Duration.zero;
 
   @override
   void initState() {
@@ -34,15 +41,28 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
+    _refreshTimer?.cancel();
     _api.dispose();
     super.dispose();
   }
 
-  Future<void> _loadQRCode() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+  Future<void> _loadQRCode({bool showLoader = true}) async {
+    if (_isRefreshing) {
+      return;
+    }
+
+    if (showLoader || _qrData == null) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    } else {
+      setState(() {
+        _error = null;
+        _isRefreshing = true;
+      });
+    }
 
     try {
       final qrData = await _api.fetchMyQRCode(
@@ -51,19 +71,54 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
       );
 
       if (mounted) {
+        _configureQrTimers(qrData);
         setState(() {
           _qrData = qrData;
           _isLoading = false;
+          _isRefreshing = false;
         });
       }
     } catch (e) {
       if (mounted) {
+        _countdownTimer?.cancel();
+        _refreshTimer?.cancel();
         setState(() {
           _error = e.toString();
           _isLoading = false;
+          _isRefreshing = false;
         });
       }
     }
+  }
+
+  void _configureQrTimers(QRCodeData qrData) {
+    _countdownTimer?.cancel();
+    _refreshTimer?.cancel();
+    _updateTimeRemaining(qrData.expiresAt);
+
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _updateTimeRemaining(qrData.expiresAt);
+    });
+
+    final delay = qrData.expiresAt.difference(DateTime.now());
+    _refreshTimer = Timer(
+      delay.isNegative ? Duration.zero : delay + const Duration(seconds: 1),
+      () {
+        if (mounted) {
+          _loadQRCode(showLoader: false);
+        }
+      },
+    );
+  }
+
+  void _updateTimeRemaining(DateTime expiresAt) {
+    final remaining = expiresAt.difference(DateTime.now());
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _timeRemaining = remaining.isNegative ? Duration.zero : remaining;
+    });
   }
 
   @override
@@ -238,6 +293,29 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                               ?.copyWith(color: Colors.grey[600]),
                           textAlign: TextAlign.center,
                         ),
+                        const SizedBox(height: 12),
+                        AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          opacity: _isRefreshing ? 1 : 0,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                S.of(context).qrCodeRefreshing,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -305,7 +383,13 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                         _buildInfoRow(
                           icon: Icons.calendar_today,
                           label: S.of(context).generatedOn,
-                          value: _formatDate(_qrData!.generatedAt),
+                          value: _formatDateTime(_qrData!.generatedAt),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildInfoRow(
+                          icon: Icons.timer_outlined,
+                          label: S.of(context).expiresOn,
+                          value: _formatDateTime(_qrData!.expiresAt),
                         ),
                         const SizedBox(height: 16),
                         Container(
@@ -325,7 +409,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  S.of(context).validForSingleEntry,
+                                  '${S.of(context).codeExpiresIn(_formatRemaining(_timeRemaining))}\n${S.of(context).qrCodeAutoRefresh}',
                                   style: TextStyle(
                                     color: Colors.amber[900],
                                     fontSize: 13,
@@ -364,31 +448,43 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
     required String value,
   }) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 20, color: Colors.grey[400]),
         const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-            ),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[800],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
               ),
-            ),
-          ],
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} à ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  String _formatDateTime(DateTime date) {
+    return DateFormat.yMMMd(
+      S.of(context).localeName,
+    ).add_Hm().format(date.toLocal());
+  }
+
+  String _formatRemaining(Duration duration) {
+    final totalSeconds = duration.inSeconds.clamp(0, 359_999);
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
   }
 }

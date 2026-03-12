@@ -2,11 +2,13 @@ class QRCodeData {
   final String qrToken;
   final int eventId;
   final DateTime generatedAt;
+  final DateTime expiresAt;
 
   const QRCodeData({
     required this.qrToken,
     required this.eventId,
     required this.generatedAt,
+    required this.expiresAt,
   });
 
   factory QRCodeData.fromJson(Map<String, dynamic> json) {
@@ -14,6 +16,7 @@ class QRCodeData {
       qrToken: json['qr_token'] as String,
       eventId: json['event_id'] as int,
       generatedAt: DateTime.parse(json['generated_at'] as String),
+      expiresAt: DateTime.parse(json['expires_at'] as String),
     );
   }
 
@@ -22,6 +25,7 @@ class QRCodeData {
       'qr_token': qrToken,
       'event_id': eventId,
       'generated_at': generatedAt.toIso8601String(),
+      'expires_at': expiresAt.toIso8601String(),
     };
   }
 }
