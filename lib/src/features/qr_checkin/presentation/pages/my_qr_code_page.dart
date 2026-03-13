@@ -148,6 +148,8 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
     final brightness = theme.brightness;
     final isDark = brightness == Brightness.dark;
     final surfaceRaised = FiestaaaPalette.surfaceRaisedFor(brightness);
+    final dangerColor = theme.colorScheme.fiestaaaDanger;
+    final dangerContainer = theme.colorScheme.fiestaaaDangerContainer;
 
     return Center(
       child: ConstrainedBox(
@@ -176,14 +178,10 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.error.withValues(alpha: 0.12),
+                  color: dangerContainer,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  Icons.error_outline,
-                  size: 40,
-                  color: theme.colorScheme.error,
-                ),
+                child: Icon(Icons.error_outline, size: 40, color: dangerColor),
               ),
               const SizedBox(height: 18),
               Text(
@@ -260,6 +258,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                         label: S
                             .of(context)
                             .codeExpiresIn(_formatRemaining(_timeRemaining)),
+                        tone: FiestaaaStatusTone.warning,
                       ),
                     ],
                   ),
@@ -406,21 +405,28 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
     required IconData icon,
     required String label,
     bool emphasize = false,
+    FiestaaaStatusTone? tone,
   }) {
     final theme = Theme.of(context);
     final brightness = theme.brightness;
     final isDark = brightness == Brightness.dark;
+    final toneStyle = tone == null
+        ? null
+        : theme.colorScheme.fiestaaaStatus(tone);
     final backgroundColor = emphasize
         ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.18 : 0.10)
-        : FiestaaaPalette.surfaceRaisedFor(
-            brightness,
-          ).withValues(alpha: isDark ? 0.84 : 0.92);
+        : toneStyle?.background ??
+              FiestaaaPalette.surfaceRaisedFor(
+                brightness,
+              ).withValues(alpha: isDark ? 0.84 : 0.92);
     final borderColor = emphasize
         ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.26 : 0.16)
-        : theme.colorScheme.outline.withValues(alpha: isDark ? 0.22 : 0.12);
+        : toneStyle?.border ??
+              theme.colorScheme.outline.withValues(alpha: isDark ? 0.22 : 0.12);
     final iconColor = emphasize
         ? theme.colorScheme.primary
-        : theme.colorScheme.secondary;
+        : toneStyle?.foreground ?? theme.colorScheme.secondary;
+    final labelColor = emphasize ? null : toneStyle?.foreground;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -437,6 +443,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
           Text(
             label,
             style: theme.textTheme.labelLarge?.copyWith(
+              color: labelColor,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -567,10 +574,11 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
   }
 
   Widget _buildQrCard({required QRCodeData qrData, required double qrSize}) {
+    final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.all(qrSize >= 280 ? 22 : 18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.fiestaaaTicketSurface,
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
@@ -584,7 +592,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
         data: qrData.qrToken,
         version: QrVersions.auto,
         size: qrSize,
-        backgroundColor: Colors.white,
+        backgroundColor: theme.fiestaaaTicketSurface,
         errorCorrectionLevel: QrErrorCorrectLevel.H,
       ),
     );
@@ -595,7 +603,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
     required bool useWideLayout,
   }) {
     final theme = Theme.of(context);
-    final mutedText = theme.colorScheme.onSurface.withValues(alpha: 0.68);
+    final mutedText = theme.fiestaaaMutedText;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -649,7 +657,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
                       icon: Icons.timer_outlined,
                       label: S.of(context).expiresOn,
                       value: _formatDateTime(qrData.expiresAt),
-                      accentColor: theme.colorScheme.secondary,
+                      accentColor: theme.colorScheme.fiestaaaWarning,
                     ),
                   ),
                 ],
@@ -697,7 +705,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
           Text(
             label,
             style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.58),
+              color: theme.fiestaaaMutedText,
             ),
           ),
           const SizedBox(height: 6),
@@ -717,7 +725,7 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
     final theme = Theme.of(context);
     final textColor = onGradient
         ? Colors.white.withValues(alpha: 0.82)
-        : theme.colorScheme.onSurface.withValues(alpha: 0.68);
+        : theme.fiestaaaMutedText;
     final indicatorColor = onGradient
         ? Colors.white
         : theme.colorScheme.primary;

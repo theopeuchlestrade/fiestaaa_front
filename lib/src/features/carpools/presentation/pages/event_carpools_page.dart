@@ -298,10 +298,11 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
   }
 
   void _showSnack(String message, {bool isError = false}) {
+    final scheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.red.shade400 : null,
+        backgroundColor: isError ? scheme.error : null,
       ),
     );
   }
@@ -390,22 +391,25 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
     final message = widget.eventReadOnly
         ? l10n.eventFinishedReadOnly
         : l10n.acceptInvitationForCarpool;
+    final warningStyle = Theme.of(
+      context,
+    ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.warning);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.amber.shade50,
+        color: warningStyle.background,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.amber.shade200),
+        border: Border.all(color: warningStyle.border),
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline, color: Colors.amber.shade700),
+          Icon(Icons.info_outline, color: warningStyle.foreground),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
               style: TextStyle(
-                color: Colors.amber.shade900,
+                color: warningStyle.foreground,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -443,9 +447,9 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
               userIsInAnyCarpool
                   ? l10n.alreadyInCarpoolForEvent
                   : l10n.proposeACarpoolDescription,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).fiestaaaMutedText,
+              ),
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -476,15 +480,16 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
   }
 
   Widget _buildErrorSection(S l10n) {
+    final danger = Theme.of(context).colorScheme.fiestaaaDanger;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
+        Icon(Icons.error_outline, size: 48, color: danger),
         const SizedBox(height: 12),
         Text(
           _error!,
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.red.shade400),
+          style: TextStyle(color: danger),
         ),
         const SizedBox(height: 16),
         ElevatedButton.icon(
@@ -497,6 +502,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
   }
 
   Widget _buildEmptyState(S l10n) {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -504,7 +510,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
           Icon(
             Icons.directions_car_outlined,
             size: 64,
-            color: Colors.grey.shade400,
+            color: theme.fiestaaaMutedText,
           ),
           const SizedBox(height: 16),
           Text(
@@ -517,9 +523,9 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
           Text(
             _canInteract ? l10n.beFirstToPropose : l10n.acceptInvitationToJoin,
             textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.fiestaaaMutedText,
+            ),
           ),
         ],
       ),
@@ -527,6 +533,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
   }
 
   Widget _buildCarpoolsGrid(S l10n) {
+    final theme = Theme.of(context);
     final userHandle = widget.session.handle?.toLowerCase();
 
     return Column(
@@ -534,9 +541,9 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
       children: [
         Text(
           l10n.carpoolsCount(_carpools!.length),
-          style: Theme.of(
-            context,
-          ).textTheme.labelLarge?.copyWith(color: Colors.grey.shade600),
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.fiestaaaMutedText,
+          ),
         ),
         const SizedBox(height: 12),
         LayoutBuilder(
@@ -640,20 +647,17 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
 
   Widget _buildSortMenu(S l10n) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final isActive = _sortBy != null;
 
     return Container(
       decoration: BoxDecoration(
         color: isActive
             ? FiestaaaPalette.primary.withValues(alpha: 0.12)
-            : (isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.grey.shade100),
+            : theme.fiestaaaMutedSurface,
         borderRadius: BorderRadius.circular(12),
         border: isActive
             ? Border.all(color: FiestaaaPalette.primary.withValues(alpha: 0.3))
-            : null,
+            : Border.all(color: theme.fiestaaaSoftBorder),
       ),
       child: PopupMenuButton<String?>(
         icon: Row(
@@ -736,7 +740,9 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
           Icon(
             icon,
             size: 18,
-            color: isSelected ? FiestaaaPalette.primary : Colors.grey,
+            color: isSelected
+                ? FiestaaaPalette.primary
+                : Theme.of(context).fiestaaaMutedText,
           ),
           const SizedBox(width: 12),
           Expanded(

@@ -205,7 +205,7 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(S.of(context).carpoolCannotBeAfterEvent),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       return;
@@ -281,7 +281,9 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
           const SizedBox(height: 6),
           Text(
             _addressSearchError!,
-            style: TextStyle(color: Colors.red.shade700),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.fiestaaaDanger,
+            ),
           ),
         ],
         if (_addressSuggestions.isNotEmpty) ...[
@@ -352,7 +354,9 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
                         ).add_Hm().format(_departAt!)
                       : l10n.carpoolSelectDateTime,
                   style: TextStyle(
-                    color: _departAt != null ? null : Colors.grey.shade600,
+                    color: _departAt != null
+                        ? null
+                        : Theme.of(context).fiestaaaMutedText,
                   ),
                 ),
               ),

@@ -122,11 +122,12 @@ class EventsListPageState extends State<EventsListPage> {
     if (_loading) {
       content = const Center(child: CircularProgressIndicator());
     } else if (_error != null) {
+      final theme = Theme.of(context);
       content = Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.wifi_off, color: Colors.grey.shade500, size: 40),
+            Icon(Icons.wifi_off, color: theme.fiestaaaMutedText, size: 40),
             const SizedBox(height: 12),
             Text(_error!, textAlign: TextAlign.center),
           ],
@@ -135,11 +136,12 @@ class EventsListPageState extends State<EventsListPage> {
     } else {
       final events = _events ?? [];
       if (events.isEmpty) {
+        final theme = Theme.of(context);
         content = Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.celebration, color: Colors.grey.shade500, size: 40),
+              Icon(Icons.celebration, color: theme.fiestaaaMutedText, size: 40),
               const SizedBox(height: 12),
               Text(S.of(context).noFiestaaaYet),
             ],
@@ -217,29 +219,24 @@ class _EventsGrid extends StatelessWidget {
                   ),
                   sliver: SliverToBoxAdapter(
                     child: Card(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Color.alphaBlend(
-                              FiestaaaPalette.primary.withValues(alpha: 0.14),
-                              Theme.of(context).colorScheme.surface,
-                            )
-                          : Colors.orange.shade50,
+                      color: Theme.of(context).colorScheme
+                          .fiestaaaStatus(FiestaaaStatusTone.warning)
+                          .background,
                       child: ListTile(
                         leading: Icon(
                           Icons.mark_email_unread,
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFFC0B0FF)
-                              : Colors.orange,
+                          color: Theme.of(context).colorScheme
+                              .fiestaaaStatus(FiestaaaStatusTone.warning)
+                              .foreground,
                         ),
                         title: Text(
                           S.of(context).invitationsWaitingCount(pendingInvites),
                           style: Theme.of(context).textTheme.titleSmall
                               ?.copyWith(
                                 fontWeight: FontWeight.w700,
-                                color:
-                                    Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? Theme.of(context).colorScheme.onSurface
-                                    : Colors.orange.shade900,
+                                color: Theme.of(context).colorScheme
+                                    .fiestaaaStatus(FiestaaaStatusTone.warning)
+                                    .foreground,
                               ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -340,16 +337,17 @@ class _EventBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final badge = _badgeData(context);
+    final borderRadius = BorderRadius.circular(28);
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: borderRadius,
       child: Container(
         decoration: BoxDecoration(
           gradient: FiestaaaPalette.cardGradientFor(
             Theme.of(context).brightness,
           ),
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: borderRadius,
           boxShadow: [
             BoxShadow(
               color: FiestaaaPalette.primary.withValues(alpha: 0.14),
@@ -358,131 +356,139 @@ class _EventBubble extends StatelessWidget {
             ),
           ],
         ),
-        child: Stack(
-          children: [
-            Positioned(
-              top: -30,
-              right: -18,
-              child: _DecorativeWave(
-                color: Colors.white.withValues(alpha: 0.18),
-                size: 120,
+        child: ClipRRect(
+          borderRadius: borderRadius,
+          child: Stack(
+            children: [
+              Positioned(
+                top: -30,
+                right: -18,
+                child: _DecorativeWave(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  size: 120,
+                ),
               ),
-            ),
-            Positioned(
-              bottom: -22,
-              left: -10,
-              child: _DecorativeWave(
-                color: Colors.white.withValues(alpha: 0.12),
-                size: 140,
+              Positioned(
+                bottom: -22,
+                left: -10,
+                child: _DecorativeWave(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  size: 140,
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          event.name,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (badge != null)
-                        Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(badge.icon, size: 16, color: badge.color),
-                                const SizedBox(width: 6),
-                                Flexible(
-                                  child: Text(
-                                    badge.label,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall
-                                        ?.copyWith(
-                                          color: badge.color,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            event.name,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
                                 ),
-                              ],
-                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.event, size: 18, color: Colors.white),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${event.formattedDate} • ${event.formattedTime}',
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.92),
-                                fontWeight: FontWeight.w700,
+                        if (badge != null)
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
                               ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.place, size: 18, color: Colors.white),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          event.address,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.9),
+                              decoration: BoxDecoration(
+                                color: badge.background,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: badge.border),
                               ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    badge.icon,
+                                    size: 16,
+                                    color: badge.color,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      badge.label,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            color: badge.color,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.event, size: 18, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${event.formattedDate} • ${event.formattedTime}',
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.92),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: Text(
-                      event.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.place, size: 18, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            event.address,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: Text(
+                        event.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -490,10 +496,14 @@ class _EventBubble extends StatelessWidget {
 
   _EventBadgeData? _badgeData(BuildContext context) {
     if (event.isFinished) {
+      final finished = Theme.of(
+        context,
+      ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.warning);
       return _EventBadgeData(
         label: S.of(context).finishedEvent,
-        color: Colors.orange.shade900,
-        background: Colors.orange.shade100,
+        color: finished.foreground,
+        background: finished.background,
+        border: finished.border,
         icon: Icons.lock_clock_outlined,
       );
     }
@@ -504,7 +514,8 @@ class _EventBubble extends StatelessWidget {
       return _EventBadgeData(
         label: S.of(context).organizer,
         color: FiestaaaPalette.primary,
-        background: FiestaaaPalette.primary.withValues(alpha: 0.12),
+        background: FiestaaaPalette.primary.withValues(alpha: 0.16),
+        border: FiestaaaPalette.primary.withValues(alpha: 0.32),
         icon: Icons.emoji_events,
       );
     }
@@ -515,24 +526,36 @@ class _EventBubble extends StatelessWidget {
 
     switch (invitation!.status) {
       case 'Accepted':
+        final accepted = Theme.of(
+          context,
+        ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.success);
         return _EventBadgeData(
           label: S.of(context).participationConfirmed,
-          color: Colors.green.shade800,
-          background: Colors.green.shade100,
+          color: accepted.foreground,
+          background: accepted.background,
+          border: accepted.border,
           icon: Icons.check_circle,
         );
       case 'Waiting':
+        final waiting = Theme.of(
+          context,
+        ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.warning);
         return _EventBadgeData(
           label: S.of(context).responseExpected,
-          color: Colors.orange.shade800,
-          background: Colors.orange.shade100,
+          color: waiting.foreground,
+          background: waiting.background,
+          border: waiting.border,
           icon: Icons.hourglass_top,
         );
       case 'Declined':
+        final declined = Theme.of(
+          context,
+        ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.neutral);
         return _EventBadgeData(
           label: S.of(context).refused,
-          color: Colors.grey.shade700,
-          background: Colors.grey.shade200,
+          color: declined.foreground,
+          background: declined.background,
+          border: declined.border,
           icon: Icons.remove_circle_outline,
         );
       default:
@@ -546,12 +569,14 @@ class _EventBadgeData {
     required this.label,
     required this.color,
     required this.background,
+    required this.border,
     required this.icon,
   });
 
   final String label;
   final Color color;
   final Color background;
+  final Color border;
   final IconData icon;
 }
 

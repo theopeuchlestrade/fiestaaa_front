@@ -10,6 +10,32 @@ class FiestaaaPalette {
   static const Color lightSurface = Color(0xFFF6F7FF);
   static const Color darkSurface = Color(0xFF0B0F1A);
   static const Color darkSurfaceRaised = Color(0xFF141B2D);
+  static const Color lightSurfaceLow = Color(0xFFFBFBFF);
+  static const Color lightSurfaceHigh = Color(0xFFEFF2FF);
+  static const Color lightSurfaceHighest = Color(0xFFE5EBFB);
+  static const Color darkSurfaceLow = Color(0xFF101726);
+  static const Color darkSurfaceHigh = Color(0xFF182236);
+  static const Color darkSurfaceHighest = Color(0xFF202A40);
+  static const Color lightOutline = Color(0xFFD3DAEE);
+  static const Color lightOutlineVariant = Color(0xFFE3E8F7);
+  static const Color darkOutline = Color(0xFF45506A);
+  static const Color darkOutlineVariant = Color(0xFF303A50);
+  static const Color success = Color(0xFF15803D);
+  static const Color successDark = Color(0xFF4ADE80);
+  static const Color successContainer = Color(0xFFDCFCE7);
+  static const Color successContainerDark = Color(0xFF153321);
+  static const Color warning = Color(0xFF526277);
+  static const Color warningDark = Color(0xFFD7DEE9);
+  static const Color warningContainer = Color(0xFFE2E8F0);
+  static const Color warningContainerDark = Color(0xFF2B3444);
+  static const Color info = Color(0xFF0F766E);
+  static const Color infoDark = Color(0xFF9BE8FA);
+  static const Color infoContainer = Color(0xFFDCFDF7);
+  static const Color infoContainerDark = Color(0xFF133742);
+  static const Color danger = Color(0xFFB91C1C);
+  static const Color dangerDark = Color(0xFFF87171);
+  static const Color dangerContainer = Color(0xFFFEE2E2);
+  static const Color dangerContainerDark = Color(0xFF4B1E22);
 
   static const LinearGradient lightBackgroundGradient = LinearGradient(
     colors: [Color(0xFFF6F7FF), Color(0xFFE8ECFF)],
@@ -68,6 +94,157 @@ class FiestaaaPalette {
       brightness == Brightness.dark ? darkButtonGradient : lightButtonGradient;
 }
 
+enum FiestaaaStatusTone { primary, success, warning, neutral, info, danger }
+
+class FiestaaaStatusStyle {
+  const FiestaaaStatusStyle({
+    required this.foreground,
+    required this.background,
+    required this.border,
+  });
+
+  final Color foreground;
+  final Color background;
+  final Color border;
+}
+
+extension FiestaaaColorSchemeX on ColorScheme {
+  bool get fiestaaaIsDark => brightness == Brightness.dark;
+
+  Color get fiestaaaMutedForeground => onSurfaceVariant;
+
+  Color get fiestaaaSubtleForeground =>
+      onSurface.withValues(alpha: fiestaaaIsDark ? 0.62 : 0.68);
+
+  Color get fiestaaaSurfaceMuted => fiestaaaIsDark
+      ? surfaceContainerHigh.withValues(alpha: 0.92)
+      : surfaceContainerLow;
+
+  Color get fiestaaaSurfaceSoft => fiestaaaIsDark
+      ? surfaceContainerHighest.withValues(alpha: 0.82)
+      : surfaceContainerHighest;
+
+  Color get fiestaaaAvatarSurface =>
+      fiestaaaIsDark ? surfaceContainerHighest : surfaceContainerHigh;
+
+  Color get fiestaaaSuccess =>
+      fiestaaaIsDark ? FiestaaaPalette.successDark : FiestaaaPalette.success;
+
+  Color get fiestaaaSuccessContainer => fiestaaaIsDark
+      ? FiestaaaPalette.successContainerDark
+      : FiestaaaPalette.successContainer;
+
+  Color get fiestaaaWarning =>
+      fiestaaaIsDark ? FiestaaaPalette.warningDark : FiestaaaPalette.warning;
+
+  Color get fiestaaaWarningContainer => fiestaaaIsDark
+      ? FiestaaaPalette.warningContainerDark
+      : FiestaaaPalette.warningContainer;
+
+  Color get fiestaaaInfo =>
+      fiestaaaIsDark ? FiestaaaPalette.infoDark : FiestaaaPalette.info;
+
+  Color get fiestaaaInfoContainer => fiestaaaIsDark
+      ? FiestaaaPalette.infoContainerDark
+      : FiestaaaPalette.infoContainer;
+
+  Color get fiestaaaNeutral =>
+      fiestaaaIsDark ? const Color(0xFFD4C4FF) : onSurfaceVariant;
+
+  Color get fiestaaaNeutralContainer =>
+      fiestaaaIsDark ? surfaceContainerHigh : surfaceContainerHighest;
+
+  Color get fiestaaaDanger =>
+      fiestaaaIsDark ? FiestaaaPalette.dangerDark : FiestaaaPalette.danger;
+
+  Color get fiestaaaDangerContainer => fiestaaaIsDark
+      ? FiestaaaPalette.dangerContainerDark
+      : FiestaaaPalette.dangerContainer;
+
+  FiestaaaStatusStyle fiestaaaStatus(FiestaaaStatusTone tone) {
+    switch (tone) {
+      case FiestaaaStatusTone.primary:
+        final foreground = primary;
+        return FiestaaaStatusStyle(
+          foreground: foreground,
+          background: foreground.withValues(alpha: fiestaaaIsDark ? 0.2 : 0.12),
+          border: foreground.withValues(alpha: fiestaaaIsDark ? 0.36 : 0.24),
+        );
+      case FiestaaaStatusTone.success:
+        final foreground = fiestaaaSuccess;
+        return FiestaaaStatusStyle(
+          foreground: foreground,
+          background: fiestaaaSuccessContainer,
+          border: foreground.withValues(alpha: fiestaaaIsDark ? 0.44 : 0.18),
+        );
+      case FiestaaaStatusTone.warning:
+        final foreground = fiestaaaWarning;
+        return FiestaaaStatusStyle(
+          foreground: foreground,
+          background: fiestaaaWarningContainer,
+          border: foreground.withValues(alpha: fiestaaaIsDark ? 0.42 : 0.18),
+        );
+      case FiestaaaStatusTone.neutral:
+        final foreground = fiestaaaNeutral;
+        return FiestaaaStatusStyle(
+          foreground: foreground,
+          background: fiestaaaNeutralContainer,
+          border: foreground.withValues(alpha: fiestaaaIsDark ? 0.36 : 0.2),
+        );
+      case FiestaaaStatusTone.info:
+        final foreground = fiestaaaInfo;
+        return FiestaaaStatusStyle(
+          foreground: foreground,
+          background: fiestaaaInfoContainer,
+          border: foreground.withValues(alpha: fiestaaaIsDark ? 0.42 : 0.18),
+        );
+      case FiestaaaStatusTone.danger:
+        final foreground = fiestaaaDanger;
+        return FiestaaaStatusStyle(
+          foreground: foreground,
+          background: fiestaaaDangerContainer,
+          border: foreground.withValues(alpha: fiestaaaIsDark ? 0.42 : 0.22),
+        );
+    }
+  }
+}
+
+extension FiestaaaThemeDataX on ThemeData {
+  Color get fiestaaaMutedText => colorScheme.fiestaaaMutedForeground;
+  Color get fiestaaaSubtleText => colorScheme.fiestaaaSubtleForeground;
+  Color get fiestaaaSoftSurface => colorScheme.fiestaaaSurfaceSoft;
+  Color get fiestaaaMutedSurface => colorScheme.fiestaaaSurfaceMuted;
+  Color get fiestaaaAvatarSurface => colorScheme.fiestaaaAvatarSurface;
+  Color get fiestaaaSoftBorder => colorScheme.outlineVariant;
+  Color get fiestaaaTicketSurface => Colors.white;
+  Color get fiestaaaTicketText => const Color(0xFF1F2937);
+  Color get fiestaaaTicketMutedText => const Color(0xFF6B7280);
+  Color get fiestaaaTicketSubtleText => const Color(0xFF9CA3AF);
+  Color get fiestaaaTicketDivider => const Color(0xFFD1D5DB);
+  Color get fiestaaaTicketEdge => const Color(0xFFEEEEEE);
+  Color get fiestaaaScrim => colorScheme.scrim.withValues(
+    alpha: brightness == Brightness.dark ? 0.64 : 0.5,
+  );
+}
+
+FiestaaaStatusStyle fiestaaaInvitationStatusStyle(
+  ColorScheme scheme,
+  String status,
+) {
+  switch (status) {
+    case 'Accepted':
+      return scheme.fiestaaaStatus(FiestaaaStatusTone.success);
+    case 'Waiting':
+    case 'Pending':
+      return scheme.fiestaaaStatus(FiestaaaStatusTone.warning);
+    case 'Declined':
+    case 'Expired':
+      return scheme.fiestaaaStatus(FiestaaaStatusTone.neutral);
+    default:
+      return scheme.fiestaaaStatus(FiestaaaStatusTone.neutral);
+  }
+}
+
 ThemeData buildFiestaaaTheme() {
   return _buildFiestaaaTheme(Brightness.light);
 }
@@ -81,11 +258,24 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
   final textColor = FiestaaaPalette.textFor(brightness);
   final surfaceColor = FiestaaaPalette.surfaceFor(brightness);
   final surfaceRaised = FiestaaaPalette.surfaceRaisedFor(brightness);
-  final outlineColor = isDark ? Colors.white24 : Colors.grey.shade300;
-  final dividerColor = isDark ? Colors.white12 : Colors.grey.shade200;
-  final mutedText = textColor.withValues(alpha: isDark ? 0.7 : 0.76);
-  final bodyText = textColor.withValues(alpha: isDark ? 0.78 : 0.82);
-  final inputLabelColor = isDark ? mutedText : Colors.grey.shade700;
+  final surfaceLow = isDark
+      ? FiestaaaPalette.darkSurfaceLow
+      : FiestaaaPalette.lightSurfaceLow;
+  final surfaceHigh = isDark
+      ? FiestaaaPalette.darkSurfaceHigh
+      : FiestaaaPalette.lightSurfaceHigh;
+  final surfaceHighest = isDark
+      ? FiestaaaPalette.darkSurfaceHighest
+      : FiestaaaPalette.lightSurfaceHighest;
+  final outlineColor = isDark
+      ? FiestaaaPalette.darkOutline
+      : FiestaaaPalette.lightOutline;
+  final outlineVariant = isDark
+      ? FiestaaaPalette.darkOutlineVariant
+      : FiestaaaPalette.lightOutlineVariant;
+  final mutedText = textColor.withValues(alpha: isDark ? 0.72 : 0.7);
+  final bodyText = textColor.withValues(alpha: isDark ? 0.8 : 0.84);
+  final inputLabelColor = mutedText;
 
   final colorScheme =
       ColorScheme.fromSeed(
@@ -94,12 +284,35 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
       ).copyWith(
         primary: FiestaaaPalette.primary,
         secondary: FiestaaaPalette.secondary,
+        tertiary: FiestaaaPalette.accent,
         surface: surfaceRaised,
+        surfaceContainerLowest: surfaceColor,
+        surfaceContainerLow: surfaceLow,
+        surfaceContainer: surfaceRaised,
+        surfaceContainerHigh: surfaceHigh,
+        surfaceContainerHighest: surfaceHighest,
         onSurface: textColor,
+        onSurfaceVariant: mutedText,
         onPrimary: Colors.white,
         onSecondary: isDark
             ? FiestaaaPalette.darkSurface
             : FiestaaaPalette.lightText,
+        outline: outlineColor,
+        outlineVariant: outlineVariant,
+        primaryContainer: isDark
+            ? const Color(0xFF241F52)
+            : const Color(0xFFE8E3FF),
+        secondaryContainer: isDark
+            ? const Color(0xFF123446)
+            : const Color(0xFFDDF9FF),
+        tertiaryContainer: isDark
+            ? const Color(0xFF2B2144)
+            : const Color(0xFFF0E9FF),
+        error: isDark ? FiestaaaPalette.dangerDark : FiestaaaPalette.danger,
+        errorContainer: isDark
+            ? FiestaaaPalette.dangerContainerDark
+            : FiestaaaPalette.dangerContainer,
+        scrim: Colors.black,
       );
 
   final baseTextTheme = GoogleFonts.manropeTextTheme().apply(
@@ -163,7 +376,7 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
       contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: outlineColor),
+        borderSide: BorderSide(color: colorScheme.outline),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -174,7 +387,7 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: outlineColor),
+        borderSide: BorderSide(color: colorScheme.outline),
       ),
       labelStyle: TextStyle(color: inputLabelColor),
       prefixIconColor: FiestaaaPalette.primary,
@@ -214,7 +427,7 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
       labelStyle: TextStyle(fontWeight: FontWeight.w600, color: textColor),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
     ),
-    dividerColor: dividerColor,
+    dividerColor: colorScheme.outlineVariant,
   );
 }
 

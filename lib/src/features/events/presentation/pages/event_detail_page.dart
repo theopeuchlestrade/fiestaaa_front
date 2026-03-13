@@ -657,13 +657,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   Expanded(
                     child: ListView(
                       children: poll.options.map((option) {
+                        final theme = Theme.of(context);
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
+                            color: theme.fiestaaaMutedSurface,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade200),
+                            border: Border.all(color: theme.fiestaaaSoftBorder),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -679,7 +680,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                           .titleSmall
                                           ?.copyWith(
                                             fontWeight: FontWeight.w800,
-                                            color: Colors.grey.shade900,
+                                            color: theme.colorScheme.onSurface,
                                           ),
                                     ),
                                   ),
@@ -689,10 +690,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                       vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      color: theme.colorScheme.surface,
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: Colors.grey.shade300,
+                                        color: theme.fiestaaaSoftBorder,
                                       ),
                                     ),
                                     child: Row(
@@ -716,7 +717,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                 Text(
                                   S.of(context).noVotesYet,
                                   style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(color: Colors.grey.shade600),
+                                      ?.copyWith(
+                                        color: theme.fiestaaaMutedText,
+                                      ),
                                 )
                               else
                                 Wrap(
@@ -729,7 +732,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                     );
                                     return Chip(
                                       avatar: CircleAvatar(
-                                        backgroundColor: Colors.grey.shade300,
+                                        backgroundColor:
+                                            theme.fiestaaaAvatarSurface,
                                         backgroundImage: voter.avatarUrl == null
                                             ? null
                                             : NetworkImage(voter.avatarUrl!),
@@ -1200,7 +1204,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             icon: const Icon(Icons.delete_outline),
             label: const Text('Supprimer'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade600,
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
           ),
         ],
@@ -1422,7 +1426,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         useSafeArea: true,
         showDragHandle: true,
         backgroundColor: Colors.transparent,
-        barrierColor: Colors.black.withValues(alpha: 0.5),
+        barrierColor: Theme.of(context).fiestaaaScrim,
         builder: (_) => ValueListenableBuilder<int>(
           valueListenable: _modalRefreshTick,
           builder: (context, _, child) {
@@ -1536,7 +1540,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       useSafeArea: true,
       showDragHandle: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
+      barrierColor: Theme.of(context).fiestaaaScrim,
       builder: (_) => AnimatedPadding(
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOutCubic,
@@ -1595,7 +1599,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 ? l10n.playlistEmptyOwner
                 : l10n.playlistEmptyParticipant
           : null,
-      accentColor: const Color(0xFF2E7D32),
+      accentColor: Theme.of(context).colorScheme.fiestaaaSuccess,
       children: [
         if (!isEmpty) ...[
           Text(
@@ -1660,10 +1664,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   void _showSnack(String message, {bool isError = false}) {
+    final scheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.red.shade400 : null,
+        backgroundColor: isError ? scheme.error : null,
       ),
     );
   }
@@ -1727,9 +1732,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         item.maxQuantity,
                         item.unitLabel,
                       ),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).fiestaaaMutedText,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -1869,23 +1874,26 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Widget _buildReadOnlyBanner() {
+    final warningStyle = Theme.of(
+      context,
+    ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.warning);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.orange.shade50,
+        color: warningStyle.background,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.orange.shade200),
+        border: Border.all(color: warningStyle.border),
       ),
       child: Row(
         children: [
-          Icon(Icons.lock_clock_outlined, color: Colors.orange.shade800),
+          Icon(Icons.lock_clock_outlined, color: warningStyle.foreground),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               S.of(context).eventFinishedReadOnly,
               style: TextStyle(
-                color: Colors.orange.shade900,
+                color: warningStyle.foreground,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -2074,7 +2082,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       Text(
                         S.of(context).address,
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Colors.grey.shade600,
+                          color: Theme.of(context).fiestaaaMutedText,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -2120,7 +2128,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           alignment: Alignment.topCenter,
                           child: const Icon(
                             Icons.location_on,
-                            color: Colors.red,
+                            color: FiestaaaPalette.primary,
                             size: 36,
                           ),
                         ),
@@ -2150,7 +2158,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         icon: Icons.payment,
         title: l10n.noPaymentConfigured,
         subtitle: null,
-        accentColor: const Color(0xFF00695C),
+        accentColor: Theme.of(context).colorScheme.fiestaaaInfo,
         children: [
           if (_isOwner && !_isReadOnly)
             SizedBox(
@@ -2170,7 +2178,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         icon: Icons.payment,
         title: l10n.loadingPaymentInfo,
         subtitle: null,
-        accentColor: const Color(0xFF00695C),
+        accentColor: Theme.of(context).colorScheme.fiestaaaInfo,
         children: const [
           Center(
             child: Padding(
@@ -2228,7 +2236,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       leading: _buildPaymentProviderLogo(provider, size: 24),
       title: providerName,
       subtitle: null,
-      accentColor: const Color(0xFF00695C),
+      accentColor: Theme.of(context).colorScheme.fiestaaaInfo,
       children: [
         Text(
           amountDescription,
@@ -2797,9 +2805,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               S.of(context).acceptInvitationToContribute,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.red.shade700),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme
+                    .fiestaaaStatus(FiestaaaStatusTone.warning)
+                    .foreground,
+              ),
             ),
           ),
         if (!_isOwner && _isExpiredInvitation)
@@ -2807,9 +2817,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               S.of(context).invitationExpiredNoContributions,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.red.shade700),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.fiestaaaNeutral,
+              ),
             ),
           ),
         const SizedBox(height: 12),
@@ -3156,9 +3166,10 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
     final waiting = invitation.status == 'Waiting';
     final accepted = invitation.status == 'Accepted';
     final expired = invitation.status == 'Expired';
-    Color tonedSurface(Color tint, double opacity) {
-      return Color.alphaBlend(tint.withValues(alpha: opacity), scheme.surface);
-    }
+    final neutralStyle = scheme.fiestaaaStatus(FiestaaaStatusTone.neutral);
+    final warningStyle = scheme.fiestaaaStatus(FiestaaaStatusTone.warning);
+    final successStyle = scheme.fiestaaaStatus(FiestaaaStatusTone.success);
+    final dangerStyle = scheme.fiestaaaStatus(FiestaaaStatusTone.danger);
 
     Color background;
     Color accent;
@@ -3169,45 +3180,35 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
     String statusLabel;
 
     if (expired) {
-      background = isDark
-          ? tonedSurface(const Color(0xFF90A4AE), 0.12)
-          : Colors.grey.shade100;
-      accent = isDark ? const Color(0xFFB0BEC5) : Colors.grey.shade700;
-      bodyColor = isDark ? scheme.onSurface : Colors.grey.shade800;
-      buttonOutlineColor = accent.withValues(alpha: isDark ? 0.45 : 0.22);
-      leaveActionColor = scheme.error;
+      background = neutralStyle.background;
+      accent = neutralStyle.foreground;
+      bodyColor = isDark ? scheme.onSurface : theme.fiestaaaMutedText;
+      buttonOutlineColor = dangerStyle.border;
+      leaveActionColor = dangerStyle.foreground;
       icon = Icons.hourglass_disabled;
       statusLabel = S.of(context).invitationExpired;
     } else if (waiting) {
-      background = isDark
-          ? tonedSurface(FiestaaaPalette.primary, 0.14)
-          : Colors.orange.shade50;
-      accent = isDark ? const Color(0xFFC0B0FF) : Colors.orange.shade800;
-      bodyColor = isDark ? scheme.onSurface : Colors.orange.shade900;
-      buttonOutlineColor = isDark
-          ? scheme.error.withValues(alpha: 0.4)
-          : Colors.red.shade200;
-      leaveActionColor = scheme.error;
+      background = warningStyle.background;
+      accent = warningStyle.foreground;
+      bodyColor = isDark ? scheme.onSurface : warningStyle.foreground;
+      buttonOutlineColor = dangerStyle.border;
+      leaveActionColor = dangerStyle.foreground;
       icon = Icons.mark_email_unread;
       statusLabel = S.of(context).invitationStatusWaiting;
     } else if (accepted) {
-      background = isDark
-          ? tonedSurface(FiestaaaPalette.secondary, 0.14)
-          : Colors.green.shade50;
-      accent = isDark ? const Color(0xFF9BE8FA) : Colors.green.shade800;
-      bodyColor = isDark ? scheme.onSurface : Colors.green.shade900;
-      buttonOutlineColor = scheme.error.withValues(alpha: isDark ? 0.42 : 0.22);
-      leaveActionColor = isDark ? const Color(0xFFFF8A80) : Colors.red.shade700;
+      background = successStyle.background;
+      accent = successStyle.foreground;
+      bodyColor = isDark ? scheme.onSurface : successStyle.foreground;
+      buttonOutlineColor = dangerStyle.border;
+      leaveActionColor = dangerStyle.foreground;
       icon = Icons.check_circle;
       statusLabel = S.of(context).participationConfirmed;
     } else {
-      background = isDark
-          ? tonedSurface(FiestaaaPalette.accent, 0.12)
-          : Colors.grey.shade200;
-      accent = isDark ? const Color(0xFFD4C4FF) : Colors.grey.shade700;
-      bodyColor = isDark ? scheme.onSurface : Colors.grey.shade800;
-      buttonOutlineColor = accent.withValues(alpha: isDark ? 0.4 : 0.24);
-      leaveActionColor = scheme.error;
+      background = neutralStyle.background;
+      accent = neutralStyle.foreground;
+      bodyColor = isDark ? scheme.onSurface : theme.fiestaaaMutedText;
+      buttonOutlineColor = neutralStyle.border;
+      leaveActionColor = dangerStyle.foreground;
       icon = Icons.cancel_outlined;
       statusLabel = S.of(context).invitationDeclined;
     }
@@ -3273,9 +3274,7 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                     child: OutlinedButton(
                       onPressed: () => widget.onRespond('Declined'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: isDark
-                            ? const Color(0xFFFFB4AB)
-                            : Colors.red.shade700,
+                        foregroundColor: dangerStyle.foreground,
                         side: BorderSide(color: buttonOutlineColor),
                       ),
                       child: Text(S.of(context).decline),
@@ -3286,9 +3285,7 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                     child: ElevatedButton(
                       onPressed: () => widget.onRespond('Accepted'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark
-                            ? FiestaaaPalette.primary
-                            : Colors.green.shade600,
+                        backgroundColor: successStyle.foreground,
                         foregroundColor: Colors.white,
                       ),
                       child: Text(S.of(context).accept),
@@ -3404,10 +3401,11 @@ class _PollCard extends StatelessWidget {
     final textColor = theme.colorScheme.onSurface;
     final fadedText = textColor.withValues(alpha: 0.6);
     final subtleText = textColor.withValues(alpha: 0.5);
-    final surfaceButton = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.grey.shade100;
-    final accentGreen = Colors.green.shade500;
+    final surfaceButton = theme.fiestaaaMutedSurface;
+    final accentGreen = theme.colorScheme.fiestaaaSuccess;
+    final dangerStyle = theme.colorScheme.fiestaaaStatus(
+      FiestaaaStatusTone.danger,
+    );
     final maxVotes = poll.maxVotes == 0 ? 1 : poll.maxVotes;
     final timeText = DateFormat.Hm('fr_FR').format(poll.expiresAt);
 
@@ -3420,9 +3418,9 @@ class _PollCard extends StatelessWidget {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.25)
-                : const Color.fromARGB(30, 0, 0, 0),
+            color: theme.colorScheme.scrim.withValues(
+              alpha: isDark ? 0.25 : 0.12,
+            ),
             blurRadius: 10,
             offset: const Offset(0, 6),
           ),
@@ -3453,15 +3451,13 @@ class _PollCard extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: isDark ? 0.2 : 0.08),
+                      color: dangerStyle.background,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       'Expiré',
                       style: TextStyle(
-                        color: isDark
-                            ? Colors.red.shade200
-                            : Colors.red.shade600,
+                        color: dangerStyle.foreground,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -3518,9 +3514,7 @@ class _PollCard extends StatelessWidget {
                 Text(
                   remainingLabel,
                   style: TextStyle(
-                    color: poll.isExpired
-                        ? (isDark ? Colors.red.shade300 : Colors.red.shade400)
-                        : fadedText,
+                    color: poll.isExpired ? dangerStyle.foreground : fadedText,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -3547,12 +3541,8 @@ class _PollCard extends StatelessWidget {
                   const SizedBox(width: 10),
                   TextButton(
                     style: TextButton.styleFrom(
-                      backgroundColor: Colors.red.withValues(
-                        alpha: isDark ? 0.2 : 0.08,
-                      ),
-                      foregroundColor: isDark
-                          ? Colors.red.shade300
-                          : Colors.red.shade500,
+                      backgroundColor: dangerStyle.background,
+                      foregroundColor: dangerStyle.foreground,
                       padding: const EdgeInsets.symmetric(
                         vertical: 12,
                         horizontal: 14,
@@ -3605,20 +3595,15 @@ class _PollOptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final textColor = theme.colorScheme.onSurface;
-    final baseBar = isDark ? Colors.white12 : Colors.grey.shade200;
+    final baseBar = theme.fiestaaaSoftSurface;
     final ratio = maxVotes == 0 ? 0.0 : option.voteCount / maxVotes;
     final fillColor = option.voteCount == 0
-        ? (isDark ? Colors.white24 : Colors.grey.shade300)
+        ? theme.fiestaaaSoftBorder
         : accentColor;
     final faded = textColor.withValues(alpha: 0.55);
-    final avatarBackground = isDark
-        ? theme.colorScheme.surface.withValues(alpha: 0.9)
-        : Colors.grey.shade200;
-    final avatarForeground = isDark
-        ? textColor.withValues(alpha: 0.8)
-        : Colors.grey.shade800;
+    final avatarBackground = theme.fiestaaaAvatarSurface;
+    final avatarForeground = textColor;
     final firstVoter = option.voters.isNotEmpty ? option.voters.first : null;
 
     return GestureDetector(
@@ -3968,13 +3953,8 @@ class _EventItemTile extends StatelessWidget {
       context: context,
       builder: (context) {
         final theme = Theme.of(context);
-        final isDark = theme.brightness == Brightness.dark;
-        final avatarBackground = isDark
-            ? theme.colorScheme.surface.withValues(alpha: 0.9)
-            : Colors.grey.shade200;
-        final avatarForeground = isDark
-            ? theme.colorScheme.onSurface.withValues(alpha: 0.8)
-            : Colors.grey.shade800;
+        final avatarBackground = theme.fiestaaaAvatarSurface;
+        final avatarForeground = theme.colorScheme.onSurface;
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -4031,26 +4011,22 @@ class _EventItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final surface = theme.colorScheme.surface;
     final borderColor = theme.dividerColor;
     final textColor = theme.colorScheme.onSurface;
     final mutedText = textColor.withValues(alpha: 0.6);
-    final actionBackground = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.grey.shade100;
+    final actionBackground = theme.fiestaaaMutedSurface;
     final actionForeground = textColor;
-    final avatarBackground = isDark
-        ? surface.withValues(alpha: 0.9)
-        : Colors.grey.shade200;
-    final avatarForeground = isDark
-        ? textColor.withValues(alpha: 0.8)
-        : Colors.grey.shade800;
-    final barBackground = isDark ? Colors.white12 : Colors.grey.shade200;
-    final barEmpty = isDark ? Colors.white24 : Colors.grey.shade400;
-    final shadow = isDark
-        ? Colors.black.withValues(alpha: 0.25)
-        : const Color.fromARGB(30, 0, 0, 0);
+    final avatarBackground = theme.fiestaaaAvatarSurface;
+    final avatarForeground = textColor;
+    final barBackground = theme.fiestaaaSoftSurface;
+    final barEmpty = theme.fiestaaaSoftBorder;
+    final shadow = theme.colorScheme.scrim.withValues(
+      alpha: theme.brightness == Brightness.dark ? 0.25 : 0.12,
+    );
+    final dangerStyle = theme.colorScheme.fiestaaaStatus(
+      FiestaaaStatusTone.danger,
+    );
     final ratio = item.maxQuantity == 0
         ? 0.0
         : item.reservedQuantity / item.maxQuantity;
@@ -4062,7 +4038,7 @@ class _EventItemTile extends StatelessWidget {
     final isFull = available <= 0;
     final hasContributed = myContribution.isNotEmpty;
     final isBring = item.kind == EventItemKind.bring;
-    final accentGreen = Colors.green.shade500;
+    final accentGreen = theme.colorScheme.fiestaaaSuccess;
 
     if (isBring) {
       final creatorName = _displayName(context, item.createdByHandle);
@@ -4169,12 +4145,8 @@ class _EventItemTile extends StatelessWidget {
               if (onDelete != null)
                 TextButton(
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.red.withValues(
-                      alpha: isDark ? 0.2 : 0.08,
-                    ),
-                    foregroundColor: isDark
-                        ? Colors.red.shade300
-                        : Colors.red.shade400,
+                    backgroundColor: dangerStyle.background,
+                    foregroundColor: dangerStyle.foreground,
                     padding: const EdgeInsets.symmetric(
                       vertical: 12,
                       horizontal: 14,
@@ -4404,12 +4376,8 @@ class _EventItemTile extends StatelessWidget {
                     const SizedBox(width: 10),
                     TextButton(
                       style: TextButton.styleFrom(
-                        backgroundColor: Colors.red.withValues(
-                          alpha: isDark ? 0.2 : 0.08,
-                        ),
-                        foregroundColor: isDark
-                            ? Colors.red.shade300
-                            : Colors.red.shade400,
+                        backgroundColor: dangerStyle.background,
+                        foregroundColor: dangerStyle.foreground,
                         padding: const EdgeInsets.symmetric(
                           vertical: 12,
                           horizontal: 14,
@@ -4471,7 +4439,7 @@ class _DetailTile extends StatelessWidget {
                   Text(
                     label,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: Colors.grey.shade600,
+                      color: Theme.of(context).fiestaaaMutedText,
                     ),
                   ),
                   const SizedBox(height: 6),
