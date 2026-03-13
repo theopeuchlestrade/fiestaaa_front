@@ -194,33 +194,17 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
   }
 
   Color _statusTextColor(String status) {
-    switch (status) {
-      case 'Accepted':
-        return Colors.green.shade800;
-      case 'Declined':
-        return Colors.grey.shade800;
-      case 'Expired':
-        return Colors.grey.shade700;
-      case 'Waiting':
-        return Colors.orange.shade800;
-      default:
-        return Colors.grey.shade800;
-    }
+    return fiestaaaInvitationStatusStyle(
+      Theme.of(context).colorScheme,
+      status,
+    ).foreground;
   }
 
   Color _statusBackgroundColor(String status) {
-    switch (status) {
-      case 'Accepted':
-        return Colors.green.shade100;
-      case 'Declined':
-        return Colors.grey.shade200;
-      case 'Expired':
-        return Colors.grey.shade100;
-      case 'Waiting':
-        return Colors.orange.shade100;
-      default:
-        return Colors.grey.shade200;
-    }
+    return fiestaaaInvitationStatusStyle(
+      Theme.of(context).colorScheme,
+      status,
+    ).background;
   }
 
   Widget _buildInvitationActions(
@@ -246,10 +230,11 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
     }
 
     if (invitation.status == 'Accepted') {
+      final scheme = Theme.of(context).colorScheme;
       return TextButton.icon(
         onPressed: () => _confirmLeave(invitation),
         icon: const Icon(Icons.logout),
-        style: TextButton.styleFrom(foregroundColor: Colors.red.shade700),
+        style: TextButton.styleFrom(foregroundColor: scheme.fiestaaaDanger),
         label: Text(S.of(context).leaveEvent),
       );
     }
@@ -267,10 +252,11 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
   }
 
   void _showSnack(String text, {bool isError = false}) {
+    final scheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        backgroundColor: isError ? Colors.red.shade400 : null,
+        backgroundColor: isError ? scheme.error : null,
       ),
     );
   }
@@ -359,6 +345,7 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
+                        final theme = Theme.of(context);
                         final isCompact = constraints.maxWidth < 420;
                         final actions = _buildInvitationActions(
                           inv,
@@ -395,13 +382,9 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
                           subtitle: subtitle,
                           leading: Icon(
                             Icons.mail_outline,
-                            color: inv.status == 'Accepted'
-                                ? Colors.green
-                                : inv.status == 'Declined'
-                                ? Colors.redAccent
-                                : inv.status == 'Expired'
-                                ? Colors.grey
-                                : FiestaaaPalette.primary,
+                            color: inv.status == 'Declined'
+                                ? theme.colorScheme.fiestaaaDanger
+                                : _statusTextColor(inv.status),
                           ),
                           trailing: isCompact ? null : actions,
                           isThreeLine: isCompact,
@@ -512,7 +495,7 @@ class _FriendRequestsSection extends StatelessWidget {
               Expanded(
                 child: Text(
                   S.of(context).nothingForNow,
-                  style: const TextStyle(color: Colors.grey),
+                  style: TextStyle(color: Theme.of(context).fiestaaaMutedText),
                 ),
               ),
             ],
@@ -552,6 +535,10 @@ class _FriendRequestsSection extends StatelessWidget {
               final subtitle = incoming
                   ? S.of(context).receivedOn(dateStr)
                   : S.of(context).sentOn(dateStr);
+              final statusStyle = fiestaaaInvitationStatusStyle(
+                Theme.of(context).colorScheme,
+                req.status,
+              );
 
               return ListTile(
                 contentPadding: EdgeInsets.zero,
@@ -576,19 +563,12 @@ class _FriendRequestsSection extends StatelessWidget {
                         label: Text(
                           _statusLabel(context, req.status),
                           style: TextStyle(
-                            color: req.status == 'Accepted'
-                                ? Colors.green.shade800
-                                : req.status == 'Declined'
-                                ? Colors.grey.shade800
-                                : Colors.orange.shade800,
+                            color: statusStyle.foreground,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        backgroundColor: req.status == 'Accepted'
-                            ? Colors.green.shade100
-                            : req.status == 'Declined'
-                            ? Colors.grey.shade200
-                            : Colors.orange.shade100,
+                        backgroundColor: statusStyle.background,
+                        side: BorderSide(color: statusStyle.border),
                       ),
               );
             }),

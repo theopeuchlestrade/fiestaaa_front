@@ -12,6 +12,7 @@ import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dar
 import 'package:fiestaaa_front/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:fiestaaa_front/src/core/theme_service.dart';
+import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
@@ -277,6 +278,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _iconWithBadge(IconData icon, int count) {
     if (count <= 0) return Icon(icon);
+    final danger = Theme.of(context).colorScheme.fiestaaaDanger;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -287,7 +289,7 @@ class _HomePageState extends State<HomePage> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.redAccent,
+              color: danger,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(

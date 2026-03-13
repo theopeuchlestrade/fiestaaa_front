@@ -409,9 +409,23 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
 
     if (!isSelf) {
       if (_isFriendWith(identifier)) {
-        actions.add(_statusIcon(Icons.verified, Colors.teal));
+        actions.add(
+          _statusIcon(
+            Icons.verified,
+            Theme.of(
+              context,
+            ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.info).foreground,
+          ),
+        );
       } else if (_hasPendingFriendRequestWith(identifier)) {
-        actions.add(_statusIcon(Icons.hourglass_top, Colors.orange));
+        actions.add(
+          _statusIcon(
+            Icons.hourglass_top,
+            Theme.of(
+              context,
+            ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.warning).foreground,
+          ),
+        );
       } else {
         actions.add(
           IconButton(
@@ -445,10 +459,11 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   }
 
   void _showSnack(String text, {bool isError = false}) {
+    final scheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        backgroundColor: isError ? Colors.red.shade400 : null,
+        backgroundColor: isError ? scheme.error : null,
       ),
     );
   }
@@ -456,6 +471,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   @override
   Widget build(BuildContext context) {
     final filteredFriends = _filteredFriends;
+    final warningStyle = Theme.of(
+      context,
+    ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.warning);
 
     final content = RefreshIndicator(
       onRefresh: () async {
@@ -483,22 +501,22 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: warningStyle.background,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.orange.shade200),
+                border: Border.all(color: warningStyle.border),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.lock_clock_outlined,
-                    color: Colors.orange.shade800,
+                    color: warningStyle.foreground,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       S.of(context).eventFinishedReadOnly,
                       style: TextStyle(
-                        color: Colors.orange.shade900,
+                        color: warningStyle.foreground,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -557,27 +575,28 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   }
 
   List<Widget> _buildInvitationSections() {
+    final scheme = Theme.of(context).colorScheme;
     final sections = [
       (
         status: 'Waiting',
         title: S.of(context).waiting,
         emptyLabel: S.of(context).noWaitingInvitation,
         icon: Icons.hourglass_bottom,
-        color: Colors.amber,
+        color: scheme.fiestaaaStatus(FiestaaaStatusTone.warning).foreground,
       ),
       (
         status: 'Accepted',
         title: S.of(context).acceptedSectionTitle,
         emptyLabel: S.of(context).noOneAcceptedYet,
         icon: Icons.check_circle,
-        color: Colors.green,
+        color: scheme.fiestaaaStatus(FiestaaaStatusTone.success).foreground,
       ),
       (
         status: 'Declined',
         title: S.of(context).declinedSectionTitle,
         emptyLabel: S.of(context).noDeclineRecorded,
         icon: Icons.cancel,
-        color: Colors.redAccent,
+        color: scheme.fiestaaaStatus(FiestaaaStatusTone.danger).foreground,
       ),
     ];
 
@@ -675,6 +694,7 @@ class _FriendsInviteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final buttonLabel = inviting
         ? S.of(context).sending
         : (selectedHandles.isEmpty
@@ -693,7 +713,10 @@ class _FriendsInviteCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.people_outline, color: Colors.teal),
+                Icon(
+                  Icons.people_outline,
+                  color: Theme.of(context).colorScheme.fiestaaaInfo,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -715,9 +738,9 @@ class _FriendsInviteCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               S.of(context).searchAndSelectFriends,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade700),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.fiestaaaMutedText,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -739,7 +762,10 @@ class _FriendsInviteCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(error!, style: const TextStyle(color: Colors.red)),
+                  Text(
+                    error!,
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
                     onPressed: onRefresh,
@@ -751,7 +777,7 @@ class _FriendsInviteCard extends StatelessWidget {
             else if (friends.isEmpty)
               Text(
                 S.of(context).noFriendAvailable,
-                style: const TextStyle(color: Colors.grey),
+                style: TextStyle(color: theme.fiestaaaMutedText),
               )
             else
               Wrap(

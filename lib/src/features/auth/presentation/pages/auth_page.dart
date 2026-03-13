@@ -514,10 +514,11 @@ Bug report
   }
 
   void _showSnack(String text, {bool isError = false}) {
+    final scheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        backgroundColor: isError ? Colors.red.shade400 : null,
+        backgroundColor: isError ? scheme.error : null,
       ),
     );
   }
@@ -552,18 +553,11 @@ Bug report
   Widget _buildMobileLayout(BuildContext context) {
     final l10n = S.of(context);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final cardColor = isDark ? FiestaaaPalette.darkSurfaceRaised : Colors.white;
-    final inputFill = isDark
-        ? FiestaaaPalette.darkSurface
-        : Colors.grey.shade50;
-    final mutedText = isDark
-        ? theme.colorScheme.onSurface.withValues(alpha: 0.72)
-        : Colors.grey.shade600;
-    final dividerColor = isDark ? Colors.white12 : Colors.grey.shade300;
-    final dividerText = isDark
-        ? theme.colorScheme.onSurface.withValues(alpha: 0.6)
-        : Colors.grey.shade500;
+    final cardColor = theme.colorScheme.surface;
+    final inputFill = theme.fiestaaaMutedSurface;
+    final mutedText = theme.fiestaaaMutedText;
+    final dividerColor = theme.fiestaaaSoftBorder;
+    final dividerText = theme.fiestaaaSubtleText;
     return Container(
       decoration: BoxDecoration(
         gradient: FiestaaaPalette.cardGradientFor(Theme.of(context).brightness),
@@ -1051,15 +1045,10 @@ Bug report
       borderRadius: BorderRadius.circular(24),
     );
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final socialBackground = isDark
-        ? FiestaaaPalette.darkSurfaceRaised
-        : Colors.white;
-    final socialForeground = isDark
-        ? theme.colorScheme.onSurface
-        : Colors.black87;
-    final socialBorder = isDark ? Colors.white12 : Colors.grey.shade300;
-    final appleColor = isDark ? Colors.white : Colors.black87;
+    final socialBackground = theme.colorScheme.surface;
+    final socialForeground = theme.colorScheme.onSurface;
+    final socialBorder = theme.fiestaaaSoftBorder;
+    final appleColor = socialForeground;
 
     Widget spinner(Color color) {
       return SizedBox(
@@ -1121,18 +1110,11 @@ Bug report
   Widget _buildAuthForm(BuildContext context, double padding) {
     final l10n = S.of(context);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final toggleBackground = isDark
-        ? FiestaaaPalette.darkSurface
-        : Colors.grey.shade100;
-    final toggleBorder = isDark ? Colors.white12 : Colors.grey.shade300;
-    final toggleInactive = isDark
-        ? theme.colorScheme.onSurface.withValues(alpha: 0.7)
-        : Colors.grey.shade800;
-    final dividerColor = isDark ? Colors.white12 : Colors.grey.shade300;
-    final dividerText = isDark
-        ? theme.colorScheme.onSurface.withValues(alpha: 0.6)
-        : Colors.grey.shade600;
+    final toggleBackground = theme.fiestaaaMutedSurface;
+    final toggleBorder = theme.fiestaaaSoftBorder;
+    final toggleInactive = theme.fiestaaaMutedText;
+    final dividerColor = theme.fiestaaaSoftBorder;
+    final dividerText = theme.fiestaaaSubtleText;
     return Padding(
       padding: EdgeInsets.all(padding),
       child: Column(
@@ -1389,23 +1371,17 @@ Bug report
   Widget _buildAlphaBanner({required bool compact}) {
     final l10n = S.of(context);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final bannerBackground = isDark
-        ? const Color(0xFF2A1A0E)
-        : Colors.orange.shade50;
-    final bannerBorder = isDark
-        ? Colors.orange.withValues(alpha: 0.35)
-        : Colors.orange.shade200;
-    final bannerShadow = isDark
-        ? Colors.orange.withValues(alpha: 0.18)
-        : Colors.orange.shade200.withValues(alpha: 0.4);
-    final bannerTitle = isDark
-        ? Colors.orange.shade100
-        : Colors.orange.shade900;
-    final bannerText = isDark ? Colors.orange.shade200 : Colors.orange.shade800;
-    final bannerIconBackground = isDark
-        ? Colors.orange.withValues(alpha: 0.2)
-        : Colors.orange.shade100;
+    final warningStyle = theme.colorScheme.fiestaaaStatus(
+      FiestaaaStatusTone.warning,
+    );
+    final bannerBackground = warningStyle.background;
+    final bannerBorder = warningStyle.border;
+    final bannerShadow = warningStyle.foreground.withValues(alpha: 0.18);
+    final bannerTitle = warningStyle.foreground;
+    final bannerText = warningStyle.foreground;
+    final bannerIconBackground = warningStyle.foreground.withValues(
+      alpha: 0.14,
+    );
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(

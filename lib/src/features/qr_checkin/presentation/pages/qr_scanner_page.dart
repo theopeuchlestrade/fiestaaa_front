@@ -495,8 +495,8 @@ class _QRScannerPageState extends State<QRScannerPage> {
     final surfaceRaised = FiestaaaPalette.surfaceRaisedFor(brightness);
     final isSuccess = _lastScanResult!.success;
     final statusColor = isSuccess
-        ? const Color(0xFF22C55E)
-        : theme.colorScheme.error;
+        ? theme.colorScheme.fiestaaaSuccess
+        : theme.colorScheme.fiestaaaDanger;
     final rawHandle = _lastScanResult!.userHandle?.trim();
     final displayHandle = rawHandle != null && rawHandle.isNotEmpty
         ? rawHandle
