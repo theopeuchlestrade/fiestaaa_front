@@ -1,6 +1,7 @@
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/data/qr_checkin_api.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/domain/qr_checkin_models.dart';
+import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -110,7 +111,6 @@ class _QRScannerPageState extends State<QRScannerPage> {
         });
         await _scannerController.stop();
 
-        // Reload stats after successful scan
         if (result.success) {
           await _loadStats();
         }
@@ -133,18 +133,19 @@ class _QRScannerPageState extends State<QRScannerPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final brightness = theme.brightness;
+    final isDark = brightness == Brightness.dark;
+    final surface = FiestaaaPalette.surfaceFor(brightness);
+    final surfaceRaised = FiestaaaPalette.surfaceRaisedFor(brightness);
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(
-          S.of(context).scanner,
-          style: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(S.of(context).scanner),
+        backgroundColor: surfaceRaised.withValues(alpha: isDark ? 0.76 : 0.88),
+        surfaceTintColor: Colors.transparent,
         actions: [
-          // Torch Button
           ValueListenableBuilder(
             valueListenable: _scannerController,
             builder: (context, state, child) {
@@ -152,13 +153,14 @@ class _QRScannerPageState extends State<QRScannerPage> {
               return IconButton(
                 icon: Icon(
                   isTorchOn ? Icons.flash_on : Icons.flash_off,
-                  color: isTorchOn ? Colors.yellow : Colors.white,
+                  color: isTorchOn
+                      ? Colors.amber.shade300
+                      : theme.colorScheme.onSurface,
                 ),
                 onPressed: () => _scannerController.toggleTorch(),
               );
             },
           ),
-          // Camera Switch Button
           ValueListenableBuilder(
             valueListenable: _scannerController,
             builder: (context, state, child) {
@@ -166,7 +168,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
               return IconButton(
                 icon: Icon(
                   isFront ? Icons.camera_front : Icons.camera_rear,
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                 ),
                 onPressed: () => _scannerController.switchCamera(),
               );
@@ -180,156 +182,306 @@ class _QRScannerPageState extends State<QRScannerPage> {
             controller: _scannerController,
             onDetect: _handleBarcode,
           ),
-
-          // Custom Overlay (Darken area outside scan zone)
-          ColorFiltered(
-            colorFilter: ColorFilter.mode(
-              Colors.black.withValues(alpha: 0.5),
-              BlendMode.srcOut,
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -110,
+                    left: -60,
+                    child: _ScannerAccentGlow(
+                      size: 240,
+                      color: theme.colorScheme.primary.withValues(
+                        alpha: isDark ? 0.30 : 0.18,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 80,
+                    right: -40,
+                    child: _ScannerAccentGlow(
+                      size: 220,
+                      color: theme.colorScheme.secondary.withValues(
+                        alpha: isDark ? 0.32 : 0.20,
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            surfaceRaised.withValues(
+                              alpha: isDark ? 0.72 : 0.56,
+                            ),
+                            Colors.transparent,
+                            surface.withValues(alpha: isDark ? 0.86 : 0.68),
+                          ],
+                          stops: const [0.0, 0.35, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Stack(
+          ),
+          _buildScannerMask(surface.withValues(alpha: isDark ? 0.78 : 0.66)),
+          Center(child: _buildScanFrame()),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + kToolbarHeight + 12,
+            left: 20,
+            right: 20,
+            child: Column(
               children: [
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.black,
-                    backgroundBlendMode: BlendMode.dstOut,
+                _buildEventOverlay(),
+                if (!_isLoadingStats && _stats != null) ...[
+                  const SizedBox(height: 12),
+                  _buildStatsOverlay(),
+                ],
+              ],
+            ),
+          ),
+          if (_lastScanResult != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SafeArea(top: false, child: _buildResultOverlay()),
+            ),
+          if (_isScanning && _lastScanResult == null)
+            Center(
+              child: CircularProgressIndicator(
+                color: theme.colorScheme.primary,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScannerMask(Color overlayColor) {
+    return IgnorePointer(
+      child: ColorFiltered(
+        colorFilter: ColorFilter.mode(overlayColor, BlendMode.srcOut),
+        child: Stack(
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                color: Colors.black,
+                backgroundBlendMode: BlendMode.dstOut,
+              ),
+            ),
+            Center(
+              child: Container(
+                width: 292,
+                height: 292,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScanFrame() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return IgnorePointer(
+      child: Container(
+        width: 292,
+        height: 292,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 0.92),
+            width: 2.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.primary.withValues(
+                alpha: isDark ? 0.34 : 0.18,
+              ),
+              blurRadius: 24,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: theme.colorScheme.secondary.withValues(alpha: 0.56),
+                width: 1.2,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEventOverlay() {
+    final theme = Theme.of(context);
+    final brightness = theme.brightness;
+    final isDark = brightness == Brightness.dark;
+    final surfaceRaised = FiestaaaPalette.surfaceRaisedFor(brightness);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: surfaceRaised.withValues(alpha: isDark ? 0.84 : 0.92),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(
+            alpha: isDark ? 0.28 : 0.14,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.24 : 0.10),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: FiestaaaPalette.cardGradientFor(brightness),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.qr_code_scanner_rounded,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.eventName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                Center(
-                  child: Container(
-                    width: 300,
-                    height: 300,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+                const SizedBox(height: 4),
+                Text(
+                  S.of(context).scanner,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.66),
                   ),
                 ),
               ],
             ),
           ),
-
-          // Scan Frame Border
-          Center(
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.primary,
-                  width: 3,
-                ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-          ),
-
-          // Stats Overlay
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: _buildStatsOverlay(),
-              ),
-            ),
-          ),
-
-          // Result Overlay
-          if (_lastScanResult != null)
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: _buildResultOverlay(),
-            ),
-
-          if (_isScanning && _lastScanResult == null)
-            const Center(child: CircularProgressIndicator(color: Colors.white)),
         ],
       ),
     );
   }
 
   Widget _buildStatsOverlay() {
-    if (_isLoadingStats) {
-      return const SizedBox();
+    final stats = _stats;
+    if (stats == null) {
+      return const SizedBox.shrink();
     }
 
-    if (_stats == null) return const SizedBox();
-
-    final primaryColor = Theme.of(context).colorScheme.primary;
-    final onPrimaryColor = Theme.of(context).colorScheme.onPrimary;
+    final theme = Theme.of(context);
+    final brightness = theme.brightness;
+    final isDark = brightness == Brightness.dark;
+    final surfaceRaised = FiestaaaPalette.surfaceRaisedFor(brightness);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        color: primaryColor,
-        borderRadius: BorderRadius.circular(30),
+        color: surfaceRaised.withValues(alpha: isDark ? 0.78 : 0.88),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: onPrimaryColor.withValues(alpha: 0.2),
-          width: 1,
+          color: theme.colorScheme.primary.withValues(
+            alpha: isDark ? 0.26 : 0.14,
+          ),
         ),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildStatItem(
-            S.of(context).invited,
-            '${_stats!.totalInvited}',
-            textColor: onPrimaryColor,
+          Expanded(
+            child: _buildStatItem(
+              S.of(context).invited,
+              '${stats.totalInvited}',
+            ),
           ),
-          Container(
-            height: 24,
-            width: 1,
-            color: onPrimaryColor.withValues(alpha: 0.3),
-            margin: const EdgeInsets.symmetric(horizontal: 20),
+          _buildStatDivider(),
+          Expanded(
+            child: _buildStatItem(
+              S.of(context).present,
+              '${stats.totalCheckedIn}',
+              isHighlight: true,
+            ),
           ),
-          _buildStatItem(
-            S.of(context).present,
-            '${_stats!.totalCheckedIn}',
-            textColor: onPrimaryColor,
-            isHighlight: true,
-          ),
-          Container(
-            height: 24,
-            width: 1,
-            color: onPrimaryColor.withValues(alpha: 0.3),
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-          ),
-          _buildStatItem(
-            S.of(context).remaining,
-            '${_stats!.totalInvited - _stats!.totalCheckedIn}',
-            textColor: onPrimaryColor,
+          _buildStatDivider(),
+          Expanded(
+            child: _buildStatItem(
+              S.of(context).remaining,
+              '${stats.pendingCheckins}',
+            ),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildStatDivider() {
+    final theme = Theme.of(context);
+    return Container(
+      height: 26,
+      width: 1,
+      color: theme.colorScheme.outline.withValues(alpha: 0.22),
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+    );
+  }
+
   Widget _buildStatItem(
     String label,
     String value, {
-    required Color textColor,
     bool isHighlight = false,
   }) {
+    final theme = Theme.of(context);
+    final color = isHighlight
+        ? theme.colorScheme.primary
+        : theme.colorScheme.onSurface;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           value,
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.bold,
-            fontSize: isHighlight ? 22 : 18,
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: color,
+            fontWeight: FontWeight.w800,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(
-            color: textColor.withValues(alpha: 0.8),
-            fontSize: 11,
-            letterSpacing: 0.5,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.64),
           ),
         ),
       ],
@@ -337,22 +489,37 @@ class _QRScannerPageState extends State<QRScannerPage> {
   }
 
   Widget _buildResultOverlay() {
+    final theme = Theme.of(context);
+    final brightness = theme.brightness;
+    final isDark = brightness == Brightness.dark;
+    final surfaceRaised = FiestaaaPalette.surfaceRaisedFor(brightness);
     final isSuccess = _lastScanResult!.success;
-    final color = isSuccess ? Colors.green : Colors.red;
-    final icon = isSuccess ? Icons.check_circle : Icons.error;
+    final statusColor = isSuccess
+        ? const Color(0xFF22C55E)
+        : theme.colorScheme.error;
+    final rawHandle = _lastScanResult!.userHandle?.trim();
+    final displayHandle = rawHandle != null && rawHandle.isNotEmpty
+        ? rawHandle
+        : null;
+    final handleInitialSource = displayHandle?.replaceFirst('@', '').trim();
+    final initials =
+        handleInitialSource != null && handleInitialSource.isNotEmpty
+        ? handleInitialSource.characters.first.toUpperCase()
+        : '?';
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.all(24),
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: surfaceRaised.withValues(alpha: isDark ? 0.97 : 0.98),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: statusColor.withValues(alpha: 0.22)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.12),
+            blurRadius: 28,
+            offset: const Offset(0, 16),
           ),
         ],
       ),
@@ -362,55 +529,92 @@ class _QRScannerPageState extends State<QRScannerPage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: statusColor.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: color, size: 48),
+            child: Icon(
+              isSuccess ? Icons.check_circle : Icons.cancel_rounded,
+              color: statusColor,
+              size: 44,
+            ),
           ),
           const SizedBox(height: 16),
           Text(
             isSuccess
                 ? S.of(context).accessGranted
                 : S.of(context).accessDenied,
-            style: TextStyle(
-              color: color,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: statusColor,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             _lastScanResult!.message,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey[800], fontSize: 16),
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
+            ),
           ),
           if (_lastScanResult!.userEmail != null) ...[
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 16),
-            if (_lastScanResult!.userAvatarUrl != null)
-              CircleAvatar(
-                backgroundImage: NetworkImage(_lastScanResult!.userAvatarUrl!),
-                radius: 30,
-              )
-            else
-              CircleAvatar(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                radius: 30,
-                child: Text(
-                  _lastScanResult!.userHandle?.substring(0, 1).toUpperCase() ??
-                      '?',
-                  style: const TextStyle(color: Colors.white, fontSize: 24),
+            const SizedBox(height: 18),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(
+                  alpha: isDark ? 0.14 : 0.08,
                 ),
+                borderRadius: BorderRadius.circular(20),
               ),
-            const SizedBox(height: 8),
-            Text(
-              _lastScanResult!.userHandle ?? S.of(context).unknownUser,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            Text(
-              _lastScanResult!.userEmail!,
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              child: Row(
+                children: [
+                  if (_lastScanResult!.userAvatarUrl != null)
+                    CircleAvatar(
+                      backgroundImage: NetworkImage(
+                        _lastScanResult!.userAvatarUrl!,
+                      ),
+                      radius: 28,
+                    )
+                  else
+                    CircleAvatar(
+                      backgroundColor: theme.colorScheme.primary,
+                      radius: 28,
+                      child: Text(
+                        initials,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          displayHandle ?? S.of(context).unknownUser,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _lastScanResult!.userEmail!,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.66,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
           const SizedBox(height: 24),
@@ -426,17 +630,38 @@ class _QRScannerPageState extends State<QRScannerPage> {
                 _scheduleScannerStart();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: color,
+                backgroundColor: statusColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
               child: Text(S.of(context).scanNext),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ScannerAccentGlow extends StatelessWidget {
+  const _ScannerAccentGlow({required this.size, required this.color});
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [color, color.withValues(alpha: 0.01)],
+        ),
       ),
     );
   }
