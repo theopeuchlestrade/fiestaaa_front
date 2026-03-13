@@ -3157,10 +3157,7 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
     final accepted = invitation.status == 'Accepted';
     final expired = invitation.status == 'Expired';
     Color tonedSurface(Color tint, double opacity) {
-      return Color.alphaBlend(
-        tint.withValues(alpha: opacity),
-        scheme.surface,
-      );
+      return Color.alphaBlend(tint.withValues(alpha: opacity), scheme.surface);
     }
 
     Color background;
@@ -3352,9 +3349,7 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                   }
                 },
                 icon: const Icon(Icons.logout),
-                style: TextButton.styleFrom(
-                  foregroundColor: leaveActionColor,
-                ),
+                style: TextButton.styleFrom(foregroundColor: leaveActionColor),
                 label: Text(S.of(context).leaveFiestaaaAction),
               ),
             ],
