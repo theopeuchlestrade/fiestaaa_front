@@ -497,8 +497,15 @@ class _QRScannerPageState extends State<QRScannerPage> {
     final statusColor = isSuccess
         ? const Color(0xFF22C55E)
         : theme.colorScheme.error;
+    final rawHandle = _lastScanResult!.userHandle?.trim();
+    final displayHandle = rawHandle != null && rawHandle.isNotEmpty
+        ? rawHandle
+        : null;
+    final handleInitialSource = displayHandle?.replaceFirst('@', '').trim();
     final initials =
-        _lastScanResult!.userHandle?.substring(0, 1).toUpperCase() ?? '?';
+        handleInitialSource != null && handleInitialSource.isNotEmpty
+        ? handleInitialSource.characters.first.toUpperCase()
+        : '?';
 
     return Container(
       width: double.infinity,
@@ -589,8 +596,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _lastScanResult!.userHandle ??
-                              S.of(context).unknownUser,
+                          displayHandle ?? S.of(context).unknownUser,
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
