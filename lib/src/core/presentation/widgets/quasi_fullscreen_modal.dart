@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 
 Future<T?> showQuasiFullscreenModal<T>({
   required BuildContext context,
@@ -14,7 +15,7 @@ Future<T?> showQuasiFullscreenModal<T>({
     showDragHandle: showDragHandle,
     enableDrag: enableDrag,
     backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.5),
+    barrierColor: Theme.of(context).fiestaaaScrim,
     builder: (sheetContext) => _QuasiFullscreenModalContainer(
       heightFactor: heightFactor,
       child: builder(sheetContext),

@@ -161,7 +161,9 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.fiestaaaDanger,
+            ),
             child: Text(l10n.delete),
           ),
         ],
@@ -195,10 +197,11 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _showSnack(String text, {bool isError = false}) {
+    final scheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        backgroundColor: isError ? Colors.red.shade400 : null,
+        backgroundColor: isError ? scheme.error : null,
       ),
     );
   }
@@ -217,7 +220,10 @@ class _ProfilePageState extends State<ProfilePage> {
           for (final locale in LocaleService.supportedLocales)
             ListTile(
               leading: currentLocale == locale.languageCode
-                  ? const Icon(Icons.check, color: Colors.green)
+                  ? Icon(
+                      Icons.check,
+                      color: Theme.of(context).colorScheme.fiestaaaSuccess,
+                    )
                   : const SizedBox(width: 24),
               title: Text(
                 widget.localeService?.getLanguageName(locale.languageCode) ??
@@ -263,7 +269,10 @@ class _ProfilePageState extends State<ProfilePage> {
           ])
             ListTile(
               leading: currentTheme == mode
-                  ? const Icon(Icons.check, color: Colors.green)
+                  ? Icon(
+                      Icons.check,
+                      color: Theme.of(context).colorScheme.fiestaaaSuccess,
+                    )
                   : const SizedBox(width: 24),
               title: Text(_themeLabel(mode, l10n)),
               onTap: () => Navigator.of(ctx).pop(mode),
@@ -460,8 +469,14 @@ class _ProfilePageState extends State<ProfilePage> {
                                       ? null
                                       : _confirmDeleteAccount,
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.red,
-                                    side: const BorderSide(color: Colors.red),
+                                    foregroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.fiestaaaDanger,
+                                    side: BorderSide(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.fiestaaaDanger,
+                                    ),
                                   ),
                                   icon: _deletingAccount
                                       ? const SizedBox(
@@ -494,9 +509,9 @@ class _ProfilePageState extends State<ProfilePage> {
                           children: [
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.edit_outlined,
-                                  color: Colors.deepPurple,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
@@ -524,9 +539,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                 helperText: l10n.identifierHelperText,
                                 prefixIcon: const Icon(Icons.alternate_email),
                                 suffixIcon: _handleAvailable == true
-                                    ? const Icon(
+                                    ? Icon(
                                         Icons.check_circle,
-                                        color: Colors.green,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.fiestaaaSuccess,
                                       )
                                     : null,
                               ),
@@ -538,8 +555,12 @@ class _ProfilePageState extends State<ProfilePage> {
                                   _handleStatus!,
                                   style: TextStyle(
                                     color: _handleAvailable == false
-                                        ? Colors.red.shade700
-                                        : Colors.green.shade700,
+                                        ? Theme.of(
+                                            context,
+                                          ).colorScheme.fiestaaaDanger
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.fiestaaaSuccess,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -624,9 +645,11 @@ class _ProfilePageState extends State<ProfilePage> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.language,
-                                    color: Colors.deepPurple,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(

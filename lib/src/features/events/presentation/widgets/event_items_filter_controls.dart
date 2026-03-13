@@ -25,7 +25,6 @@ class EventItemsFilterControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final isActive = selectedSort != EventItemsSort.smart;
     final scopeChips = Wrap(
       spacing: 8,
@@ -49,13 +48,11 @@ class EventItemsFilterControls extends StatelessWidget {
       decoration: BoxDecoration(
         color: isActive
             ? FiestaaaPalette.primary.withValues(alpha: 0.12)
-            : (isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.grey.shade100),
+            : theme.fiestaaaMutedSurface,
         borderRadius: BorderRadius.circular(12),
         border: isActive
             ? Border.all(color: FiestaaaPalette.primary.withValues(alpha: 0.3))
-            : null,
+            : Border.all(color: theme.fiestaaaSoftBorder),
       ),
       child: PopupMenuButton<EventItemsSort>(
         key: const Key('items_sort_button'),
@@ -67,6 +64,7 @@ class EventItemsFilterControls extends StatelessWidget {
         },
         itemBuilder: (context) => [
           _buildSortMenuItem(
+            context: context,
             value: EventItemsSort.smart,
             label: sortLabelBuilder(EventItemsSort.smart),
             icon: Icons.reorder,
@@ -74,12 +72,14 @@ class EventItemsFilterControls extends StatelessWidget {
           ),
           const PopupMenuDivider(),
           _buildSortMenuItem(
+            context: context,
             value: EventItemsSort.nameAsc,
             label: sortLabelBuilder(EventItemsSort.nameAsc),
             icon: Icons.sort_by_alpha,
             isSelected: selectedSort == EventItemsSort.nameAsc,
           ),
           _buildSortMenuItem(
+            context: context,
             value: EventItemsSort.remainingDesc,
             label: sortLabelBuilder(EventItemsSort.remainingDesc),
             icon: Icons.trending_up,
@@ -131,6 +131,7 @@ class EventItemsFilterControls extends StatelessWidget {
   }
 
   PopupMenuItem<EventItemsSort> _buildSortMenuItem({
+    required BuildContext context,
     required EventItemsSort value,
     required String label,
     required IconData icon,
@@ -144,7 +145,9 @@ class EventItemsFilterControls extends StatelessWidget {
           Icon(
             icon,
             size: 18,
-            color: isSelected ? FiestaaaPalette.primary : Colors.grey,
+            color: isSelected
+                ? FiestaaaPalette.primary
+                : Theme.of(context).fiestaaaMutedText,
           ),
           const SizedBox(width: 12),
           Expanded(

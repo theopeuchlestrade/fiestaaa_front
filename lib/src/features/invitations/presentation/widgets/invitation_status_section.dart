@@ -1,5 +1,6 @@
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
+import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -27,6 +28,7 @@ class InvitationStatusSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
@@ -57,9 +59,9 @@ class InvitationStatusSection extends StatelessWidget {
             if (invitations.isEmpty)
               Text(
                 emptyLabel,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.fiestaaaMutedText,
+                ),
               )
             else
               ...invitations.map(
@@ -77,6 +79,7 @@ class InvitationStatusSection extends StatelessWidget {
         ? invitation.handle!
         : S.of(context).accountToCreate;
     final display = '@$handle';
+    final scheme = Theme.of(context).colorScheme;
     final title = Row(
       children: [
         Flexible(
@@ -88,7 +91,7 @@ class InvitationStatusSection extends StatelessWidget {
             message: S.of(context).eventCreator,
             child: Icon(
               Icons.emoji_events,
-              color: Colors.amber.shade700,
+              color: scheme.fiestaaaWarning,
               size: 18,
             ),
           ),
@@ -134,6 +137,7 @@ class _AvatarCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final letter = (fallbackText ?? '')
         .trim()
         .characters
@@ -141,8 +145,8 @@ class _AvatarCircle extends StatelessWidget {
         .toString()
         .toUpperCase();
     Widget placeholder() => CircleAvatar(
-      backgroundColor: Colors.grey.shade200,
-      foregroundColor: Colors.grey.shade800,
+      backgroundColor: theme.fiestaaaAvatarSurface,
+      foregroundColor: theme.colorScheme.onSurface,
       child: Text(
         letter.isNotEmpty ? letter : '?',
         style: const TextStyle(fontWeight: FontWeight.w800),
@@ -150,7 +154,7 @@ class _AvatarCircle extends StatelessWidget {
     );
     if (url == null || url!.isEmpty) return placeholder();
     return CircleAvatar(
-      backgroundColor: Colors.grey.shade200,
+      backgroundColor: theme.fiestaaaAvatarSurface,
       backgroundImage: NetworkImage(url!),
       onBackgroundImageError: (error, stackTrace) {},
       child: null,

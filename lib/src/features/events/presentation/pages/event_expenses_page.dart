@@ -731,12 +731,8 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
 
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final positiveColor = theme.brightness == Brightness.dark
-        ? const Color(0xFF4ADE80)
-        : const Color(0xFF15803D);
-    final negativeColor = theme.brightness == Brightness.dark
-        ? const Color(0xFFF87171)
-        : const Color(0xFFB91C1C);
+    final positiveColor = scheme.fiestaaaSuccess;
+    final negativeColor = scheme.fiestaaaDanger;
 
     return Card(
       clipBehavior: Clip.antiAlias,

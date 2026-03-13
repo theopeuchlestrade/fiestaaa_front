@@ -37,8 +37,10 @@ class CarpoolCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final l10n = S.of(context);
+    final passengerStyle = theme.colorScheme.fiestaaaStatus(
+      FiestaaaStatusTone.info,
+    );
 
     return Card(
       child: Padding(
@@ -77,7 +79,7 @@ class CarpoolCard extends StatelessWidget {
                       else if (isPassenger)
                         _StatusBadge(
                           label: l10n.youArePassenger,
-                          color: Colors.teal,
+                          color: passengerStyle.foreground,
                           icon: Icons.person,
                         ),
                     ],
@@ -125,14 +127,18 @@ class CarpoolCard extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : FiestaaaPalette.primary.withValues(alpha: 0.05),
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: theme.brightness == Brightness.dark
+                              ? 0.16
+                              : 0.08,
+                        ),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.1)
-                              : FiestaaaPalette.primary.withValues(alpha: 0.15),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: theme.brightness == Brightness.dark
+                                ? 0.28
+                                : 0.16,
+                          ),
                         ),
                       ),
                       child: Column(
@@ -190,14 +196,14 @@ class CarpoolCard extends StatelessWidget {
                   Icon(
                     Icons.people_outline,
                     size: 18,
-                    color: Colors.grey.shade600,
+                    color: theme.fiestaaaMutedText,
                   ),
                   const SizedBox(width: 6),
                   Text(
                     l10n.passengersCount(carpool.passengers.length),
                     style: theme.textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade600,
+                      color: theme.fiestaaaMutedText,
                     ),
                   ),
                 ],
@@ -225,6 +231,7 @@ class CarpoolCard extends StatelessWidget {
   }
 
   Widget _buildActions(BuildContext context, S l10n) {
+    final theme = Theme.of(context);
     final showJoinButton = onJoin != null && unavailableReason == null;
 
     return Row(
@@ -273,9 +280,7 @@ class CarpoolCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
               decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.grey.shade100,
+                color: theme.fiestaaaMutedSurface,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -284,7 +289,7 @@ class CarpoolCard extends StatelessWidget {
                   Icon(
                     Icons.info_outline,
                     size: 16,
-                    color: Colors.grey.shade600,
+                    color: theme.fiestaaaMutedText,
                   ),
                   const SizedBox(width: 8),
                   Flexible(
@@ -292,7 +297,7 @@ class CarpoolCard extends StatelessWidget {
                       unavailableReason!,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: theme.fiestaaaMutedText,
                         fontWeight: FontWeight.w500,
                       ),
                       textAlign: TextAlign.center,
@@ -319,7 +324,7 @@ class CarpoolCard extends StatelessWidget {
               icon: Icons.delete_outline,
               tooltip: l10n.delete,
               onPressed: onDelete!,
-              color: Colors.red.shade400,
+              color: theme.colorScheme.fiestaaaDanger,
             ),
           ],
         ],
@@ -524,7 +529,10 @@ class _DriverAvatar extends StatelessWidget {
               decoration: BoxDecoration(
                 color: FiestaaaPalette.primary,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surface,
+                  width: 2,
+                ),
               ),
               child: const Icon(Icons.check, size: 8, color: Colors.white),
             ),
@@ -627,7 +635,7 @@ class _InfoRow extends StatelessWidget {
                 Text(
                   secondaryText!,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey.shade600,
+                    color: theme.fiestaaaMutedText,
                     fontSize: 11,
                   ),
                 ),
@@ -675,15 +683,17 @@ class _SeatsIndicator extends StatelessWidget {
     final seatsAvailable = seatsTotal - seatsTaken;
     final isFull = seatsTaken >= seatsTotal;
     final progress = seatsTotal > 0 ? seatsTaken / seatsTotal : 0.0;
+    final theme = Theme.of(context);
+    final statusStyle = theme.colorScheme.fiestaaaStatus(
+      isFull ? FiestaaaStatusTone.danger : FiestaaaStatusTone.success,
+    );
 
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: isFull ? Colors.red.shade50 : Colors.green.shade50,
+        color: statusStyle.background,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isFull ? Colors.red.shade200 : Colors.green.shade200,
-        ),
+        border: Border.all(color: statusStyle.border),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -696,9 +706,9 @@ class _SeatsIndicator extends StatelessWidget {
                 height: 40,
                 child: CircularProgressIndicator(
                   value: progress,
-                  backgroundColor: Colors.grey.shade200,
+                  backgroundColor: theme.fiestaaaSoftSurface,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    isFull ? Colors.red.shade400 : Colors.green.shade500,
+                    statusStyle.foreground,
                   ),
                   strokeWidth: 3,
                 ),
@@ -708,7 +718,7 @@ class _SeatsIndicator extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
-                  color: isFull ? Colors.red.shade600 : Colors.green.shade700,
+                  color: statusStyle.foreground,
                 ),
               ),
             ],
@@ -719,7 +729,7 @@ class _SeatsIndicator extends StatelessWidget {
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: isFull ? Colors.red.shade600 : Colors.green.shade700,
+              color: statusStyle.foreground,
             ),
           ),
         ],
@@ -737,12 +747,11 @@ class _PassengerChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = S.of(context);
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? Colors.white.withValues(alpha: 0.08)
-            : Colors.grey.shade100,
+        color: theme.fiestaaaMutedSurface,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
