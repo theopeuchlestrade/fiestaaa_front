@@ -27,9 +27,7 @@ import 'package:fiestaaa_front/src/core/external_uri_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
-import 'package:flutter_map/flutter_map.dart';
 import 'package:intl/intl.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
@@ -2058,93 +2056,54 @@ class _EventDetailPageState extends State<EventDetailPage> {
       );
     }
 
-    final target = LatLng(
-      _currentEvent.latitude ?? 0,
-      _currentEvent.longitude ?? 0,
-    );
+    final latitude = _currentEvent.latitude ?? 0;
+    final longitude = _currentEvent.longitude ?? 0;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.place, color: FiestaaaPalette.primary),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        S.of(context).address,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Theme.of(context).fiestaaaMutedText,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _currentEvent.address,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
-                height: 220,
-                child: FlutterMap(
-                  options: MapOptions(
-                    initialCenter: target,
-                    initialZoom: 15,
-                    interactionOptions: const InteractionOptions(
-                      flags:
-                          InteractiveFlag.drag |
-                          InteractiveFlag.pinchZoom |
-                          InteractiveFlag.doubleTapZoom |
-                          InteractiveFlag.scrollWheelZoom,
-                    ),
-                  ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _openMap(latitude, longitude),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.place, color: FiestaaaPalette.primary),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      tileProvider: NetworkTileProvider(),
-                      userAgentPackageName: 'fiestaaa_front',
+                    Text(
+                      S.of(context).address,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Theme.of(context).fiestaaaMutedText,
+                      ),
                     ),
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: target,
-                          width: 40,
-                          height: 40,
-                          alignment: Alignment.topCenter,
-                          child: const Icon(
-                            Icons.location_on,
-                            color: FiestaaaPalette.primary,
-                            size: 36,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 4),
+                    Text(
+                      _currentEvent.address,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      S.of(context).openInMapsApp,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: FiestaaaPalette.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => _openMap(target),
-              icon: const Icon(Icons.map_outlined),
-              label: Text(S.of(context).openInMapsApp),
-            ),
-          ],
+              const SizedBox(width: 12),
+              Icon(
+                Icons.open_in_new,
+                color: Theme.of(context).fiestaaaMutedText,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -2357,12 +2316,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
     return base.replace(queryParameters: params).toString();
   }
 
-  Future<void> _openMap(LatLng target) async {
+  Future<void> _openMap(double latitude, double longitude) async {
     // On Android, try geo: scheme to let the OS/app chooser handle it directly.
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      final geo = Uri.parse(
-        'geo:${target.latitude},${target.longitude}?q=${target.latitude},${target.longitude}',
-      );
+      final geo = Uri.parse('geo:$latitude,$longitude?q=$latitude,$longitude');
       try {
         final opened = await launchUrl(
           geo,
@@ -2376,7 +2333,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
     final provider = await _pickMapProvider();
     if (provider == null) return;
-    final uri = _uriForProvider(provider, target);
+    final uri = _uriForProvider(provider, latitude, longitude);
     try {
       final success = await launchUrl(
         uri,
@@ -2420,9 +2377,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  Uri _uriForProvider(String provider, LatLng target) {
-    final lat = target.latitude;
-    final lon = target.longitude;
+  Uri _uriForProvider(String provider, double lat, double lon) {
     switch (provider) {
       case 'google':
         return Uri.parse(
