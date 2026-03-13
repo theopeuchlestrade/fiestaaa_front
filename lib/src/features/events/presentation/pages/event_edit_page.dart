@@ -431,10 +431,11 @@ class _EventEditPageState extends State<EventEditPage> {
   }
 
   void _showSnack(String text, {bool isError = false}) {
+    final scheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        backgroundColor: isError ? Colors.red.shade400 : null,
+        backgroundColor: isError ? scheme.error : null,
       ),
     );
   }
@@ -615,7 +616,7 @@ class _EventEditPageState extends State<EventEditPage> {
         const SizedBox(height: 6),
         Text(
           S.of(context).playlistHelperText,
-          style: TextStyle(color: Colors.grey.shade600),
+          style: TextStyle(color: Theme.of(context).fiestaaaMutedText),
         ),
         if (_playlistUrlController.text.trim().isNotEmpty)
           Align(
@@ -670,7 +671,9 @@ class _EventEditPageState extends State<EventEditPage> {
           const SizedBox(height: 6),
           Text(
             _addressSearchError!,
-            style: TextStyle(color: Colors.red.shade700),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.fiestaaaDanger,
+            ),
           ),
         ],
         if (_addressSuggestions.isNotEmpty) ...[
@@ -705,7 +708,7 @@ class _EventEditPageState extends State<EventEditPage> {
                 Icon(
                   Icons.check_circle,
                   size: 18,
-                  color: Colors.green.shade600,
+                  color: Theme.of(context).colorScheme.fiestaaaSuccess,
                 ),
                 const SizedBox(width: 6),
                 Text(S.of(context).addressValidated),
@@ -815,10 +818,11 @@ class _EventEditPageState extends State<EventEditPage> {
       );
     }
     if (_providersError != null) {
+      final danger = Theme.of(context).colorScheme.fiestaaaDanger;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_providersError!, style: TextStyle(color: Colors.red.shade400)),
+          Text(_providersError!, style: TextStyle(color: danger)),
           TextButton.icon(
             onPressed: _loadPaymentProviders,
             icon: const Icon(Icons.refresh),
@@ -869,14 +873,15 @@ class _EventEditPageState extends State<EventEditPage> {
     if (_selectedProviderId == null) {
       return const SizedBox.shrink();
     }
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           S.of(context).contributionType,
-          style: Theme.of(
-            context,
-          ).textTheme.labelLarge?.copyWith(color: Colors.grey.shade700),
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.fiestaaaMutedText,
+          ),
         ),
         const SizedBox(height: 8),
         SegmentedButton<bool>(
@@ -1086,7 +1091,10 @@ class _EventEditPageState extends State<EventEditPage> {
         final subtitleWidget = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(subtitle, style: TextStyle(color: Colors.grey.shade700)),
+            Text(
+              subtitle,
+              style: TextStyle(color: Theme.of(context).fiestaaaMutedText),
+            ),
             if (isCompact) ...[const SizedBox(height: 8), actions],
           ],
         );
