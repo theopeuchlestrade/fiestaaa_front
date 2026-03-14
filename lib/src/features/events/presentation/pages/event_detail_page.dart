@@ -42,6 +42,27 @@ String _displayInitial(BuildContext context, String? handle) {
   return name.isEmpty ? '?' : name[0].toUpperCase();
 }
 
+String _formatEventAddress(BuildContext context, EventModel event) {
+  final summary = event.shortAddressSummary;
+  final secondary = summary.secondary?.trim();
+  if (secondary == null || secondary.isEmpty) {
+    return summary.primary;
+  }
+
+  final l10n = S.of(context);
+  return switch (summary.relation) {
+    EventAddressRelation.region => l10n.addressWithRegion(
+      summary.primary,
+      secondary,
+    ),
+    EventAddressRelation.locality => l10n.addressWithLocality(
+      summary.primary,
+      secondary,
+    ),
+    EventAddressRelation.none => summary.primary,
+  };
+}
+
 class EventDetailPage extends StatefulWidget {
   const EventDetailPage({
     super.key,
@@ -2052,7 +2073,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       return _DetailTile(
         icon: Icons.place,
         label: S.of(context).address,
-        value: _currentEvent.address,
+        value: _formatEventAddress(context, _currentEvent),
       );
     }
 
@@ -2083,7 +2104,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _currentEvent.address,
+                      _formatEventAddress(context, _currentEvent),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 10),

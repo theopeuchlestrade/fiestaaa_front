@@ -1,4 +1,6 @@
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -124,6 +126,104 @@ void main() {
     expect(event.isUpcoming, isTrue);
     expect(event.isReadOnly, isFalse);
     expect(event.enabledFeatures, ['expenses', 'items']);
+  });
+
+  test(
+    'shortAddressSummary keeps street and city from a full geocoded address',
+    () {
+      final event = EventModel.fromJson({
+        'event_id': 5,
+        'name_event': 'Soirée',
+        'description': 'Centre-ville',
+        'date_event': '2030-06-21',
+        'start_time': '20:00:00',
+        'address':
+            '115, Boulevard Lafayette, Le Brézet, Clermont-Ferrand, Puy-de-Dôme, Auvergne-Rhône-Alpes, France métropolitaine, 63000, France',
+        'latitude': 45.7797,
+        'longitude': 3.0863,
+        'payment_provider_id': null,
+        'payment_identifier': null,
+        'payment_requested_amount': null,
+        'payment_per_person': false,
+        'owner_email': 'owner@example.com',
+        'playlist_url': null,
+        'playlist_provider': null,
+        'enabled_features': ['items'],
+        'invitation_deadline': null,
+      });
+
+      expect(event.shortAddressSummary.primary, '115 Boulevard Lafayette');
+      expect(event.shortAddressSummary.secondary, 'Clermont-Ferrand');
+      expect(event.shortAddressSummary.relation, EventAddressRelation.locality);
+    },
+  );
+
+  test('shortAddressSummary keeps city and region for a city-only address', () {
+    final event = EventModel.fromJson({
+      'event_id': 6,
+      'name_event': 'Balade',
+      'description': 'Centre',
+      'date_event': '2030-06-21',
+      'start_time': '20:00:00',
+      'address':
+          'Clermont-Ferrand, Puy-de-Dôme, Auvergne-Rhône-Alpes, France métropolitaine, 63000, France',
+      'latitude': 45.7797,
+      'longitude': 3.0863,
+      'payment_provider_id': null,
+      'payment_identifier': null,
+      'payment_requested_amount': null,
+      'payment_per_person': false,
+      'owner_email': 'owner@example.com',
+      'playlist_url': null,
+      'playlist_provider': null,
+      'enabled_features': ['items'],
+      'invitation_deadline': null,
+    });
+
+    expect(event.shortAddressSummary.primary, 'Clermont-Ferrand');
+    expect(event.shortAddressSummary.secondary, 'Auvergne-Rhône-Alpes');
+    expect(event.shortAddressSummary.relation, EventAddressRelation.region);
+  });
+
+  test('shortAddressSummary keeps venue when it appears before the street', () {
+    final event = EventModel.fromJson({
+      'event_id': 7,
+      'name_event': 'Concert',
+      'description': 'Live',
+      'date_event': '2030-06-21',
+      'start_time': '20:00:00',
+      'address':
+          'Le Modern, Rue du Postillon, Moulin des Filoirs, Issoire, Puy-de-Dôme, Auvergne-Rhône-Alpes, France métropolitaine, 63500, France',
+      'latitude': 45.543,
+      'longitude': 3.249,
+      'payment_provider_id': null,
+      'payment_identifier': null,
+      'payment_requested_amount': null,
+      'payment_per_person': false,
+      'owner_email': 'owner@example.com',
+      'playlist_url': null,
+      'playlist_provider': null,
+      'enabled_features': ['items'],
+      'invitation_deadline': null,
+    });
+
+    expect(event.shortAddressSummary.primary, 'Le Modern, Rue du Postillon');
+    expect(event.shortAddressSummary.secondary, 'Issoire');
+    expect(event.shortAddressSummary.relation, EventAddressRelation.locality);
+  });
+
+  test('address connectors are localized', () {
+    final fr = lookupS(const Locale('fr'));
+    final en = lookupS(const Locale('en'));
+
+    expect(
+      fr.addressWithRegion('Clermont-Ferrand', 'Auvergne-Rhône-Alpes'),
+      'Clermont-Ferrand en Auvergne-Rhône-Alpes',
+    );
+    expect(
+      en.addressWithLocality('115 Boulevard Lafayette', 'Clermont-Ferrand'),
+      '115 Boulevard Lafayette in Clermont-Ferrand',
+    );
   });
 
   test('past events are exposed as finished and read-only', () {

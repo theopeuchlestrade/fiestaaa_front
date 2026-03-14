@@ -260,6 +260,20 @@
   "fiestaaaName": "Nom de la fiestaaa",
   "description": "Description",
   "address": "Adresse",
+  "addressWithLocality": "{primary} à {secondary}",
+  "@addressWithLocality": {
+    "placeholders": {
+      "primary": {"type": "String"},
+      "secondary": {"type": "String"}
+    }
+  },
+  "addressWithRegion": "{primary} en {secondary}",
+  "@addressWithRegion": {
+    "placeholders": {
+      "primary": {"type": "String"},
+      "secondary": {"type": "String"}
+    }
+  },
   "addressValidated": "Adresse validée",
   "searchAndSelectAddress": "Recherchez puis sélectionnez une suggestion validée",
   "search": "Rechercher",
