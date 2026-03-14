@@ -212,6 +212,35 @@ void main() {
     expect(event.shortAddressSummary.relation, EventAddressRelation.locality);
   });
 
+  test(
+    'shortAddressSummary keeps the city when a street address has no postal code',
+    () {
+      final event = EventModel.fromJson({
+        'event_id': 8,
+        'name_event': 'Meeting',
+        'description': 'Office',
+        'date_event': '2030-06-21',
+        'start_time': '20:00:00',
+        'address': '10 Downing Street, London, England, United Kingdom',
+        'latitude': 51.5034,
+        'longitude': -0.1276,
+        'payment_provider_id': null,
+        'payment_identifier': null,
+        'payment_requested_amount': null,
+        'payment_per_person': false,
+        'owner_email': 'owner@example.com',
+        'playlist_url': null,
+        'playlist_provider': null,
+        'enabled_features': ['items'],
+        'invitation_deadline': null,
+      });
+
+      expect(event.shortAddressSummary.primary, '10 Downing Street');
+      expect(event.shortAddressSummary.secondary, 'London');
+      expect(event.shortAddressSummary.relation, EventAddressRelation.locality);
+    },
+  );
+
   test('address connectors are localized', () {
     final fr = lookupS(const Locale('fr'));
     final en = lookupS(const Locale('en'));

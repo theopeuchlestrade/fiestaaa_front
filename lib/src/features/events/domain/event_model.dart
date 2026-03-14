@@ -308,7 +308,7 @@ class EventModel {
         relation: EventAddressRelation.locality,
       );
     }
-    if (postalIndex >= 0 && candidates.length == 2) {
+    if (candidates.length == 2) {
       return _AddressSecondaryPart(
         value: candidates.first,
         relation: EventAddressRelation.locality,
