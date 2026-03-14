@@ -185,6 +185,35 @@ void main() {
     expect(event.shortAddressSummary.relation, EventAddressRelation.region);
   });
 
+  test(
+    'shortAddressSummary keeps the region for a city-only address with one extra component',
+    () {
+      final event = EventModel.fromJson({
+        'event_id': 9,
+        'name_event': 'Walk',
+        'description': 'Center',
+        'date_event': '2030-06-21',
+        'start_time': '20:00:00',
+        'address': 'Paris, Île-de-France, France',
+        'latitude': 48.8566,
+        'longitude': 2.3522,
+        'payment_provider_id': null,
+        'payment_identifier': null,
+        'payment_requested_amount': null,
+        'payment_per_person': false,
+        'owner_email': 'owner@example.com',
+        'playlist_url': null,
+        'playlist_provider': null,
+        'enabled_features': ['items'],
+        'invitation_deadline': null,
+      });
+
+      expect(event.shortAddressSummary.primary, 'Paris');
+      expect(event.shortAddressSummary.secondary, 'Île-de-France');
+      expect(event.shortAddressSummary.relation, EventAddressRelation.region);
+    },
+  );
+
   test('shortAddressSummary keeps venue when it appears before the street', () {
     final event = EventModel.fromJson({
       'event_id': 7,

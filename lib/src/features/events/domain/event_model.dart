@@ -337,10 +337,10 @@ class EventModel {
       candidates.add(part);
     }
 
-    if (candidates.length < 2) {
+    if (candidates.isEmpty) {
       return null;
     }
-    if (candidates.length == 2) {
+    if (candidates.length <= 2) {
       return _AddressSecondaryPart(
         value: candidates.last,
         relation: EventAddressRelation.region,
@@ -440,11 +440,18 @@ class EventModel {
 
   static bool _looksLikeCountryOrTerritory(String value) {
     final normalized = value.toLowerCase();
-    return normalized.contains('france') ||
-        normalized.contains('united states') ||
-        normalized == 'usa' ||
-        normalized.contains('united kingdom') ||
-        normalized == 'uk';
+    const countryOrTerritoryNames = <String>{
+      'france',
+      'france métropolitaine',
+      'france metropolitaine',
+      'metropolitan france',
+      'united states',
+      'united states of america',
+      'usa',
+      'united kingdom',
+      'uk',
+    };
+    return countryOrTerritoryNames.contains(normalized);
   }
 
   static List<String> _parseEnabledFeatures(
