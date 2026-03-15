@@ -197,6 +197,13 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       ],
       supportedLocales: LocaleService.supportedLocales,
       locale: _localeService.locale,
+      localeListResolutionCallback: (deviceLocales, _) {
+        final selectedLocale = _localeService.locale;
+        if (selectedLocale != null) {
+          return selectedLocale;
+        }
+        return LocaleService.resolveDeviceLocales(deviceLocales);
+      },
       home: _loadingSession
           ? const _SplashScreen()
           : _session == null
