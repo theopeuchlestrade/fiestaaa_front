@@ -206,20 +206,36 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  String _languageLabel(Locale? locale, S l10n) {
+    if (locale == null) {
+      return l10n.themeSystem;
+    }
+    return widget.localeService?.getLanguageName(locale.languageCode) ??
+        locale.languageCode;
+  }
+
   Future<void> _showLanguageDialog() async {
     final l10n = S.of(context);
-    final currentLocale =
-        widget.localeService?.locale?.languageCode ??
-        Localizations.localeOf(context).languageCode;
+    final currentLocale = widget.localeService?.locale;
 
     final selected = await showDialog<String>(
       context: context,
       builder: (ctx) => SimpleDialog(
         title: Text(l10n.changeLanguage),
         children: [
+          ListTile(
+            leading: currentLocale == null
+                ? Icon(
+                    Icons.check,
+                    color: Theme.of(context).colorScheme.fiestaaaSuccess,
+                  )
+                : const SizedBox(width: 24),
+            title: Text(l10n.themeSystem),
+            onTap: () => Navigator.of(ctx).pop('system'),
+          ),
           for (final locale in LocaleService.supportedLocales)
             ListTile(
-              leading: currentLocale == locale.languageCode
+              leading: currentLocale?.languageCode == locale.languageCode
                   ? Icon(
                       Icons.check,
                       color: Theme.of(context).colorScheme.fiestaaaSuccess,
@@ -235,9 +251,16 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
 
-    if (selected != null && widget.localeService != null) {
-      await widget.localeService!.setLocale(Locale(selected));
+    if (selected == null || widget.localeService == null) {
+      return;
     }
+
+    if (selected == 'system') {
+      await widget.localeService!.clearLocale();
+      return;
+    }
+
+    await widget.localeService!.setLocale(Locale(selected));
   }
 
   String _themeLabel(ThemeMode mode, S l10n) {
@@ -666,14 +689,10 @@ class _ProfilePageState extends State<ProfilePage> {
                                 onPressed: _showLanguageDialog,
                                 icon: const Icon(Icons.translate),
                                 label: Text(
-                                  widget.localeService?.getLanguageName(
-                                        widget
-                                                .localeService
-                                                ?.locale
-                                                ?.languageCode ??
-                                            locale,
-                                      ) ??
-                                      l10n.french,
+                                  _languageLabel(
+                                    widget.localeService?.locale,
+                                    l10n,
+                                  ),
                                 ),
                               ),
                             ],

@@ -4,27 +4,53 @@ import 'package:shared_preferences/shared_preferences.dart';
 class LocaleService extends ChangeNotifier {
   static const String _localeKey = 'app_locale';
   static const List<Locale> supportedLocales = [Locale('fr'), Locale('en')];
+  static const Locale fallbackLocale = Locale('en');
 
   Locale? _locale;
 
   Locale? get locale => _locale;
 
+  static Locale? normalizeSupportedLocale(Locale? locale) {
+    if (locale == null) return null;
+    for (final supportedLocale in supportedLocales) {
+      if (supportedLocale.languageCode == locale.languageCode) {
+        return supportedLocale;
+      }
+    }
+    return null;
+  }
+
+  static Locale resolveDeviceLocales(List<Locale>? deviceLocales) {
+    if (deviceLocales != null) {
+      for (final locale in deviceLocales) {
+        final supportedLocale = normalizeSupportedLocale(locale);
+        if (supportedLocale != null) {
+          return supportedLocale;
+        }
+      }
+    }
+    return fallbackLocale;
+  }
+
   Future<void> loadSavedLocale() async {
     final prefs = await SharedPreferences.getInstance();
     final savedLocale = prefs.getString(_localeKey);
-    if (savedLocale != null) {
-      _locale = Locale(savedLocale);
-      notifyListeners();
-    }
+    final parsedLocale = normalizeSupportedLocale(
+      savedLocale == null ? null : Locale(savedLocale),
+    );
+    if (parsedLocale == null) return;
+
+    _locale = parsedLocale;
+    notifyListeners();
   }
 
   Future<void> setLocale(Locale locale) async {
-    if (!supportedLocales.contains(Locale(locale.languageCode))) {
-      return;
-    }
-    _locale = Locale(locale.languageCode);
+    final supportedLocale = normalizeSupportedLocale(locale);
+    if (supportedLocale == null) return;
+
+    _locale = supportedLocale;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_localeKey, locale.languageCode);
+    await prefs.setString(_localeKey, supportedLocale.languageCode);
     notifyListeners();
   }
 
