@@ -5,6 +5,7 @@ import 'package:fiestaaa_front/src/features/carpools/data/carpools_api.dart';
 import 'package:fiestaaa_front/src/features/carpools/domain/carpool_model.dart';
 import 'package:fiestaaa_front/src/features/carpools/presentation/widgets/carpool_card.dart';
 import 'package:fiestaaa_front/src/features/carpools/presentation/pages/carpool_create_page.dart';
+import 'package:fiestaaa_front/src/core/presentation/widgets/quasi_fullscreen_modal.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
 
@@ -111,11 +112,11 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
       return;
     }
     setState(() => _editingCarpoolId = existing?.carpoolId);
-    final result = await showModalBottomSheet<Object>(
+    final result = await showQuasiFullscreenModal<Object>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) => ScaffoldMessenger(
+      heightFactor: 0.9,
+      fitContent: true,
+      builder: (context) => FiestaaaPageLayout(
         child: CarpoolCreatePage(
           existingCarpool: existing,
           eventId: widget.eventId,

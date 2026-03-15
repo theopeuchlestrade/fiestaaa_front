@@ -324,84 +324,97 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
     final l10n = S.of(context);
     final isEditing = widget.existingCarpool != null;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? l10n.edit : l10n.proposeCarpool),
-        backgroundColor: Colors.transparent,
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _buildAddressField(l10n),
-            const SizedBox(height: 16),
-            InkWell(
-              onTap: _selectDateTime,
-              borderRadius: BorderRadius.circular(16),
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: l10n.carpoolDepartureDateTime,
-                  prefixIcon: const Icon(Icons.access_time),
-                  errorText: _departAt == null
-                      ? l10n.carpoolDateTimeRequired
-                      : null,
-                ),
-                child: Text(
-                  _departAt != null
-                      ? DateFormat.yMMMMEEEEd(
-                          Localizations.localeOf(context).toString(),
-                        ).add_Hm().format(_departAt!)
-                      : l10n.carpoolSelectDateTime,
-                  style: TextStyle(
-                    color: _departAt != null
-                        ? null
-                        : Theme.of(context).fiestaaaMutedText,
-                  ),
+    return Form(
+      key: _formKey,
+      child: ListView(
+        shrinkWrap: true,
+        padding: EdgeInsets.zero,
+        physics: const ClampingScrollPhysics(),
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: FiestaaaPageHeader(
+                  title: isEditing ? l10n.edit : l10n.proposeCarpool,
+                  bottomSpacing: 0,
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(
-                l10n.carpoolAvailableSeatsCount(_seatsTotal),
-                style: const TextStyle(fontWeight: FontWeight.w600),
+              IconButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                icon: const Icon(Icons.close),
               ),
-            ),
-            Slider(
-              value: _seatsTotal.toDouble(),
-              min: 1,
-              max: 10,
-              divisions: 9,
-              activeColor: FiestaaaPalette.primary,
-              label: '$_seatsTotal ${l10n.seatsAvailable(_seatsTotal)}',
-              onChanged: (value) {
-                setState(() {
-                  _seatsTotal = value.round();
-                });
-              },
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _notesController,
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildAddressField(l10n),
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: _selectDateTime,
+            borderRadius: BorderRadius.circular(16),
+            child: InputDecorator(
               decoration: InputDecoration(
-                labelText: '${l10n.description} (${l10n.optional})',
-                hintText: l10n.carpoolNotesHint,
-                prefixIcon: const Icon(Icons.note),
+                labelText: l10n.carpoolDepartureDateTime,
+                prefixIcon: const Icon(Icons.access_time),
+                errorText: _departAt == null
+                    ? l10n.carpoolDateTimeRequired
+                    : null,
               ),
-              maxLines: 3,
-              maxLength: 500,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _submit,
               child: Text(
-                isEditing ? l10n.carpoolUpdateAction : l10n.carpoolCreateAction,
+                _departAt != null
+                    ? DateFormat.yMMMMEEEEd(
+                        Localizations.localeOf(context).toString(),
+                      ).add_Hm().format(_departAt!)
+                    : l10n.carpoolSelectDateTime,
+                style: TextStyle(
+                  color: _departAt != null
+                      ? null
+                      : Theme.of(context).fiestaaaMutedText,
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              l10n.carpoolAvailableSeatsCount(_seatsTotal),
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          Slider(
+            value: _seatsTotal.toDouble(),
+            min: 1,
+            max: 10,
+            divisions: 9,
+            activeColor: FiestaaaPalette.primary,
+            label: '$_seatsTotal ${l10n.seatsAvailable(_seatsTotal)}',
+            onChanged: (value) {
+              setState(() {
+                _seatsTotal = value.round();
+              });
+            },
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _notesController,
+            decoration: InputDecoration(
+              labelText: '${l10n.description} (${l10n.optional})',
+              hintText: l10n.carpoolNotesHint,
+              prefixIcon: const Icon(Icons.note),
+            ),
+            maxLines: 3,
+            maxLength: 500,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: _submit,
+            child: Text(
+              isEditing ? l10n.carpoolUpdateAction : l10n.carpoolCreateAction,
+            ),
+          ),
+        ],
       ),
     );
   }

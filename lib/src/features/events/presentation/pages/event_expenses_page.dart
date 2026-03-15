@@ -581,7 +581,6 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final summary = _summary;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -617,9 +616,7 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      widget.isReadOnly
-                          ? l10n.sharedExpensesFinalSubtitle
-                          : l10n.sharedExpensesLiveSubtitle,
+                      l10n.sharedExpensesHelper,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: Colors.white.withValues(alpha: 0.86),
                       ),
@@ -637,31 +634,6 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                   ),
                   icon: const Icon(Icons.close),
                 ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _HeroPill(
-                icon: Icons.payments_outlined,
-                label: summary == null
-                    ? l10n.currentSplitPreview
-                    : l10n.totalSharedExpenses(summary.formattedTotal),
-              ),
-              _HeroPill(
-                icon: widget.isReadOnly
-                    ? Icons.lock_clock_outlined
-                    : Icons.bolt_outlined,
-                label: widget.isReadOnly
-                    ? l10n.finalSplit
-                    : l10n.currentSplitPreview,
-              ),
-              _HeroPill(
-                icon: Icons.receipt_long_outlined,
-                label: '${_expenses.length}',
-              ),
             ],
           ),
         ],
@@ -763,23 +735,6 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                         ),
                       ),
                     ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: scheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    summary.formattedTotal,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: scheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w800,
-                    ),
                   ),
                 ),
               ],
@@ -1090,38 +1045,6 @@ class _UserAvatar extends StatelessWidget {
                 fontWeight: FontWeight.w800,
               ),
             ),
-    );
-  }
-}
-
-class _HeroPill extends StatelessWidget {
-  const _HeroPill({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: Colors.white),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
