@@ -12,6 +12,20 @@ const List<String> defaultEventFeatures = <String>[
   eventFeatureItems,
 ];
 
+enum EventAddressRelation { none, locality, region }
+
+class EventAddressSummary {
+  const EventAddressSummary({
+    required this.primary,
+    this.secondary,
+    this.relation = EventAddressRelation.none,
+  });
+
+  final String primary;
+  final String? secondary;
+  final EventAddressRelation relation;
+}
+
 class EventModel {
   EventModel({
     required this.id,
@@ -107,6 +121,8 @@ class EventModel {
     return '$hours:$minutes';
   }
 
+  EventAddressSummary get shortAddressSummary => _formatShortAddress(address);
+
   String? get formattedEndDate =>
       endDate == null ? null : DateFormat.yMMMMd('fr_FR').format(endDate!);
 
@@ -188,6 +204,256 @@ class EventModel {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
+  static EventAddressSummary _formatShortAddress(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return const EventAddressSummary(primary: '');
+    }
+
+    final parts = trimmed
+        .split(',')
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .toList();
+    if (parts.length < 2) {
+      return EventAddressSummary(primary: trimmed);
+    }
+
+    final streetPartIndexes = _findStreetPartIndexes(parts);
+    final primary = _joinParts(parts, streetPartIndexes);
+    final secondary = _extractSecondaryPart(parts, streetPartIndexes);
+
+    if (secondary == null || secondary.value == primary) {
+      return EventAddressSummary(primary: primary);
+    }
+    return EventAddressSummary(
+      primary: primary,
+      secondary: secondary.value,
+      relation: secondary.relation,
+    );
+  }
+
+  static Set<int> _findStreetPartIndexes(List<String> parts) {
+    final streetIndex = parts.indexWhere(_looksLikeStreetPart);
+    if (streetIndex >= 0) {
+      final indexes = <int>{streetIndex};
+      if (streetIndex > 0 && _looksLikeHouseNumber(parts[streetIndex - 1])) {
+        indexes.add(streetIndex - 1);
+      }
+      indexes.addAll(_findVenueIndexes(parts, streetIndex));
+      if (indexes.isNotEmpty) {
+        return indexes;
+      }
+    }
+
+    if (parts.length > 1 &&
+        _looksLikeHouseNumber(parts.first) &&
+        !_looksLikePostalCode(parts[1]) &&
+        !_looksLikeCountryOrTerritory(parts[1]) &&
+        (_looksLikeStreetPart(parts[1]) || parts.length > 3)) {
+      return {0, 1};
+    }
+
+    return {0};
+  }
+
+  static Set<int> _findVenueIndexes(List<String> parts, int streetIndex) {
+    final indexes = <int>{};
+    for (var i = 0; i < streetIndex; i++) {
+      final part = parts[i];
+      if (_looksLikeHouseNumber(part) ||
+          _looksLikePostalCode(part) ||
+          _looksLikeCountryOrTerritory(part)) {
+        continue;
+      }
+      indexes.add(i);
+    }
+    return indexes;
+  }
+
+  static _AddressSecondaryPart? _extractSecondaryPart(
+    List<String> parts,
+    Set<int> streetPartIndexes,
+  ) {
+    final hasStreet = streetPartIndexes.any(
+      (index) => _looksLikeStreetPart(parts[index]),
+    );
+    if (hasStreet) {
+      return _extractLocalityPart(parts, streetPartIndexes);
+    }
+    return _extractNoStreetPart(parts, streetPartIndexes);
+  }
+
+  static _AddressSecondaryPart? _extractLocalityPart(
+    List<String> parts,
+    Set<int> streetPartIndexes,
+  ) {
+    final postalIndex = parts.indexWhere(_looksLikePostalCode);
+    final streetEnd = streetPartIndexes.reduce((a, b) => a > b ? a : b);
+    final upperBound = postalIndex >= 0 ? postalIndex : parts.length;
+    final candidates = <String>[];
+
+    for (var i = streetEnd + 1; i < upperBound; i++) {
+      final part = parts[i];
+      if (_looksLikePostalCode(part) || _looksLikeCountryOrTerritory(part)) {
+        continue;
+      }
+      candidates.add(part);
+    }
+
+    if (candidates.isEmpty) return null;
+    if (candidates.length >= 3) {
+      return _AddressSecondaryPart(
+        value: candidates[candidates.length - 3],
+        relation: EventAddressRelation.locality,
+      );
+    }
+    if (candidates.length == 2) {
+      return _AddressSecondaryPart(
+        value: candidates.first,
+        relation: EventAddressRelation.locality,
+      );
+    }
+    return _AddressSecondaryPart(
+      value: candidates.last,
+      relation: EventAddressRelation.locality,
+    );
+  }
+
+  static _AddressSecondaryPart? _extractNoStreetPart(
+    List<String> parts,
+    Set<int> streetPartIndexes,
+  ) {
+    final postalIndex = parts.indexWhere(_looksLikePostalCode);
+    final primaryEnd = streetPartIndexes.reduce((a, b) => a > b ? a : b);
+    final upperBound = postalIndex >= 0 ? postalIndex : parts.length;
+    final candidates = <String>[];
+
+    for (var i = primaryEnd + 1; i < upperBound; i++) {
+      final part = parts[i];
+      if (_looksLikePostalCode(part) || _looksLikeCountryOrTerritory(part)) {
+        continue;
+      }
+      candidates.add(part);
+    }
+
+    if (candidates.isEmpty) {
+      return null;
+    }
+    if (candidates.length <= 2) {
+      return _AddressSecondaryPart(
+        value: candidates.last,
+        relation: EventAddressRelation.region,
+      );
+    }
+    return _AddressSecondaryPart(
+      value: candidates[candidates.length - 3],
+      relation: EventAddressRelation.locality,
+    );
+  }
+
+  static String _joinParts(List<String> parts, Set<int> indexes) {
+    final sortedIndexes = indexes.toList()..sort();
+    if (sortedIndexes.isEmpty) return '';
+
+    final buffer = StringBuffer(parts[sortedIndexes.first]);
+    for (var i = 1; i < sortedIndexes.length; i++) {
+      final previous = parts[sortedIndexes[i - 1]];
+      final current = parts[sortedIndexes[i]];
+      buffer
+        ..write(_primaryPartSeparator(previous, current))
+        ..write(current);
+    }
+    return buffer.toString();
+  }
+
+  static String _primaryPartSeparator(String previous, String current) {
+    final previousIsStreetBlock =
+        _looksLikeHouseNumber(previous) || _looksLikeStreetPart(previous);
+    final currentIsStreetBlock =
+        _looksLikeHouseNumber(current) || _looksLikeStreetPart(current);
+    if (previousIsStreetBlock && currentIsStreetBlock) {
+      return ' ';
+    }
+    return ', ';
+  }
+
+  static bool _looksLikeStreetPart(String value) {
+    final normalized = value.toLowerCase();
+    const streetKeywords = <String>[
+      'rue',
+      'avenue',
+      'av.',
+      'boulevard',
+      'bd',
+      'chemin',
+      'impasse',
+      'route',
+      'allee',
+      'allée',
+      'place',
+      'quai',
+      'cours',
+      'square',
+      'passage',
+      'sentier',
+      'montee',
+      'montée',
+      'faubourg',
+      'promenade',
+      'esplanade',
+      'voie',
+      'villa',
+      'street',
+      'st.',
+      'road',
+      'rd.',
+      'drive',
+      'dr.',
+      'lane',
+      'court',
+      'way',
+      'parkway',
+      'highway',
+      'trail',
+      'terrace',
+    ];
+
+    for (final keyword in streetKeywords) {
+      if (normalized == keyword ||
+          normalized.startsWith('$keyword ') ||
+          normalized.contains(' $keyword ') ||
+          normalized.endsWith(' $keyword')) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static bool _looksLikeHouseNumber(String value) => RegExp(
+    r'^\d+(?:\s*[-/]\s*\d+)?(?:\s*(?:bis|ter|quater|[a-z]))?$',
+    caseSensitive: false,
+  ).hasMatch(value.trim());
+
+  static bool _looksLikePostalCode(String value) =>
+      RegExp(r'^\d{4,6}(?:-\d{4})?$').hasMatch(value.trim());
+
+  static bool _looksLikeCountryOrTerritory(String value) {
+    final normalized = value.toLowerCase();
+    const countryOrTerritoryNames = <String>{
+      'france',
+      'france métropolitaine',
+      'france metropolitaine',
+      'metropolitan france',
+      'united states',
+      'united states of america',
+      'usa',
+      'united kingdom',
+      'uk',
+    };
+    return countryOrTerritoryNames.contains(normalized);
+  }
+
   static List<String> _parseEnabledFeatures(
     dynamic value, {
     required int? paymentProviderId,
@@ -234,6 +500,13 @@ class EventModel {
     }
     return inferred;
   }
+}
+
+class _AddressSecondaryPart {
+  const _AddressSecondaryPart({required this.value, required this.relation});
+
+  final String value;
+  final EventAddressRelation relation;
 }
 
 class EventPayload {
