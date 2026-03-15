@@ -19,6 +19,15 @@ void main() {
     expect(service.locale, const Locale('en'));
   });
 
+  test('loadSavedLocale ignores invalid persisted values', () async {
+    SharedPreferences.setMockInitialValues({'app_locale': 'es'});
+    final service = LocaleService();
+
+    await service.loadSavedLocale();
+
+    expect(service.locale, isNull);
+  });
+
   test('setLocale ignores unsupported locales', () async {
     final service = LocaleService();
 
@@ -28,6 +37,27 @@ void main() {
     expect(service.locale, isNull);
     expect(prefs.getString('app_locale'), isNull);
   });
+
+  test('resolveDeviceLocales returns the first supported system locale', () {
+    final resolved = LocaleService.resolveDeviceLocales(const [
+      Locale('es'),
+      Locale('fr', 'FR'),
+    ]);
+
+    expect(resolved, const Locale('fr'));
+  });
+
+  test(
+    'resolveDeviceLocales falls back to english for unsupported systems',
+    () {
+      final resolved = LocaleService.resolveDeviceLocales(const [
+        Locale('es'),
+        Locale('de'),
+      ]);
+
+      expect(resolved, const Locale('en'));
+    },
+  );
 
   test('clearLocale resets memory and storage', () async {
     SharedPreferences.setMockInitialValues({'app_locale': 'fr'});
