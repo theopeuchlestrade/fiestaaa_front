@@ -245,6 +245,20 @@
   "fiestaaaName": "Fiestaaa name",
   "description": "Description",
   "address": "Address",
+  "addressWithLocality": "{primary} in {secondary}",
+  "@addressWithLocality": {
+    "placeholders": {
+      "primary": {"type": "String"},
+      "secondary": {"type": "String"}
+    }
+  },
+  "addressWithRegion": "{primary} in {secondary}",
+  "@addressWithRegion": {
+    "placeholders": {
+      "primary": {"type": "String"},
+      "secondary": {"type": "String"}
+    }
+  },
   "addressValidated": "Address validated",
   "searchAndSelectAddress": "Search then select a validated suggestion",
   "search": "Search",
