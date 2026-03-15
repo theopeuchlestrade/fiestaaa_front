@@ -101,6 +101,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
       eventFeatureCarpools,
       eventFeaturePolls,
       eventFeatureItems,
+      eventFeatureTicketing,
       eventFeaturePlaylist,
       eventFeaturePayment,
       eventFeatureExpenses,
@@ -717,6 +718,13 @@ class _EventCreatePageState extends State<EventCreatePage> {
         secondary: const Icon(Icons.inventory_2_outlined),
         value: _enabledFeatures.contains(eventFeatureItems),
         onChanged: (value) => _toggleFeature(eventFeatureItems, value),
+      ),
+      const Divider(height: 1),
+      SwitchListTile.adaptive(
+        title: Text(l10n.ticketing),
+        secondary: const Icon(Icons.confirmation_number_outlined),
+        value: _enabledFeatures.contains(eventFeatureTicketing),
+        onChanged: (value) => _toggleFeature(eventFeatureTicketing, value),
       ),
       const Divider(height: 1),
       SwitchListTile.adaptive(

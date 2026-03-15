@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 const String eventFeatureCarpools = 'carpools';
 const String eventFeaturePolls = 'polls';
 const String eventFeatureItems = 'items';
+const String eventFeatureTicketing = 'ticketing';
 const String eventFeaturePlaylist = 'playlist';
 const String eventFeaturePayment = 'payment';
 const String eventFeatureExpenses = 'expenses';
@@ -465,6 +466,7 @@ class EventModel {
       eventFeatureCarpools,
       eventFeaturePolls,
       eventFeatureItems,
+      eventFeatureTicketing,
       eventFeaturePlaylist,
       eventFeaturePayment,
       eventFeatureExpenses,

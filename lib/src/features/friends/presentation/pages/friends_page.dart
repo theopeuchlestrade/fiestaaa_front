@@ -3,15 +3,26 @@ import 'dart:async';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
+import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
+import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/friends/data/friends_api.dart';
 import 'package:fiestaaa_front/src/features/friends/domain/friend_model.dart';
+import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
+import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 enum _FriendsTab { friends, requests, add }
 
-enum _FriendMenuAction { remove }
+enum _FriendMenuAction { inviteToFiestaaa, remove }
+
+class FriendsPageInviteFlow {
+  const FriendsPageInviteFlow({required this.eventId, required this.eventName});
+
+  final int eventId;
+  final String eventName;
+}
 
 class FriendsPage extends StatefulWidget {
   const FriendsPage({
@@ -19,11 +30,13 @@ class FriendsPage extends StatefulWidget {
     required this.session,
     this.onPendingRequestsChanged,
     this.realtimeStream,
+    this.inviteFlow,
   });
 
   final SessionData session;
   final ValueChanged<int>? onPendingRequestsChanged;
   final Stream<Map<String, dynamic>>? realtimeStream;
+  final FriendsPageInviteFlow? inviteFlow;
 
   @override
   State<FriendsPage> createState() => _FriendsPageState();
@@ -32,6 +45,8 @@ class FriendsPage extends StatefulWidget {
 class _FriendsPageState extends State<FriendsPage>
     with SingleTickerProviderStateMixin {
   final _api = FriendsApi();
+  final _eventsApi = EventsApi();
+  final _invitationsApi = InvitationsApi();
   final _inviteController = TextEditingController();
   final _friendsFilterController = TextEditingController();
   late final TabController _tabController;
@@ -41,12 +56,30 @@ class _FriendsPageState extends State<FriendsPage>
   List<FriendModel> _friends = [];
   List<FriendRequestModel> _requests = [];
   List<FriendSearchResult> _suggestions = [];
+  List<EventModel>? _ownedEvents;
   bool _loading = true;
   bool _loadingRequests = true;
+  bool? _loadingOwnedEvents;
+  bool? _loadingEventInvitations;
   bool _searching = false;
   bool _sending = false;
+  bool? _invitingFriendsToEvent;
   String? _error;
   String? _requestError;
+  String? _ownedEventsError;
+  String? _eventInvitationsError;
+  Set<String>? _selectedFriendKeys;
+  Set<String>? _invitedFriendIdentifiers;
+
+  bool get _isInviteSelectionMode => widget.inviteFlow != null;
+  List<EventModel> get _ownedEventsValue => _ownedEvents ??= <EventModel>[];
+  bool get _isLoadingOwnedEvents => _loadingOwnedEvents ?? false;
+  bool get _isLoadingEventInvitations => _loadingEventInvitations ?? false;
+  bool get _isInvitingFriendsToEvent => _invitingFriendsToEvent ?? false;
+  Set<String> get _selectedFriendKeysValue =>
+      _selectedFriendKeys ??= <String>{};
+  Set<String> get _invitedFriendIdentifiersValue =>
+      _invitedFriendIdentifiers ??= <String>{};
 
   @override
   void initState() {
@@ -69,6 +102,8 @@ class _FriendsPageState extends State<FriendsPage>
     _friendsFilterController.dispose();
     _tabController.dispose();
     _api.dispose();
+    _eventsApi.dispose();
+    _invitationsApi.dispose();
     super.dispose();
   }
 
@@ -79,10 +114,21 @@ class _FriendsPageState extends State<FriendsPage>
       _realtimeSub?.cancel();
       _realtimeSub = widget.realtimeStream?.listen(_handleRealtime);
     }
+    if (oldWidget.inviteFlow?.eventId != widget.inviteFlow?.eventId) {
+      _selectedFriendKeysValue.clear();
+      _refreshAll();
+    }
   }
 
   Future<void> _refreshAll() async {
-    await Future.wait([_fetchFriends(), _fetchRequests()]);
+    final futures = <Future<void>>[_fetchFriends()];
+    if (_isInviteSelectionMode) {
+      futures.add(_fetchEventInvitations());
+    } else {
+      futures.add(_fetchRequests());
+      futures.add(_fetchOwnedEvents());
+    }
+    await Future.wait(futures);
   }
 
   void _handleRealtime(Map<String, dynamic> message) {
@@ -90,6 +136,17 @@ class _FriendsPageState extends State<FriendsPage>
     if (type == null) return;
     if (type == 'friend_requests.changed' || type == 'friendships.changed') {
       _refreshAll();
+      return;
+    }
+    if (!_isInviteSelectionMode && type == 'events.changed') {
+      _fetchOwnedEvents();
+      return;
+    }
+    if (_isInviteSelectionMode && type == 'event.invitations.changed') {
+      final eventId = message['event_id'];
+      if (eventId is int && eventId == widget.inviteFlow!.eventId) {
+        _fetchEventInvitations();
+      }
     }
   }
 
@@ -101,7 +158,10 @@ class _FriendsPageState extends State<FriendsPage>
     try {
       final data = await _api.fetchFriends(widget.session.token);
       if (!mounted) return;
-      setState(() => _friends = data);
+      setState(() {
+        _friends = data;
+        _pruneSelectedFriendKeys();
+      });
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message);
@@ -111,6 +171,65 @@ class _FriendsPageState extends State<FriendsPage>
     } finally {
       if (mounted) {
         setState(() => _loading = false);
+      }
+    }
+  }
+
+  Future<void> _fetchOwnedEvents() async {
+    setState(() {
+      _loadingOwnedEvents = true;
+      _ownedEventsError = null;
+    });
+    try {
+      final events = await _eventsApi.fetchEvents(token: widget.session.token);
+      if (!mounted) return;
+      final ownedEvents = events.where(_isOwnedInvitableEvent).toList()
+        ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
+      setState(() => _ownedEvents = ownedEvents);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _ownedEventsError = e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _ownedEventsError = S.of(context).unableToLoadFiestaaa);
+    } finally {
+      if (mounted) {
+        setState(() => _loadingOwnedEvents = false);
+      }
+    }
+  }
+
+  Future<void> _fetchEventInvitations() async {
+    final flow = widget.inviteFlow;
+    if (flow == null) return;
+
+    setState(() {
+      _loadingEventInvitations = true;
+      _eventInvitationsError = null;
+    });
+    try {
+      final invitations = await _invitationsApi.fetchEventInvitations(
+        token: widget.session.token,
+        eventId: flow.eventId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _invitedFriendIdentifiersValue
+          ..clear()
+          ..addAll(_buildInvitationIdentifiers(invitations));
+        _pruneSelectedFriendKeys();
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _eventInvitationsError = e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(
+        () => _eventInvitationsError = S.of(context).unableToLoadInvitations,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _loadingEventInvitations = false);
       }
     }
   }
@@ -297,6 +416,24 @@ class _FriendsPageState extends State<FriendsPage>
     );
   }
 
+  bool _isOwnedInvitableEvent(EventModel event) {
+    final isOwner =
+        event.ownerEmail.toLowerCase() == widget.session.email.toLowerCase();
+    if (!isOwner || event.isReadOnly) return false;
+
+    final deadline = event.invitationDeadline;
+    if (deadline == null) return true;
+    final endOfDay = DateTime(
+      deadline.year,
+      deadline.month,
+      deadline.day,
+      23,
+      59,
+      59,
+    );
+    return !DateTime.now().isAfter(endOfDay);
+  }
+
   List<FriendRequestModel> _sortedRequests(
     Iterable<FriendRequestModel> requests,
   ) {
@@ -313,8 +450,11 @@ class _FriendsPageState extends State<FriendsPage>
       final right = _friendSortLabel(b);
       return left.compareTo(right);
     });
-    if (query.isEmpty) return friends;
     return friends.where((friend) {
+      if (_isInviteSelectionMode && _isAlreadyInvited(friend)) {
+        return false;
+      }
+      if (query.isEmpty) return true;
       final handle = friend.handle.toLowerCase();
       final email = friend.email.toLowerCase();
       return handle.contains(query) || email.contains(query);
@@ -324,6 +464,269 @@ class _FriendsPageState extends State<FriendsPage>
   String _friendSortLabel(FriendModel friend) {
     final handle = friend.handle.trim();
     return (handle.isNotEmpty ? handle : friend.email).toLowerCase();
+  }
+
+  String _friendInviteIdentifier(FriendModel friend) {
+    final handle = friend.handle.trim();
+    return handle.isNotEmpty ? handle : friend.email.trim();
+  }
+
+  String _friendSelectionKey(FriendModel friend) =>
+      _friendInviteIdentifier(friend).toLowerCase();
+
+  bool _eventAlreadyIncludesFriend(
+    FriendModel friend,
+    List<InvitationModel> invitations,
+  ) {
+    final invitedIdentifiers = _buildInvitationIdentifiers(invitations);
+    final handle = friend.handle.trim().toLowerCase();
+    final email = friend.email.trim().toLowerCase();
+    return invitedIdentifiers.contains(handle) ||
+        invitedIdentifiers.contains(email);
+  }
+
+  bool _isAlreadyInvited(FriendModel friend) {
+    final handle = friend.handle.trim().toLowerCase();
+    final email = friend.email.trim().toLowerCase();
+    return _invitedFriendIdentifiersValue.contains(handle) ||
+        _invitedFriendIdentifiersValue.contains(email);
+  }
+
+  Set<String> _buildInvitationIdentifiers(List<InvitationModel> invitations) {
+    final identifiers = <String>{};
+    for (final invitation in invitations) {
+      final email = invitation.email.trim();
+      if (email.isNotEmpty) {
+        identifiers.add(email.toLowerCase());
+      }
+      final handle = invitation.handle?.trim();
+      if (handle != null && handle.isNotEmpty) {
+        identifiers.add(handle.toLowerCase());
+      }
+    }
+    return identifiers;
+  }
+
+  void _pruneSelectedFriendKeys() {
+    final availableKeys = _friends
+        .where((friend) => !_isAlreadyInvited(friend))
+        .map(_friendSelectionKey)
+        .toSet();
+    _selectedFriendKeysValue.removeWhere((key) => !availableKeys.contains(key));
+  }
+
+  void _toggleFriendSelection(FriendModel friend) {
+    final key = _friendSelectionKey(friend);
+    setState(() {
+      if (_selectedFriendKeysValue.contains(key)) {
+        _selectedFriendKeysValue.remove(key);
+      } else {
+        _selectedFriendKeysValue.add(key);
+      }
+    });
+  }
+
+  Future<void> _openInviteSheetForFriend(FriendModel friend) async {
+    if (_isLoadingOwnedEvents) {
+      _showSnack(S.of(context).loading);
+      return;
+    }
+    if (_ownedEventsError != null) {
+      _showSnack(_ownedEventsError!, isError: true);
+      return;
+    }
+    if (_ownedEventsValue.isEmpty) {
+      _showSnack(S.of(context).noOwnedFiestaaaAvailable, isError: true);
+      return;
+    }
+
+    final ownedEvents = _ownedEventsValue;
+    List<List<InvitationModel>> eventInvitations;
+    try {
+      eventInvitations = await Future.wait(
+        ownedEvents.map(
+          (event) => _invitationsApi.fetchEventInvitations(
+            token: widget.session.token,
+            eventId: event.id,
+          ),
+        ),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+      return;
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack(S.of(context).unableToLoadInvitations, isError: true);
+      return;
+    }
+
+    final inviteableEvents = <EventModel>[];
+    for (var index = 0; index < ownedEvents.length; index++) {
+      if (_eventAlreadyIncludesFriend(friend, eventInvitations[index])) {
+        continue;
+      }
+      inviteableEvents.add(ownedEvents[index]);
+    }
+    if (!mounted) return;
+    if (inviteableEvents.isEmpty) {
+      _showSnack(S.of(context).friendAlreadyInAllOwnedFiestaaas, isError: true);
+      return;
+    }
+
+    final locale = S.of(context).localeName;
+    final formatter = DateFormat.yMMMd(locale).add_Hm();
+    final event = await showModalBottomSheet<EventModel>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                S.of(context).chooseFiestaaaToInvite,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                friend.handle.isNotEmpty ? '@${friend.handle}' : friend.email,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.sizeOf(context).height * 0.55,
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: inviteableEvents.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final item = inviteableEvents[index];
+                    return _TileShell(
+                      child: ListTile(
+                        onTap: () => Navigator.of(context).pop(item),
+                        leading: const Icon(Icons.celebration_outlined),
+                        title: Text(
+                          item.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          '${formatter.format(item.startDateTime.toLocal())} • ${item.shortAddressSummary.primary}',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (event == null || !mounted) return;
+    final result = await _inviteIdentifiersToEvent(
+      eventId: event.id,
+      identifiers: [_friendInviteIdentifier(friend)],
+    );
+    if (!mounted) return;
+
+    if (result.successCount > 0) {
+      _showSnack(S.of(context).invitationSentToFriend);
+      return;
+    }
+    if (result.deadlineExpired) {
+      _showSnack(S.of(context).deadlineExpired, isError: true);
+      return;
+    }
+    _showSnack(
+      result.firstError ?? S.of(context).noInvitationSent,
+      isError: true,
+    );
+  }
+
+  Future<void> _inviteSelectedFriendsToEvent() async {
+    final flow = widget.inviteFlow;
+    if (flow == null || _selectedFriendKeysValue.isEmpty) return;
+
+    final identifiers = _friends
+        .where(
+          (friend) =>
+              _selectedFriendKeysValue.contains(_friendSelectionKey(friend)),
+        )
+        .map(_friendInviteIdentifier)
+        .toList();
+    final result = await _inviteIdentifiersToEvent(
+      eventId: flow.eventId,
+      identifiers: identifiers,
+    );
+    if (!mounted) return;
+
+    if (result.successCount > 0) {
+      Navigator.of(context).pop(result.successCount);
+      return;
+    }
+    if (result.deadlineExpired) {
+      _showSnack(S.of(context).deadlineExpired, isError: true);
+      return;
+    }
+    _showSnack(
+      result.firstError ?? S.of(context).noInvitationSent,
+      isError: true,
+    );
+  }
+
+  Future<_EventInviteSendResult> _inviteIdentifiersToEvent({
+    required int eventId,
+    required List<String> identifiers,
+  }) async {
+    setState(() => _invitingFriendsToEvent = true);
+    var successCount = 0;
+    String? firstError;
+    var deadlineExpired = false;
+    final creationFailed = S.of(context).creationFailed;
+
+    try {
+      for (final identifier in identifiers) {
+        try {
+          await _invitationsApi.createInvitation(
+            token: widget.session.token,
+            eventId: eventId,
+            identifier: identifier,
+          );
+          successCount++;
+        } on ApiException catch (e) {
+          firstError ??= e.message;
+          if (e.statusCode == 410) {
+            deadlineExpired = true;
+            break;
+          }
+        } catch (_) {
+          firstError ??= creationFailed;
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _invitingFriendsToEvent = false);
+      }
+    }
+
+    return _EventInviteSendResult(
+      successCount: successCount,
+      firstError: firstError,
+      deadlineExpired: deadlineExpired,
+    );
   }
 
   List<_FriendListEntry> _buildFriendEntries(List<FriendModel> friends) {
@@ -350,6 +753,31 @@ class _FriendsPageState extends State<FriendsPage>
 
   @override
   Widget build(BuildContext context) {
+    if (_isInviteSelectionMode) {
+      return _EventInviteSelectionView(
+        eventName: widget.inviteFlow!.eventName,
+        filterController: _friendsFilterController,
+        query: _friendsFilterController.text.trim(),
+        totalFriendsCount: _friends.length,
+        filteredFriendsCount: _filteredFriends.length,
+        selectedCount: _selectedFriendKeysValue.length,
+        loading: _loading || _isLoadingEventInvitations,
+        error: _error ?? _eventInvitationsError,
+        friends: _filteredFriends,
+        inviting: _isInvitingFriendsToEvent,
+        selectedKeys: _selectedFriendKeysValue,
+        onRefresh: () async {
+          await Future.wait([_fetchFriends(), _fetchEventInvitations()]);
+        },
+        onClearFilter: () => _friendsFilterController.clear(),
+        onToggleSelection: _toggleFriendSelection,
+        onCancel: () => Navigator.of(context).maybePop(),
+        onInvite: _selectedFriendKeysValue.isEmpty || _isInvitingFriendsToEvent
+            ? null
+            : _inviteSelectedFriendsToEvent,
+      );
+    }
+
     final incoming = _sortedRequests(
       _requests.where((r) => r.isIncoming(widget.session.email)),
     );
@@ -393,6 +821,7 @@ class _FriendsPageState extends State<FriendsPage>
                   entries: friendEntries,
                   onRefresh: _refreshAll,
                   onClearFilter: () => _friendsFilterController.clear(),
+                  onInviteToEvent: _openInviteSheetForFriend,
                   onRemove: _removeFriend,
                 ),
                 _RequestsTab(
@@ -622,6 +1051,7 @@ class _FriendsDirectoryTab extends StatelessWidget {
     required this.entries,
     required this.onRefresh,
     required this.onClearFilter,
+    required this.onInviteToEvent,
     required this.onRemove,
   });
 
@@ -634,6 +1064,7 @@ class _FriendsDirectoryTab extends StatelessWidget {
   final List<_FriendListEntry> entries;
   final Future<void> Function() onRefresh;
   final VoidCallback onClearFilter;
+  final ValueChanged<FriendModel> onInviteToEvent;
   final ValueChanged<FriendModel> onRemove;
 
   @override
@@ -760,12 +1191,223 @@ class _FriendsDirectoryTab extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _FriendTile(
                       friend: entry.friend!,
+                      onInviteToEvent: onInviteToEvent,
                       onRemove: onRemove,
                     ),
                   );
                 }, childCount: entries.length),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EventInviteSelectionView extends StatelessWidget {
+  const _EventInviteSelectionView({
+    required this.eventName,
+    required this.filterController,
+    required this.query,
+    required this.totalFriendsCount,
+    required this.filteredFriendsCount,
+    required this.selectedCount,
+    required this.loading,
+    required this.error,
+    required this.friends,
+    required this.inviting,
+    required this.selectedKeys,
+    required this.onRefresh,
+    required this.onClearFilter,
+    required this.onToggleSelection,
+    required this.onCancel,
+    required this.onInvite,
+  });
+
+  final String eventName;
+  final TextEditingController filterController;
+  final String query;
+  final int totalFriendsCount;
+  final int filteredFriendsCount;
+  final int selectedCount;
+  final bool loading;
+  final String? error;
+  final List<FriendModel> friends;
+  final bool inviting;
+  final Set<String> selectedKeys;
+  final Future<void> Function() onRefresh;
+  final VoidCallback onClearFilter;
+  final ValueChanged<FriendModel> onToggleSelection;
+  final VoidCallback onCancel;
+  final Future<void> Function()? onInvite;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasQuery = query.trim().isNotEmpty;
+    final buttonLabel = inviting
+        ? S.of(context).sending
+        : (selectedCount == 0
+              ? S.of(context).invite
+              : (selectedCount == 1
+                    ? S.of(context).inviteFriend
+                    : S.of(context).inviteFriendsCount(selectedCount)));
+
+    return FiestaaaPageLayout(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: FiestaaaPageHeader(
+                  title: S.of(context).inviteFriends,
+                  subtitle: S.of(context).selectFriendsForEvent(eventName),
+                  bottomSpacing: 12,
+                ),
+              ),
+              IconButton(
+                onPressed: onCancel,
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          _SectionPanel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionHeader(
+                  icon: Icons.group_add_outlined,
+                  title: S.of(context).friendsTab,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: filterController,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: S.of(context).filterFriends,
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: hasQuery
+                        ? IconButton(
+                            onPressed: onClearFilter,
+                            icon: const Icon(Icons.close),
+                            tooltip: S.of(context).close,
+                          )
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _InfoPill(
+                      icon: Icons.group_outlined,
+                      value: '$totalFriendsCount',
+                      label: S.of(context).friendsTab,
+                    ),
+                    _InfoPill(
+                      icon: Icons.check_circle_outline,
+                      value: '$selectedCount',
+                      label: S.of(context).selectedFriends,
+                    ),
+                    if (hasQuery)
+                      _InfoPill(
+                        icon: Icons.filter_alt_outlined,
+                        value: '$filteredFriendsCount',
+                        label: S.of(context).search,
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: onRefresh,
+              displacement: 28,
+              child: ListView(
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
+                ),
+                padding: const EdgeInsets.only(bottom: 16),
+                children: [
+                  if (loading)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 48),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (error != null)
+                    _StatePanel(
+                      icon: Icons.error_outline,
+                      message: error!,
+                      action: OutlinedButton.icon(
+                        onPressed: onRefresh,
+                        icon: const Icon(Icons.refresh),
+                        label: Text(S.of(context).retry),
+                      ),
+                    )
+                  else if (friends.isEmpty)
+                    _StatePanel(
+                      icon: hasQuery
+                          ? Icons.search_off_rounded
+                          : Icons.group_off_outlined,
+                      message: hasQuery
+                          ? S.of(context).noFriendsMatchSearch
+                          : totalFriendsCount == 0
+                          ? S.of(context).addFirstFriends
+                          : S.of(context).allFriendsAlreadyInvited,
+                    )
+                  else
+                    ...friends.map(
+                      (friend) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _FriendTile(
+                          friend: friend,
+                          selected: selectedKeys.contains(
+                            (friend.handle.isNotEmpty
+                                    ? friend.handle
+                                    : friend.email)
+                                .toLowerCase(),
+                          ),
+                          onToggleSelection: onToggleSelection,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          SafeArea(
+            top: false,
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onCancel,
+                    child: Text(S.of(context).cancel),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton.icon(
+                    onPressed: onInvite == null ? null : () => onInvite!(),
+                    icon: inviting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.send),
+                    label: Text(buttonLabel),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -1199,67 +1841,132 @@ class _RequestTile extends StatelessWidget {
 }
 
 class _FriendTile extends StatelessWidget {
-  const _FriendTile({required this.friend, required this.onRemove});
+  const _FriendTile({
+    required this.friend,
+    this.onInviteToEvent,
+    this.onRemove,
+    this.selected = false,
+    this.onToggleSelection,
+  });
 
   final FriendModel friend;
-  final ValueChanged<FriendModel> onRemove;
+  final ValueChanged<FriendModel>? onInviteToEvent;
+  final ValueChanged<FriendModel>? onRemove;
+  final bool selected;
+  final ValueChanged<FriendModel>? onToggleSelection;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final formatter = DateFormat.yMMMd(S.of(context).localeName);
     final title = friend.handle.isNotEmpty ? '@${friend.handle}' : friend.email;
+    final selectionMode = onToggleSelection != null;
+
+    final tile = ListTile(
+      dense: true,
+      visualDensity: VisualDensity.compact,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      leading: _AvatarCircle(
+        url: friend.avatarUrl,
+        fallbackText: friend.handle.isNotEmpty ? friend.handle : friend.email,
+        size: 42,
+      ),
+      title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(friend.email, maxLines: 1, overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 4),
+          Text(
+            S.of(context).friendSince(formatter.format(friend.since.toLocal())),
+            style: theme.textTheme.bodySmall,
+          ),
+        ],
+      ),
+      trailing: selectionMode
+          ? Icon(
+              selected
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked,
+              color: selected
+                  ? theme.colorScheme.primary
+                  : theme.fiestaaaMutedText,
+            )
+          : PopupMenuButton<_FriendMenuAction>(
+              onSelected: (action) {
+                switch (action) {
+                  case _FriendMenuAction.inviteToFiestaaa:
+                    onInviteToEvent?.call(friend);
+                    break;
+                  case _FriendMenuAction.remove:
+                    onRemove?.call(friend);
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                if (onInviteToEvent != null)
+                  PopupMenuItem<_FriendMenuAction>(
+                    value: _FriendMenuAction.inviteToFiestaaa,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.celebration_outlined,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(S.of(context).inviteToFiestaaa),
+                      ],
+                    ),
+                  ),
+                if (onInviteToEvent != null && onRemove != null)
+                  const PopupMenuDivider(),
+                if (onRemove != null)
+                  PopupMenuItem<_FriendMenuAction>(
+                    value: _FriendMenuAction.remove,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.person_remove_outlined,
+                          color: theme.colorScheme.error,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(S.of(context).remove),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+    );
 
     return _TileShell(
-      child: ListTile(
-        dense: true,
-        visualDensity: VisualDensity.compact,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        leading: _AvatarCircle(
-          url: friend.avatarUrl,
-          fallbackText: friend.handle.isNotEmpty ? friend.handle : friend.email,
-          size: 42,
-        ),
-        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(friend.email, maxLines: 1, overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 4),
-            Text(
-              S
-                  .of(context)
-                  .friendSince(formatter.format(friend.since.toLocal())),
-              style: theme.textTheme.bodySmall,
-            ),
-          ],
-        ),
-        trailing: PopupMenuButton<_FriendMenuAction>(
-          onSelected: (action) {
-            if (action == _FriendMenuAction.remove) {
-              onRemove(friend);
-            }
-          },
-          itemBuilder: (context) => [
-            PopupMenuItem<_FriendMenuAction>(
-              value: _FriendMenuAction.remove,
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.person_remove_outlined,
-                    color: theme.colorScheme.error,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(S.of(context).remove),
-                ],
-              ),
-            ),
-          ],
-        ),
+      child: Material(
+        color: selected
+            ? theme.colorScheme.primary.withValues(alpha: 0.08)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: selectionMode
+            ? InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () => onToggleSelection?.call(friend),
+                child: tile,
+              )
+            : tile,
       ),
     );
   }
+}
+
+class _EventInviteSendResult {
+  const _EventInviteSendResult({
+    required this.successCount,
+    required this.firstError,
+    required this.deadlineExpired,
+  });
+
+  final int successCount;
+  final String? firstError;
+  final bool deadlineExpired;
 }
 
 class _MetricCard extends StatelessWidget {

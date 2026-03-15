@@ -5,6 +5,7 @@ import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/friends/data/friends_api.dart';
 import 'package:fiestaaa_front/src/features/friends/domain/friend_model.dart';
+import 'package:fiestaaa_front/src/features/friends/presentation/pages/friends_page.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/features/invitations/presentation/widgets/invitation_status_section.dart';
@@ -16,6 +17,7 @@ class EventInvitationsPage extends StatefulWidget {
     super.key,
     required this.session,
     required this.eventId,
+    required this.eventName,
     required this.ownerEmail,
     required this.eventReadOnly,
     this.realtimeStream,
@@ -24,6 +26,7 @@ class EventInvitationsPage extends StatefulWidget {
 
   final SessionData session;
   final int eventId;
+  final String eventName;
   final String ownerEmail;
   final bool eventReadOnly;
   final Stream<Map<String, dynamic>>? realtimeStream;
@@ -44,11 +47,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   bool _submitting = false;
   List<FriendModel> _friends = [];
   List<FriendRequestModel> _friendRequests = [];
-  bool _loadingFriends = true;
-  String? _friendsError;
-  final _friendFilterController = TextEditingController();
-  final Set<String> _selectedFriendHandles = {};
-  bool _invitingFriends = false;
   bool _sendingFriendAsk = false;
   StreamSubscription<Map<String, dynamic>>? _realtimeSub;
 
@@ -59,9 +57,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   @override
   void initState() {
     super.initState();
-    _friendFilterController.addListener(() {
-      setState(() {});
-    });
     _fetch();
     _loadFriendsAndRequests();
     _realtimeSub = widget.realtimeStream?.listen(_handleRealtime);
@@ -72,7 +67,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     _realtimeSub?.cancel();
     _api.dispose();
     _emailController.dispose();
-    _friendFilterController.dispose();
     _friendsApi.dispose();
     super.dispose();
   }
@@ -97,10 +91,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   }
 
   Future<void> _loadFriendsAndRequests() async {
-    setState(() {
-      _loadingFriends = true;
-      _friendsError = null;
-    });
     try {
       final results = await Future.wait([
         _friendsApi.fetchFriends(widget.session.token),
@@ -110,21 +100,11 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       setState(() {
         _friends = results[0] as List<FriendModel>;
         _friendRequests = results[1] as List<FriendRequestModel>;
-        _pruneSelectedFriendHandles(
-          _buildInvitedIdentifiers(_invitations),
-          _friends,
-        );
       });
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() => _friendsError = e.message);
+    } on ApiException {
+      // Friend relationship badges are secondary here.
     } catch (_) {
-      if (!mounted) return;
-      setState(() => _friendsError = S.of(context).unableToLoadFriends);
-    } finally {
-      if (mounted) {
-        setState(() => _loadingFriends = false);
-      }
+      // Ignore and keep invitation management available.
     }
   }
 
@@ -143,10 +123,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
         _invitations = all
             .where((inv) => inv.eventId == widget.eventId)
             .toList();
-        _pruneSelectedFriendHandles(
-          _buildInvitedIdentifiers(_invitations),
-          _friends,
-        );
       });
     } on ApiException catch (e) {
       setState(() => _error = e.message);
@@ -225,53 +201,10 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     }
   }
 
-  List<FriendModel> get _filteredFriends {
-    final query = _friendFilterController.text.trim().toLowerCase();
-    final invitedIdentifiers = _buildInvitedIdentifiers(_invitations);
-    return _friends.where((friend) {
-      final handle = friend.handle.toLowerCase();
-      final email = friend.email.toLowerCase();
-      if (invitedIdentifiers.contains(handle) ||
-          invitedIdentifiers.contains(email)) {
-        return false;
-      }
-      if (query.isEmpty) return true;
-      return handle.contains(query) || email.contains(query);
-    }).toList();
-  }
-
   bool _identifierMatches(String identifier, String handle, String email) {
     final normalized = identifier.toLowerCase();
     return handle.toLowerCase() == normalized ||
         email.toLowerCase() == normalized;
-  }
-
-  Set<String> _buildInvitedIdentifiers(List<InvitationModel> invitations) {
-    final identifiers = <String>{};
-    for (final invitation in invitations) {
-      identifiers.add(invitation.email.toLowerCase());
-      final handle = invitation.handle?.trim();
-      if (handle != null && handle.isNotEmpty) {
-        identifiers.add(handle.toLowerCase());
-      }
-    }
-    return identifiers;
-  }
-
-  void _pruneSelectedFriendHandles(
-    Set<String> invitedIdentifiers,
-    List<FriendModel> friends,
-  ) {
-    final friendsByHandle = <String, FriendModel>{
-      for (final friend in friends) friend.handle.toLowerCase(): friend,
-    };
-    _selectedFriendHandles.removeWhere((handle) {
-      final normalized = handle.toLowerCase();
-      final friend = friendsByHandle[normalized];
-      if (friend == null) return true;
-      return invitedIdentifiers.contains(normalized) ||
-          invitedIdentifiers.contains(friend.email.toLowerCase());
-    });
   }
 
   bool _isFriendWith(String identifier) {
@@ -297,70 +230,32 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     );
   }
 
-  void _toggleFriendSelection(String handle) {
-    setState(() {
-      if (_selectedFriendHandles.contains(handle)) {
-        _selectedFriendHandles.remove(handle);
-      } else {
-        _selectedFriendHandles.add(handle);
-      }
-    });
-  }
+  Future<void> _openInviteFriendsPage() async {
+    if (!_canMutate) return;
+    final invitedCount = await Navigator.of(context).push<int>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => Scaffold(
+          body: FriendsPage(
+            session: widget.session,
+            realtimeStream: widget.realtimeStream,
+            inviteFlow: FriendsPageInviteFlow(
+              eventId: widget.eventId,
+              eventName: widget.eventName,
+            ),
+          ),
+        ),
+      ),
+    );
 
-  Future<void> _inviteSelectedFriends() async {
-    if (_selectedFriendHandles.isEmpty || !_canMutate) return;
-    setState(() => _invitingFriends = true);
-    var successCount = 0;
-    String? firstError;
-    var deadlineExpired = false;
-    // Capture localized string before async loop
-    final creationFailedMsg = S.of(context).creationFailed;
-
-    try {
-      for (final handle in _selectedFriendHandles) {
-        try {
-          await _api.createInvitation(
-            token: widget.session.token,
-            eventId: widget.eventId,
-            identifier: handle,
-          );
-          successCount++;
-        } on ApiException catch (e) {
-          firstError ??= e.message;
-          if (e.statusCode == 410) {
-            deadlineExpired = true;
-            break;
-          }
-        } catch (_) {
-          firstError ??= creationFailedMsg;
-        }
-      }
-      if (!mounted) return;
-      await _fetch();
-      if (!mounted) return;
-      setState(() {
-        _selectedFriendHandles.clear();
-      });
-      if (deadlineExpired) {
-        _showSnack(S.of(context).deadlineExpired, isError: true);
-        return;
-      }
-      if (successCount > 0) {
-        _showSnack(
-          successCount == 1
-              ? S.of(context).invitationSentToFriend
-              : S.of(context).invitationsSentToFriends(successCount),
-        );
-      } else if (firstError != null) {
-        _showSnack(firstError, isError: true);
-      } else {
-        _showSnack(S.of(context).noInvitationSent, isError: true);
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _invitingFriends = false);
-      }
-    }
+    if (!mounted || invitedCount == null || invitedCount <= 0) return;
+    await _fetch();
+    if (!mounted) return;
+    _showSnack(
+      invitedCount == 1
+          ? S.of(context).invitationSentToFriend
+          : S.of(context).invitationsSentToFriends(invitedCount),
+    );
   }
 
   Future<void> _sendFriendRequestForInvitation(
@@ -470,7 +365,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredFriends = _filteredFriends;
     final warningStyle = Theme.of(
       context,
     ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.warning);
@@ -533,18 +427,13 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
               submitting: _submitting,
             ),
             const SizedBox(height: 16),
-            _FriendsInviteCard(
-              loading: _loadingFriends,
-              error: _friendsError,
-              friends: filteredFriends,
-              selectedHandles: _selectedFriendHandles,
-              filterController: _friendFilterController,
-              onToggle: _toggleFriendSelection,
-              onInvite: _selectedFriendHandles.isEmpty || _invitingFriends
-                  ? null
-                  : _inviteSelectedFriends,
-              inviting: _invitingFriends,
-              onRefresh: _loadFriendsAndRequests,
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _openInviteFriendsPage,
+                icon: const Icon(Icons.group_add_outlined),
+                label: Text(S.of(context).inviteFriends),
+              ),
             ),
             const SizedBox(height: 24),
           ],
@@ -665,152 +554,6 @@ class _InviteForm extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _FriendsInviteCard extends StatelessWidget {
-  const _FriendsInviteCard({
-    required this.loading,
-    required this.error,
-    required this.friends,
-    required this.selectedHandles,
-    required this.filterController,
-    required this.onToggle,
-    required this.onInvite,
-    required this.inviting,
-    required this.onRefresh,
-  });
-
-  final bool loading;
-  final String? error;
-  final List<FriendModel> friends;
-  final Set<String> selectedHandles;
-  final TextEditingController filterController;
-  final ValueChanged<String> onToggle;
-  final Future<void> Function()? onInvite;
-  final bool inviting;
-  final Future<void> Function() onRefresh;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final buttonLabel = inviting
-        ? S.of(context).sending
-        : (selectedHandles.isEmpty
-              ? S.of(context).invite
-              : (selectedHandles.length == 1
-                    ? S.of(context).inviteFriend
-                    : S
-                          .of(context)
-                          .inviteFriendsCount(selectedHandles.length)));
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.people_outline,
-                  color: Theme.of(context).colorScheme.fiestaaaInfo,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    S.of(context).inviteFromFriends,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: loading ? null : () => onRefresh(),
-                  tooltip: S.of(context).refresh,
-                  icon: const Icon(Icons.refresh),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              S.of(context).searchAndSelectFriends,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.fiestaaaMutedText,
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: filterController,
-              decoration: InputDecoration(
-                labelText: S.of(context).filterFriends,
-                prefixIcon: const Icon(Icons.search),
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (loading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (error != null)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    error!,
-                    style: TextStyle(color: theme.colorScheme.error),
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: onRefresh,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(S.of(context).retry),
-                  ),
-                ],
-              )
-            else if (friends.isEmpty)
-              Text(
-                S.of(context).noFriendAvailable,
-                style: TextStyle(color: theme.fiestaaaMutedText),
-              )
-            else
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: friends
-                    .map(
-                      (friend) => FilterChip(
-                        label: Text('@${friend.handle}'),
-                        selected: selectedHandles.contains(friend.handle),
-                        onSelected: (_) => onToggle(friend.handle),
-                      ),
-                    )
-                    .toList(),
-              ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: onInvite == null ? null : () => onInvite!(),
-                icon: inviting
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.send),
-                label: Text(buttonLabel),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
