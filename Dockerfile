@@ -2,8 +2,8 @@
 
 # Build a production web bundle and serve it with Nginx
 
-# Pinned Flutter image for deterministic CI builds (3.41.2)
-FROM ghcr.io/cirruslabs/flutter:3.41.2@sha256:c690397aed33cf1a05ef9fee2871346bbe93fc09d3e437e15c5e49395f806127 AS build
+# Pinned Flutter image for deterministic CI builds (3.41.5)
+FROM ghcr.io/cirruslabs/flutter:3.41.5@sha256:5120236042c0a04d831c69fc41f0d56462d145d3b0078fdd07b50d655bbec985 AS build
 WORKDIR /app
 
 # Build-time configuration (required)
