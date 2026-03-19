@@ -10,6 +10,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 
+class EventEditPageResult {
+  const EventEditPageResult.updated(this.event) : deleted = false;
+
+  const EventEditPageResult.deleted() : event = null, deleted = true;
+
+  final EventModel? event;
+  final bool deleted;
+}
+
 class EventEditPage extends StatefulWidget {
   const EventEditPage({
     super.key,
@@ -47,6 +56,7 @@ class _EventEditPageState extends State<EventEditPage> {
   TimeOfDay? _selectedEndTime;
   DateTime? _invitationDeadline;
   bool _submitting = false;
+  bool _deleting = false;
   bool _loadingProviders = true;
   String? _providersError;
   List<PaymentProviderModel> _providers = [];
@@ -138,6 +148,7 @@ class _EventEditPageState extends State<EventEditPage> {
       eventFeatureCarpools,
       eventFeaturePolls,
       eventFeatureItems,
+      eventFeatureTicketing,
       eventFeaturePlaylist,
       eventFeaturePayment,
       eventFeatureExpenses,
@@ -416,7 +427,7 @@ class _EventEditPageState extends State<EventEditPage> {
         payload: payload,
       );
       if (!mounted) return;
-      Navigator.of(context).pop(updated);
+      Navigator.of(context).pop(EventEditPageResult.updated(updated));
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
@@ -426,6 +437,57 @@ class _EventEditPageState extends State<EventEditPage> {
     } finally {
       if (mounted) {
         setState(() => _submitting = false);
+      }
+    }
+  }
+
+  Future<void> _confirmDeleteEvent() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(S.of(context).deleteFiestaaaTitle),
+        content: Text(S.of(context).deleteFiestaaaWarning),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(S.of(context).cancel),
+          ),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.of(context).pop(true),
+            icon: const Icon(Icons.delete_outline),
+            label: Text(S.of(context).delete),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _deleteEvent();
+    }
+  }
+
+  Future<void> _deleteEvent() async {
+    setState(() => _deleting = true);
+    try {
+      await _api.deleteEvent(
+        token: widget.session.token,
+        eventId: widget.initialEvent.id,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop(const EventEditPageResult.deleted());
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message, isError: true);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack(S.of(context).deleteImpossible, isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _deleting = false);
       }
     }
   }
@@ -932,6 +994,13 @@ class _EventEditPageState extends State<EventEditPage> {
       ),
       const Divider(height: 1),
       SwitchListTile.adaptive(
+        title: Text(l10n.ticketing),
+        secondary: const Icon(Icons.confirmation_number_outlined),
+        value: _enabledFeatures.contains(eventFeatureTicketing),
+        onChanged: (value) => _toggleFeature(eventFeatureTicketing, value),
+      ),
+      const Divider(height: 1),
+      SwitchListTile.adaptive(
         title: Text(l10n.sharedPlaylist),
         subtitle: playlistEnabled && !_hasPlaylistConfig
             ? Text(l10n.playlistLinkRequired)
@@ -1166,7 +1235,7 @@ class _EventEditPageState extends State<EventEditPage> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _submitting ? null : _submit,
+                        onPressed: _submitting || _deleting ? null : _submit,
                         child: _submitting
                             ? const SizedBox(
                                 width: 18,
@@ -1176,6 +1245,38 @@ class _EventEditPageState extends State<EventEditPage> {
                                 ),
                               )
                             : Text(S.of(context).save),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Divider(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outlineVariant.withValues(alpha: 0.8),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _submitting || _deleting
+                            ? null
+                            : _confirmDeleteEvent,
+                        icon: _deleting
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.delete_outline),
+                        label: Text(S.of(context).deleteFiestaaa),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Theme.of(context).colorScheme.error,
+                          side: BorderSide(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
                       ),
                     ),
                   ],
