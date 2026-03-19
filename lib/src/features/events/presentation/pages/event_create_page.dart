@@ -54,7 +54,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
   bool _paymentPerPerson = false;
   String? _selectedPlaylistProvider;
   bool _playlistChanged = false;
-  final Set<String> _enabledFeatures = {...defaultEventFeatures};
+  final Set<String> _enabledFeatures = <String>{};
 
   @override
   void initState() {
@@ -96,8 +96,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
     });
   }
 
-  List<String> _orderedEnabledFeatures() {
-    const order = <String>[
+  List<String> _orderedFeatureOptions(S l10n) {
+    final features = <String>[
       eventFeatureCarpools,
       eventFeaturePolls,
       eventFeatureItems,
@@ -106,7 +106,38 @@ class _EventCreatePageState extends State<EventCreatePage> {
       eventFeaturePayment,
       eventFeatureExpenses,
     ];
-    return order.where(_enabledFeatures.contains).toList(growable: false);
+    features.sort((left, right) {
+      final leftLabel = _featureLabel(left, l10n).toLowerCase();
+      final rightLabel = _featureLabel(right, l10n).toLowerCase();
+      return leftLabel.compareTo(rightLabel);
+    });
+    return features;
+  }
+
+  List<String> _orderedEnabledFeatures(S l10n) {
+    return _orderedFeatureOptions(
+      l10n,
+    ).where(_enabledFeatures.contains).toList(growable: false);
+  }
+
+  String _featureLabel(String feature, S l10n) {
+    switch (feature) {
+      case eventFeatureCarpools:
+        return l10n.carpools;
+      case eventFeaturePolls:
+        return l10n.ephemeralPolls;
+      case eventFeatureItems:
+        return l10n.availableItems;
+      case eventFeatureTicketing:
+        return l10n.ticketing;
+      case eventFeaturePlaylist:
+        return l10n.sharedPlaylist;
+      case eventFeaturePayment:
+        return l10n.payment;
+      case eventFeatureExpenses:
+        return l10n.sharedExpenses;
+    }
+    return feature;
   }
 
   Future<void> _loadPaymentProviders() async {
@@ -307,12 +338,13 @@ class _EventCreatePageState extends State<EventCreatePage> {
       return;
     }
     setState(() => _submitting = true);
+    final l10n = S.of(context);
     final requestedAmount = _requestedAmountValue();
     final selectedAddress = _selectedSuggestion!;
     final playlistUrl = _playlistUrlController.text.trim();
     final playlistProvider = _selectedPlaylistProvider;
     final shouldClearPlaylist = _playlistChanged && playlistUrl.isEmpty;
-    final enabledFeatures = _orderedEnabledFeatures();
+    final enabledFeatures = _orderedEnabledFeatures(l10n);
     if (!shouldClearPlaylist &&
         playlistUrl.isNotEmpty &&
         playlistProvider == null) {
@@ -390,9 +422,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
         _invitationDeadline = null;
         _selectedPlaylistProvider = null;
         _playlistChanged = false;
-        _enabledFeatures
-          ..clear()
-          ..addAll(defaultEventFeatures);
+        _paymentPerPerson = false;
+        _enabledFeatures.clear();
       });
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -698,132 +729,164 @@ class _EventCreatePageState extends State<EventCreatePage> {
     final playlistEnabled = _enabledFeatures.contains(eventFeaturePlaylist);
     final paymentEnabled = _enabledFeatures.contains(eventFeaturePayment);
     final expensesEnabled = _enabledFeatures.contains(eventFeatureExpenses);
-    final tiles = <Widget>[
-      SwitchListTile.adaptive(
-        title: Text(l10n.carpools),
-        secondary: const Icon(Icons.directions_car_filled_outlined),
-        value: _enabledFeatures.contains(eventFeatureCarpools),
-        onChanged: (value) => _toggleFeature(eventFeatureCarpools, value),
-      ),
-      const Divider(height: 1),
-      SwitchListTile.adaptive(
-        title: Text(l10n.ephemeralPolls),
-        secondary: const Icon(Icons.poll_outlined),
-        value: _enabledFeatures.contains(eventFeaturePolls),
-        onChanged: (value) => _toggleFeature(eventFeaturePolls, value),
-      ),
-      const Divider(height: 1),
-      SwitchListTile.adaptive(
-        title: Text(l10n.availableItems),
-        secondary: const Icon(Icons.inventory_2_outlined),
-        value: _enabledFeatures.contains(eventFeatureItems),
-        onChanged: (value) => _toggleFeature(eventFeatureItems, value),
-      ),
-      const Divider(height: 1),
-      SwitchListTile.adaptive(
-        title: Text(l10n.ticketing),
-        secondary: const Icon(Icons.confirmation_number_outlined),
-        value: _enabledFeatures.contains(eventFeatureTicketing),
-        onChanged: (value) => _toggleFeature(eventFeatureTicketing, value),
-      ),
-      const Divider(height: 1),
-      SwitchListTile.adaptive(
-        title: Text(l10n.sharedPlaylist),
-        subtitle: playlistEnabled && !_hasPlaylistConfig
-            ? Text(l10n.playlistLinkRequired)
-            : null,
-        secondary: const Icon(Icons.playlist_add_check),
-        value: playlistEnabled,
-        onChanged: (value) => _toggleFeature(eventFeaturePlaylist, value),
-      ),
-      if (playlistEnabled)
-        Padding(
-          key: const ValueKey('create_playlist_fields'),
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: _buildPlaylistSection(),
-        ),
-      const Divider(height: 1),
-      SwitchListTile.adaptive(
-        title: Text(l10n.sharedExpenses),
-        subtitle: expensesEnabled ? Text(l10n.sharedExpensesHelper) : null,
-        secondary: const Icon(Icons.receipt_long_outlined),
-        value: expensesEnabled,
-        onChanged: (value) => _toggleFeature(eventFeatureExpenses, value),
-      ),
-      const Divider(height: 1),
-      SwitchListTile.adaptive(
-        title: Text(l10n.payment),
-        subtitle: !paymentEnabled || _hasPaymentConfig
-            ? null
-            : Text(
-                _selectedProviderId == null
-                    ? l10n.choosePaymentProvider
-                    : l10n.linkRequired,
+    List<Widget> buildFeatureTile(String feature) {
+      switch (feature) {
+        case eventFeatureCarpools:
+          return [
+            SwitchListTile.adaptive(
+              title: Text(l10n.carpools),
+              secondary: const Icon(Icons.directions_car_filled_outlined),
+              value: _enabledFeatures.contains(eventFeatureCarpools),
+              onChanged: (value) => _toggleFeature(eventFeatureCarpools, value),
+            ),
+          ];
+        case eventFeaturePolls:
+          return [
+            SwitchListTile.adaptive(
+              title: Text(l10n.ephemeralPolls),
+              secondary: const Icon(Icons.poll_outlined),
+              value: _enabledFeatures.contains(eventFeaturePolls),
+              onChanged: (value) => _toggleFeature(eventFeaturePolls, value),
+            ),
+          ];
+        case eventFeatureItems:
+          return [
+            SwitchListTile.adaptive(
+              title: Text(l10n.availableItems),
+              secondary: const Icon(Icons.inventory_2_outlined),
+              value: _enabledFeatures.contains(eventFeatureItems),
+              onChanged: (value) => _toggleFeature(eventFeatureItems, value),
+            ),
+          ];
+        case eventFeatureTicketing:
+          return [
+            SwitchListTile.adaptive(
+              title: Text(l10n.ticketing),
+              secondary: const Icon(Icons.confirmation_number_outlined),
+              value: _enabledFeatures.contains(eventFeatureTicketing),
+              onChanged: (value) =>
+                  _toggleFeature(eventFeatureTicketing, value),
+            ),
+          ];
+        case eventFeaturePlaylist:
+          return [
+            SwitchListTile.adaptive(
+              title: Text(l10n.sharedPlaylist),
+              subtitle: playlistEnabled && !_hasPlaylistConfig
+                  ? Text(l10n.playlistLinkRequired)
+                  : null,
+              secondary: const Icon(Icons.playlist_add_check),
+              value: playlistEnabled,
+              onChanged: (value) => _toggleFeature(eventFeaturePlaylist, value),
+            ),
+            if (playlistEnabled)
+              Padding(
+                key: const ValueKey('create_playlist_fields'),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: _buildPlaylistSection(),
               ),
-        secondary: const Icon(Icons.payment),
-        value: paymentEnabled,
-        onChanged: (value) => _toggleFeature(eventFeaturePayment, value),
-      ),
-      if (paymentEnabled)
-        Padding(
-          key: const ValueKey('create_payment_fields'),
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildPaymentProviderField(),
-              const SizedBox(height: 12),
-              _buildPaymentModeToggle(),
-              if (_selectedProviderId != null) ...[
-                const SizedBox(height: 12),
-                TextFormField(
-                  key: const ValueKey('create_payment_link_field'),
-                  controller: _paymentIdentifierController,
-                  decoration: InputDecoration(
-                    labelText: l10n.paymentLink,
-                    prefixIcon: const Icon(Icons.link),
-                  ),
-                  enabled: _selectedProviderId != null,
-                  validator: _validatePaymentLink,
+          ];
+        case eventFeatureExpenses:
+          return [
+            SwitchListTile.adaptive(
+              title: Text(l10n.sharedExpenses),
+              subtitle: expensesEnabled
+                  ? Text(l10n.sharedExpensesHelper)
+                  : null,
+              secondary: const Icon(Icons.receipt_long_outlined),
+              value: expensesEnabled,
+              onChanged: (value) => _toggleFeature(eventFeatureExpenses, value),
+            ),
+          ];
+        case eventFeaturePayment:
+          return [
+            SwitchListTile.adaptive(
+              title: Text(l10n.payment),
+              subtitle: !paymentEnabled || _hasPaymentConfig
+                  ? null
+                  : Text(
+                      _selectedProviderId == null
+                          ? l10n.choosePaymentProvider
+                          : l10n.linkRequired,
+                    ),
+              secondary: const Icon(Icons.payment),
+              value: paymentEnabled,
+              onChanged: (value) => _toggleFeature(eventFeaturePayment, value),
+            ),
+            if (paymentEnabled)
+              Padding(
+                key: const ValueKey('create_payment_fields'),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPaymentProviderField(),
+                    const SizedBox(height: 12),
+                    _buildPaymentModeToggle(),
+                    if (_selectedProviderId != null) ...[
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        key: const ValueKey('create_payment_link_field'),
+                        controller: _paymentIdentifierController,
+                        decoration: InputDecoration(
+                          labelText: l10n.paymentLink,
+                          prefixIcon: const Icon(Icons.link),
+                        ),
+                        enabled: _selectedProviderId != null,
+                        validator: _validatePaymentLink,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        key: const ValueKey('create_payment_amount_field'),
+                        controller: _paymentAmountController,
+                        decoration: InputDecoration(
+                          labelText: _paymentPerPerson
+                              ? l10n.amountPerPerson
+                              : l10n.totalAmount,
+                          prefixIcon: const Icon(Icons.euro),
+                          helperText: _paymentPerPerson
+                              ? l10n.amountPerPersonHelper
+                              : l10n.totalAmountHelper,
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        enabled: _selectedProviderId != null,
+                        validator: (value) {
+                          if (!_enabledFeatures.contains(eventFeaturePayment) ||
+                              _selectedProviderId == null) {
+                            return null;
+                          }
+                          final raw = value?.trim() ?? '';
+                          if (raw.isEmpty) {
+                            return null;
+                          }
+                          final parsed = double.tryParse(
+                            raw.replaceAll(',', '.'),
+                          );
+                          if (parsed == null || parsed < 0) {
+                            return l10n.enterPositiveAmount;
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ],
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  key: const ValueKey('create_payment_amount_field'),
-                  controller: _paymentAmountController,
-                  decoration: InputDecoration(
-                    labelText: _paymentPerPerson
-                        ? l10n.amountPerPerson
-                        : l10n.totalAmount,
-                    prefixIcon: const Icon(Icons.euro),
-                    helperText: _paymentPerPerson
-                        ? l10n.amountPerPersonHelper
-                        : l10n.totalAmountHelper,
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  enabled: _selectedProviderId != null,
-                  validator: (value) {
-                    if (!_enabledFeatures.contains(eventFeaturePayment) ||
-                        _selectedProviderId == null) {
-                      return null;
-                    }
-                    final raw = value?.trim() ?? '';
-                    if (raw.isEmpty) {
-                      return null;
-                    }
-                    final parsed = double.tryParse(raw.replaceAll(',', '.'));
-                    if (parsed == null || parsed < 0) {
-                      return l10n.enterPositiveAmount;
-                    }
-                    return null;
-                  },
-                ),
-              ],
-            ],
-          ),
-        ),
-    ];
+              ),
+          ];
+      }
+      return const <Widget>[];
+    }
+
+    final tiles = <Widget>[];
+    final orderedFeatures = _orderedFeatureOptions(l10n);
+    for (var index = 0; index < orderedFeatures.length; index++) {
+      tiles.addAll(buildFeatureTile(orderedFeatures[index]));
+      if (index < orderedFeatures.length - 1) {
+        tiles.add(const Divider(height: 1));
+      }
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
