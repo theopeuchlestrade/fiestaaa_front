@@ -54,11 +54,18 @@ void main() {
         'owner_email': 'owner@example.com',
         'playlist_url': null,
         'playlist_provider': null,
-        'enabled_features': ['items', 'PAYMENT', 'items', 'unknown', 'polls'],
+        'enabled_features': [
+          'items',
+          'PAYMENT',
+          'ticketing',
+          'items',
+          'unknown',
+          'polls',
+        ],
         'invitation_deadline': null,
       });
 
-      expect(event.enabledFeatures, ['items', 'payment', 'polls']);
+      expect(event.enabledFeatures, ['items', 'payment', 'ticketing', 'polls']);
       expect(event.startDateTime, DateTime(2030, 2, 14, 18));
     },
   );

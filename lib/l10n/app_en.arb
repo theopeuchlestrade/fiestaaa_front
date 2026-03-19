@@ -143,6 +143,7 @@
   "actionFailed": "Action failed",
 
   "payment": "Collection",
+  "ticketing": "Ticketing",
   "contribute": "Contribute",
   "viewDetails": "View details",
   "seeOnMap": "See on map",
@@ -489,9 +490,22 @@
   "sendInvitation": "Send invitation",
   "sending": "Sending...",
   "inviteFromFriends": "Invite from my friends",
+  "inviteFriends": "Invite friends",
+  "selectFriendsForEvent": "Select one or more friends to invite to {eventName}.",
+  "@selectFriendsForEvent": {
+    "placeholders": {
+      "eventName": {"type": "String"}
+    }
+  },
   "searchAndSelectFriends": "Search and select multiple friends, then send a group invitation.",
   "filterFriends": "Filter your friends",
   "noFriendAvailable": "No friends available at the moment.",
+  "selectedFriends": "Selected",
+  "inviteToFiestaaa": "Invite to a fiestaaa",
+  "chooseFiestaaaToInvite": "Choose a fiestaaa",
+  "allFriendsAlreadyInvited": "All your friends are already invited to this fiestaaa.",
+  "noOwnedFiestaaaAvailable": "You do not have any available fiestaaa to invite this friend to.",
+  "friendAlreadyInAllOwnedFiestaaas": "This friend is already present in all your available fiestaaas.",
   "invite": "Invite",
   "inviteFriend": "Invite this friend",
   "inviteFriendsCount": "Invite {count} friends",
@@ -585,6 +599,8 @@
   },
 
   "myTicket": "My Ticket",
+  "ticket": "Ticket",
+  "ticketScanner": "Ticket scanner",
   "oops": "Oops!",
   "personalInvitation": "PERSONAL INVITATION",
   "presentCodeAtEntrance": "Present this code at the entrance",
