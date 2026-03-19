@@ -101,7 +101,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
   bool _loadingPaymentProviders = true;
   String? _paymentProvidersError;
   Map<int, PaymentProviderModel> _providersById = {};
-  bool _deletingEvent = false;
   bool _sharingLink = false;
   RealtimeClient? _realtime;
   StreamSubscription<Map<String, dynamic>>? _realtimeSub;
@@ -171,6 +170,15 @@ class _EventDetailPageState extends State<EventDetailPage> {
       _isFeatureEnabled(eventFeaturePayment) &&
       _currentEvent.paymentProviderId != null &&
       (_currentEvent.paymentIdentifier?.trim().isNotEmpty ?? false);
+  bool get _canShowTicketingFeature {
+    if (!_isFeatureEnabled(eventFeatureTicketing) || _isReadOnly) {
+      return false;
+    }
+    if (_isOwner) {
+      return true;
+    }
+    return _hasAcceptedInvitation || _isWaitingInvitation;
+  }
 
   Future<void> _loadItems({bool showLoading = true}) async {
     setState(() {
@@ -1207,34 +1215,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
-  Future<void> _confirmDeleteEvent() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(S.of(context).deleteFiestaaaTitle),
-        content: Text(S.of(context).deleteFiestaaaWarning),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Annuler'),
-          ),
-          ElevatedButton.icon(
-            onPressed: () => Navigator.of(context).pop(true),
-            icon: const Icon(Icons.delete_outline),
-            label: const Text('Supprimer'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await _deleteEvent();
-    }
-  }
-
   String _playlistProviderName(String? provider) {
     return switch (provider) {
       'spotify' => 'Spotify',
@@ -1652,32 +1632,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  Future<void> _deleteEvent() async {
-    setState(() => _deletingEvent = true);
-    try {
-      await _eventsApi.deleteEvent(
-        token: widget.session.token,
-        eventId: _currentEvent.id,
-      );
-      if (!mounted) return;
-      widget.onEventRemoved?.call(_currentEvent.id);
-      _showSnack(S.of(context).fiestaaaDeleted);
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      _showSnack(e.message, isError: true);
-    } catch (_) {
-      if (!mounted) return;
-      _showSnack(S.of(context).deleteImpossible, isError: true);
-    } finally {
-      if (mounted) {
-        setState(() => _deletingEvent = false);
-      }
-    }
-  }
-
   void _notifyInvitationStatus(String status) {
     widget.onInvitationStatusChanged?.call(_currentEvent.id, status);
   }
@@ -1825,30 +1779,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 )
               : const Icon(Icons.share_outlined),
           tooltip: S.of(context).shareFiestaaa,
-        ),
-      if (_isOwner && !_isReadOnly)
-        IconButton(
-          onPressed: _deletingEvent ? null : _confirmDeleteEvent,
-          icon: _deletingEvent
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.delete_outline),
-          tooltip: S.of(context).deleteFiestaaa,
-        ),
-      if (_isOwner && !_isReadOnly)
-        IconButton(
-          onPressed: _openQRScanner,
-          icon: const Icon(Icons.qr_code_scanner),
-          tooltip: S.of(context).scanQRCodes,
-        )
-      else if (!_isReadOnly && (_hasAcceptedInvitation || _isWaitingInvitation))
-        IconButton(
-          onPressed: _openMyQRCode,
-          icon: const Icon(Icons.qr_code),
-          tooltip: S.of(context).myQrCode,
         ),
     ];
   }
@@ -2017,6 +1947,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
           icon: Icons.payment,
           label: l10n.payment,
           onPressed: _openPaymentFromMenu,
+        ),
+      if (_canShowTicketingFeature)
+        _EventDetailFeatureActionData(
+          icon: _isOwner
+              ? Icons.qr_code_scanner
+              : Icons.confirmation_number_outlined,
+          label: _isOwner ? l10n.ticketScanner : l10n.ticket,
+          onPressed: _isOwner ? _openQRScanner : _openMyQRCode,
         ),
       _EventDetailFeatureActionData(
         icon: Icons.groups_2_outlined,
@@ -2414,7 +2352,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _openEditEvent() async {
-    final updated = await Navigator.of(context).push<EventModel>(
+    final result = await Navigator.of(context).push<EventEditPageResult>(
       MaterialPageRoute(
         builder: (_) =>
             EventEditPage(session: widget.session, initialEvent: _currentEvent),
@@ -2422,6 +2360,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
 
     if (!mounted) return;
+    if (result == null) return;
+    if (result.deleted) {
+      widget.onEventRemoved?.call(_currentEvent.id);
+      _showSnack(S.of(context).fiestaaaDeleted);
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      return;
+    }
+    final updated = result.event;
     if (updated != null) {
       setState(() {
         _currentEvent = updated;
@@ -2436,6 +2384,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       pageBuilder: (_) => EventInvitationsPage(
         session: widget.session,
         eventId: _currentEvent.id,
+        eventName: _currentEvent.name,
         ownerEmail: _currentEvent.ownerEmail,
         eventReadOnly: _isReadOnly,
         realtimeStream: _realtime?.stream,

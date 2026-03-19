@@ -159,6 +159,7 @@
   "actionFailed": "Action impossible",
 
   "payment": "Cagnotte",
+  "ticketing": "Billetterie",
   "contribute": "Participer",
   "viewDetails": "Voir les détails",
   "seeOnMap": "Voir sur la carte",
@@ -504,9 +505,22 @@
   "sendInvitation": "Envoyer l'invitation",
   "sending": "Envoi...",
   "inviteFromFriends": "Inviter depuis mes amis",
+  "inviteFriends": "Inviter des amis",
+  "selectFriendsForEvent": "Sélectionnez un ou plusieurs amis pour les inviter à {eventName}.",
+  "@selectFriendsForEvent": {
+    "placeholders": {
+      "eventName": {"type": "String"}
+    }
+  },
   "searchAndSelectFriends": "Recherchez et sélectionnez plusieurs amis, puis envoyez une invitation groupée.",
   "filterFriends": "Filtrer vos amis",
   "noFriendAvailable": "Aucun ami disponible pour le moment.",
+  "selectedFriends": "Sélectionnés",
+  "inviteToFiestaaa": "Inviter à une fiestaaa",
+  "chooseFiestaaaToInvite": "Choisir une fiestaaa",
+  "allFriendsAlreadyInvited": "Tous vos amis sont déjà invités à cette fiestaaa.",
+  "noOwnedFiestaaaAvailable": "Vous n'avez aucune fiestaaa disponible pour inviter cet ami.",
+  "friendAlreadyInAllOwnedFiestaaas": "Cet ami est déjà présent dans toutes vos fiestaaas disponibles.",
   "invite": "Inviter",
   "inviteFriend": "Inviter cet ami",
   "inviteFriendsCount": "Inviter {count} amis",
@@ -600,6 +614,8 @@
   },
 
   "myTicket": "Mon Billet",
+  "ticket": "Billet",
+  "ticketScanner": "Scanner de billets",
   "oops": "Oups !",
   "personalInvitation": "INVITATION PERSONNELLE",
   "presentCodeAtEntrance": "Présentez ce code à l'entrée",
