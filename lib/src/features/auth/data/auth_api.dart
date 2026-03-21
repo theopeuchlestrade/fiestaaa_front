@@ -119,6 +119,7 @@ class AuthApi {
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final publicId = decoded['public_id'] as String?;
       final email = decoded['email'] as String?;
       final handle = decoded['handle'] as String?;
       if (email == null) return null;
@@ -126,6 +127,7 @@ class AuthApi {
         token: kIsWeb ? '' : token,
         email: email,
         handle: handle,
+        publicId: publicId,
       );
     }
     if (response.statusCode == 401) {
@@ -183,6 +185,7 @@ class AuthApi {
   }) {
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;
     final token = decoded['token'] as String?;
+    final publicId = decoded['public_id'] as String?;
     final email = decoded['email'] as String? ?? fallbackIdentifier;
     final handle = decoded['handle'] as String?;
     final resolvedToken = kIsWeb ? '' : token;
@@ -198,6 +201,7 @@ class AuthApi {
       token: resolvedToken ?? '',
       email: email,
       handle: handle,
+      publicId: publicId,
     );
   }
 }
