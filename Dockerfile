@@ -77,5 +77,8 @@ FROM nginx:alpine AS runtime
 LABEL org.opencontainers.image.source="https://github.com/theopeuchlestrade/fiestaaa_front"
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/build/web /usr/share/nginx/html
-EXPOSE 80
+RUN mkdir -p /var/cache/nginx /var/run /tmp \
+ && chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/run /tmp
+USER nginx
+EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
