@@ -193,4 +193,13 @@ flutter gen-l10n
 
 4. Les mêmes valeurs doivent être passées en `--dart-define` (voir commandes ci-dessus) pour correspondre à `lib/firebase_options.dart`.
 
-> `web/firebase-messaging-sw.js` est ignoré par git : conservez les secrets uniquement dans `.env`/CI.***
+> `web/firebase-messaging-sw.js` est ignoré par git : conservez les secrets uniquement dans `.env`/CI.
+
+## Security
+
+- Report policy: `SECURITY.md`
+- Public-release transition runbook: see `fiestaaa_back/docs/passage-public-open-source.md` in the companion backend repo.
+
+## License
+
+`fiestaaa_front` is licensed under `MPL-2.0`. See `LICENSE`.

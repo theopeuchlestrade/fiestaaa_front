@@ -31,3 +31,4 @@ Installer les hooks :
 ## PR / MR
 - Décrire le contexte, le changement, et l’impact.
 - Vérifier `dart format` et `flutter analyze` avant d’ouvrir la MR.
+- Les vulnérabilités de sécurité ne doivent pas être remontées via une issue publique ; suivre `SECURITY.md`.
