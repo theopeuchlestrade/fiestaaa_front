@@ -9,13 +9,14 @@ Merci de contribuer au front.
 ## Installation
 1. Copier `.env.example` en `.env` si nécessaire.
 2. `flutter pub get`
+3. `flutter gen-l10n`
 
 ## Lancer l’app
 - Web : `flutter run -d chrome --web-port=5001 --dart-define-from-file=.env`
 - Android : `flutter run -d emulator-5554 --dart-define-from-file=.env`
 
 ## Pre-commit (hooks locaux)
-Les hooks exécutent `dart format` + `flutter analyze`.
+Les hooks exécutent `flutter gen-l10n`, `dart format` puis `flutter analyze`.
 
 Installer les hooks :
 - Depuis ce repo : `sh scripts/install-hooks.sh`
@@ -23,12 +24,13 @@ Installer les hooks :
 
 ## Lint / Format
 - `dart format lib test`
+- `flutter gen-l10n`
 - `flutter analyze`
 
 ## Tests
-- `flutter test`
+- `flutter test --dart-define-from-file=.env`
 
 ## PR / MR
 - Décrire le contexte, le changement, et l’impact.
-- Vérifier `dart format` et `flutter analyze` avant d’ouvrir la MR.
+- Vérifier `flutter gen-l10n`, `dart format`, `flutter analyze` et `flutter test --dart-define-from-file=.env` avant d’ouvrir la MR.
 - Les vulnérabilités de sécurité ne doivent pas être remontées via une issue publique ; suivre `SECURITY.md`.

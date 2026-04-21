@@ -25,6 +25,10 @@ RUN flutter pub get --enforce-lockfile
 # Source code
 COPY . .
 
+# Keep l10n generation explicit so fresh clones and CI builds do not rely on
+# tool-specific implicit generation behavior.
+RUN flutter gen-l10n
+
 # Generate the Firebase service worker from build-time env
 RUN --mount=type=secret,id=FIREBASE_WEB_API_KEY \
     --mount=type=secret,id=FIREBASE_AUTH_DOMAIN,required=false \
