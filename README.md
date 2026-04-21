@@ -158,6 +158,17 @@ Si tu préfères générer uniquement à la demande :
 flutter gen-l10n
 ```
 
+### Commandes locales recommandées
+
+Pour éviter les erreurs sur clone frais ou en CI locale, exécute explicitement :
+
+```bash
+flutter pub get
+flutter gen-l10n
+flutter analyze
+flutter test --dart-define-from-file=.env
+```
+
 ### Quoi committer / quoi ignorer
 
 À committer : `lib/l10n/*.arb` + `l10n.yaml` (et éventuellement `untranslated.txt`).
