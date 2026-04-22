@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed deployment workflows to use immutable image tags and public smoke checks after rollout.
 - Changed the production web build path so it works on a fresh clone just like CI.
 - Changed the production Nginx CSP to tighten allowed `connect-src` and `img-src` origins.
+- Removed the implicit backend `latest` fallback from the frontend deployment workflow.
+- Documented the requirement to seed both production image tags on the VPS before the first GitHub Actions deployment.
 
 ### Security
 - Removed sensitive URL parameters such as `shareToken` and `verifyEmailToken` after they are processed in the app.
