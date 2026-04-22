@@ -77,7 +77,8 @@ flutter build web --release \
   "--dart-define=FIREBASE_WEB_MEASUREMENT_ID=${FIREBASE_WEB_MEASUREMENT_ID}"
 BASH
 
-FROM nginx:alpine AS runtime
+# Pinned Nginx runtime image for deterministic production serving (1.29.2-alpine)
+FROM nginx:1.29.2-alpine@sha256:61e01287e546aac28a3f56839c136b31f590273f3b41187a36f46f6a03bbfe22 AS runtime
 LABEL org.opencontainers.image.source="https://github.com/theopeuchlestrade/fiestaaa_front"
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/build/web /usr/share/nginx/html
