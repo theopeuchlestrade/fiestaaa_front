@@ -210,6 +210,7 @@ flutter test --dart-define-from-file=.env
 
 - Report policy: `SECURITY.md`
 - Public-release transition runbook: see `fiestaaa_back/docs/passage-public-open-source.md` in the companion backend repo.
+- Release history: `CHANGELOG.md`
 
 ## License
 
