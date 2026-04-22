@@ -33,4 +33,5 @@ Installer les hooks :
 ## PR / MR
 - Décrire le contexte, le changement, et l’impact.
 - Vérifier `flutter gen-l10n`, `dart format`, `flutter analyze` et `flutter test --dart-define-from-file=.env` avant d’ouvrir la MR.
+- Mettre à jour `CHANGELOG.md` pour tout changement livrable, user-facing, sécurité, infra de prod ou DX notable.
 - Les vulnérabilités de sécurité ne doivent pas être remontées via une issue publique ; suivre `SECURITY.md`.
