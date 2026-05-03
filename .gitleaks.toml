@@ -8,3 +8,10 @@ regexes = [
   '''AppAuth: [a-f0-9]{40}''',
   '''GTMAppAuth: [a-f0-9]{40}''',
 ]
+
+[[allowlists]]
+description = "Docker BuildKit secret env mappings in GitHub Actions are not secret values"
+paths = ['''\.github/workflows/deploy\.yml''']
+regexes = [
+  '''id=FIESTAAA_FCM_VAPID_KEY,\s*env=FIESTAAA_FCM_VAPID_KEY''',
+]
