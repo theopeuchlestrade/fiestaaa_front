@@ -1,0 +1,10 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "CocoaPods spec checksums in Podfile.lock are not secrets"
+paths = ['''ios/Podfile\.lock''']
+regexes = [
+  '''AppAuth: [a-f0-9]{40}''',
+  '''GTMAppAuth: [a-f0-9]{40}''',
+]
