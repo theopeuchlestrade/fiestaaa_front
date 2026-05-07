@@ -109,7 +109,7 @@ jobs:
             FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}
 
       - name: Generate image attestation
-        if: steps.push.outputs.digest != ''
+        if: steps.push.outputs.digest != '' && !github.event.repository.private
         uses: actions/attest-build-provenance@v3
         with:
           subject-name: ${{ env.IMAGE }}
