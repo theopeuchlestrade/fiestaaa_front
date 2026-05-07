@@ -8,6 +8,10 @@ on:
         description: "Ignore existing image and rebuild"
         type: boolean
         default: false
+      skip_deploy:
+        description: "Build and push the image, but skip VPS deployment"
+        type: boolean
+        default: false
 
 env:
   IMAGE: ghcr.io/theopeuchlestrade/fiestaaa_front
@@ -42,12 +46,17 @@ jobs:
           FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
           FIREBASE_WEB_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          SKIP_DEPLOY: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_deploy }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
           missing=0
-          for var in FIESTAAA_API_BASE_URL FIESTAAA_APPLE_REDIRECT_URI FIESTAAA_APPLE_SERVICE_ID FIESTAAA_FCM_VAPID_KEY FIESTAAA_GOOGLE_WEB_CLIENT_ID FIREBASE_MESSAGING_SENDER_ID FIREBASE_PROJECT_ID FIREBASE_STORAGE_BUCKET FIREBASE_WEB_API_KEY FIREBASE_WEB_APP_ID GHCR_TOKEN VPS_HOST VPS_SSH_KEY VPS_USER; do
+          for var in FIESTAAA_API_BASE_URL FIESTAAA_APPLE_REDIRECT_URI FIESTAAA_APPLE_SERVICE_ID FIESTAAA_FCM_VAPID_KEY FIESTAAA_GOOGLE_WEB_CLIENT_ID FIREBASE_MESSAGING_SENDER_ID FIREBASE_PROJECT_ID FIREBASE_STORAGE_BUCKET FIREBASE_WEB_API_KEY FIREBASE_WEB_APP_ID GHCR_TOKEN VPS_HOST VPS_PORT VPS_SSH_KEY VPS_USER; do
+            if [ "${SKIP_DEPLOY}" = "true" ]; then
+              case "$var" in GHCR_TOKEN|VPS_HOST|VPS_PORT|VPS_SSH_KEY|VPS_USER) continue ;; esac
+            fi
             if [ -z "${!var}" ]; then
               echo "::error::$var manquant"
               missing=1
@@ -107,7 +116,37 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
+      - name: Check VPS bootstrap state
+        id: bootstrap
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_deploy) }}
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          set -euo pipefail
+          key_path="${RUNNER_TEMP}/fiestaaa_deploy"
+          printf '%s\n' "${VPS_SSH_KEY}" > "${key_path}"
+          chmod 600 "${key_path}"
+          api_image_tag="$(
+            ssh -i "${key_path}" \
+              -p "${VPS_PORT}" \
+              -o BatchMode=yes \
+              -o StrictHostKeyChecking=accept-new \
+              "${VPS_USER}@${VPS_HOST}" \
+              "grep '^API_IMAGE_TAG=' ~/apps/fiestaaa/.env 2>/dev/null | cut -d= -f2- || true"
+          )"
+          rm -f "${key_path}"
+          if [ -z "${api_image_tag}" ]; then
+            echo "ready=false" >> "${GITHUB_OUTPUT}"
+            echo "::notice::Bootstrap initial non detecte: le deploy front est ignore jusqu'au workflow Bootstrap VPS Stack."
+          else
+            echo "ready=true" >> "${GITHUB_OUTPUT}"
+          fi
+
       - name: Deploy to VPS
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_deploy) && steps.bootstrap.outputs.ready == 'true' }}
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -154,6 +193,7 @@ jobs:
           TAG: ${{ github.sha }}
 
       - name: Verify public smoke checks
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_deploy) && steps.bootstrap.outputs.ready == 'true' }}
         run: |
           curl --fail --silent --show-error https://api.fiestaaa.app/health
           curl --fail --silent --show-error --head https://fiestaaa.app
