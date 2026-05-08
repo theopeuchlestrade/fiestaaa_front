@@ -1,0 +1,12 @@
+{
+  "name": "fiestaaa-front-smoke",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "smoke:web": "node tool/smoke_web.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1",
+    "pngjs": "7.0.0"
+  }
+}
