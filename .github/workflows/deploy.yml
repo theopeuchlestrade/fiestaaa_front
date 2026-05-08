@@ -197,3 +197,22 @@ jobs:
         run: |
           curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors https://api.fiestaaa.app/health
           curl --fail --silent --show-error --head --retry 12 --retry-delay 5 --retry-all-errors https://fiestaaa.app
+
+      - name: Setup Node for browser smoke check
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_deploy) && steps.bootstrap.outputs.ready == 'true' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install browser smoke dependencies
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_deploy) && steps.bootstrap.outputs.ready == 'true' }}
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_deploy) && steps.bootstrap.outputs.ready == 'true' }}
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify browser smoke check
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_deploy) && steps.bootstrap.outputs.ready == 'true' }}
+        run: npm run smoke:web -- --url https://fiestaaa.app
