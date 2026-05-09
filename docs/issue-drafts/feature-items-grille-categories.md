@@ -1,51 +1,51 @@
-# [FRONT] Grille items + categories + resume quantites
+# [FRONT] Item grid + categories + quantity summary
 
-## Objectif
-Afficher les items sous forme de grille responsive avec categories simples et resume des quantites.
+## Objective
+Display items as a responsive grid with simple categories and a quantity summary.
 
-## Contexte
-La liste actuelle est longue. Une grille + filtre par categorie permet de voir rapidement ce que les gens apportent.
+## Context
+The current list is long. A grid + category filter makes it easier to quickly see what people are bringing.
 
-## Parcours utilisateur
-- Point d'entree : section items sur la page evenement.
-- Etapes principales : basculer par categorie, consulter les quantites.
-- Cas limites : aucune categorie selectionnee, liste vide.
+## User Journey
+- Entry point: items section on the event page.
+- Main steps: switch by category, review quantities.
+- Edge cases: no selected category, empty list.
 
 ## UI / UX
-- Ecrans impactes : detail evenement.
-- Composants a creer/modifier : grille d'items, chips de categorie, bloc resume.
-- Etats (loading, empty, error, success) : empty state par categorie.
-- Micro-interactions : animation de reflow lors du filtre.
+- Impacted screens: event detail.
+- Components to create/modify: item grid, category chips, summary block.
+- States (loading, empty, error, success): empty state by category.
+- Micro-interactions: reflow animation during filtering.
 
 ## Responsive
-- Mobile : 2 colonnes.
-- Tablette : 3 colonnes.
-- Desktop : 4+ colonnes selon largeur.
+- Mobile: 2 columns.
+- Tablet: 3 columns.
+- Desktop: 4+ columns depending on width.
 
-## Accessibilite
-- Navigation clavier : navigation sur chips et cards.
-- Contrast / lisibilite : tags de categorie lisibles.
+## Accessibility
+- Keyboard navigation: navigation across chips and cards.
+- Contrast / readability: readable category tags.
 
 ## API / Data
-- Endpoints utilises : items list (avec category) + summary si dispo.
-- Format des donnees : category, quantite, statut.
-- Cache / pagination : cache simple, rafraichir apres update.
+- Endpoints used: items list (with category) + summary if available.
+- Data format: category, quantity, status.
+- Cache / pagination: simple cache, refresh after update.
 
-## Analytics / Tracking (si besoin)
-- Events : category_filter_click.
-- Props : event_id, category.
+## Analytics / Tracking (if needed)
+- Events: category_filter_click.
+- Props: event_id, category.
 
 ## Tests
-- Unitaires : rendu grille responsive.
-- Integration : filtre categorie.
-- E2E (si applicable) : utilisateur filtre et voit le resume.
+- Unit tests: responsive grid rendering.
+- Integration: category filter.
+- E2E (if applicable): user filters and sees the summary.
 
 ## Definition of Done
-- [ ] UX conforme aux specs
-- [ ] Responsive valide
-- [ ] Etats limites geres
-- [ ] Tests passes
-- [ ] Docs mises a jour (si besoin)
+- [ ] UX matches the specs
+- [ ] Responsive behavior validated
+- [ ] Edge states handled
+- [ ] Tests pass
+- [ ] Docs updated (if needed)
 
-## Notes / Risques
-Valider les noms de categories (soft/alcool/sale/sucre/autre).
+## Notes / Risks
+Validate category names (soft drinks/alcohol/savory/sweet/other).

@@ -1,51 +1,51 @@
-# [FRONT] Resume des items utilisateur
+# [FRONT] User item summary
 
-## Objectif
-Afficher un resume des items que l'utilisateur doit apporter sur la page evenement (et profil si dispo).
+## Objective
+Display a summary of the items the user should bring on the event page (and profile if available).
 
-## Contexte
-La liste globale d'items est longue; un resume perso evitera la recherche.
+## Context
+The global item list is long; a personal summary will avoid manual searching.
 
-## Parcours utilisateur
-- Point d'entree : page evenement (section "Mes items").
-- Etapes principales : consulter la liste, ouvrir un item si besoin.
-- Cas limites : aucun item, utilisateur non participant.
+## User Journey
+- Entry point: event page ("My items" section).
+- Main steps: view the list, open an item if needed.
+- Edge cases: no item, user is not a participant.
 
 ## UI / UX
-- Ecrans impactes : detail evenement, profil (optionnel).
-- Composants a creer/modifier : liste "Mes items" avec statut/quantite.
-- Etats (loading, empty, error, success) : empty state clair.
-- Micro-interactions : lien "Voir tous les items".
+- Impacted screens: event detail, profile (optional).
+- Components to create/modify: "My items" list with status/quantity.
+- States (loading, empty, error, success): clear empty state.
+- Micro-interactions: "View all items" link.
 
 ## Responsive
-- Mobile : liste compacte.
-- Tablette : section a cote des autres infos.
-- Desktop : panneau lateral si possible.
+- Mobile: compact list.
+- Tablet: section next to other information.
+- Desktop: side panel if possible.
 
-## Accessibilite
-- Navigation clavier : navigation liste.
-- Contrast / lisibilite : statut lisible.
+## Accessibility
+- Keyboard navigation: list navigation.
+- Contrast / readability: readable status.
 
 ## API / Data
-- Endpoints utilises : GET /events/{id}/my-items (ou my_items dans GET /events/{id}).
-- Format des donnees : items + quantite + statut.
-- Cache / pagination : cache court, rafraichir apres update.
+- Endpoints used: GET /events/{id}/my-items (or my_items in GET /events/{id}).
+- Data format: items + quantity + status.
+- Cache / pagination: short cache, refresh after update.
 
-## Analytics / Tracking (si besoin)
-- Events : none.
-- Props : none.
+## Analytics / Tracking (if needed)
+- Events: none.
+- Props: none.
 
 ## Tests
-- Unitaires : rendu liste vide vs pleine.
-- Integration : affichage avec data.
-- E2E (si applicable) : utilisateur voit ses items.
+- Unit tests: empty vs populated list rendering.
+- Integration: display with data.
+- E2E (if applicable): user sees their items.
 
 ## Definition of Done
-- [ ] UX conforme aux specs
-- [ ] Responsive valide
-- [ ] Etats limites geres
-- [ ] Tests passes
-- [ ] Docs mises a jour (si besoin)
+- [ ] UX matches the specs
+- [ ] Responsive behavior validated
+- [ ] Edge states handled
+- [ ] Tests pass
+- [ ] Docs updated (if needed)
 
-## Notes / Risques
-Assurer la coherence avec la liste globale.
+## Notes / Risks
+Ensure consistency with the global list.

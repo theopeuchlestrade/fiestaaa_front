@@ -1,31 +1,31 @@
 ---
 name: "Bug - Front"
-about: "Signaler un bug frontend"
+about: "Report a frontend bug"
 title: "[FRONT][BUG] "
 labels: ["bug", "frontend"]
 ---
 
-## Resume
-Decrire le probleme en 1-2 phrases.
+## Summary
+Describe the problem in 1-2 sentences.
 
-## Etapes pour reproduire
+## Steps to Reproduce
 1.
 2.
 3.
 
-## Comportement actuel
-Ce qui se passe actuellement.
+## Current Behavior
+What currently happens.
 
-## Comportement attendu
-Ce qui devrait se passer.
+## Expected Behavior
+What should happen.
 
-## Environnement
-- App / version :
-- OS / device :
-- Navigateur (si web) :
+## Environment
+- App / version:
+- OS / device:
+- Browser (if web):
 
-## Visuels
-Capture d'ecran ou video si possible.
+## Visuals
+Screenshot or video if possible.
 
 ## Notes
-Tout contexte utile (hypotheses, pistes, liens).
+Any useful context (assumptions, leads, links).

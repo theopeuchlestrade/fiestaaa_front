@@ -1,56 +1,56 @@
 ---
 name: "Feature - Front"
-about: "Nouvelle fonctionnalite frontend"
+about: "New frontend feature"
 title: "[FRONT] "
 labels: ["feature", "frontend"]
 ---
 
-## Objectif
-Decrire le resultat attendu en 1-2 phrases.
+## Objective
+Describe the expected result in 1-2 sentences.
 
-## Contexte
-Pourquoi cette demande maintenant ? Lien vers issue, doc, discussion.
+## Context
+Why this request now? Link to issue, doc, or discussion.
 
-## Parcours utilisateur
-- Point d'entree :
-- Etapes principales :
-- Cas limites :
+## User Journey
+- Entry point:
+- Main steps:
+- Edge cases:
 
 ## UI / UX
-- Ecrans impactes :
-- Composants a creer/modifier :
-- Etats (loading, empty, error, success) :
-- Micro-interactions :
+- Impacted screens:
+- Components to create/modify:
+- States (loading, empty, error, success):
+- Micro-interactions:
 
 ## Responsive
-- Mobile :
-- Tablette :
-- Desktop :
+- Mobile:
+- Tablet:
+- Desktop:
 
-## Accessibilite
-- Navigation clavier :
-- Contrast / lisibilite :
+## Accessibility
+- Keyboard navigation:
+- Contrast / readability:
 
 ## API / Data
-- Endpoints utilises :
-- Format des donnees :
-- Cache / pagination :
+- Endpoints used:
+- Data format:
+- Cache / pagination:
 
-## Analytics / Tracking (si besoin)
-- Events :
-- Props :
+## Analytics / Tracking (if needed)
+- Events:
+- Props:
 
 ## Tests
-- Unitaires :
-- Integration :
-- E2E (si applicable) :
+- Unit tests:
+- Integration:
+- E2E (if applicable):
 
 ## Definition of Done
-- [ ] UX conforme aux specs
-- [ ] Responsive valide
-- [ ] Etats limites geres
-- [ ] Tests passes
-- [ ] Docs mises a jour (si besoin)
+- [ ] UX matches the specs
+- [ ] Responsive behavior validated
+- [ ] Edge states handled
+- [ ] Tests pass
+- [ ] Docs updated (if needed)
 
-## Notes / Risques
-Liste courte des risques, dependances, ou points ouverts.
+## Notes / Risks
+Short list of risks, dependencies, or open questions.

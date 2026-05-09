@@ -172,7 +172,7 @@ class CarpoolCard extends StatelessWidget {
                             Align(
                               alignment: Alignment.centerRight,
                               child: Text(
-                                l10n.seeMore, // "Voir plus" (make sure to have this or hardcode for now if missing)
+                                l10n.seeMore, // "See more" (make sure to have this or hardcode for now if missing)
                                 style: theme.textTheme.labelSmall?.copyWith(
                                   color: theme.colorScheme.primary,
                                   fontWeight: FontWeight.bold,

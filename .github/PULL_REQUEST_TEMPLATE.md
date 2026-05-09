@@ -1,19 +1,19 @@
-## Contexte
+## Context
 
-Décrivez le problème ou l'objectif traité par cette PR.
+Describe the problem or goal addressed by this PR.
 
-## Changements
+## Changes
 
 - 
 
-## Vérifications
+## Verification
 
 - [ ] `flutter gen-l10n`
 - [ ] `dart format --output=none --set-exit-if-changed lib test tool`
 - [ ] `flutter analyze`
 - [ ] `flutter test --dart-define-from-file=.env`
 
-## Sécurité
+## Security
 
-- [ ] Aucun secret, token, fichier `.env`, keystore, provisioning profile ou fichier Firebase privé n'est ajouté.
-- [ ] Les changements touchant l'auth, les permissions, les données personnelles ou le déploiement sont explicités.
+- [ ] No secret, token, `.env` file, keystore, provisioning profile, or private Firebase file is added.
+- [ ] Changes affecting auth, permissions, personal data, or deployment are explained.

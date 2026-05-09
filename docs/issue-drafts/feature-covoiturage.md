@@ -1,51 +1,51 @@
-# [FRONT] Covoiturage par evenement
+# [FRONT] Carpools by event
 
-## Objectif
-Ajouter un module covoiturage dans la page evenement (proposer une voiture, rejoindre une voiture).
+## Objective
+Add a carpool module to the event page (offer a ride, join a ride).
 
-## Contexte
-Besoin recurrent pour organiser les trajets, surtout pour les BDE.
+## Context
+Recurring need for organizing trips, especially for student associations.
 
-## Parcours utilisateur
-- Point d'entree : section "Covoiturage" dans l'evenement.
-- Etapes principales : proposer une voiture, rejoindre/quitter, voir places restantes.
-- Cas limites : plus de places, voiture supprimee.
+## User Journey
+- Entry point: "Carpool" section in the event.
+- Main steps: offer a ride, join/leave, see remaining seats.
+- Edge cases: no seats left, ride deleted.
 
 ## UI / UX
-- Ecrans impactes : detail evenement.
-- Composants a creer/modifier : carte voiture, formulaire creation, bouton rejoindre/quitter.
-- Etats (loading, empty, error, success) : empty state invite a proposer une voiture.
-- Micro-interactions : compteur places restantes, confirmation.
+- Impacted screens: event detail.
+- Components to create/modify: ride card, creation form, join/leave button.
+- States (loading, empty, error, success): empty state prompts users to offer a ride.
+- Micro-interactions: remaining seats counter, confirmation.
 
 ## Responsive
-- Mobile : cartes empilees, bouton full width.
-- Tablette : grille 2 colonnes.
-- Desktop : grille 3 colonnes si place.
+- Mobile: stacked cards, full-width button.
+- Tablet: 2-column grid.
+- Desktop: 3-column grid if space allows.
 
-## Accessibilite
-- Navigation clavier : focus sur boutons rejoindre/quitter.
-- Contrast / lisibilite : compteur de places lisible.
+## Accessibility
+- Keyboard navigation: focus on join/leave buttons.
+- Contrast / readability: readable seat counter.
 
 ## API / Data
-- Endpoints utilises : liste carpools, create/update/delete, join/leave.
-- Format des donnees : seats_total, seats_taken, driver, origin, depart_at.
-- Cache / pagination : rafraichir liste apres action.
+- Endpoints used: carpool list, create/update/delete, join/leave.
+- Data format: seats_total, seats_taken, driver, origin, depart_at.
+- Cache / pagination: refresh list after action.
 
-## Analytics / Tracking (si besoin)
-- Events : carpool_create, carpool_join, carpool_leave.
-- Props : event_id, carpool_id.
+## Analytics / Tracking (if needed)
+- Events: carpool_create, carpool_join, carpool_leave.
+- Props: event_id, carpool_id.
 
 ## Tests
-- Unitaires : rendu carte + etats.
-- Integration : join/leave met a jour l'UI.
-- E2E (si applicable) : parcours complet covoiturage.
+- Unit tests: card rendering + states.
+- Integration: join/leave updates the UI.
+- E2E (if applicable): complete carpool flow.
 
 ## Definition of Done
-- [ ] UX conforme aux specs
-- [ ] Responsive valide
-- [ ] Etats limites geres
-- [ ] Tests passes
-- [ ] Docs mises a jour (si besoin)
+- [ ] UX matches the specs
+- [ ] Responsive behavior validated
+- [ ] Edge states handled
+- [ ] Tests pass
+- [ ] Docs updated (if needed)
 
-## Notes / Risques
-Besoin de clarifier si les passagers sont affiches ou seulement le compteur.
+## Notes / Risks
+Need to clarify whether passengers are displayed or only the counter.

@@ -179,12 +179,12 @@ jobs:
               if command -v docker-compose >/dev/null 2>&1; then
                 compose_cmd="docker-compose"
               else
-                echo "docker compose/docker-compose introuvable sur le VPS" >&2
+                echo "docker compose/docker-compose not found on the VPS" >&2
                 exit 1
               fi
             fi
             ${compose_cmd} pull front
-            # Évite de redémarrer l'API/DB si elles sont déjà en place
+            # Avoid restarting the API/DB if they are already in place
             ${compose_cmd} up -d --no-deps front
             ${compose_cmd} ps
         env:

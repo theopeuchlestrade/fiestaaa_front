@@ -56,13 +56,13 @@ class _AuthPageState extends State<AuthPage> {
   static const String _feedbackEmail = 'feedback@fiestaaa.app';
   static const String _bugTemplate = '''
 Bug report
-- Appareil / OS :
-- Version de l'app :
-- Contexte (écran, action) :
-- Étapes exactes pour reproduire :
-- Résultat attendu :
-- Résultat obtenu / message d'erreur :
-- Capture d'écran (si possible) :
+- Device / OS:
+- App version:
+- Context (screen, action):
+- Exact steps to reproduce:
+- Expected result:
+- Actual result / error message:
+- Screenshot (if possible):
 ''';
 
   @override

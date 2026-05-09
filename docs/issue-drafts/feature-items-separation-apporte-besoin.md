@@ -1,51 +1,51 @@
-# [FRONT] Separation items apporte vs besoin
+# [FRONT] Separate bring vs need items
 
-## Objectif
-Separer visuellement les items "Ce que j'apporte" et "Ce que j'ai besoin" sur l'evenement.
+## Objective
+Visually separate "what I bring" and "what I need" items on the event.
 
-## Contexte
-Le melange actuel rend la lecture confuse entre besoins du createur et propositions des participants.
+## Context
+The current mix makes it hard to distinguish creator needs from participant offers.
 
-## Parcours utilisateur
-- Point d'entree : page evenement.
-- Etapes principales : createur ajoute un besoin; participant ajoute ce qu'il apporte.
-- Cas limites : aucune proposition, aucun besoin.
+## User Journey
+- Entry point: event page.
+- Main steps: creator adds a need; participant adds what they bring.
+- Edge cases: no offer, no need.
 
 ## UI / UX
-- Ecrans impactes : detail evenement, creation/edition d'item.
-- Composants a creer/modifier : deux sections ou onglets; formulaire avec type d'item.
-- Etats (loading, empty, error, success) : empty states distincts.
-- Micro-interactions : compteur par section.
+- Impacted screens: event detail, item creation/editing.
+- Components to create/modify: two sections or tabs; form with item type.
+- States (loading, empty, error, success): distinct empty states.
+- Micro-interactions: counter by section.
 
 ## Responsive
-- Mobile : sections empilees.
-- Tablette : sections empilees ou accordions.
-- Desktop : deux colonnes si place.
+- Mobile: stacked sections.
+- Tablet: stacked sections or accordions.
+- Desktop: two columns if space allows.
 
-## Accessibilite
-- Navigation clavier : tab order coherent.
-- Contrast / lisibilite : titres de section visibles.
+## Accessibility
+- Keyboard navigation: consistent tab order.
+- Contrast / readability: visible section titles.
 
 ## API / Data
-- Endpoints utilises : items list/create/update avec item_kind.
-- Format des donnees : item_kind (need|bring).
-- Cache / pagination : rafraichir sections apres action.
+- Endpoints used: items list/create/update with item_kind.
+- Data format: item_kind (need|bring).
+- Cache / pagination: refresh sections after action.
 
-## Analytics / Tracking (si besoin)
-- Events : item_create_need, item_create_bring.
-- Props : event_id, item_id.
+## Analytics / Tracking (if needed)
+- Events: item_create_need, item_create_bring.
+- Props: event_id, item_id.
 
 ## Tests
-- Unitaires : rendu sections avec item_kind.
-- Integration : creation item dans la bonne section.
-- E2E (si applicable) : parcours createur vs participant.
+- Unit tests: section rendering with item_kind.
+- Integration: item creation in the correct section.
+- E2E (if applicable): creator vs participant flow.
 
 ## Definition of Done
-- [ ] UX conforme aux specs
-- [ ] Responsive valide
-- [ ] Etats limites geres
-- [ ] Tests passes
-- [ ] Docs mises a jour (si besoin)
+- [ ] UX matches the specs
+- [ ] Responsive behavior validated
+- [ ] Edge states handled
+- [ ] Tests pass
+- [ ] Docs updated (if needed)
 
-## Notes / Risques
-Clarifier le wording entre "apporte" et "besoin".
+## Notes / Risks
+Clarify wording between "bring" and "need".
