@@ -18,11 +18,13 @@ for (let index = 2; index < process.argv.length; index += 1) {
 
 const url = args.get('url') ?? process.env.SMOKE_URL ?? 'https://fiestaaa.app';
 const timeoutMs = Number(args.get('timeout-ms') ?? process.env.SMOKE_TIMEOUT_MS ?? 30000);
+const locale = args.get('locale') ?? process.env.SMOKE_LOCALE ?? 'fr-FR';
 
 const browser = await chromium.launch();
 const page = await browser.newPage({
   viewport: { width: 1366, height: 900 },
   deviceScaleFactor: 1,
+  locale,
 });
 
 const failures = [];
