@@ -421,7 +421,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     bool allowMultiple = true;
 
     final durations = <int>[15, 30, 60, 120, 360, 1440];
-    const maxDurationMinutes = 60 * 24 * 7; // 7 jours
+    const maxDurationMinutes = 60 * 24 * 7; // 7 days
 
     final result = await showModalBottomSheet<_NewPollData>(
       context: context,

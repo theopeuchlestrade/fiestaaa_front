@@ -1,25 +1,24 @@
 # Fiestaaa Front
 
-Frontend Flutter de Fiestaaa, une application d'organisation d'événements
-privés.
+Fiestaaa's Flutter frontend, an app for organizing private events.
 
-L'application couvre l'authentification, la création d'événements, les
-invitations, les listes d'items, le covoiturage, les frais partagés, les QR
-codes d'accès, les notifications push et les préférences utilisateur.
+The app covers authentication, event creation, invitations, item lists,
+carpools, shared expenses, access QR codes, push notifications, and user
+preferences.
 
 ## Stack
 
 - Flutter 3.41.5
 - Dart 3.11
-- Firebase pour la configuration mobile/web et les notifications
-- Google Sign-In et Sign in with Apple
-- Docker/Nginx pour le build web de production
+- Firebase for mobile/web configuration and notifications
+- Google Sign-In and Sign in with Apple
+- Docker/Nginx for the production web build
 
-## Prérequis
+## Prerequisites
 
-- Flutter SDK compatible avec `pubspec.yaml`
-- Dart SDK fourni par Flutter
-- Une copie locale de `.env.example` vers `.env`
+- Flutter SDK compatible with `pubspec.yaml`
+- Dart SDK provided by Flutter
+- A local copy of `.env.example` as `.env`
 
 ## Configuration
 
@@ -27,42 +26,40 @@ codes d'accès, les notifications push et les préférences utilisateur.
 cp .env.example .env
 ```
 
-Les valeurs de `.env.example` sont des placeholders. Les vraies valeurs
-Firebase, OAuth, VAPID, signing Android et fichiers `google-services.json`
-doivent rester dans `.env`, dans les secrets CI ou dans les stores de secrets
-adaptés.
+The values in `.env.example` are placeholders. Real Firebase, OAuth, VAPID,
+Android signing values, and `google-services.json` files must stay in `.env`,
+CI secrets, or appropriate secret stores.
 
-Variables principales :
+Main variables:
 
-- `FIESTAAA_API_BASE_URL` : URL du backend
-- `FIESTAAA_APP_BASE_URL` : URL publique du front
-- `FIESTAAA_GOOGLE_WEB_CLIENT_ID` : client OAuth web
-- `FIESTAAA_APPLE_*` : configuration Apple Sign-In
-- `FIESTAAA_FCM_VAPID_KEY` : clé VAPID web push
-- `FIREBASE_*` : configuration Firebase web/mobile
+- `FIESTAAA_API_BASE_URL`: backend URL
+- `FIESTAAA_APP_BASE_URL`: public frontend URL
+- `FIESTAAA_GOOGLE_WEB_CLIENT_ID`: web OAuth client
+- `FIESTAAA_APPLE_*`: Apple Sign-In configuration
+- `FIESTAAA_FCM_VAPID_KEY`: web push VAPID key
+- `FIREBASE_*`: web/mobile Firebase configuration
 
-En développement web local, utilisez le même host pour le front et l'API.
-Par exemple, utilisez `localhost:5001` avec
-`FIESTAAA_API_BASE_URL=http://localhost:8080`, et évitez de mélanger
-`localhost` et `127.0.0.1`, sinon les cookies `HttpOnly` ne seront pas envoyés
-comme prévu.
+In local web development, use the same host for the frontend and the API. For
+example, use `localhost:5001` with
+`FIESTAAA_API_BASE_URL=http://localhost:8080`, and avoid mixing `localhost` and
+`127.0.0.1`; otherwise, `HttpOnly` cookies will not be sent as expected.
 
-## Développement local
+## Local Development
 
-Installer les dépendances et générer les localisations :
+Install dependencies and generate localizations:
 
 ```bash
 flutter pub get
 flutter gen-l10n
 ```
 
-Web :
+Web:
 
 ```bash
 flutter run -d chrome --web-port=5001 --dart-define-from-file=.env
 ```
 
-Android :
+Android:
 
 ```bash
 flutter run -d emulator-5554 --dart-define-from-file=.env
@@ -70,54 +67,54 @@ flutter run -d emulator-5554 --dart-define-from-file=.env
 
 ## Firebase web service worker
 
-Le service worker Firebase web est généré depuis
-`web/firebase-messaging-sw.template.js` et `.env`.
+The Firebase web service worker is generated from
+`web/firebase-messaging-sw.template.js` and `.env`.
 
 ```bash
 dart run tool/generate_firebase_sw.dart
 ```
 
-Le fichier généré `web/firebase-messaging-sw.js` est ignoré par Git.
+The generated `web/firebase-messaging-sw.js` file is ignored by Git.
 
 ## Build Android
 
-Debug :
+Debug:
 
 ```bash
 flutter build apk --debug --dart-define-from-file=.env
 ```
 
-Release :
+Release:
 
 ```bash
 flutter build apk --release --dart-define-from-file=.env
 ```
 
-La signature release utilise `android/key.properties` si le fichier existe,
-sinon Flutter retombe sur une signature de debug. Ne committez jamais
-`android/key.properties`, les keystores `.jks` ou les profils de provisioning.
+Release signing uses `android/key.properties` if the file exists; otherwise,
+Flutter falls back to debug signing. Never commit `android/key.properties`,
+`.jks` keystores, or provisioning profiles.
 
-## Qualité et tests
+## Quality and Tests
 
-Format :
+Format:
 
 ```bash
 dart format --output=none --set-exit-if-changed lib test tool
 ```
 
-Analyse :
+Analyze:
 
 ```bash
 flutter analyze
 ```
 
-Tests :
+Tests:
 
 ```bash
 flutter test --dart-define-from-file=.env
 ```
 
-Pour un clone frais, la séquence recommandée est :
+For a fresh clone, the recommended sequence is:
 
 ```bash
 flutter pub get
@@ -127,22 +124,22 @@ flutter analyze
 flutter test --dart-define-from-file=.env
 ```
 
-## Déploiement
+## Deployment
 
-Le build web de production est défini dans `Dockerfile` et servi par Nginx.
-Le workflow GitHub Actions publie l'image GHCR et déclenche le déploiement.
+The production web build is defined in `Dockerfile` and served by Nginx. The
+GitHub Actions workflow publishes the GHCR image and triggers deployment.
 
-La documentation d'exploitation vit dans le dépôt backend compagnon,
+Operations documentation lives in the companion backend repository,
 `fiestaaa_back/docs/deploiement.md`.
 
-## Sécurité
+## Security
 
-Ne signalez pas de vulnérabilité via une issue publique. Consultez
-`SECURITY.md` pour le canal de signalement et les attentes de divulgation.
+Do not report vulnerabilities through a public issue. See `SECURITY.md` for the
+reporting channel and disclosure expectations.
 
-Avant toute publication publique du dépôt, relancez un scan de secrets sur
-l'état courant et sur tout l'historique Git.
+Before any public release of the repository, rerun a secret scan on the current
+state and the full Git history.
 
-## Licence
+## License
 
-`fiestaaa_front` est distribué sous licence `MPL-2.0`. Voir `LICENSE`.
+`fiestaaa_front` is distributed under the `MPL-2.0` license. See `LICENSE`.
