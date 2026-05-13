@@ -27,7 +27,7 @@ jobs:
         uses: subosito/flutter-action@v2.23.0
         with:
           flutter-version: 3.41.5
-          cache: true
+          cache: false
 
       - name: Check required secrets
         env:
