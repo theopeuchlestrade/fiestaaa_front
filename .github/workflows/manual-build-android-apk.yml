@@ -6,4 +6,3 @@ on:
 jobs:
   build-android-apk:
     uses: ./.github/workflows/build-android-apk.yml
-    secrets: inherit
