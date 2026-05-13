@@ -94,6 +94,29 @@ Release signing uses `android/key.properties` if the file exists; otherwise,
 Flutter falls back to debug signing. Never commit `android/key.properties`,
 `.jks` keystores, or provisioning profiles.
 
+## Build iOS
+
+For local development on a connected iPhone:
+
+```bash
+flutter run -d <device-id> --dart-define-from-file=.env
+```
+
+The manual GitHub Actions workflow `Manual Build iOS IPA` creates a signed
+`.ipa` artifact for device testing. It requires these production environment
+secrets:
+
+- `IOS_CERTIFICATE_BASE64`: base64-encoded `.p12` signing certificate
+- `IOS_CERTIFICATE_PASSWORD`: `.p12` password
+- `IOS_PROVISIONING_PROFILE_BASE64`: base64-encoded `.mobileprovision`
+- `IOS_TEAM_ID`: optional if the provisioning profile contains the team ID
+- `IOS_CODE_SIGN_IDENTITY`: optional, defaults to `Apple Development` for
+  `debugging` exports and `Apple Distribution` otherwise
+
+Use `debugging` with a development provisioning profile, or `release-testing`
+with an Ad Hoc profile. In both cases, the iPhone must be included in the
+provisioning profile.
+
 ## Quality and Tests
 
 Format:

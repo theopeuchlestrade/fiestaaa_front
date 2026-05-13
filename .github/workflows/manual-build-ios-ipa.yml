@@ -1,0 +1,222 @@
+name: Manual Build iOS IPA
+
+on:
+  workflow_dispatch:
+    inputs:
+      export_method:
+        description: "Xcode export method: debugging for development devices, release-testing for Ad Hoc, app-store-connect for TestFlight/App Store"
+        required: true
+        default: debugging
+        type: choice
+        options:
+          - debugging
+          - release-testing
+          - app-store-connect
+
+jobs:
+  build-ios-ipa:
+    runs-on: macos-latest
+    environment:
+      name: production
+    permissions:
+      contents: read
+    env:
+      IOS_BUNDLE_ID: com.fiestaaa.fiestaaa
+      IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+      IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+      IOS_CODE_SIGN_IDENTITY: ${{ secrets.IOS_CODE_SIGN_IDENTITY }}
+      IOS_EXPORT_METHOD: ${{ inputs.export_method }}
+      IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+      IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+      KEYCHAIN_PASSWORD: ${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Check required secrets
+        env:
+          FIESTAAA_API_BASE_URL: ${{ secrets.FIESTAAA_API_BASE_URL }}
+          FIESTAAA_APPLE_REDIRECT_URI: ${{ secrets.FIESTAAA_APPLE_REDIRECT_URI }}
+          FIESTAAA_APPLE_SERVICE_ID: ${{ secrets.FIESTAAA_APPLE_SERVICE_ID }}
+          FIESTAAA_FCM_VAPID_KEY: ${{ secrets.FIESTAAA_FCM_VAPID_KEY }}
+          FIESTAAA_GOOGLE_WEB_CLIENT_ID: ${{ secrets.FIESTAAA_GOOGLE_WEB_CLIENT_ID }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_IOS_API_KEY: ${{ secrets.FIREBASE_IOS_API_KEY }}
+          FIREBASE_IOS_APP_ID: ${{ secrets.FIREBASE_IOS_APP_ID }}
+          FIREBASE_IOS_BUNDLE_ID: ${{ secrets.FIREBASE_IOS_BUNDLE_ID }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
+          FIREBASE_WEB_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
+        run: |
+          missing=0
+          for var in FIESTAAA_API_BASE_URL FIESTAAA_APPLE_REDIRECT_URI FIESTAAA_APPLE_SERVICE_ID FIESTAAA_FCM_VAPID_KEY FIESTAAA_GOOGLE_WEB_CLIENT_ID FIREBASE_MESSAGING_SENDER_ID FIREBASE_PROJECT_ID FIREBASE_STORAGE_BUCKET FIREBASE_WEB_API_KEY FIREBASE_WEB_APP_ID FIREBASE_IOS_API_KEY FIREBASE_IOS_APP_ID FIREBASE_IOS_BUNDLE_ID IOS_CERTIFICATE_BASE64 IOS_CERTIFICATE_PASSWORD IOS_PROVISIONING_PROFILE_BASE64; do
+            if [ -z "${!var}" ]; then
+              echo "::error::$var manquant"
+              missing=1
+            fi
+          done
+          if [ -n "$FIREBASE_IOS_BUNDLE_ID" ] && [ "$FIREBASE_IOS_BUNDLE_ID" != "$IOS_BUNDLE_ID" ]; then
+            echo "::error::FIREBASE_IOS_BUNDLE_ID doit correspondre a $IOS_BUNDLE_ID"
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2.23.0
+        with:
+          flutter-version: 3.41.5
+          cache: false
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Write .env
+        run: |
+          FIREBASE_AUTH_DOMAIN_VALUE="${{ secrets.FIREBASE_AUTH_DOMAIN }}"
+          if [ -z "$FIREBASE_AUTH_DOMAIN_VALUE" ]; then
+            FIREBASE_AUTH_DOMAIN_VALUE="${{ secrets.FIREBASE_PROJECT_ID }}.firebaseapp.com"
+          fi
+          cat <<EOF > .env
+          FIESTAAA_API_BASE_URL=${{ secrets.FIESTAAA_API_BASE_URL }}
+          FIESTAAA_APPLE_SERVICE_ID=${{ secrets.FIESTAAA_APPLE_SERVICE_ID }}
+          FIESTAAA_APPLE_REDIRECT_URI=${{ secrets.FIESTAAA_APPLE_REDIRECT_URI }}
+          FIESTAAA_FCM_VAPID_KEY=${{ secrets.FIESTAAA_FCM_VAPID_KEY }}
+          FIESTAAA_GOOGLE_WEB_CLIENT_ID=${{ secrets.FIESTAAA_GOOGLE_WEB_CLIENT_ID }}
+          FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_WEB_API_KEY=${{ secrets.FIREBASE_WEB_API_KEY }}
+          FIREBASE_WEB_APP_ID=${{ secrets.FIREBASE_WEB_APP_ID }}
+          FIREBASE_WEB_MEASUREMENT_ID=${{ secrets.FIREBASE_WEB_MEASUREMENT_ID }}
+          FIREBASE_IOS_API_KEY=${{ secrets.FIREBASE_IOS_API_KEY }}
+          FIREBASE_IOS_APP_ID=${{ secrets.FIREBASE_IOS_APP_ID }}
+          FIREBASE_IOS_BUNDLE_ID=${{ secrets.FIREBASE_IOS_BUNDLE_ID }}
+          FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN_VALUE}
+          EOF
+
+      - name: Install signing certificate and provisioning profile
+        run: |
+          CERTIFICATE_PATH="$RUNNER_TEMP/build_certificate.p12"
+          PROFILE_PATH="$RUNNER_TEMP/build_profile.mobileprovision"
+          PROFILE_PLIST_PATH="$RUNNER_TEMP/build_profile.plist"
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+
+          printf '%s' "$IOS_CERTIFICATE_BASE64" | base64 -D > "$CERTIFICATE_PATH"
+          printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | base64 -D > "$PROFILE_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -P "$IOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+
+          security cms -D -i "$PROFILE_PATH" > "$PROFILE_PLIST_PATH"
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" "$PROFILE_PLIST_PATH")
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print Name" "$PROFILE_PLIST_PATH")
+          PROFILE_TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print TeamIdentifier:0" "$PROFILE_PLIST_PATH")
+          PROFILE_APP_ID=$(/usr/libexec/PlistBuddy -c "Print Entitlements:application-identifier" "$PROFILE_PLIST_PATH")
+          PROFILE_BUNDLE_ID="${PROFILE_APP_ID#*.}"
+
+          if [ "$PROFILE_BUNDLE_ID" != "$IOS_BUNDLE_ID" ] && [ "$PROFILE_BUNDLE_ID" != "*" ]; then
+            echo "::error::Provisioning profile bundle id ($PROFILE_BUNDLE_ID) does not match $IOS_BUNDLE_ID"
+            exit 1
+          fi
+
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
+
+          if [ -z "$IOS_TEAM_ID" ]; then
+            IOS_TEAM_ID="$PROFILE_TEAM_ID"
+          fi
+          if [ -z "$IOS_CODE_SIGN_IDENTITY" ]; then
+            case "$IOS_EXPORT_METHOD" in
+              debugging) IOS_CODE_SIGN_IDENTITY="Apple Development" ;;
+              *) IOS_CODE_SIGN_IDENTITY="Apple Distribution" ;;
+            esac
+          fi
+
+          {
+            echo "IOS_KEYCHAIN_PATH=$KEYCHAIN_PATH"
+            echo "IOS_PROFILE_NAME=$PROFILE_NAME"
+            echo "IOS_PROFILE_UUID=$PROFILE_UUID"
+            echo "IOS_TEAM_ID=$IOS_TEAM_ID"
+            echo "IOS_CODE_SIGN_IDENTITY=$IOS_CODE_SIGN_IDENTITY"
+          } >> "$GITHUB_ENV"
+          echo "Installed provisioning profile: $PROFILE_NAME"
+
+      - name: Write export options
+        run: |
+          cat <<EOF > "$RUNNER_TEMP/ExportOptions.plist"
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>destination</key>
+            <string>export</string>
+            <key>method</key>
+            <string>${IOS_EXPORT_METHOD}</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${IOS_BUNDLE_ID}</key>
+              <string>${IOS_PROFILE_NAME}</string>
+            </dict>
+            <key>signingCertificate</key>
+            <string>${IOS_CODE_SIGN_IDENTITY}</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>stripSwiftSymbols</key>
+            <true/>
+            <key>teamID</key>
+            <string>${IOS_TEAM_ID}</string>
+          </dict>
+          </plist>
+          EOF
+          plutil -lint "$RUNNER_TEMP/ExportOptions.plist"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Prepare unsigned iOS build
+        run: flutter build ios --release --no-codesign --dart-define-from-file=.env
+
+      - name: Archive iOS app
+        run: |
+          xcodebuild archive \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="$IOS_CODE_SIGN_IDENTITY" \
+            PROVISIONING_PROFILE="$IOS_PROFILE_UUID" \
+            PROVISIONING_PROFILE_SPECIFIER="$IOS_PROFILE_NAME" \
+            PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
+            OTHER_CODE_SIGN_FLAGS="--keychain $IOS_KEYCHAIN_PATH"
+
+      - name: Export IPA
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            -exportPath build/ios/ipa \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: fiestaaa-ios-ipa-${{ inputs.export_method }}-${{ github.sha }}
+          path: build/ios/ipa/*.ipa
+          if-no-files-found: error
+
+      - name: Clean up signing keychain
+        if: ${{ always() }}
+        run: |
+          if [ -n "${IOS_KEYCHAIN_PATH:-}" ] && [ -f "$IOS_KEYCHAIN_PATH" ]; then
+            security delete-keychain "$IOS_KEYCHAIN_PATH" || true
+          fi
