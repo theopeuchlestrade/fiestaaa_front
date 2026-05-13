@@ -148,7 +148,7 @@ jobs:
           cat signing-sha.txt
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: fiestaaa-android-apk-${{ github.sha }}
           path: |
