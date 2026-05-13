@@ -81,6 +81,9 @@ Bug report
     // Mobile only. (Web uses googleAuthHelper.)
     _googleInitFuture = _googleSignIn.initialize(
       clientId: kIsWeb ? googleWebClientId : null,
+      serverClientId: !kIsWeb && googleWebClientId.isNotEmpty
+          ? googleWebClientId
+          : null,
     );
     return _googleInitFuture!;
   }
