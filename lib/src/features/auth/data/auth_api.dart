@@ -88,16 +88,24 @@ class AuthApi {
     String? email,
     String? displayName,
   }) async {
-    if ((idToken == null || idToken.isEmpty) &&
-        (accessToken == null || accessToken.isEmpty)) {
+    final trimmedIdToken = idToken?.trim();
+    final trimmedAccessToken = accessToken?.trim();
+    final normalizedIdToken = trimmedIdToken == null || trimmedIdToken.isEmpty
+        ? null
+        : trimmedIdToken;
+    final normalizedAccessToken =
+        trimmedAccessToken == null || trimmedAccessToken.isEmpty
+        ? null
+        : trimmedAccessToken;
+    if (normalizedIdToken == null && normalizedAccessToken == null) {
       throw ApiException('Token OAuth manquant ou invalide');
     }
 
     final response = await _post(
       '/auth/oauth/$provider',
       body: {
-        'idToken': ?idToken,
-        'accessToken': ?accessToken,
+        'idToken': ?normalizedIdToken,
+        'accessToken': ?normalizedAccessToken,
         if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
         if (displayName != null && displayName.trim().isNotEmpty)
           'name': displayName.trim(),
