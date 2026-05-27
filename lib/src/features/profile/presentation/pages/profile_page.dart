@@ -1,10 +1,10 @@
-import 'package:file_selector/file_selector.dart';
 import 'package:fiestaaa_front/src/core/locale_service.dart';
 import 'package:fiestaaa_front/src/core/theme_service.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/profile/data/profile_api.dart';
 import 'package:fiestaaa_front/src/features/profile/domain/profile_info.dart';
+import 'package:fiestaaa_front/src/features/profile/presentation/pages/avatar_file_picker.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
@@ -323,21 +323,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _pickAndUploadAvatar(ProfileInfo profile) async {
     final l10n = S.of(context);
-    const typeGroup = XTypeGroup(
-      label: 'images',
-      extensions: ['jpg', 'jpeg', 'png', 'webp'],
-      mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-      webWildCards: ['image/*'],
-    );
 
-    late final XFile file;
-    late final List<int> bytes;
+    late final AvatarFile file;
     try {
-      final selected = await openFile(acceptedTypeGroups: [typeGroup]);
+      final selected = await pickAvatarFile();
       if (selected == null) return;
       file = selected;
-      bytes = await file.readAsBytes();
-      final sizeMb = bytes.length / (1024 * 1024);
+      final sizeMb = file.bytes.length / (1024 * 1024);
       if (sizeMb > _maxAvatarSizeMb) {
         _showSnack(l10n.imageTooLarge, isError: true);
         return;
@@ -353,7 +345,7 @@ class _ProfilePageState extends State<ProfilePage> {
       final updated = await _api.uploadAvatar(
         token: widget.session.token,
         filename: file.name.isNotEmpty ? file.name : 'avatar.jpg',
-        bytes: bytes,
+        bytes: file.bytes,
       );
       if (!mounted) return;
       setState(() {
