@@ -5,6 +5,7 @@ class SessionStorage {
   static const _publicIdKey = 'fiestaaa_public_id';
   static const _emailKey = 'fiestaaa_email';
   static const _handleKey = 'fiestaaa_handle';
+  static const _cookieSessionHintKey = 'fiestaaa_cookie_session';
 
   static Future<void> save(SessionData session) async {
     if (session.publicId != null) {
@@ -18,6 +19,7 @@ class SessionStorage {
     } else {
       web.window.sessionStorage.removeItem(_handleKey);
     }
+    web.window.localStorage.setItem(_cookieSessionHintKey, '1');
   }
 
   static Future<SessionData?> load() async {
@@ -37,5 +39,10 @@ class SessionStorage {
     web.window.sessionStorage.removeItem(_publicIdKey);
     web.window.sessionStorage.removeItem(_emailKey);
     web.window.sessionStorage.removeItem(_handleKey);
+    web.window.localStorage.removeItem(_cookieSessionHintKey);
+  }
+
+  static Future<bool> shouldProbeCookieSession() async {
+    return web.window.localStorage.getItem(_cookieSessionHintKey) == '1';
   }
 }

@@ -72,4 +72,6 @@ class SessionStorage {
       _fallback.clear();
     }
   }
+
+  static Future<bool> shouldProbeCookieSession() async => false;
 }

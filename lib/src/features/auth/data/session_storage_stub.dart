@@ -12,4 +12,6 @@ class SessionStorage {
   static Future<void> clear() async {
     _session = null;
   }
+
+  static Future<bool> shouldProbeCookieSession() async => false;
 }
