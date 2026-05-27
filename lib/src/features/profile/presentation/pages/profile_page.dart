@@ -55,6 +55,16 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.session.token != oldWidget.session.token ||
+        widget.session.publicId != oldWidget.session.publicId ||
+        widget.session.email != oldWidget.session.email) {
+      _future = _api.fetchProfile(widget.session.token);
+    }
+  }
+
   Future<void> _checkHandleAvailability() async {
     final l10n = S.of(context);
     final handle = _handleController.text.trim();
@@ -316,15 +326,28 @@ class _ProfilePageState extends State<ProfilePage> {
     const typeGroup = XTypeGroup(
       label: 'images',
       extensions: ['jpg', 'jpeg', 'png', 'webp'],
+      mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+      webWildCards: ['image/*'],
     );
-    final file = await openFile(acceptedTypeGroups: [typeGroup]);
-    if (file == null) return;
-    final bytes = await file.readAsBytes();
-    final sizeMb = bytes.length / (1024 * 1024);
-    if (sizeMb > _maxAvatarSizeMb) {
-      _showSnack(l10n.imageTooLarge, isError: true);
+
+    late final XFile file;
+    late final List<int> bytes;
+    try {
+      final selected = await openFile(acceptedTypeGroups: [typeGroup]);
+      if (selected == null) return;
+      file = selected;
+      bytes = await file.readAsBytes();
+      final sizeMb = bytes.length / (1024 * 1024);
+      if (sizeMb > _maxAvatarSizeMb) {
+        _showSnack(l10n.imageTooLarge, isError: true);
+        return;
+      }
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack(l10n.uploadFailed, isError: true);
       return;
     }
+
     setState(() => _updatingHandle = true);
     try {
       final updated = await _api.uploadAvatar(
