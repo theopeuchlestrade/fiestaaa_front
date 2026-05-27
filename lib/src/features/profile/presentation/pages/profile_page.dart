@@ -31,6 +31,8 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  static const double _maxAvatarSizeMb = 8;
+
   final _api = ProfileApi();
   Future<ProfileInfo>? _future;
   final _handleController = TextEditingController();
@@ -319,7 +321,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (file == null) return;
     final bytes = await file.readAsBytes();
     final sizeMb = bytes.length / (1024 * 1024);
-    if (sizeMb > 1.5) {
+    if (sizeMb > _maxAvatarSizeMb) {
       _showSnack(l10n.imageTooLarge, isError: true);
       return;
     }

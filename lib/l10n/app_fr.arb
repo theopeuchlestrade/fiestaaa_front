@@ -63,7 +63,7 @@
   "checkFailed": "Vérification impossible",
 
   "photoUpdated": "Photo mise à jour",
-  "imageTooLarge": "Image trop lourde (max 1.5 Mo)",
+  "imageTooLarge": "Image trop lourde (max 8 Mo)",
   "uploadFailed": "Upload impossible",
   "profileLoadFailed": "Impossible de charger votre profil",
   "profileNotFound": "Profil introuvable",

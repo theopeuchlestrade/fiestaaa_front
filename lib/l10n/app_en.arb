@@ -47,7 +47,7 @@
   "checkFailed": "Check failed",
 
   "photoUpdated": "Photo updated",
-  "imageTooLarge": "Image too large (max 1.5 MB)",
+  "imageTooLarge": "Image too large (max 8 MB)",
   "uploadFailed": "Upload failed",
   "profileLoadFailed": "Unable to load your profile",
   "profileNotFound": "Profile not found",
