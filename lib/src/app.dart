@@ -66,12 +66,15 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   Future<void> _restoreSession() async {
     final session = await SessionStorage.load();
     if (session == null) {
-      if (kIsWeb) {
+      if (kIsWeb && await SessionStorage.shouldProbeCookieSession()) {
         SessionData? refreshed;
         try {
           refreshed = await _authApi.validateSession('');
         } catch (_) {
           refreshed = null;
+        }
+        if (refreshed == null) {
+          await SessionStorage.clear();
         }
         if (!mounted) return;
         setState(() {
