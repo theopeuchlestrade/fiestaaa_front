@@ -77,6 +77,15 @@ flutter build web --release \
   "--dart-define=FIREBASE_WEB_MEASUREMENT_ID=${FIREBASE_WEB_MEASUREMENT_ID}"
 BASH
 
+# Use a content-derived query string for Flutter entry points so browsers do
+# not keep running an old app shell after deployment.
+RUN bash <<'BASH'
+set -euo pipefail
+asset_version="$(sha256sum build/web/main.dart.js | cut -c1-12)"
+sed -i "s#flutter_bootstrap.js#flutter_bootstrap.js?v=${asset_version}#g" build/web/index.html
+sed -i "s#\"main.dart.js\"#\"main.dart.js?v=${asset_version}\"#g" build/web/flutter_bootstrap.js
+BASH
+
 # Pinned Nginx runtime image for deterministic production serving (1.29.2-alpine)
 FROM nginx:1.29.2-alpine@sha256:61e01287e546aac28a3f56839c136b31f590273f3b41187a36f46f6a03bbfe22 AS runtime
 LABEL org.opencontainers.image.source="https://github.com/theopeuchlestrade/fiestaaa_front"
