@@ -77,13 +77,17 @@ flutter build web --release \
   "--dart-define=FIREBASE_WEB_MEASUREMENT_ID=${FIREBASE_WEB_MEASUREMENT_ID}"
 BASH
 
-# Use a content-derived query string for Flutter entry points so browsers do
-# not keep running an old app shell after deployment.
+# Use content-derived filenames for Flutter entry points so browsers do not
+# keep running an old app shell after deployment.
 RUN bash <<'BASH'
 set -euo pipefail
 asset_version="$(sha256sum build/web/main.dart.js | cut -c1-12)"
-sed -i "s#flutter_bootstrap.js#flutter_bootstrap.js?v=${asset_version}#g" build/web/index.html
-sed -i "s#\"main.dart.js\"#\"main.dart.js?v=${asset_version}\"#g" build/web/flutter_bootstrap.js
+main_js="main.${asset_version}.dart.js"
+bootstrap_js="flutter_bootstrap.${asset_version}.js"
+cp build/web/main.dart.js "build/web/${main_js}"
+sed -i "s#\"main.dart.js\"#\"${main_js}\"#g" build/web/flutter_bootstrap.js
+cp build/web/flutter_bootstrap.js "build/web/${bootstrap_js}"
+sed -i "s#flutter_bootstrap.js#${bootstrap_js}#g" build/web/index.html
 BASH
 
 # Pinned Nginx runtime image for deterministic production serving (1.29.2-alpine)
