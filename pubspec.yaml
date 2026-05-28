@@ -13,7 +13,6 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_svg: ^2.2.4
-  file_selector: ^1.0.3
   flutter_localizations:
     sdk: flutter
 
@@ -38,6 +37,7 @@ dependencies:
   sign_in_with_apple: ^8.0.0
   web: ^1.1.1
   flutter_launcher_icons: ^0.14.4
+  image_picker: ^1.2.2
 
 dev_dependencies:
   flutter_test:
