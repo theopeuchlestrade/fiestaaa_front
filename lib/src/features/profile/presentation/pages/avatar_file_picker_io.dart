@@ -14,6 +14,7 @@ Future<AvatarFile?> pickAvatarFile() async {
     label: 'images',
     extensions: ['jpg', 'jpeg', 'png', 'webp'],
     mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    uniformTypeIdentifiers: ['public.image'],
     webWildCards: ['image/*'],
   );
 
