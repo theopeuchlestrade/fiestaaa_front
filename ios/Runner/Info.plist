@@ -37,6 +37,8 @@
 	<string>791798589818-9s52tagkl7p9ugadle0m7p5llioac494.apps.googleusercontent.com</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Fiestaaa uses your camera to scan event ticket QR codes.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Fiestaaa uses your photo library so you can choose a profile photo.</string>
 	<key>UIApplicationSceneManifest</key>
