@@ -37,6 +37,7 @@ Main variables:
 - `FIESTAAA_GOOGLE_WEB_CLIENT_ID`: web OAuth client, also used on Android as the Google Sign-In `serverClientId`
 - `FIESTAAA_APPLE_*`: Apple Sign-In configuration
 - `FIESTAAA_FCM_VAPID_KEY`: web push VAPID key
+- `FIESTAAA_SENTRY_DSN`: optional Sentry DSN for crash/error reporting
 - `FIREBASE_*`: web/mobile Firebase configuration
 
 In local web development, use the same host for the frontend and the API. For
