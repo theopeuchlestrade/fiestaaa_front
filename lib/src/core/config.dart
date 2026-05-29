@@ -29,6 +29,29 @@ const String fcmWebVapidKey = String.fromEnvironment(
   defaultValue: '',
 );
 
+const String sentryDsn = String.fromEnvironment(
+  'FIESTAAA_SENTRY_DSN',
+  defaultValue: '',
+);
+
+const String sentryEnvironment = String.fromEnvironment(
+  'FIESTAAA_SENTRY_ENVIRONMENT',
+  defaultValue: 'development',
+);
+
+const String sentryRelease = String.fromEnvironment(
+  'FIESTAAA_SENTRY_RELEASE',
+  defaultValue: '',
+);
+
+const String sentryTracesSampleRateValue = String.fromEnvironment(
+  'FIESTAAA_SENTRY_TRACES_SAMPLE_RATE',
+  defaultValue: '0',
+);
+
+double get sentryTracesSampleRate =>
+    double.tryParse(sentryTracesSampleRateValue) ?? 0;
+
 Uri buildApiUri(String path, {Map<String, String>? queryParameters}) {
   final base = Uri.parse(apiBaseUrl);
   final normalizedPath = path.startsWith('/') ? path.substring(1) : path;

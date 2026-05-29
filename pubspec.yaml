@@ -38,6 +38,7 @@ dependencies:
   web: ^1.1.1
   flutter_launcher_icons: ^0.14.4
   image_picker: ^1.2.2
+  sentry_flutter: ^8.14.2
 
 dev_dependencies:
   flutter_test:
