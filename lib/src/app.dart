@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fiestaaa_front/src/core/locale_service.dart';
 import 'package:fiestaaa_front/src/core/query_param_sanitizer.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
@@ -31,6 +33,9 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   String? _pendingRegistrationCompletionToken;
   String? _authFlashCode;
   bool _authFlashIsError = false;
+  PushNotificationIntent? _pendingNotificationIntent;
+  int _notificationIntentSerial = 0;
+  StreamSubscription<PushNotificationIntent>? _notificationIntentSub;
 
   @override
   void initState() {
@@ -45,14 +50,23 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     }
     _localeService.addListener(_onLocaleChanged);
     _themeService.addListener(_onThemeChanged);
-    _init();
+    _notificationIntentSub = PushNotificationService.instance.intents.listen(
+      _handlePushNotificationIntent,
+    );
+    unawaited(_init());
   }
 
   Future<void> _init() async {
-    await _localeService.loadSavedLocale();
-    await _themeService.loadSavedTheme();
-    await _consumeEmailVerificationToken();
-    await _restoreSession();
+    await _timed(
+      'LocaleService.loadSavedLocale',
+      _localeService.loadSavedLocale,
+    );
+    await _timed('ThemeService.loadSavedTheme', _themeService.loadSavedTheme);
+    await _timed(
+      'consumeEmailVerificationToken',
+      _consumeEmailVerificationToken,
+    );
+    await _timed('restoreSession', _restoreSession);
   }
 
   void _onLocaleChanged() {
@@ -64,12 +78,15 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   }
 
   Future<void> _restoreSession() async {
-    final session = await SessionStorage.load();
+    final session = await _timed('SessionStorage.load', SessionStorage.load);
     if (session == null) {
       if (kIsWeb && await SessionStorage.shouldProbeCookieSession()) {
         SessionData? refreshed;
         try {
-          refreshed = await _authApi.validateSession('');
+          refreshed = await _timed(
+            'AuthApi.validateCookieSession',
+            () => _authApi.validateSession(''),
+          );
         } catch (_) {
           refreshed = null;
         }
@@ -82,7 +99,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
           _loadingSession = false;
         });
         if (refreshed != null) {
-          await PushNotificationService.instance.syncSession(refreshed);
+          unawaited(PushNotificationService.instance.syncSession(refreshed));
           await SessionStorage.save(refreshed);
         }
         return;
@@ -95,12 +112,29 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       return;
     }
 
+    if (!mounted) return;
+    setState(() {
+      _session = session;
+      _loadingSession = false;
+    });
+    unawaited(PushNotificationService.instance.syncSession(session));
+    unawaited(_refreshRestoredSession(session));
+  }
+
+  Future<void> _refreshRestoredSession(SessionData session) async {
     SessionData? refreshed;
+    var validationFailed = false;
     try {
-      refreshed = await _authApi.validateSession(session.token);
+      refreshed = await _timed(
+        'AuthApi.validateSession',
+        () => _authApi.validateSession(session.token),
+      );
     } catch (_) {
-      refreshed = null;
+      validationFailed = true;
     }
+
+    if (!mounted || _session?.token != session.token) return;
+    if (validationFailed) return;
 
     if (refreshed == null) {
       await SessionStorage.clear();
@@ -113,7 +147,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     });
 
     if (refreshed != null) {
-      await PushNotificationService.instance.syncSession(refreshed);
+      unawaited(PushNotificationService.instance.syncSession(refreshed));
       await SessionStorage.save(refreshed);
     }
   }
@@ -149,13 +183,26 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
 
   Future<void> _handleAuthenticated(SessionData session) async {
     await SessionStorage.save(session);
-    await PushNotificationService.instance.syncSession(session);
+    unawaited(PushNotificationService.instance.syncSession(session));
     if (!mounted) return;
     setState(() {
       _session = session;
       _pendingRegistrationCompletionToken = null;
       _authFlashCode = null;
       _authFlashIsError = false;
+    });
+  }
+
+  void _handlePushNotificationIntent(PushNotificationIntent intent) {
+    if (!intent.opensFriendRequests) return;
+    if (!mounted) {
+      _pendingNotificationIntent = intent;
+      _notificationIntentSerial++;
+      return;
+    }
+    setState(() {
+      _pendingNotificationIntent = intent;
+      _notificationIntentSerial++;
     });
   }
 
@@ -179,9 +226,19 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   void dispose() {
     _localeService.removeListener(_onLocaleChanged);
     _themeService.removeListener(_onThemeChanged);
+    _notificationIntentSub?.cancel();
     _authApi.dispose();
     PushNotificationService.instance.dispose();
     super.dispose();
+  }
+
+  Future<T> _timed<T>(String label, Future<T> Function() action) async {
+    final watch = Stopwatch()..start();
+    try {
+      return await action();
+    } finally {
+      debugPrint('Fiestaaa startup $label: ${watch.elapsedMilliseconds}ms');
+    }
   }
 
   @override
@@ -221,6 +278,8 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
               onLogout: _handleLogout,
               onSessionUpdated: _handleAuthenticated,
               initialShareToken: _pendingShareToken,
+              notificationIntent: _pendingNotificationIntent,
+              notificationIntentSerial: _notificationIntentSerial,
               onShareTokenConsumed: () {
                 setState(() {
                   _pendingShareToken = null;
@@ -238,6 +297,35 @@ class _SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    final theme = Theme.of(context);
+    return Scaffold(
+      body: FiestaaaBackground(
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  'F',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: theme.colorScheme.onPrimary,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const CircularProgressIndicator(),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

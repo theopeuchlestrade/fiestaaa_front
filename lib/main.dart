@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:fiestaaa_front/firebase_options.dart';
@@ -12,13 +14,41 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 }
 
+Future<T> _timedStartup<T>(String label, Future<T> Function() action) async {
+  final watch = Stopwatch()..start();
+  try {
+    return await action();
+  } finally {
+    debugPrint('Fiestaaa startup $label: ${watch.elapsedMilliseconds}ms');
+  }
+}
+
 Future<void> _bootstrap() async {
+  final startupWatch = Stopwatch()..start();
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await _timedStartup(
+    'Firebase.initializeApp',
+    () =>
+        Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
+  );
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  await PushNotificationService.instance.init();
-  await initializeDateFormatting('fr_FR');
+  await _timedStartup(
+    'initializeDateFormatting',
+    () => initializeDateFormatting('fr_FR'),
+  );
   runApp(const FiestaaaApp());
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(
+      _timedStartup(
+        'PushNotificationService.init',
+        PushNotificationService.instance.init,
+      ),
+    );
+    debugPrint(
+      'Fiestaaa startup first frame scheduled after '
+      '${startupWatch.elapsedMilliseconds}ms',
+    );
+  });
 }
 
 Future<void> main() async {

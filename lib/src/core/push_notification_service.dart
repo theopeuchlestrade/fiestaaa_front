@@ -11,6 +11,37 @@ import 'web_notification_stub.dart'
     if (dart.library.html) 'web_notification_html.dart'
     as web_notif;
 
+class PushNotificationIntent {
+  const PushNotificationIntent({
+    required this.type,
+    this.requestId,
+    this.eventId,
+  });
+
+  final String type;
+  final int? requestId;
+  final int? eventId;
+
+  bool get opensFriendRequests =>
+      type == 'friend_request' || type == 'friend_response';
+
+  static PushNotificationIntent? fromMessage(RemoteMessage message) {
+    final type = message.data['type']?.trim();
+    if (type == null || type.isEmpty) return null;
+    return PushNotificationIntent(
+      type: type,
+      requestId: _parseInt(message.data['request_id']),
+      eventId: _parseInt(message.data['event_id']),
+    );
+  }
+
+  static int? _parseInt(Object? value) {
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+}
+
 class PushNotificationService {
   PushNotificationService._();
 
@@ -30,10 +61,15 @@ class PushNotificationService {
   String? _registeredToken;
   SessionData? _session;
   StreamSubscription<String>? _tokenStreamSub;
+  StreamSubscription<RemoteMessage>? _openedAppSub;
   Timer? _syncRetryTimer;
   bool _syncInProgress = false;
   int _syncRetryAttempt = 0;
   bool _blocked = false;
+  final StreamController<PushNotificationIntent> _intentController =
+      StreamController<PushNotificationIntent>.broadcast();
+
+  Stream<PushNotificationIntent> get intents => _intentController.stream;
 
   Future<void> init() async {
     if (_initialized) return;
@@ -49,8 +85,15 @@ class PushNotificationService {
       sound: true,
     );
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    _openedAppSub = FirebaseMessaging.onMessageOpenedApp.listen(
+      _emitIntentFromMessage,
+    );
 
     _cachedToken = await _safeGetToken();
+    final initialMessage = await _messaging.getInitialMessage();
+    if (initialMessage != null) {
+      _emitIntentFromMessage(initialMessage);
+    }
     _tokenStreamSub = _messaging.onTokenRefresh.listen((token) async {
       final previous = _cachedToken;
       _cachedToken = token;
@@ -156,6 +199,13 @@ class PushNotificationService {
   Future<void> dispose() async {
     _syncRetryTimer?.cancel();
     await _tokenStreamSub?.cancel();
+    await _openedAppSub?.cancel();
+  }
+
+  void _emitIntentFromMessage(RemoteMessage message) {
+    final intent = PushNotificationIntent.fromMessage(message);
+    if (intent == null || _intentController.isClosed) return;
+    _intentController.add(intent);
   }
 
   Future<void> _requestPermissions() async {

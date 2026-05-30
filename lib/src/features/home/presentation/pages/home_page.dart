@@ -10,6 +10,7 @@ import 'package:fiestaaa_front/src/features/friends/data/friends_api.dart';
 import 'package:fiestaaa_front/src/features/friends/presentation/pages/friends_page.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/profile/presentation/pages/profile_page.dart';
+import 'package:fiestaaa_front/src/core/push_notification_service.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:fiestaaa_front/src/core/theme_service.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
@@ -22,6 +23,8 @@ class HomePage extends StatefulWidget {
     required this.session,
     required this.onLogout,
     this.initialShareToken,
+    this.notificationIntent,
+    this.notificationIntentSerial = 0,
     this.onShareTokenConsumed,
     this.onSessionUpdated,
     this.localeService,
@@ -31,6 +34,8 @@ class HomePage extends StatefulWidget {
   final SessionData session;
   final VoidCallback onLogout;
   final String? initialShareToken;
+  final PushNotificationIntent? notificationIntent;
+  final int notificationIntentSerial;
   final VoidCallback? onShareTokenConsumed;
   final Future<void> Function(SessionData session)? onSessionUpdated;
   final LocaleService? localeService;
@@ -52,6 +57,8 @@ class _HomePageState extends State<HomePage> {
   late SessionData _session;
   int _pendingEventInvites = 0;
   int _pendingFriendRequests = 0;
+  int _friendsRequestsOpenSerial = 0;
+  int _lastHandledNotificationIntentSerial = 0;
 
   void _onItemTapped(int index) {
     setState(() {
@@ -124,6 +131,9 @@ class _HomePageState extends State<HomePage> {
     _session = widget.session;
     _loadPendingBadges();
     _startRealtime();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _handleNotificationIntentIfNeeded();
+    });
     if (widget.initialShareToken != null) {
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => _claimShareIfNeeded(),
@@ -144,6 +154,11 @@ class _HomePageState extends State<HomePage> {
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => _claimShareIfNeeded(),
       );
+    }
+    if (widget.notificationIntentSerial != oldWidget.notificationIntentSerial) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _handleNotificationIntentIfNeeded();
+      });
     }
   }
 
@@ -211,6 +226,25 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _handleNotificationIntentIfNeeded() {
+    if (!mounted ||
+        widget.notificationIntentSerial == 0 ||
+        widget.notificationIntentSerial ==
+            _lastHandledNotificationIntentSerial) {
+      return;
+    }
+
+    _lastHandledNotificationIntentSerial = widget.notificationIntentSerial;
+    final intent = widget.notificationIntent;
+    if (intent == null || !intent.opensFriendRequests) return;
+
+    setState(() {
+      _selectedIndex = 2;
+      _friendsRequestsOpenSerial++;
+    });
+    _loadPendingBadges();
+  }
+
   void _showSnack(String text) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
@@ -232,6 +266,7 @@ class _HomePageState extends State<HomePage> {
         onPendingRequestsChanged: (count) =>
             setState(() => _pendingFriendRequests = count),
         realtimeStream: _realtime?.stream,
+        requestsOpenSerial: _friendsRequestsOpenSerial,
       ),
       ProfilePage(
         session: _session,
