@@ -30,6 +30,9 @@ class PushNotificationService {
   String? _registeredToken;
   SessionData? _session;
   StreamSubscription<String>? _tokenStreamSub;
+  Timer? _syncRetryTimer;
+  bool _syncInProgress = false;
+  int _syncRetryAttempt = 0;
   bool _blocked = false;
 
   Future<void> init() async {
@@ -52,17 +55,9 @@ class PushNotificationService {
       final previous = _cachedToken;
       _cachedToken = token;
       if (_session != null) {
-        try {
-          await _api.refreshDevice(
-            authToken: _session!.token,
-            oldToken: previous ?? token,
-            newToken: token,
-            platform: _platform(),
-            locale: _locale(),
-            appVersion: _appVersion(),
-          );
-          _registeredToken = token;
-        } catch (_) {}
+        await _syncRegisteredDevice(
+          oldTokenOverride: previous != token ? previous : null,
+        );
       }
     });
   }
@@ -73,38 +68,79 @@ class PushNotificationService {
       await init();
     }
     if (_blocked) return;
-    final token = _cachedToken ?? await _safeGetToken();
-    if (token == null) return;
+    await _syncRegisteredDevice();
+  }
 
-    if (_registeredToken == token) return;
+  Future<void> _syncRegisteredDevice({String? oldTokenOverride}) async {
+    if (_blocked || _syncInProgress) return;
+    final session = _session;
+    if (session == null) return;
 
+    _syncRetryTimer?.cancel();
+    _syncRetryTimer = null;
+
+    _syncInProgress = true;
     try {
-      if (_registeredToken != null) {
-        await _api.refreshDevice(
-          authToken: session.token,
-          oldToken: _registeredToken!,
-          newToken: token,
-          platform: _platform(),
-          locale: _locale(),
-          appVersion: _appVersion(),
-        );
-      } else {
-        await _api.registerDevice(
-          authToken: session.token,
-          fcmToken: token,
-          platform: _platform(),
-          locale: _locale(),
-          appVersion: _appVersion(),
-        );
+      final token = _cachedToken ?? await _safeGetToken();
+      if (token == null) {
+        _scheduleSyncRetry();
+        return;
       }
-      _registeredToken = token;
-      _cachedToken = token;
-    } catch (_) {
-      // Ignore network/API errors here; token will be retried on next refresh/login.
+
+      if (_registeredToken == token && oldTokenOverride == null) return;
+
+      try {
+        final oldToken = oldTokenOverride ?? _registeredToken;
+        if (oldToken != null && oldToken != token) {
+          await _api.refreshDevice(
+            authToken: session.token,
+            oldToken: oldToken,
+            newToken: token,
+            platform: _platform(),
+            locale: _locale(),
+            appVersion: _appVersion(),
+          );
+        } else {
+          await _api.registerDevice(
+            authToken: session.token,
+            fcmToken: token,
+            platform: _platform(),
+            locale: _locale(),
+            appVersion: _appVersion(),
+          );
+        }
+        _registeredToken = token;
+        _cachedToken = token;
+        _syncRetryAttempt = 0;
+      } catch (_) {
+        _scheduleSyncRetry();
+      }
+    } finally {
+      _syncInProgress = false;
     }
   }
 
+  void _scheduleSyncRetry() {
+    if (_session == null || _blocked || _syncRetryTimer?.isActive == true) {
+      return;
+    }
+
+    final seconds = switch (_syncRetryAttempt) {
+      0 => 2,
+      1 => 5,
+      2 => 10,
+      _ => 30,
+    };
+    _syncRetryAttempt += 1;
+    _syncRetryTimer = Timer(Duration(seconds: seconds), () {
+      unawaited(_syncRegisteredDevice());
+    });
+  }
+
   Future<void> clearSession() async {
+    _syncRetryTimer?.cancel();
+    _syncRetryTimer = null;
+    _syncRetryAttempt = 0;
     if (_session != null && _registeredToken != null) {
       try {
         await _api.deleteDevice(
@@ -118,12 +154,13 @@ class PushNotificationService {
   }
 
   Future<void> dispose() async {
+    _syncRetryTimer?.cancel();
     await _tokenStreamSub?.cancel();
   }
 
   Future<void> _requestPermissions() async {
     try {
-      await _messaging.requestPermission(
+      final settings = await _messaging.requestPermission(
         alert: true,
         announcement: false,
         badge: true,
@@ -131,6 +168,7 @@ class PushNotificationService {
         provisional: false,
         sound: true,
       );
+      _blocked = settings.authorizationStatus == AuthorizationStatus.denied;
     } catch (_) {
       // Permission request failed (blocked); continue without notifications.
       _blocked = true;
@@ -139,12 +177,23 @@ class PushNotificationService {
 
   Future<String?> _safeGetToken() async {
     try {
+      if (!await _hasApnsTokenIfNeeded()) return null;
       return await _messaging.getToken(
         vapidKey: kIsWeb && fcmWebVapidKey.isNotEmpty ? fcmWebVapidKey : null,
       );
     } catch (_) {
-      _blocked = true;
       return null;
+    }
+  }
+
+  Future<bool> _hasApnsTokenIfNeeded() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) return true;
+
+    try {
+      final apnsToken = await _messaging.getAPNSToken();
+      return apnsToken != null && apnsToken.isNotEmpty;
+    } catch (_) {
+      return true;
     }
   }
 
@@ -221,7 +270,12 @@ class PushNotificationService {
       priority: Priority.high,
       playSound: true,
     );
-    const iosDetails = DarwinNotificationDetails();
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      sound: 'default',
+    );
     const details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
