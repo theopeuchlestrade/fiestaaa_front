@@ -31,12 +31,14 @@ class FriendsPage extends StatefulWidget {
     this.onPendingRequestsChanged,
     this.realtimeStream,
     this.inviteFlow,
+    this.requestsOpenSerial = 0,
   });
 
   final SessionData session;
   final ValueChanged<int>? onPendingRequestsChanged;
   final Stream<Map<String, dynamic>>? realtimeStream;
   final FriendsPageInviteFlow? inviteFlow;
+  final int requestsOpenSerial;
 
   @override
   State<FriendsPage> createState() => _FriendsPageState();
@@ -70,6 +72,7 @@ class _FriendsPageState extends State<FriendsPage>
   String? _eventInvitationsError;
   Set<String>? _selectedFriendKeys;
   Set<String>? _invitedFriendIdentifiers;
+  int _lastHandledRequestsOpenSerial = 0;
 
   bool get _isInviteSelectionMode => widget.inviteFlow != null;
   List<EventModel> get _ownedEventsValue => _ownedEvents ??= <EventModel>[];
@@ -92,6 +95,9 @@ class _FriendsPageState extends State<FriendsPage>
     _friendsFilterController.addListener(_onFriendFilterChanged);
     _refreshAll();
     _realtimeSub = widget.realtimeStream?.listen(_handleRealtime);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _openRequestsTabIfNeeded();
+    });
   }
 
   @override
@@ -117,6 +123,11 @@ class _FriendsPageState extends State<FriendsPage>
     if (oldWidget.inviteFlow?.eventId != widget.inviteFlow?.eventId) {
       _selectedFriendKeysValue.clear();
       _refreshAll();
+    }
+    if (oldWidget.requestsOpenSerial != widget.requestsOpenSerial) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _openRequestsTabIfNeeded();
+      });
     }
   }
 
@@ -266,6 +277,18 @@ class _FriendsPageState extends State<FriendsPage>
         )
         .length;
     widget.onPendingRequestsChanged!(pending);
+  }
+
+  void _openRequestsTabIfNeeded() {
+    if (!mounted ||
+        _isInviteSelectionMode ||
+        widget.requestsOpenSerial == 0 ||
+        widget.requestsOpenSerial == _lastHandledRequestsOpenSerial) {
+      return;
+    }
+    _lastHandledRequestsOpenSerial = widget.requestsOpenSerial;
+    _tabController.animateTo(_FriendsTab.requests.index);
+    _fetchRequests();
   }
 
   void _onInviteQueryChanged() {
