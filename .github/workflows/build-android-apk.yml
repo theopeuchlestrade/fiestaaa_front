@@ -2,10 +2,34 @@ name: Build Android APK
 
 on:
   workflow_call:
+    inputs:
+      ref:
+        description: "Git ref to build"
+        required: true
+        type: string
+      version:
+        description: "Flutter build name, for example 1.2.3"
+        required: true
+        type: string
+      build_number:
+        description: "Flutter build number"
+        required: true
+        type: string
+      artifact_suffix:
+        description: "Suffix used in uploaded artifact names"
+        required: true
+        type: string
+      require_signing:
+        description: "Fail unless Android release signing secrets are present"
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   build-android-apk:
+    name: Android APK
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     environment: production
     permissions:
       contents: read
@@ -16,6 +40,19 @@ jobs:
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v6.0.2
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Validate build inputs
+        run: |
+          if ! [[ "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must use MAJOR.MINOR.PATCH, for example 1.2.3"
+            exit 1
+          fi
+          if ! [[ "${{ inputs.build_number }}" =~ ^[0-9]+$ ]]; then
+            echo "::error::build_number must be a positive integer"
+            exit 1
+          fi
 
       - name: Setup Java
         uses: actions/setup-java@v5.2.0
@@ -29,7 +66,7 @@ jobs:
           flutter-version: 3.41.5
           cache: false
 
-      - name: Check required secrets
+      - name: Check required configuration
         env:
           FIESTAAA_API_BASE_URL: ${{ secrets.FIESTAAA_API_BASE_URL }}
           FIESTAAA_APPLE_REDIRECT_URI: ${{ secrets.FIESTAAA_APPLE_REDIRECT_URI }}
@@ -62,10 +99,15 @@ jobs:
           fi
           cat <<EOF > .env
           FIESTAAA_API_BASE_URL=${{ secrets.FIESTAAA_API_BASE_URL }}
+          FIESTAAA_APP_BASE_URL=${{ secrets.FIESTAAA_APP_BASE_URL || 'https://fiestaaa.app' }}
           FIESTAAA_APPLE_SERVICE_ID=${{ secrets.FIESTAAA_APPLE_SERVICE_ID }}
           FIESTAAA_APPLE_REDIRECT_URI=${{ secrets.FIESTAAA_APPLE_REDIRECT_URI }}
           FIESTAAA_FCM_VAPID_KEY=${{ secrets.FIESTAAA_FCM_VAPID_KEY }}
           FIESTAAA_GOOGLE_WEB_CLIENT_ID=${{ secrets.FIESTAAA_GOOGLE_WEB_CLIENT_ID }}
+          FIESTAAA_SENTRY_DSN=${{ secrets.FIESTAAA_SENTRY_DSN }}
+          FIESTAAA_SENTRY_ENVIRONMENT=${{ vars.FIESTAAA_SENTRY_ENVIRONMENT || 'production' }}
+          FIESTAAA_SENTRY_RELEASE=${{ inputs.artifact_suffix }}
+          FIESTAAA_SENTRY_TRACES_SAMPLE_RATE=${{ vars.FIESTAAA_SENTRY_TRACES_SAMPLE_RATE || '0' }}
           FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}
           FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
@@ -77,8 +119,8 @@ jobs:
           FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN_VALUE}
           EOF
 
-      - name: Check signing secrets (release)
-        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
+      - name: Check signing secrets
+        if: ${{ inputs.require_signing }}
         run: |
           missing=0
           for var in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
@@ -89,7 +131,7 @@ jobs:
           done
           if [ "$missing" -ne 0 ]; then exit 1; fi
 
-      - name: Setup Android signing (release)
+      - name: Setup Android signing
         if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
         run: |
           mkdir -p android/app
@@ -117,13 +159,18 @@ jobs:
           EOF
 
       - name: Install dependencies
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
 
       - name: Generate localizations
         run: flutter gen-l10n
 
       - name: Build APK
-        run: flutter build apk --release --dart-define-from-file=.env
+        run: |
+          flutter build apk \
+            --release \
+            --build-name "${{ inputs.version }}" \
+            --build-number "${{ inputs.build_number }}" \
+            --dart-define-from-file=.env
 
       - name: Extract signing fingerprints
         run: |
@@ -149,7 +196,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: fiestaaa-android-apk-${{ github.sha }}
+          name: fiestaaa-android-apk-${{ inputs.artifact_suffix }}
           path: |
             build/app/outputs/flutter-apk/app-release.apk
             signing-sha.txt

@@ -104,8 +104,9 @@ flutter run -d <device-id> --dart-define-from-file=.env
 ```
 
 The manual GitHub Actions workflow `Manual Build iOS IPA` creates a signed
-`.ipa` artifact for device testing. It requires these production environment
-secrets:
+`.ipa` artifact for device testing. The `Frontend Release` workflow uses the
+same reusable iOS build and attaches the `.ipa` to the GitHub Release. It
+requires these production environment secrets:
 
 - `IOS_CERTIFICATE_BASE64`: base64-encoded `.p12` signing certificate
 - `IOS_CERTIFICATE_PASSWORD`: `.p12` password
@@ -151,7 +152,10 @@ flutter test --dart-define-from-file=.env
 ## Deployment
 
 The production web build is defined in `Dockerfile` and served by Nginx. The
-GitHub Actions workflow publishes the GHCR image and triggers deployment.
+manual `Frontend Release` GitHub Actions workflow verifies the app, bumps
+`pubspec.yaml` from a `patch`, `minor`, `major`, or custom version choice,
+creates the `vX.Y.Z` tag, publishes the GHCR web image, builds Android/iOS
+artifacts, creates the GitHub Release, and can deploy the web image to the VPS.
 
 Operations documentation lives in the companion backend repository,
 `fiestaaa_back/docs/deploiement.md`.

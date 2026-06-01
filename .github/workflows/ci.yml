@@ -2,7 +2,9 @@ name: Frontend CI
 
 on:
   pull_request:
-    branches: [main, master]
+    branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -12,22 +14,25 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  FLUTTER_VERSION: 3.41.5
+
 jobs:
-  frontend-ci:
-    name: Frontend CI
+  quality:
+    name: Analyze and Test
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6.0.2
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2.18.0
+        uses: subosito/flutter-action@v2.23.0
         with:
-          flutter-version: 3.41.5
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: Install dependencies
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
 
       - name: Generate localizations
         run: flutter gen-l10n
@@ -47,6 +52,10 @@ jobs:
           FIESTAAA_APPLE_REDIRECT_URI=https://fiestaaa.example.test/auth/callback
           FIESTAAA_FCM_VAPID_KEY=test-vapid-key
           FIESTAAA_GOOGLE_WEB_CLIENT_ID=test-web-client-id.apps.googleusercontent.com
+          FIESTAAA_SENTRY_DSN=
+          FIESTAAA_SENTRY_ENVIRONMENT=ci
+          FIESTAAA_SENTRY_RELEASE=ci
+          FIESTAAA_SENTRY_TRACES_SAMPLE_RATE=0
           FIREBASE_PROJECT_ID=fiestaaa-test
           FIREBASE_STORAGE_BUCKET=fiestaaa-test.firebasestorage.app
           FIREBASE_MESSAGING_SENDER_ID=123456789012
@@ -58,8 +67,201 @@ jobs:
           FIREBASE_ANDROID_APP_ID=1:123456789012:android:testappid
           FIREBASE_IOS_API_KEY=test-ios-api-key
           FIREBASE_IOS_APP_ID=1:123456789012:ios:testappid
-          FIREBASE_IOS_BUNDLE_ID=com.example.fiestaaa
+          FIREBASE_IOS_BUNDLE_ID=com.fiestaaa.fiestaaa
           EOF
 
       - name: Run tests
         run: flutter test --dart-define-from-file=.env.ci
+
+  web-container-build:
+    name: Web Container Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.11.1
+
+      - name: Build production web image
+        uses: docker/build-push-action@v6.18.0
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          tags: ghcr.io/${{ github.repository }}:ci-${{ github.sha }}
+          build-args: |
+            FIESTAAA_API_BASE_URL=https://api.example.test
+            FIESTAAA_APPLE_REDIRECT_URI=https://fiestaaa.example.test/auth/callback
+            FIESTAAA_APPLE_SERVICE_ID=com.example.fiestaaa.web
+            FIESTAAA_GOOGLE_WEB_CLIENT_ID=test-web-client-id.apps.googleusercontent.com
+            FIESTAAA_SENTRY_DSN=
+            FIESTAAA_SENTRY_ENVIRONMENT=ci
+            FIESTAAA_SENTRY_RELEASE=ci-${{ github.sha }}
+            FIESTAAA_SENTRY_TRACES_SAMPLE_RATE=0
+            FIREBASE_MESSAGING_SENDER_ID=123456789012
+            FIREBASE_PROJECT_ID=fiestaaa-test
+            FIREBASE_STORAGE_BUCKET=fiestaaa-test.firebasestorage.app
+            FIREBASE_WEB_APP_ID=1:123456789012:web:testappid
+            FIREBASE_WEB_MEASUREMENT_ID=
+          secrets: |
+            FIESTAAA_FCM_VAPID_KEY=test-vapid-key
+            FIREBASE_WEB_API_KEY=test-web-api-key
+            FIREBASE_AUTH_DOMAIN=fiestaaa-test.firebaseapp.com
+
+  android-build:
+    name: Android Compile
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Setup Java
+        uses: actions/setup-java@v5.2.0
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Write CI defines
+        run: |
+          cat <<'EOF' > .env.ci
+          FIESTAAA_API_BASE_URL=https://api.example.test
+          FIESTAAA_APP_BASE_URL=https://fiestaaa.example.test
+          FIESTAAA_APPLE_SERVICE_ID=com.example.fiestaaa.web
+          FIESTAAA_APPLE_REDIRECT_URI=https://fiestaaa.example.test/auth/callback
+          FIESTAAA_FCM_VAPID_KEY=test-vapid-key
+          FIESTAAA_GOOGLE_WEB_CLIENT_ID=test-web-client-id.apps.googleusercontent.com
+          FIESTAAA_SENTRY_DSN=
+          FIESTAAA_SENTRY_ENVIRONMENT=ci
+          FIESTAAA_SENTRY_RELEASE=ci
+          FIESTAAA_SENTRY_TRACES_SAMPLE_RATE=0
+          FIREBASE_PROJECT_ID=fiestaaa-test
+          FIREBASE_STORAGE_BUCKET=fiestaaa-test.firebasestorage.app
+          FIREBASE_MESSAGING_SENDER_ID=123456789012
+          FIREBASE_WEB_API_KEY=test-web-api-key
+          FIREBASE_WEB_APP_ID=1:123456789012:web:testappid
+          FIREBASE_WEB_MEASUREMENT_ID=
+          FIREBASE_AUTH_DOMAIN=fiestaaa-test.firebaseapp.com
+          FIREBASE_ANDROID_API_KEY=test-android-api-key
+          FIREBASE_ANDROID_APP_ID=1:123456789012:android:testappid
+          FIREBASE_IOS_API_KEY=test-ios-api-key
+          FIREBASE_IOS_APP_ID=1:123456789012:ios:testappid
+          FIREBASE_IOS_BUNDLE_ID=com.fiestaaa.fiestaaa
+          EOF
+
+      - name: Write dummy google-services.json
+        run: |
+          mkdir -p android/app
+          cat <<'EOF' > android/app/google-services.json
+          {
+            "project_info": {
+              "project_number": "123456789012",
+              "project_id": "fiestaaa-test",
+              "storage_bucket": "fiestaaa-test.firebasestorage.app"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:123456789012:android:testappid",
+                  "android_client_info": {
+                    "package_name": "com.fiestaaa.fiestaaa"
+                  }
+                },
+                "api_key": [
+                  {
+                    "current_key": "test-android-api-key"
+                  }
+                ]
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
+
+      - name: Install dependencies
+        run: flutter pub get --enforce-lockfile
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Build Android debug APK
+        run: flutter build apk --debug --dart-define-from-file=.env.ci
+
+  ios-build:
+    name: iOS Compile
+    runs-on: macos-latest
+    timeout-minutes: 45
+    if: ${{ github.event_name != 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Write CI defines
+        run: |
+          cat <<'EOF' > .env.ci
+          FIESTAAA_API_BASE_URL=https://api.example.test
+          FIESTAAA_APP_BASE_URL=https://fiestaaa.example.test
+          FIESTAAA_APPLE_SERVICE_ID=com.example.fiestaaa.web
+          FIESTAAA_APPLE_REDIRECT_URI=https://fiestaaa.example.test/auth/callback
+          FIESTAAA_FCM_VAPID_KEY=test-vapid-key
+          FIESTAAA_GOOGLE_WEB_CLIENT_ID=test-web-client-id.apps.googleusercontent.com
+          FIESTAAA_SENTRY_DSN=
+          FIESTAAA_SENTRY_ENVIRONMENT=ci
+          FIESTAAA_SENTRY_RELEASE=ci
+          FIESTAAA_SENTRY_TRACES_SAMPLE_RATE=0
+          FIREBASE_PROJECT_ID=fiestaaa-test
+          FIREBASE_STORAGE_BUCKET=fiestaaa-test.firebasestorage.app
+          FIREBASE_MESSAGING_SENDER_ID=123456789012
+          FIREBASE_WEB_API_KEY=test-web-api-key
+          FIREBASE_WEB_APP_ID=1:123456789012:web:testappid
+          FIREBASE_WEB_MEASUREMENT_ID=
+          FIREBASE_AUTH_DOMAIN=fiestaaa-test.firebaseapp.com
+          FIREBASE_ANDROID_API_KEY=test-android-api-key
+          FIREBASE_ANDROID_APP_ID=1:123456789012:android:testappid
+          FIREBASE_IOS_API_KEY=test-ios-api-key
+          FIREBASE_IOS_APP_ID=1:123456789012:ios:testappid
+          FIREBASE_IOS_BUNDLE_ID=com.fiestaaa.fiestaaa
+          EOF
+
+      - name: Install dependencies
+        run: flutter pub get --enforce-lockfile
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Build unsigned iOS app
+        run: flutter build ios --release --no-codesign --dart-define-from-file=.env.ci
+
+  ci:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+    needs: [quality, web-container-build, android-build, ios-build]
+    if: ${{ always() }}
+    steps:
+      - name: Check required jobs
+        run: |
+          if [ "${{ needs.quality.result }}" != "success" ] ||
+             [ "${{ needs.web-container-build.result }}" != "success" ] ||
+             [ "${{ needs.android-build.result }}" != "success" ]; then
+            echo "::error::One or more frontend CI jobs failed"
+            exit 1
+          fi
+          if [ "${{ needs.ios-build.result }}" != "success" ] &&
+             [ "${{ needs.ios-build.result }}" != "skipped" ]; then
+            echo "::error::iOS compile job failed"
+            exit 1
+          fi

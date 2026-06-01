@@ -1,38 +1,281 @@
-name: Build and Deploy Front
+name: Frontend Release
+
 on:
-  push:
-    branches: [main, master]
   workflow_dispatch:
     inputs:
-      force_build:
-        description: "Ignore existing image and rebuild"
+      release_type:
+        description: "Version bump to apply"
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - custom
+      custom_version:
+        description: "Required only when release_type=custom, without the v prefix"
+        required: false
+        type: string
+      build_number:
+        description: "Mobile build number. Defaults to the GitHub run number when empty."
+        required: false
+        type: string
+      deploy_to_vps:
+        description: "Deploy the released web image to the production VPS"
+        required: true
         type: boolean
-        default: false
-      skip_deploy:
-        description: "Build and push the image, but skip VPS deployment"
+        default: true
+      build_ios:
+        description: "Build the signed iOS IPA"
+        required: true
         type: boolean
-        default: false
+        default: true
+      ios_export_method:
+        description: "Xcode export method"
+        required: true
+        default: release-testing
+        type: choice
+        options:
+          - debugging
+          - release-testing
+          - app-store-connect
+
+concurrency:
+  group: frontend-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+  attestations: write
+  artifact-metadata: write
+  id-token: write
 
 env:
-  IMAGE: ghcr.io/theopeuchlestrade/fiestaaa_front
-  TAG: ${{ github.sha }}
+  FLUTTER_VERSION: 3.41.5
+  IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
-  build-and-deploy:
+  verify:
+    name: Verify Release Candidate
     runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://fiestaaa.app
-    permissions:
-      contents: read
-      attestations: write
-      artifact-metadata: write
-      id-token: write
-      packages: write
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6.0.2
 
-      - name: Check required secrets
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get --enforce-lockfile
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed lib test tool
+
+      - name: Run analyze
+        run: flutter analyze
+
+      - name: Write CI defines
+        run: |
+          cat <<'EOF' > .env.ci
+          FIESTAAA_API_BASE_URL=https://api.example.test
+          FIESTAAA_APP_BASE_URL=https://fiestaaa.example.test
+          FIESTAAA_APPLE_SERVICE_ID=com.example.fiestaaa.web
+          FIESTAAA_APPLE_REDIRECT_URI=https://fiestaaa.example.test/auth/callback
+          FIESTAAA_FCM_VAPID_KEY=test-vapid-key
+          FIESTAAA_GOOGLE_WEB_CLIENT_ID=test-web-client-id.apps.googleusercontent.com
+          FIESTAAA_SENTRY_DSN=
+          FIESTAAA_SENTRY_ENVIRONMENT=ci
+          FIESTAAA_SENTRY_RELEASE=release-candidate
+          FIESTAAA_SENTRY_TRACES_SAMPLE_RATE=0
+          FIREBASE_PROJECT_ID=fiestaaa-test
+          FIREBASE_STORAGE_BUCKET=fiestaaa-test.firebasestorage.app
+          FIREBASE_MESSAGING_SENDER_ID=123456789012
+          FIREBASE_WEB_API_KEY=test-web-api-key
+          FIREBASE_WEB_APP_ID=1:123456789012:web:testappid
+          FIREBASE_WEB_MEASUREMENT_ID=
+          FIREBASE_AUTH_DOMAIN=fiestaaa-test.firebaseapp.com
+          FIREBASE_ANDROID_API_KEY=test-android-api-key
+          FIREBASE_ANDROID_APP_ID=1:123456789012:android:testappid
+          FIREBASE_IOS_API_KEY=test-ios-api-key
+          FIREBASE_IOS_APP_ID=1:123456789012:ios:testappid
+          FIREBASE_IOS_BUNDLE_ID=com.fiestaaa.fiestaaa
+          EOF
+
+      - name: Run tests
+        run: flutter test --dart-define-from-file=.env.ci
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.11.1
+
+      - name: Build production web image
+        uses: docker/build-push-action@v6.18.0
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          tags: ${{ env.IMAGE }}:release-candidate-${{ github.sha }}
+          build-args: |
+            FIESTAAA_API_BASE_URL=https://api.example.test
+            FIESTAAA_APPLE_REDIRECT_URI=https://fiestaaa.example.test/auth/callback
+            FIESTAAA_APPLE_SERVICE_ID=com.example.fiestaaa.web
+            FIESTAAA_GOOGLE_WEB_CLIENT_ID=test-web-client-id.apps.googleusercontent.com
+            FIESTAAA_SENTRY_DSN=
+            FIESTAAA_SENTRY_ENVIRONMENT=ci
+            FIESTAAA_SENTRY_RELEASE=release-candidate-${{ github.sha }}
+            FIESTAAA_SENTRY_TRACES_SAMPLE_RATE=0
+            FIREBASE_MESSAGING_SENDER_ID=123456789012
+            FIREBASE_PROJECT_ID=fiestaaa-test
+            FIREBASE_STORAGE_BUCKET=fiestaaa-test.firebasestorage.app
+            FIREBASE_WEB_APP_ID=1:123456789012:web:testappid
+            FIREBASE_WEB_MEASUREMENT_ID=
+          secrets: |
+            FIESTAAA_FCM_VAPID_KEY=test-vapid-key
+            FIREBASE_WEB_API_KEY=test-web-api-key
+            FIREBASE_AUTH_DOMAIN=fiestaaa-test.firebaseapp.com
+
+  prepare-release:
+    name: Version, Commit and Tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: verify
+    outputs:
+      build_number: ${{ steps.version.outputs.build_number }}
+      release_sha: ${{ steps.push.outputs.release_sha }}
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Validate release version
+        id: version
+        env:
+          CUSTOM_VERSION: ${{ inputs.custom_version }}
+          RELEASE_TYPE: ${{ inputs.release_type }}
+        run: |
+          set -euo pipefail
+          release_type="${RELEASE_TYPE}"
+          custom_version="${CUSTOM_VERSION}"
+          build_number="${{ inputs.build_number }}"
+          if [ -z "${build_number}" ]; then
+            build_number="${GITHUB_RUN_NUMBER}"
+          fi
+
+          if [ "${release_type}" = "custom" ]; then
+            version="${custom_version}"
+            if [ -z "${version}" ]; then
+              echo "::error::custom_version is required when release_type=custom"
+              exit 1
+            fi
+          else
+            if [ -n "${custom_version}" ]; then
+              echo "::error::custom_version can only be set when release_type=custom"
+              exit 1
+            fi
+            current_version="$(sed -nE 's/^version:[[:space:]]*([0-9]+)\.([0-9]+)\.([0-9]+)(\+[0-9]+)?.*/\1.\2.\3/p' pubspec.yaml | head -n 1)"
+            if [ -z "${current_version}" ]; then
+              echo "::error::pubspec.yaml version must use MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH+BUILD"
+              exit 1
+            fi
+            IFS=. read -r major minor patch <<< "${current_version}"
+            case "${release_type}" in
+              patch)
+                patch=$((patch + 1))
+                ;;
+              minor)
+                minor=$((minor + 1))
+                patch=0
+                ;;
+              major)
+                major=$((major + 1))
+                minor=0
+                patch=0
+                ;;
+              *)
+                echo "::error::Unsupported release_type: ${release_type}"
+                exit 1
+                ;;
+            esac
+            version="${major}.${minor}.${patch}"
+          fi
+
+          if ! [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must use MAJOR.MINOR.PATCH, for example 1.2.3"
+            exit 1
+          fi
+          if ! [[ "${build_number}" =~ ^[0-9]+$ ]]; then
+            echo "::error::build_number must be a positive integer"
+            exit 1
+          fi
+          tag="v${version}"
+          git fetch origin main --tags
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "::error::Tag ${tag} already exists"
+            exit 1
+          fi
+          {
+            echo "build_number=${build_number}"
+            echo "tag=${tag}"
+            echo "version=${version}"
+          } >> "${GITHUB_OUTPUT}"
+          echo "::notice::Preparing ${release_type} release ${tag} build ${build_number}"
+
+      - name: Update Flutter version
+        env:
+          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # shellcheck disable=SC2016
+          ruby -e '
+            version = ENV.fetch("VERSION")
+            build_number = ENV.fetch("BUILD_NUMBER")
+            path = "pubspec.yaml"
+            text = File.read(path)
+            raise "pubspec.yaml version not found" unless text.sub!(/^version:\s*.+$/, "version: #{version}+#{build_number}")
+            File.write(path, text)
+          '
+
+      - name: Commit and tag release
+        id: push
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet -- pubspec.yaml; then
+            git add pubspec.yaml
+            git commit -m "chore(release): ${TAG}"
+          fi
+          release_sha="$(git rev-parse HEAD)"
+          git tag -a "${TAG}" -m "Release ${TAG}" "${release_sha}"
+          git push origin HEAD:main
+          git push origin "${TAG}"
+          echo "release_sha=${release_sha}" >> "${GITHUB_OUTPUT}"
+
+  publish-web:
+    name: Publish Web Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: prepare-release
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          ref: ${{ needs.prepare-release.outputs.tag }}
+
+      - name: Check required build secrets
         env:
           FIESTAAA_API_BASE_URL: ${{ secrets.FIESTAAA_API_BASE_URL }}
           FIESTAAA_APPLE_REDIRECT_URI: ${{ secrets.FIESTAAA_APPLE_REDIRECT_URI }}
@@ -46,18 +289,9 @@ jobs:
           FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
           FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
           FIREBASE_WEB_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-          SKIP_DEPLOY: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_deploy }}
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_PORT: ${{ secrets.VPS_PORT }}
-          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-          VPS_USER: ${{ secrets.VPS_USER }}
         run: |
           missing=0
-          for var in FIESTAAA_API_BASE_URL FIESTAAA_APPLE_REDIRECT_URI FIESTAAA_APPLE_SERVICE_ID FIESTAAA_FCM_VAPID_KEY FIESTAAA_GOOGLE_WEB_CLIENT_ID FIESTAAA_SENTRY_DSN FIREBASE_MESSAGING_SENDER_ID FIREBASE_PROJECT_ID FIREBASE_STORAGE_BUCKET FIREBASE_WEB_API_KEY FIREBASE_WEB_APP_ID GHCR_TOKEN VPS_HOST VPS_PORT VPS_SSH_KEY VPS_USER; do
-            if [ "${SKIP_DEPLOY}" = "true" ]; then
-              case "$var" in GHCR_TOKEN|VPS_HOST|VPS_PORT|VPS_SSH_KEY|VPS_USER) continue ;; esac
-            fi
+          for var in FIESTAAA_API_BASE_URL FIESTAAA_APPLE_REDIRECT_URI FIESTAAA_APPLE_SERVICE_ID FIESTAAA_FCM_VAPID_KEY FIESTAAA_GOOGLE_WEB_CLIENT_ID FIESTAAA_SENTRY_DSN FIREBASE_MESSAGING_SENDER_ID FIREBASE_PROJECT_ID FIREBASE_STORAGE_BUCKET FIREBASE_WEB_API_KEY FIREBASE_WEB_APP_ID; do
             if [ -z "${!var}" ]; then
               echo "::error::$var manquant"
               missing=1
@@ -65,7 +299,7 @@ jobs:
           done
           if [ "$missing" -ne 0 ]; then exit 1; fi
 
-      - name: Login to GHCR for push
+      - name: Login to GHCR
         uses: docker/login-action@v4.0.0
         with:
           registry: ghcr.io
@@ -75,25 +309,31 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.11.1
 
-      - name: Check if image exists
-        id: image_exists
+      - name: Prepare image tags
+        id: image-tags
+        env:
+          TAG: ${{ needs.prepare-release.outputs.tag }}
+          VERSION: ${{ needs.prepare-release.outputs.version }}
         run: |
-          if docker manifest inspect "$IMAGE:$TAG" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
+          {
+            echo "tags<<EOF"
+            echo "${IMAGE}:${TAG}"
+            echo "${IMAGE}:${VERSION}"
+            echo "${IMAGE}:latest"
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
 
       - name: Build and push image
         id: push
-        if: steps.image_exists.outputs.exists == 'false' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_build == 'true')
         uses: docker/build-push-action@v6.18.0
         with:
           context: .
           file: Dockerfile
           push: true
-          tags: |
-            ${{ env.IMAGE }}:${{ env.TAG }}
+          tags: ${{ steps.image-tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.version=${{ needs.prepare-release.outputs.tag }}
+            org.opencontainers.image.revision=${{ needs.prepare-release.outputs.release_sha }}
           build-args: |
             FIESTAAA_API_BASE_URL=${{ secrets.FIESTAAA_API_BASE_URL }}
             FIESTAAA_APPLE_REDIRECT_URI=${{ secrets.FIESTAAA_APPLE_REDIRECT_URI }}
@@ -101,7 +341,7 @@ jobs:
             FIESTAAA_GOOGLE_WEB_CLIENT_ID=${{ secrets.FIESTAAA_GOOGLE_WEB_CLIENT_ID }}
             FIESTAAA_SENTRY_DSN=${{ secrets.FIESTAAA_SENTRY_DSN }}
             FIESTAAA_SENTRY_ENVIRONMENT=${{ vars.FIESTAAA_SENTRY_ENVIRONMENT || 'production' }}
-            FIESTAAA_SENTRY_RELEASE=${{ github.sha }}
+            FIESTAAA_SENTRY_RELEASE=${{ needs.prepare-release.outputs.tag }}
             FIESTAAA_SENTRY_TRACES_SAMPLE_RATE=${{ vars.FIESTAAA_SENTRY_TRACES_SAMPLE_RATE || '0' }}
             FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
             FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
@@ -121,9 +361,107 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
+  build-android-apk:
+    name: Build Android APK
+    needs: prepare-release
+    uses: ./.github/workflows/build-android-apk.yml
+    with:
+      ref: ${{ needs.prepare-release.outputs.tag }}
+      version: ${{ needs.prepare-release.outputs.version }}
+      build_number: ${{ needs.prepare-release.outputs.build_number }}
+      artifact_suffix: ${{ needs.prepare-release.outputs.tag }}
+      require_signing: true
+    secrets: inherit
+
+  build-ios-ipa:
+    name: Build iOS IPA
+    needs: prepare-release
+    if: ${{ inputs.build_ios }}
+    uses: ./.github/workflows/build-ios-ipa.yml
+    with:
+      ref: ${{ needs.prepare-release.outputs.tag }}
+      version: ${{ needs.prepare-release.outputs.version }}
+      build_number: ${{ needs.prepare-release.outputs.build_number }}
+      artifact_suffix: ${{ needs.prepare-release.outputs.tag }}
+      export_method: ${{ inputs.ios_export_method }}
+    secrets: inherit
+
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [prepare-release, publish-web, build-android-apk, build-ios-ipa]
+    if: >-
+      ${{
+        always() &&
+        needs.prepare-release.result == 'success' &&
+        needs.publish-web.result == 'success' &&
+        needs.build-android-apk.result == 'success' &&
+        (needs.build-ios-ipa.result == 'success' || needs.build-ios-ipa.result == 'skipped')
+      }}
+    steps:
+      - name: Download mobile artifacts
+        uses: actions/download-artifact@v7.0.1
+        with:
+          pattern: fiestaaa-*-${{ needs.prepare-release.outputs.tag }}
+          path: release-artifacts
+          merge-multiple: true
+
+      - name: Publish release notes
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare-release.outputs.tag }}
+          name: Fiestaaa Frontend ${{ needs.prepare-release.outputs.tag }}
+          target_commitish: ${{ needs.prepare-release.outputs.release_sha }}
+          generate_release_notes: true
+          make_latest: true
+          files: release-artifacts/**
+          fail_on_unmatched_files: false
+          body: |
+            Web container image:
+            `${{ env.IMAGE }}:${{ needs.prepare-release.outputs.tag }}`
+
+            Digest:
+            `${{ needs.publish-web.outputs.digest }}`
+
+            Mobile build number:
+            `${{ needs.prepare-release.outputs.build_number }}`
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    needs: [prepare-release, publish-web, github-release]
+    if: ${{ inputs.deploy_to_vps }}
+    environment:
+      name: production
+      url: https://fiestaaa.app
+    env:
+      TAG: ${{ needs.prepare-release.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          ref: ${{ needs.prepare-release.outputs.tag }}
+
+      - name: Check required deploy secrets
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          missing=0
+          for var in GHCR_TOKEN VPS_HOST VPS_PORT VPS_SSH_KEY VPS_USER; do
+            if [ -z "${!var}" ]; then
+              echo "::error::$var manquant"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+
       - name: Check VPS bootstrap state
         id: bootstrap
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_deploy) }}
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
@@ -151,7 +489,7 @@ jobs:
           fi
 
       - name: Deploy to VPS
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_deploy) && steps.bootstrap.outputs.ready == 'true' }}
+        if: steps.bootstrap.outputs.ready == 'true'
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -189,35 +527,34 @@ jobs:
               fi
             fi
             ${compose_cmd} pull front
-            # Avoid restarting the API/DB if they are already in place
             ${compose_cmd} up -d --no-deps front
             ${compose_cmd} ps
         env:
           GHCR_USERNAME: ${{ secrets.GHCR_USERNAME || github.repository_owner }}
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-          TAG: ${{ github.sha }}
+          TAG: ${{ needs.prepare-release.outputs.tag }}
 
       - name: Verify public smoke checks
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_deploy) && steps.bootstrap.outputs.ready == 'true' }}
+        if: steps.bootstrap.outputs.ready == 'true'
         run: |
           curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors https://api.fiestaaa.app/health
           curl --fail --silent --show-error --head --retry 12 --retry-delay 5 --retry-all-errors https://fiestaaa.app
 
       - name: Setup Node for browser smoke check
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_deploy) && steps.bootstrap.outputs.ready == 'true' }}
+        if: steps.bootstrap.outputs.ready == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
       - name: Install browser smoke dependencies
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_deploy) && steps.bootstrap.outputs.ready == 'true' }}
+        if: steps.bootstrap.outputs.ready == 'true'
         run: npm ci
 
       - name: Install Playwright Chromium
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_deploy) && steps.bootstrap.outputs.ready == 'true' }}
+        if: steps.bootstrap.outputs.ready == 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Verify browser smoke check
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_deploy) && steps.bootstrap.outputs.ready == 'true' }}
+        if: steps.bootstrap.outputs.ready == 'true'
         run: npm run smoke:web -- --url https://fiestaaa.app
