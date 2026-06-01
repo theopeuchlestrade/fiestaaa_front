@@ -18,6 +18,7 @@ Describe the problem or goal addressed by this PR.
 
 - [ ] No secret, token, `.env` file, keystore, provisioning profile, or private Firebase file is added.
 - [ ] Changes affecting auth, permissions, personal data, or deployment are explained.
+- [ ] Brand, screenshot, app icon, logo, and third-party mark changes follow `TRADEMARKS.md`.
 
 ## Release Notes
 

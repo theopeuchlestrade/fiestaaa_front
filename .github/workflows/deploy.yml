@@ -142,13 +142,13 @@ jobs:
             FIREBASE_AUTH_DOMAIN=fiestaaa-test.firebaseapp.com
 
   prepare-release:
-    name: Version, Commit and Tag
+    name: Version and Tag
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: verify
     outputs:
       build_number: ${{ steps.version.outputs.build_number }}
-      release_sha: ${{ steps.push.outputs.release_sha }}
+      release_sha: ${{ steps.tag.outputs.release_sha }}
       tag: ${{ steps.version.outputs.tag }}
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -167,6 +167,7 @@ jobs:
           release_type="${RELEASE_TYPE}"
           custom_version="${CUSTOM_VERSION}"
           build_number="${{ inputs.build_number }}"
+          git fetch origin main --tags
           if [ -z "${build_number}" ]; then
             build_number="${GITHUB_RUN_NUMBER}"
           fi
@@ -182,9 +183,14 @@ jobs:
               echo "::error::custom_version can only be set when release_type=custom"
               exit 1
             fi
-            current_version="$(sed -nE 's/^version:[[:space:]]*([0-9]+)\.([0-9]+)\.([0-9]+)(\+[0-9]+)?.*/\1.\2.\3/p' pubspec.yaml | head -n 1)"
+            latest_tag="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)"
+            if [ -n "${latest_tag}" ]; then
+              current_version="${latest_tag#v}"
+            else
+              current_version="$(sed -nE 's/^version:[[:space:]]*([0-9]+)\.([0-9]+)\.([0-9]+)(\+[0-9]+)?.*/\1.\2.\3/p' pubspec.yaml | head -n 1)"
+            fi
             if [ -z "${current_version}" ]; then
-              echo "::error::pubspec.yaml version must use MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH+BUILD"
+              echo "::error::No release tag found and pubspec.yaml version must use MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH+BUILD"
               exit 1
             fi
             IFS=. read -r major minor patch <<< "${current_version}"
@@ -218,7 +224,6 @@ jobs:
             exit 1
           fi
           tag="v${version}"
-          git fetch origin main --tags
           if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
             echo "::error::Tag ${tag} already exists"
             exit 1
@@ -246,7 +251,7 @@ jobs:
           '
 
       - name: Commit and tag release
-        id: push
+        id: tag
         env:
           TAG: ${{ steps.version.outputs.tag }}
         run: |
@@ -259,7 +264,6 @@ jobs:
           fi
           release_sha="$(git rev-parse HEAD)"
           git tag -a "${TAG}" -m "Release ${TAG}" "${release_sha}"
-          git push origin HEAD:main
           git push origin "${TAG}"
           echo "release_sha=${release_sha}" >> "${GITHUB_OUTPUT}"
 
@@ -452,7 +456,7 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
           missing=0
-          for var in GHCR_TOKEN VPS_HOST VPS_PORT VPS_SSH_KEY VPS_USER; do
+          for var in VPS_HOST VPS_PORT VPS_SSH_KEY VPS_USER; do
             if [ -z "${!var}" ]; then
               echo "::error::$var manquant"
               missing=1
@@ -516,7 +520,11 @@ jobs:
             } >> .env
             chmod 600 .env
             rm -f "${tmp_env}"
-            echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
+            if [ -n "${GHCR_TOKEN:-}" ]; then
+              echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
+            else
+              echo "GHCR_TOKEN absent: pull GHCR anonyme, les images doivent etre publiques."
+            fi
             compose_cmd="docker compose"
             if ! docker compose version >/dev/null 2>&1; then
               if command -v docker-compose >/dev/null 2>&1; then

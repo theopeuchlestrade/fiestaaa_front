@@ -152,10 +152,12 @@ flutter test --dart-define-from-file=.env
 ## Deployment
 
 The production web build is defined in `Dockerfile` and served by Nginx. The
-manual `Frontend Release` GitHub Actions workflow verifies the app, bumps
-`pubspec.yaml` from a `patch`, `minor`, `major`, or custom version choice,
-creates the `vX.Y.Z` tag, publishes the GHCR web image, builds Android/iOS
-artifacts, creates the GitHub Release, and can deploy the web image to the VPS.
+manual `Frontend Release` GitHub Actions workflow verifies the app, derives the
+next version from the latest `vX.Y.Z` tag or from a custom version choice,
+creates a tag-only release commit with `pubspec.yaml` bumped, publishes the
+GHCR web image, builds Android/iOS artifacts, creates the GitHub Release, and
+can deploy the web image to the VPS. It does not push directly to `main`, so it
+remains compatible with strict branch protection.
 
 Operations documentation lives in the companion backend repository,
 `fiestaaa_back/docs/deploiement.md`.
@@ -168,6 +170,16 @@ reporting channel and disclosure expectations.
 Before any public release of the repository, rerun a secret scan on the current
 state and the full Git history.
 
+## Project Policies
+
+- Contributions: `CONTRIBUTING.md`
+- Code of conduct: `CODE_OF_CONDUCT.md`
+- Support expectations: `SUPPORT.md`
+- Governance: `GOVERNANCE.md`
+- Brand and assets: `TRADEMARKS.md`
+
 ## License
 
 `fiestaaa_front` is distributed under the `MPL-2.0` license. See `LICENSE`.
+This license covers the frontend source code. Fiestaaa brand assets, app icons,
+screenshots, and third-party logos are handled separately in `TRADEMARKS.md`.

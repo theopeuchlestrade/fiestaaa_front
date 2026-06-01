@@ -30,6 +30,13 @@ Install the hooks:
 ## Tests
 - `flutter test --dart-define-from-file=.env`
 
+## Project Policies
+- Follow `CODE_OF_CONDUCT.md` in project spaces.
+- Read `SUPPORT.md` before opening support-style issues.
+- Read `GOVERNANCE.md` for the maintainer-led decision model.
+- Changes touching the Fiestaaa name, public copy, screenshots, app icons,
+  logos, or third-party marks must follow `TRADEMARKS.md`.
+
 ## PR / MR
 - Describe the context, change, and impact.
 - Verify `flutter gen-l10n`, `dart format`, `flutter analyze`, and `flutter test --dart-define-from-file=.env` before opening the MR.
