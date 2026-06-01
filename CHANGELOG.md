@@ -7,30 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+No unreleased changes yet.
+
+## [0.0.0] - 2026-06-01
+
+Initial public-readiness baseline for the Fiestaaa frontend.
+
 ### Added
-- Added a full authentication flow with persisted sessions, login, registration, email verification, logout, and share-link handling at app startup.
+- Added a full authentication flow with persisted sessions, login, registration, email verification, registration completion, logout, and share-link handling at app startup.
 - Added Google and Apple OAuth flows when runtime configuration is provided.
+- Added startup handling for email-verification links, share links, and notification intents.
 - Added primary app pages for the home screen, event list, event detail, event creation, and event editing.
-- Added front-end support for event features including carpools, polls, items, shared playlists, payments, shared expenses, and ticketing.
-- Added invitation flows for personal invitations, invitation responses, event-level invitation management, and share links.
-- Added friend flows for search, friend requests, accept/decline actions, and integration with invitation screens.
-- Added carpool flows for creation, listing, joining, leaving, and deep links to Google Maps and Apple Maps.
-- Added event item flows with scope filters, reservations, and contribution tracking.
+- Added event creation/editing support for dates, optional end dates, address suggestions, invitation deadlines, feature toggles, playlist links, and payment settings.
+- Added frontend support for event features including carpools, polls, item lists, shared playlists, payment links, shared expenses, and ticketing.
+- Added invitation flows for personal invitations, invitation responses, event-level invitation management, guest share links, and friend-backed invite screens.
+- Added friend flows for search, friend requests, accept/decline actions, friend listing, and removal.
+- Added carpool flows for creation, listing, editing, joining, leaving, seat tracking, and deep links to Google Maps and Apple Maps.
+- Added event item flows with scope filters, catalog items, custom items, reservations, and contribution tracking.
+- Added poll flows with creation, voting, listing, and deletion.
 - Added shared expense flows with creation, listing, balance summaries, and settlement suggestions.
-- Added QR flows with a personal QR page, an owner scanner, and check-in result displays.
-- Added a profile page with handle, avatar, and account-related actions.
-- Added web/mobile push notification support and device registration flows.
-- Added localization support through `flutter gen-l10n` and the app theming layer.
+- Added QR flows with a personal QR page, owner scanner, scan result displays, and check-in statistics.
+- Added profile management with handle updates, avatar upload, and account-related actions.
+- Added web/mobile push notification support and device registration, refresh, and revocation flows.
+- Added Firebase web service-worker generation from environment configuration.
+- Added localization support through `flutter gen-l10n` and English/French app strings.
+- Added a shared app theme and responsive page layouts for mobile and desktop web.
+- Added production web Docker/Nginx build support with cache-safe Flutter entry-point names.
+- Added browser smoke checks for the deployed web app.
+- Added reusable Android APK and iOS IPA build workflows plus manual wrappers.
+- Added manual frontend release workflow with release-type selection (`patch`, `minor`, `major`, or `custom`), `pubspec.yaml` version bumping, Git tag creation, GHCR publication, GitHub Release creation, Android/iOS artifacts, provenance attestation, and optional VPS deployment.
+- Added frontend CI jobs for formatting, localization generation, analysis, tests, web container builds, Android compile checks, and iOS compile checks on non-PR runs.
 
 ### Changed
-- Changed `flutter gen-l10n` to be part of the local workflow, CI, and Docker builds.
-- Changed deployment workflows to use immutable image tags and public smoke checks after rollout.
+- Changed the app version baseline to `0.0.0` before the first versioned release.
+- Changed `flutter gen-l10n` to be part of the local workflow, CI, release, mobile build, and Docker build paths.
+- Changed release and deployment workflows to use explicit SemVer image tags while still publishing `latest` for convenience.
+- Changed deployment workflows to run public HTTP and browser smoke checks after rollout.
 - Changed the production web build path so it works on a fresh clone just like CI.
 - Changed the production Nginx CSP to tighten allowed `connect-src` and `img-src` origins.
-- Removed the implicit backend `latest` fallback from the frontend deployment workflow.
+- Removed the implicit backend image fallback from the frontend deployment workflow.
 - Documented the requirement to seed both production image tags on the VPS before the first GitHub Actions deployment.
 
 ### Security
 - Removed sensitive URL parameters such as `shareToken` and `verifyEmailToken` after they are processed in the app.
 - Hardened external URL guards to reject `localhost`, private IPs, and local-network targets.
 - Restricted the production CSP so it no longer allows local origins such as `localhost` or `127.0.0.1`.
+- Kept Firebase, OAuth, VAPID, signing, and provisioning values out of tracked files and routed them through local env files or GitHub secrets.
+- Added signed Android release builds when keystore secrets are configured.
+- Added signed iOS IPA builds through CI-provided certificates and provisioning profiles.
+- Added secret scanning, security policy, dependency review, provenance attestation, and public-opening documentation for open-source readiness.

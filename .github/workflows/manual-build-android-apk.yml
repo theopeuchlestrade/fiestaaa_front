@@ -2,156 +2,30 @@ name: Manual Build Android APK
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Flutter build name, for example 1.2.3"
+        required: true
+        default: "1.0.0"
+        type: string
+      build_number:
+        description: "Flutter build number"
+        required: true
+        default: "1"
+        type: string
+      require_signing:
+        description: "Fail unless Android release signing secrets are present"
+        required: true
+        type: boolean
+        default: true
 
 jobs:
   build-android-apk:
-    runs-on: ubuntu-latest
-    environment:
-      name: production
-    permissions:
-      contents: read
-    env:
-      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-    steps:
-      - uses: actions/checkout@v6.0.2
-
-      - name: Check required secrets
-        env:
-          FIESTAAA_API_BASE_URL: ${{ secrets.FIESTAAA_API_BASE_URL }}
-          FIESTAAA_APPLE_REDIRECT_URI: ${{ secrets.FIESTAAA_APPLE_REDIRECT_URI }}
-          FIESTAAA_APPLE_SERVICE_ID: ${{ secrets.FIESTAAA_APPLE_SERVICE_ID }}
-          FIESTAAA_FCM_VAPID_KEY: ${{ secrets.FIESTAAA_FCM_VAPID_KEY }}
-          FIESTAAA_GOOGLE_WEB_CLIENT_ID: ${{ secrets.FIESTAAA_GOOGLE_WEB_CLIENT_ID }}
-          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
-          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
-          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
-          FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
-          FIREBASE_WEB_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
-          FIREBASE_ANDROID_API_KEY: ${{ secrets.FIREBASE_ANDROID_API_KEY }}
-          FIREBASE_ANDROID_APP_ID: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
-        run: |
-          missing=0
-          for var in FIESTAAA_API_BASE_URL FIESTAAA_APPLE_REDIRECT_URI FIESTAAA_APPLE_SERVICE_ID FIESTAAA_FCM_VAPID_KEY FIESTAAA_GOOGLE_WEB_CLIENT_ID FIREBASE_MESSAGING_SENDER_ID FIREBASE_PROJECT_ID FIREBASE_STORAGE_BUCKET FIREBASE_WEB_API_KEY FIREBASE_WEB_APP_ID FIREBASE_ANDROID_API_KEY FIREBASE_ANDROID_APP_ID; do
-            if [ -z "${!var}" ]; then
-              echo "::error::$var manquant"
-              missing=1
-            fi
-          done
-          if [ "$missing" -ne 0 ]; then exit 1; fi
-
-      - name: Setup Java
-        uses: actions/setup-java@v5.2.0
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2.23.0
-        with:
-          flutter-version: 3.41.5
-          cache: false
-
-      - name: Write .env
-        run: |
-          FIREBASE_AUTH_DOMAIN_VALUE="${{ secrets.FIREBASE_AUTH_DOMAIN }}"
-          if [ -z "$FIREBASE_AUTH_DOMAIN_VALUE" ]; then
-            FIREBASE_AUTH_DOMAIN_VALUE="${{ secrets.FIREBASE_PROJECT_ID }}.firebaseapp.com"
-          fi
-          cat <<EOF > .env
-          FIESTAAA_API_BASE_URL=${{ secrets.FIESTAAA_API_BASE_URL }}
-          FIESTAAA_APPLE_SERVICE_ID=${{ secrets.FIESTAAA_APPLE_SERVICE_ID }}
-          FIESTAAA_APPLE_REDIRECT_URI=${{ secrets.FIESTAAA_APPLE_REDIRECT_URI }}
-          FIESTAAA_FCM_VAPID_KEY=${{ secrets.FIESTAAA_FCM_VAPID_KEY }}
-          FIESTAAA_GOOGLE_WEB_CLIENT_ID=${{ secrets.FIESTAAA_GOOGLE_WEB_CLIENT_ID }}
-          FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
-          FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}
-          FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
-          FIREBASE_WEB_API_KEY=${{ secrets.FIREBASE_WEB_API_KEY }}
-          FIREBASE_WEB_APP_ID=${{ secrets.FIREBASE_WEB_APP_ID }}
-          FIREBASE_WEB_MEASUREMENT_ID=${{ secrets.FIREBASE_WEB_MEASUREMENT_ID }}
-          FIREBASE_ANDROID_API_KEY=${{ secrets.FIREBASE_ANDROID_API_KEY }}
-          FIREBASE_ANDROID_APP_ID=${{ secrets.FIREBASE_ANDROID_APP_ID }}
-          FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN_VALUE}
-          EOF
-
-      - name: Check signing secrets (release)
-        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
-        run: |
-          missing=0
-          for var in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
-            if [ -z "${!var}" ]; then
-              echo "::error::$var manquant"
-              missing=1
-            fi
-          done
-          if [ "$missing" -ne 0 ]; then exit 1; fi
-
-      - name: Setup Android signing (release)
-        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
-        run: |
-          mkdir -p android/app
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/fiestaaa-release.jks
-          cat <<EOF > android/key.properties
-          storePassword=${ANDROID_KEYSTORE_PASSWORD}
-          keyPassword=${ANDROID_KEY_PASSWORD}
-          keyAlias=${ANDROID_KEY_ALIAS}
-          storeFile=fiestaaa-release.jks
-          EOF
-          chmod 600 android/app/fiestaaa-release.jks android/key.properties
-
-      - name: Ensure google-services.json
-        run: |
-          if [ -f android/app/google-services.json ]; then
-            exit 0
-          fi
-          if [ -z "${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}" ]; then
-            echo "::error::android/app/google-services.json missing and ANDROID_GOOGLE_SERVICES_JSON secret not set"
-            exit 1
-          fi
-          mkdir -p android/app
-          cat <<'EOF' > android/app/google-services.json
-          ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}
-          EOF
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Generate localizations
-        run: flutter gen-l10n
-
-      - name: Build APK
-        run: flutter build apk --release --dart-define-from-file=.env
-
-      - name: Extract signing fingerprints
-        run: |
-          APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
-          if [ ! -f "$APK_PATH" ]; then
-            echo "::error::APK not found: $APK_PATH"
-            exit 1
-          fi
-          if [ -z "${ANDROID_HOME:-}" ]; then
-            echo "::error::ANDROID_HOME non defini"
-            exit 1
-          fi
-          BUILD_TOOLS_DIR=$(find "$ANDROID_HOME"/build-tools -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
-          APKSIGNER="$BUILD_TOOLS_DIR/apksigner"
-          if [ ! -x "$APKSIGNER" ]; then
-            echo "::error::apksigner not found in $BUILD_TOOLS_DIR"
-            exit 1
-          fi
-          "$APKSIGNER" verify --print-certs "$APK_PATH" | tee signing-certs.txt
-          grep -E "SHA-1|SHA-256" signing-certs.txt | sed -E 's/.*(SHA-[0-9]+): (.*)/\1=\2/' > signing-sha.txt
-          cat signing-sha.txt
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: fiestaaa-android-apk-${{ github.sha }}
-          path: |
-            build/app/outputs/flutter-apk/app-release.apk
-            signing-sha.txt
-          if-no-files-found: error
+    uses: ./.github/workflows/build-android-apk.yml
+    with:
+      ref: ${{ github.ref }}
+      version: ${{ inputs.version }}
+      build_number: ${{ inputs.build_number }}
+      artifact_suffix: manual-${{ github.run_number }}
+      require_signing: ${{ inputs.require_signing }}
+    secrets: inherit

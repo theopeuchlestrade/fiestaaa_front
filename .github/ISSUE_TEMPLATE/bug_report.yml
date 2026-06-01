@@ -1,0 +1,69 @@
+name: Bug report
+description: Report a reproducible frontend problem.
+title: "Bug: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. For security issues, use the private security policy instead of a public issue.
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Web
+        - Android
+        - iOS
+        - Multiple platforms
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Authentication
+        - Accounts and profiles
+        - Events and items
+        - QR scanning
+        - Payments
+        - Push notifications
+        - UI and accessibility
+        - Deployment and CI
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: What happened?
+      description: Describe the current behavior and include screenshots or logs when useful.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: Describe what should have happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open ...
+        2. Tap ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Provide the app version, web image tag, or commit SHA.
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add device, browser, OS, screenshots, or links if useful.
