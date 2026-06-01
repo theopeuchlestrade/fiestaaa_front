@@ -53,7 +53,7 @@ permissions:
   id-token: write
 
 env:
-  FLUTTER_VERSION: 3.41.5
+  FLUTTER_VERSION: 3.44.0
   IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
