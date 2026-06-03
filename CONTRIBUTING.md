@@ -40,5 +40,14 @@ Install the hooks:
 ## PR / MR
 - Describe the context, change, and impact.
 - Verify `flutter gen-l10n`, `dart format`, `flutter analyze`, and `flutter test --dart-define-from-file=.env` before opening the MR.
-- Update `CHANGELOG.md` for any notable releasable, user-facing, security, production infrastructure, or DX change.
+- Use a PR title or squash commit message that can become a clear release note.
+  Gitmoji is preferred for new work, for example:
+  - `✨ (events): Add item reservations`
+  - `🐛 (auth): Fix OAuth state refresh`
+  - `🔒 (auth): Harden token validation`
+  - `⬆️ (deps): Bump Flutter dependencies`
+- Conventional Commit titles such as `feat(events): add item reservations` and
+  `fix(auth): refresh OAuth state` remain accepted during the transition.
+- `CHANGELOG.md` is generated automatically during the release workflow from
+  commits on `main`; only edit it manually for historical corrections.
 - Security vulnerabilities must not be reported through a public issue; follow `SECURITY.md`.

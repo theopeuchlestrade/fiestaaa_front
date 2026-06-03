@@ -159,6 +159,10 @@ GHCR web image, builds Android/iOS artifacts, creates the GitHub Release, and
 can deploy the web image to the VPS. It does not push directly to `main`, so it
 remains compatible with strict branch protection.
 
+Release changelogs are generated automatically from commits on `main` between
+SemVer tags. New PRs should use clear Gitmoji or Conventional Commit-style
+titles so the generated `CHANGELOG.md` and GitHub Release notes are useful.
+
 Operations documentation lives in the companion backend repository,
 `fiestaaa_back/docs/deploiement.md`.
 
