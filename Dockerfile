@@ -103,7 +103,11 @@ FROM nginx:1.31.1-alpine@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27f
 LABEL org.opencontainers.image.source="https://github.com/theopeuchlestrade/fiestaaa_front"
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/build/web /usr/share/nginx/html
-RUN mkdir -p /var/cache/nginx /var/run /tmp \
+RUN sed -i \
+      -e 's#pid[[:space:]]\+/run/nginx.pid;#pid /tmp/nginx.pid;#' \
+      -e 's#pid[[:space:]]\+/var/run/nginx.pid;#pid /tmp/nginx.pid;#' \
+      /etc/nginx/nginx.conf \
+ && mkdir -p /var/cache/nginx /var/run /tmp \
  && chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/run /tmp
 USER nginx
 EXPOSE 8080
