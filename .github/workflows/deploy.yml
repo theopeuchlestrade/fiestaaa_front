@@ -272,6 +272,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs: prepare-release
+    environment: production
     outputs:
       digest: ${{ steps.push.outputs.digest }}
     steps:
