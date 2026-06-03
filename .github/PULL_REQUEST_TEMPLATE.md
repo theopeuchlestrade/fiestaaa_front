@@ -12,6 +12,8 @@ Describe the problem or goal addressed by this PR.
 - [ ] `dart format --output=none --set-exit-if-changed lib test tool`
 - [ ] `flutter analyze`
 - [ ] `flutter test --dart-define-from-file=.env`
+- [ ] `docker build --check .`
+- [ ] CI `Workflow Lint`, `Secret Scan`, and `Dockerfile Check` passed.
 - [ ] Android and iOS builds checked when relevant.
 
 ## Security
