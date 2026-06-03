@@ -1,75 +1,93 @@
-# Fiestaaa Front
+# 🎉 Fiestaaa Front
 
-Fiestaaa's Flutter frontend, an app for organizing private events.
+[![Fiestaaa Logo](.github/assets/fiestaaa_logo.png)](https://github.com/theopeuchlestrade/fiestaaa_front)
 
-The app covers authentication, event creation, invitations, item lists,
-carpools, shared expenses, access QR codes, push notifications, and user
-preferences.
+[![Frontend Release](https://github.com/theopeuchlestrade/fiestaaa_front/actions/workflows/deploy.yml/badge.svg)](https://github.com/theopeuchlestrade/fiestaaa_front/actions/workflows/deploy.yml)
+[![CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/workflows/ci.yml/badge.svg)](https://github.com/theopeuchlestrade/fiestaaa_front/actions/workflows/ci.yml)
+[![Flutter 3.41.5](https://img.shields.io/badge/Flutter-3.41.5-02569B.svg?logo=flutter)](https://flutter.dev)
+[![Dart 3.11](https://img.shields.io/badge/Dart-3.11-0175C2.svg?logo=dart)](https://dart.dev)
+[![MPL-2.0 License](https://img.shields.io/badge/license-MPL--2.0-brightgreen.svg)](LICENSE)
+[![Firebase](https://img.shields.io/badge/firebase-ready-FFCA28.svg?logo=firebase)](https://firebase.google.com)
 
-## Stack
+**Fiestaaa Frontend** — The Flutter app for organizing private events with friends and family.
 
-- Flutter 3.41.5
-- Dart 3.11
-- Firebase for mobile/web configuration and notifications
-- Google Sign-In and Sign in with Apple
-- Docker/Nginx for the production web build
+---
 
-## Prerequisites
+## 📖 Table of Contents
+
+- [✨ Features](#-features)
+- [🚀 Getting Started](#-getting-started)
+- [🔧 Development](#-development)
+- [📦 Build & Deployment](#-build--deployment)
+- [🔒 Security](#-security)
+- [📜 License](#-license)
+- [🤝 Contributing](#-contributing)
+
+---
+
+## ✨ Features
+
+- **Authentication**: Google Sign-In, Sign in with Apple, and email/password
+- **Event Creation**: Full event management with custom details
+- **Invitations**: Send and manage invites with email
+- **Item Lists**: Collaborative shopping lists
+- **Carpools**: Organize rides with participants
+- **Shared Expenses**: Track and split expenses among attendees
+- **Access QR Codes**: Secure entry management
+- **Push Notifications**: Real-time updates via FCM
+- **User Preferences**: Customize your experience
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
 
 - Flutter SDK compatible with `pubspec.yaml`
 - Dart SDK provided by Flutter
-- A local copy of `.env.example` as `.env`
 
-## Configuration
+### Quick Start
 
-```bash
-cp .env.example .env
-```
+1. Clone the repository and copy the environment file:
+   ```bash
+   git clone https://github.com/theopeuchlestrade/fiestaaa_front.git
+   cd fiestaaa_front
+   cp .env.example .env
+   ```
 
-The values in `.env.example` are placeholders. Real Firebase, OAuth, VAPID,
-Android signing values, and `google-services.json` files must stay in `.env`,
-CI secrets, or appropriate secret stores.
+2. Configure your environment variables in `.env`. Required variables include:
+   - `FIESTAAA_API_BASE_URL`: Backend API URL
+   - `FIESTAAA_APP_BASE_URL`: Public frontend URL
+   - `FIESTAAA_GOOGLE_WEB_CLIENT_ID`: Web OAuth client ID
+   - `FIESTAAA_APPLE_*`: Apple Sign-In configuration
+   - `FIESTAAA_FCM_VAPID_KEY`: Web push VAPID key
+   - `FIRESTORE_*`: Firebase configuration
 
-Main variables:
+3. Install dependencies and generate localizations:
+   ```bash
+   flutter pub get
+   flutter gen-l10n
+   ```
 
-- `FIESTAAA_API_BASE_URL`: backend URL
-- `FIESTAAA_APP_BASE_URL`: public frontend URL
-- `FIESTAAA_GOOGLE_WEB_CLIENT_ID`: web OAuth client, also used on Android as the Google Sign-In `serverClientId`
-- `FIESTAAA_APPLE_*`: Apple Sign-In configuration
-- `FIESTAAA_FCM_VAPID_KEY`: web push VAPID key
-- `FIESTAAA_SENTRY_DSN`: optional Sentry DSN for crash/error reporting
-- `FIREBASE_*`: web/mobile Firebase configuration
+4. Run the app:
+   - **Web:**
+     ```bash
+     flutter run -d chrome --web-port=5001 --dart-define-from-file=.env
+     ```
+   - **Android:**
+     ```bash
+     flutter run -d emulator-5554 --dart-define-from-file=.env
+     ```
 
-In local web development, use the same host for the frontend and the API. For
-example, use `localhost:5001` with
-`FIESTAAA_API_BASE_URL=http://localhost:8080`, and avoid mixing `localhost` and
-`127.0.0.1`; otherwise, `HttpOnly` cookies will not be sent as expected.
+> **Note**: In local web development, use the same host for frontend and API (e.g., `localhost:5001` with `FIESTAAA_API_BASE_URL=http://localhost:8080`). Avoid mixing `localhost` and `127.0.0.1`; otherwise, `HttpOnly` cookies will not be sent correctly.
 
-## Local Development
+---
 
-Install dependencies and generate localizations:
+## 🔧 Development
 
-```bash
-flutter pub get
-flutter gen-l10n
-```
+### Firebase Web Service Worker
 
-Web:
-
-```bash
-flutter run -d chrome --web-port=5001 --dart-define-from-file=.env
-```
-
-Android:
-
-```bash
-flutter run -d emulator-5554 --dart-define-from-file=.env
-```
-
-## Firebase web service worker
-
-The Firebase web service worker is generated from
-`web/firebase-messaging-sw.template.js` and `.env`.
+The Firebase web service worker is generated from `web/firebase-messaging-sw.template.js` and `.env`:
 
 ```bash
 dart run tool/generate_firebase_sw.dart
@@ -77,70 +95,24 @@ dart run tool/generate_firebase_sw.dart
 
 The generated `web/firebase-messaging-sw.js` file is ignored by Git.
 
-## Build Android
+### Quality and Tests
 
-Debug:
-
-```bash
-flutter build apk --debug --dart-define-from-file=.env
-```
-
-Release:
-
-```bash
-flutter build apk --release --dart-define-from-file=.env
-```
-
-Release signing uses `android/key.properties` if the file exists; otherwise,
-Flutter falls back to debug signing. Never commit `android/key.properties`,
-`.jks` keystores, or provisioning profiles.
-
-## Build iOS
-
-For local development on a connected iPhone:
-
-```bash
-flutter run -d <device-id> --dart-define-from-file=.env
-```
-
-The manual GitHub Actions workflow `Manual Build iOS IPA` creates a signed
-`.ipa` artifact for device testing. The `Frontend Release` workflow uses the
-same reusable iOS build and attaches the `.ipa` to the GitHub Release. It
-requires these production environment secrets:
-
-- `IOS_CERTIFICATE_BASE64`: base64-encoded `.p12` signing certificate
-- `IOS_CERTIFICATE_PASSWORD`: `.p12` password
-- `IOS_PROVISIONING_PROFILE_BASE64`: base64-encoded `.mobileprovision`
-- `IOS_TEAM_ID`: optional if the provisioning profile contains the team ID
-- `IOS_CODE_SIGN_IDENTITY`: optional, defaults to `Apple Development` for
-  `debugging` exports and `Apple Distribution` otherwise
-
-Use `debugging` with a development provisioning profile, or `release-testing`
-with an Ad Hoc profile. In both cases, the iPhone must be included in the
-provisioning profile.
-
-## Quality and Tests
-
-Format:
-
+**Format:**
 ```bash
 dart format --output=none --set-exit-if-changed lib test tool
 ```
 
-Analyze:
-
+**Analyze:**
 ```bash
 flutter analyze
 ```
 
-Tests:
-
+**Tests:**
 ```bash
 flutter test --dart-define-from-file=.env
 ```
 
-For a fresh clone, the recommended sequence is:
-
+**Fresh clone sequence:**
 ```bash
 flutter pub get
 flutter gen-l10n
@@ -149,44 +121,105 @@ flutter analyze
 flutter test --dart-define-from-file=.env
 ```
 
-## Deployment
+---
 
-The production web build is defined in `Dockerfile` and served by Nginx. The
-manual `Frontend Release` GitHub Actions workflow verifies the app, derives the
-next version from the latest `vX.Y.Z` tag or from a custom version choice,
-creates a tag-only release commit with `pubspec.yaml` bumped, publishes the
-GHCR web image, builds Android/iOS artifacts, creates the GitHub Release, and
-can deploy the web image to the VPS. It does not push directly to `main`, so it
-remains compatible with strict branch protection.
+## 📦 Build & Deployment
 
-Release changelogs are generated automatically from commits on `main` between
-SemVer tags. New PRs should use clear Gitmoji or Conventional Commit-style
-titles so the generated `CHANGELOG.md` and GitHub Release notes are useful.
+### Android Build
 
-Operations documentation lives in the companion backend repository,
-`fiestaaa_back/docs/deploiement.md`.
+**Debug:**
+```bash
+flutter build apk --debug --dart-define-from-file=.env
+```
 
-## Security
+**Release:**
+```bash
+flutter build apk --release --dart-define-from-file=.env
+```
 
-Do not report vulnerabilities through a public issue. See `SECURITY.md` for the
-reporting channel and disclosure expectations.
+Release signing uses `android/key.properties` if the file exists; otherwise, Flutter falls back to debug signing. **Never commit** `android/key.properties`, `.jks` keystores, or provisioning profiles.
 
-Before any public release of the repository, rerun a secret scan on the current
-state and the full Git history.
+### iOS Build
 
-CI also runs workflow linting, a Dockerfile check, and a full-history Gitleaks
-scan on pull requests and pushes to `main`.
+**Local development on connected iPhone:**
+```bash
+flutter run -d <device-id> --dart-define-from-file=.env
+```
 
-## Project Policies
+**Manual IPA build:**
+The `Manual Build iOS IPA` workflow creates a signed `.ipa` artifact for device testing.
 
-- Contributions: `CONTRIBUTING.md`
-- Code of conduct: `CODE_OF_CONDUCT.md`
-- Support expectations: `SUPPORT.md`
-- Governance: `GOVERNANCE.md`
-- Brand and assets: `TRADEMARKS.md`
+**Frontend Release workflow** uses the same reusable iOS build and attaches the `.ipa` to the GitHub Release. Required production secrets:
+- `IOS_CERTIFICATE_BASE64`: base64-encoded `.p12` signing certificate
+- `IOS_CERTIFICATE_PASSWORD`: `.p12` password
+- `IOS_PROVISIONING_PROFILE_BASE64`: base64-encoded `.mobileprovision`
+- `IOS_TEAM_ID`: Optional if provisioning profile contains the team ID
+- `IOS_CODE_SIGN_IDENTITY`: Optional, defaults to `Apple Development` for debugging exports
 
-## License
+Use `debugging` with a development provisioning profile, or `release-testing` with an Ad Hoc profile. The iPhone must be included in the provisioning profile.
 
-`fiestaaa_front` is distributed under the `MPL-2.0` license. See `LICENSE`.
-This license covers the frontend source code. Fiestaaa brand assets, app icons,
-screenshots, and third-party logos are handled separately in `TRADEMARKS.md`.
+### Web Production Build
+
+The production web build is defined in `Dockerfile` and served by Nginx.
+
+### Release Workflow
+
+The **Frontend Release** GitHub Actions workflow:
+- ✅ Verifies the app
+- 📦 Derives the next version from the latest `vX.Y.Z` tag or custom version
+- 🔖 Creates a tag-only release commit with `pubspec.yaml` bumped
+- 🐳 Publishes the GHCR web image
+- 📱 Builds Android/iOS artifacts
+- 📝 Creates the GitHub Release
+- 🚀 Can deploy the web image to the VPS
+
+It does **not** push directly to `main`, so it remains compatible with strict branch protection.
+
+### Release Changelogs
+
+Release changelogs are generated automatically from commits on `main` between SemVer tags. Use clear Gitmoji or Conventional Commit-style PR titles for useful `CHANGELOG.md` and GitHub Release notes.
+
+### Operations Documentation
+
+Full operations documentation is available in the companion backend repository: [fiestaaa_back/docs/deploiement.md](https://github.com/theopeuchlestrade/fiestaaa_back/blob/main/docs/deploiement.md)
+
+---
+
+## 🔒 Security
+
+⚠️ **Do not report vulnerabilities through public issues.**
+
+See [`SECURITY.md`](SECURITY.md) for the reporting channel and disclosure expectations.
+
+### Security Scans
+
+Before any public release, rerun a secret scan on the current state and full Git history.
+
+CI runs:
+- Workflow linting
+- Dockerfile checks
+- Full-history Gitleaks scan on pull requests and pushes to `main`
+
+---
+
+## 📜 License
+
+`fiestaaa_front` is distributed under the **[MPL-2.0](LICENSE)** license.
+
+This license covers the frontend source code. Fiestaaa brand assets, app icons, screenshots, and third-party logos are handled separately in [`TRADEMARKS.md`](TRADEMARKS.md).
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see:
+
+- **Contributions**: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- **Code of Conduct**: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+- **Support**: [`SUPPORT.md`](SUPPORT.md)
+- **Governance**: [`GOVERNANCE.md`](GOVERNANCE.md)
+- **Brand & Assets**: [`TRADEMARKS.md`](TRADEMARKS.md)
+
+### Companion Repository
+
+- 🔗 [Fiestaaa Backend](https://github.com/theopeuchlestrade/fiestaaa_back) — Rust API and server
