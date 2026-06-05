@@ -6,7 +6,7 @@ Security fixes primarily target:
 
 - the `main` branch;
 - the web version currently deployed to production;
-- the build and deployment chains described in the project's operations documentation.
+- the official build and deployment chains maintained outside this public repository.
 
 Older branches, unmaintained forks, and derived builds are not guaranteed.
 
@@ -44,4 +44,5 @@ Maintenance goals:
 - prepare a fix or mitigation;
 - coordinate disclosure once the risk is reduced.
 
-This policy should be used with the backend deployment documentation and the open-source release runbook when the repositories become public.
+Once GitHub Private Vulnerability Reporting is enabled, use it as the preferred
+reporting channel.

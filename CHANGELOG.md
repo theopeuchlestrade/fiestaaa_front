@@ -60,6 +60,4 @@ Initial public-readiness baseline for the Fiestaaa frontend.
 - Hardened external URL guards to reject `localhost`, private IPs, and local-network targets.
 - Restricted the production CSP so it no longer allows local origins such as `localhost` or `127.0.0.1`.
 - Kept Firebase, OAuth, VAPID, signing, and provisioning values out of tracked files and routed them through local env files or GitHub secrets.
-- Added signed Android release builds when keystore secrets are configured.
-- Added signed iOS IPA builds through CI-provided certificates and provisioning profiles.
 - Added secret scanning, security policy, dependency review, provenance attestation, and public-opening documentation for open-source readiness.

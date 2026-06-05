@@ -2,7 +2,6 @@
 
 <img src=".github/assets/fiestaaa_logo.png" alt="Fiestaaa Logo" width="120">
 
-[![Frontend Release](https://github.com/theopeuchlestrade/fiestaaa_front/actions/workflows/deploy.yml/badge.svg)](https://github.com/theopeuchlestrade/fiestaaa_front/actions/workflows/deploy.yml)
 [![CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/workflows/ci.yml/badge.svg)](https://github.com/theopeuchlestrade/fiestaaa_front/actions/workflows/ci.yml)
 [![Flutter 3.41.5](https://img.shields.io/badge/Flutter-3.41.5-02569B.svg?logo=flutter)](https://flutter.dev)
 [![Dart 3.11](https://img.shields.io/badge/Dart-3.11-0175C2.svg?logo=dart)](https://dart.dev)
@@ -137,7 +136,9 @@ flutter build apk --debug --dart-define-from-file=.env
 flutter build apk --release --dart-define-from-file=.env
 ```
 
-Release signing uses `android/key.properties` if the file exists; otherwise, Flutter falls back to debug signing. **Never commit** `android/key.properties`, `.jks` keystores, or provisioning profiles.
+Release signing uses local Android signing files if present; otherwise, Flutter
+falls back to debug signing. **Never commit** `android/key.properties`, `.jks`
+keystores, or provisioning profiles.
 
 ### iOS Build
 
@@ -146,42 +147,18 @@ Release signing uses `android/key.properties` if the file exists; otherwise, Flu
 flutter run -d <device-id> --dart-define-from-file=.env
 ```
 
-**Manual IPA build:**
-The `Manual Build iOS IPA` workflow creates a signed `.ipa` artifact for device testing.
-
-**Frontend Release workflow** uses the same reusable iOS build and attaches the `.ipa` to the GitHub Release. Required production secrets:
-- `IOS_CERTIFICATE_BASE64`: base64-encoded `.p12` signing certificate
-- `IOS_CERTIFICATE_PASSWORD`: `.p12` password
-- `IOS_PROVISIONING_PROFILE_BASE64`: base64-encoded `.mobileprovision`
-- `IOS_TEAM_ID`: Optional if provisioning profile contains the team ID
-- `IOS_CODE_SIGN_IDENTITY`: Optional, defaults to `Apple Development` for debugging exports
-
-Use `debugging` with a development provisioning profile, or `release-testing` with an Ad Hoc profile. The iPhone must be included in the provisioning profile.
+Signed IPA builds for the official app are produced privately. This public
+repository does not publish mobile signing workflows or signed mobile artifacts.
 
 ### Web Production Build
 
 The production web build is defined in `Dockerfile` and served by Nginx.
 
-### Release Workflow
+### Public Releases
 
-The **Frontend Release** GitHub Actions workflow:
-- ✅ Verifies the app
-- 📦 Derives the next version from the latest `vX.Y.Z` tag or custom version
-- 🔖 Creates a tag-only release commit with `pubspec.yaml` bumped
-- 🐳 Publishes the GHCR web image
-- 📱 Builds Android/iOS artifacts
-- 📝 Creates the GitHub Release
-- 🚀 Can deploy the web image to the VPS
-
-It does **not** push directly to `main`, so it remains compatible with strict branch protection.
-
-### Release Changelogs
-
-Release changelogs are generated automatically from commits on `main` between SemVer tags. Use clear Gitmoji or Conventional Commit-style PR titles for useful `CHANGELOG.md` and GitHub Release notes.
-
-### Operations Documentation
-
-Full operations documentation is available in the companion backend repository: [fiestaaa_back/docs/deploiement.md](https://github.com/theopeuchlestrade/fiestaaa_back/blob/main/docs/deploiement.md)
+Official web image publication, mobile signing, and production deployment are
+maintained in a private operations repository. The public repository keeps the
+source, local build instructions, and public CI.
 
 ---
 
@@ -192,8 +169,6 @@ Full operations documentation is available in the companion backend repository: 
 See [`SECURITY.md`](SECURITY.md) for the reporting channel and disclosure expectations.
 
 ### Security Scans
-
-Before any public release, rerun a secret scan on the current state and full Git history.
 
 CI runs:
 - Workflow linting
