@@ -11,11 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added brand/assets, code of conduct, support, and governance policies for
   public contribution readiness.
 
-### Changed
-- Changed the manual release workflow to publish tag-only version commits and
-  derive version bumps from the latest `vX.Y.Z` tag, avoiding direct pushes to
-  `main` under strict branch protection.
-
 ## [0.0.0] - 2026-06-01
 
 Initial public-readiness baseline for the Fiestaaa frontend.
@@ -40,20 +35,13 @@ Initial public-readiness baseline for the Fiestaaa frontend.
 - Added localization support through `flutter gen-l10n` and English/French app strings.
 - Added a shared app theme and responsive page layouts for mobile and desktop web.
 - Added production web Docker/Nginx build support with cache-safe Flutter entry-point names.
-- Added browser smoke checks for the deployed web app.
-- Added reusable Android APK and iOS IPA build workflows plus manual wrappers.
-- Added manual frontend release workflow with release-type selection (`patch`, `minor`, `major`, or `custom`), `pubspec.yaml` version bumping, Git tag creation, GHCR publication, GitHub Release creation, Android/iOS artifacts, provenance attestation, and optional VPS deployment.
-- Added frontend CI jobs for formatting, localization generation, analysis, tests, web container builds, Android compile checks, and iOS compile checks on non-PR runs.
+- Added frontend CI jobs for formatting, localization generation, analysis, tests, web container builds, Android compile checks, and unsigned iOS compile checks on non-PR runs.
 
 ### Changed
 - Changed the app version baseline to `0.0.0` before the first versioned release.
-- Changed `flutter gen-l10n` to be part of the local workflow, CI, release, mobile build, and Docker build paths.
-- Changed release and deployment workflows to use explicit SemVer image tags while still publishing `latest` for convenience.
-- Changed deployment workflows to run public HTTP and browser smoke checks after rollout.
+- Changed `flutter gen-l10n` to be part of the local workflow, CI, mobile build, and Docker build paths.
 - Changed the production web build path so it works on a fresh clone just like CI.
 - Changed the production Nginx CSP to tighten allowed `connect-src` and `img-src` origins.
-- Removed the implicit backend image fallback from the frontend deployment workflow.
-- Documented the requirement to seed both production image tags on the VPS before the first GitHub Actions deployment.
 
 ### Security
 - Removed sensitive URL parameters such as `shareToken` and `verifyEmailToken` after they are processed in the app.
