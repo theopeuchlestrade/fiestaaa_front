@@ -1,6 +1,9 @@
 name: Bug report
 description: Report a reproducible frontend problem.
 title: "Bug: "
+labels:
+  - bug
+  - frontend
 body:
   - type: markdown
     attributes:

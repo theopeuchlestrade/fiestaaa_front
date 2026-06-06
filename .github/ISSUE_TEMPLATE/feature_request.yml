@@ -1,6 +1,9 @@
 name: Feature request
 description: Suggest a frontend improvement or capability.
 title: "Feature: "
+labels:
+  - feature
+  - frontend
 body:
   - type: textarea
     id: problem

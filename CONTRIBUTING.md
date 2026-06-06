@@ -11,6 +11,8 @@ Thanks for contributing to the frontend.
 2. `flutter pub get`
 3. `flutter gen-l10n`
 
+For a guided first setup, use [`docs/first-contribution.md`](docs/first-contribution.md).
+
 ## Run the App
 - Web: `flutter run -d chrome --web-port=5001 --dart-define-from-file=.env`
 - Android: `flutter run -d emulator-5554 --dart-define-from-file=.env`
@@ -29,17 +31,19 @@ Install the hooks:
 
 ## Tests
 - `flutter test --dart-define-from-file=.env`
+- Markdown links: `ruby scripts/check_markdown_links.rb`
 
 ## Project Policies
 - Follow `CODE_OF_CONDUCT.md` in project spaces.
 - Read `SUPPORT.md` before opening support-style issues.
 - Read `GOVERNANCE.md` for the maintainer-led decision model.
+- Read `ROADMAP.md` before proposing large feature work.
 - Changes touching the Fiestaaa name, public copy, screenshots, app icons,
   logos, or third-party marks must follow `TRADEMARKS.md`.
 
 ## PR / MR
 - Describe the context, change, and impact.
-- Verify `flutter gen-l10n`, `dart format`, `flutter analyze`, and `flutter test --dart-define-from-file=.env` before opening the MR.
+- Verify `flutter gen-l10n`, `dart format`, `flutter analyze`, `flutter test --dart-define-from-file=.env`, and `ruby scripts/check_markdown_links.rb` before opening the MR.
 - Use a PR title or squash commit message that can become a clear release note.
   Gitmoji is preferred for new work, for example:
   - `✨ (events): Add item reservations`

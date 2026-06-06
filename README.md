@@ -3,7 +3,7 @@
 <img src=".github/assets/fiestaaa_logo.png" alt="Fiestaaa Logo" width="120">
 
 [![CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/workflows/ci.yml/badge.svg)](https://github.com/theopeuchlestrade/fiestaaa_front/actions/workflows/ci.yml)
-[![Flutter 3.41.5](https://img.shields.io/badge/Flutter-3.41.5-02569B.svg?logo=flutter)](https://flutter.dev)
+[![Flutter 3.44.0](https://img.shields.io/badge/Flutter-3.44.0-02569B.svg?logo=flutter)](https://flutter.dev)
 [![Dart 3.11](https://img.shields.io/badge/Dart-3.11-0175C2.svg?logo=dart)](https://dart.dev)
 [![MPL-2.0 License](https://img.shields.io/badge/license-MPL--2.0-brightgreen.svg)](LICENSE)
 [![Firebase](https://img.shields.io/badge/firebase-ready-FFCA28.svg?logo=firebase)](https://firebase.google.com)
@@ -21,6 +21,7 @@
 - [🔒 Security](#-security)
 - [📜 License](#-license)
 - [🤝 Contributing](#-contributing)
+- [🧭 Project Docs](#-project-docs)
 
 ---
 
@@ -194,6 +195,13 @@ We welcome contributions! Please see:
 - **Support**: [`SUPPORT.md`](SUPPORT.md)
 - **Governance**: [`GOVERNANCE.md`](GOVERNANCE.md)
 - **Brand & Assets**: [`TRADEMARKS.md`](TRADEMARKS.md)
+
+## 🧭 Project Docs
+
+- **Architecture**: [`docs/architecture.md`](docs/architecture.md)
+- **First contribution**: [`docs/first-contribution.md`](docs/first-contribution.md)
+- **Roadmap**: [`ROADMAP.md`](ROADMAP.md)
+- **Third-party notices**: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)
 
 ### Companion Repository
 
