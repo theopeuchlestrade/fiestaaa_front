@@ -13,6 +13,7 @@ Describe the problem or goal addressed by this PR.
 - [ ] `flutter analyze`
 - [ ] `flutter test --dart-define-from-file=.env`
 - [ ] `docker build --check .`
+- [ ] `ruby scripts/check_markdown_links.rb`
 - [ ] CI `Workflow Lint`, `Secret Scan`, and `Dockerfile Check` passed.
 - [ ] Android and iOS builds checked when relevant.
 
