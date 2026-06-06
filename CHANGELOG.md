@@ -7,15 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Added brand/assets, code of conduct, support, and governance policies for
-  public contribution readiness.
-
-## [0.0.0] - 2026-06-01
+## [0.1.0] - 2026-06-05
 
 Initial public-readiness baseline for the Fiestaaa frontend.
 
 ### Added
+- Added brand/assets, code of conduct, support, and governance policies for
+  public contribution readiness.
 - Added a full authentication flow with persisted sessions, login, registration, email verification, registration completion, logout, and share-link handling at app startup.
 - Added Google and Apple OAuth flows when runtime configuration is provided.
 - Added startup handling for email-verification links, share links, and notification intents.
@@ -38,7 +36,7 @@ Initial public-readiness baseline for the Fiestaaa frontend.
 - Added frontend CI jobs for formatting, localization generation, analysis, tests, web container builds, Android compile checks, and unsigned iOS compile checks on non-PR runs.
 
 ### Changed
-- Changed the app version baseline to `0.0.0` before the first versioned release.
+- Changed the app version baseline to `0.1.0` for the first public release.
 - Changed `flutter gen-l10n` to be part of the local workflow, CI, mobile build, and Docker build paths.
 - Changed the production web build path so it works on a fresh clone just like CI.
 - Changed the production Nginx CSP to tighten allowed `connect-src` and `img-src` origins.
