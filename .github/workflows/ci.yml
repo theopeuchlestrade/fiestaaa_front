@@ -232,7 +232,6 @@ jobs:
     name: iOS Compile
     runs-on: macos-latest
     timeout-minutes: 45
-    if: ${{ github.event_name != 'pull_request' }}
     steps:
       - uses: actions/checkout@v6.0.3
 
@@ -278,6 +277,9 @@ jobs:
       - name: Generate localizations
         run: flutter gen-l10n
 
+      - name: Reset SwiftPM artifact cache
+        run: rm -rf "$HOME/Library/Caches/org.swift.swiftpm/artifacts"
+
       - name: Build unsigned iOS app
         run: flutter build ios --release --no-codesign --dart-define-from-file=.env.ci
 
@@ -305,8 +307,7 @@ jobs:
             echo "::error::One or more frontend CI jobs failed"
             exit 1
           fi
-          if [ "${{ needs.ios-build.result }}" != "success" ] &&
-             [ "${{ needs.ios-build.result }}" != "skipped" ]; then
-            echo "::error::iOS compile job failed"
+          if [ "${{ needs.ios-build.result }}" != "success" ]; then
+            echo "::error::iOS compile job failed or was skipped"
             exit 1
           fi
