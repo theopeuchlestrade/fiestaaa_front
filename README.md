@@ -112,6 +112,13 @@ flutter analyze
 flutter test --dart-define-from-file=.env
 ```
 
+**Coverage:**
+```bash
+flutter test --coverage --dart-define-from-file=.env
+```
+
+CI uploads the generated `coverage/lcov.info` report as a workflow artifact.
+
 **Fresh clone sequence:**
 ```bash
 flutter pub get
