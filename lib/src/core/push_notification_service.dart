@@ -7,9 +7,12 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/notifications/data/notifications_api.dart';
 import 'config.dart';
+import 'firebase_messaging_support.dart';
 import 'web_notification_stub.dart'
     if (dart.library.html) 'web_notification_html.dart'
     as web_notif;
+
+typedef FirebaseMessagingSupportChecker = Future<bool> Function();
 
 class PushNotificationIntent {
   const PushNotificationIntent({
@@ -43,7 +46,16 @@ class PushNotificationIntent {
 }
 
 class PushNotificationService {
-  PushNotificationService._();
+  PushNotificationService._({
+    FirebaseMessagingSupportChecker? messagingSupported,
+  }) : _messagingSupported = messagingSupported ?? isFirebaseMessagingSupported;
+
+  @visibleForTesting
+  factory PushNotificationService.testing({
+    FirebaseMessagingSupportChecker? messagingSupported,
+  }) {
+    return PushNotificationService._(messagingSupported: messagingSupported);
+  }
 
   static final PushNotificationService instance = PushNotificationService._();
 
@@ -52,6 +64,7 @@ class PushNotificationService {
   static const String _androidChannelDescription = 'Fiestaaa notifications';
 
   late final FirebaseMessaging _messaging;
+  final FirebaseMessagingSupportChecker _messagingSupported;
   final NotificationsApi _api = NotificationsApi();
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
@@ -71,38 +84,76 @@ class PushNotificationService {
 
   Stream<PushNotificationIntent> get intents => _intentController.stream;
 
+  @visibleForTesting
+  bool get isBlocked => _blocked;
+
+  @visibleForTesting
+  bool get isInitialized => _initialized;
+
   Future<void> init() async {
     if (_initialized) return;
-    _messaging = FirebaseMessaging.instance;
-    _initialized = true;
-
-    await _messaging.setAutoInitEnabled(true);
-    await _requestPermissions();
-    await _initLocalNotifications();
-    await _messaging.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-    _openedAppSub = FirebaseMessaging.onMessageOpenedApp.listen(
-      _emitIntentFromMessage,
-    );
-
-    _cachedToken = await _safeGetToken();
-    final initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {
-      _emitIntentFromMessage(initialMessage);
-    }
-    _tokenStreamSub = _messaging.onTokenRefresh.listen((token) async {
-      final previous = _cachedToken;
-      _cachedToken = token;
-      if (_session != null) {
-        await _syncRegisteredDevice(
-          oldTokenOverride: previous != token ? previous : null,
-        );
+    try {
+      if (!await _canUseFirebaseMessaging()) {
+        _blockPushNotifications();
+        return;
       }
-    });
+
+      _messaging = FirebaseMessaging.instance;
+      _initialized = true;
+
+      await _messaging.setAutoInitEnabled(true);
+      await _requestPermissions();
+      await _initLocalNotifications();
+      await _messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      FirebaseMessaging.onMessage.listen((message) {
+        _ignoreAsyncErrors(_handleForegroundMessage(message));
+      });
+      _openedAppSub = FirebaseMessaging.onMessageOpenedApp.listen(
+        _emitIntentFromMessage,
+      );
+
+      _cachedToken = await _safeGetToken();
+      final initialMessage = await _messaging.getInitialMessage();
+      if (initialMessage != null) {
+        _emitIntentFromMessage(initialMessage);
+      }
+      _tokenStreamSub = _messaging.onTokenRefresh.listen((token) {
+        _ignoreAsyncErrors(_handleTokenRefresh(token));
+      });
+    } catch (_) {
+      _blockPushNotifications();
+    }
+  }
+
+  Future<bool> _canUseFirebaseMessaging() async {
+    try {
+      return await _messagingSupported();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _blockPushNotifications() {
+    _initialized = true;
+    _blocked = true;
+  }
+
+  void _ignoreAsyncErrors(Future<void> future) {
+    unawaited(future.catchError((_) {}));
+  }
+
+  Future<void> _handleTokenRefresh(String token) async {
+    final previous = _cachedToken;
+    _cachedToken = token;
+    if (_session != null) {
+      await _syncRegisteredDevice(
+        oldTokenOverride: previous != token ? previous : null,
+      );
+    }
   }
 
   Future<void> syncSession(SessionData session) async {
