@@ -105,8 +105,16 @@ jobs:
           FIREBASE_IOS_BUNDLE_ID=com.fiestaaa.fiestaaa
           EOF
 
-      - name: Run tests
-        run: flutter test --dart-define-from-file=.env.ci
+      - name: Run tests with coverage
+        run: flutter test --coverage --dart-define-from-file=.env.ci
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-lcov
+          path: coverage/lcov.info
+          if-no-files-found: error
 
   web-container-build:
     name: Web Container Build
