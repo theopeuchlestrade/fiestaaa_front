@@ -241,7 +241,10 @@ class PushNotificationService {
           authToken: _session!.token,
           fcmToken: _registeredToken!,
         );
-      } catch (_) {}
+      } catch (error, stackTrace) {
+        debugPrint('Fiestaaa push device delete failed: $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }
     }
     _session = null;
     _registeredToken = null;

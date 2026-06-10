@@ -211,7 +211,10 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     await PushNotificationService.instance.clearSession();
     try {
       await _authApi.logout(token: token);
-    } catch (_) {}
+    } catch (error, stackTrace) {
+      debugPrint('Fiestaaa logout request failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
     await SessionStorage.clear();
     if (!mounted) return;
     setState(() {
