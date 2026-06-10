@@ -61,7 +61,7 @@
    - `FIESTAAA_GOOGLE_WEB_CLIENT_ID`: Web OAuth client ID
    - `FIESTAAA_APPLE_*`: Apple Sign-In configuration
    - `FIESTAAA_FCM_VAPID_KEY`: Web push VAPID key
-   - `FIRESTORE_*`: Firebase configuration
+   - `FIREBASE_*`: Firebase configuration
 
 3. Install dependencies and generate localizations:
    ```bash
