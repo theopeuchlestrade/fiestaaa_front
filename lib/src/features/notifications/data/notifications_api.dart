@@ -20,7 +20,7 @@ class NotificationsApi {
     String? appVersion,
   }) async {
     final resp = await _client.post(
-      Uri.parse('$apiBaseUrl/me/devices'),
+      buildApiUri('/me/devices'),
       headers: {
         'Authorization': 'Bearer $authToken',
         'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ class NotificationsApi {
     String? appVersion,
   }) async {
     final resp = await _client.post(
-      Uri.parse('$apiBaseUrl/me/devices/refresh'),
+      buildApiUri('/me/devices/refresh'),
       headers: {
         'Authorization': 'Bearer $authToken',
         'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ class NotificationsApi {
     required String fcmToken,
   }) async {
     final resp = await _client.post(
-      Uri.parse('$apiBaseUrl/me/devices/revoke'),
+      buildApiUri('/me/devices/revoke'),
       headers: {
         'Authorization': 'Bearer $authToken',
         'Content-Type': 'application/json',

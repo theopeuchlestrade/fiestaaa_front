@@ -21,9 +21,10 @@ class EventsApi {
     required String query,
     int limit = 5,
   }) async {
-    final uri = Uri.parse(
-      '$apiBaseUrl/geo/address-search',
-    ).replace(queryParameters: {'q': query, 'limit': '$limit'});
+    final uri = buildApiUri(
+      '/geo/address-search',
+      queryParameters: {'q': query, 'limit': '$limit'},
+    );
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -44,7 +45,7 @@ class EventsApi {
 
   Future<List<EventModel>> fetchEvents({required String token}) async {
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/events'),
+      buildApiUri('/events'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -64,7 +65,7 @@ class EventsApi {
     required EventPayload payload,
   }) async {
     final response = await _client.post(
-      Uri.parse('$apiBaseUrl/events'),
+      buildApiUri('/events'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -90,7 +91,7 @@ class EventsApi {
     required EventPayload payload,
   }) async {
     final response = await _client.put(
-      Uri.parse('$apiBaseUrl/events/$eventId'),
+      buildApiUri('/events/$eventId'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -115,7 +116,7 @@ class EventsApi {
     required int eventId,
   }) async {
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/events/$eventId'),
+      buildApiUri('/events/$eventId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -136,9 +137,10 @@ class EventsApi {
     String? token,
     String? scope,
   }) async {
-    final uri = Uri.parse(
-      '$apiBaseUrl/events/$eventId/items',
-    ).replace(queryParameters: scope == null ? null : {'scope': scope});
+    final uri = buildApiUri(
+      '/events/$eventId/items',
+      queryParameters: scope == null ? null : {'scope': scope},
+    );
     final headers = <String, String>{};
     if (token != null && token.trim().isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';
@@ -164,7 +166,7 @@ class EventsApi {
     required int eventId,
   }) async {
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/events/$eventId/polls'),
+      buildApiUri('/events/$eventId/polls'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -188,7 +190,7 @@ class EventsApi {
     bool allowMultiple = true,
   }) async {
     final response = await _client.post(
-      Uri.parse('$apiBaseUrl/events/$eventId/polls'),
+      buildApiUri('/events/$eventId/polls'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -220,7 +222,7 @@ class EventsApi {
     required List<int> optionIds,
   }) async {
     final response = await _client.post(
-      Uri.parse('$apiBaseUrl/events/$eventId/polls/$pollId/vote'),
+      buildApiUri('/events/$eventId/polls/$pollId/vote'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -253,7 +255,7 @@ class EventsApi {
     required int pollId,
   }) async {
     final response = await _client.delete(
-      Uri.parse('$apiBaseUrl/events/$eventId/polls/$pollId'),
+      buildApiUri('/events/$eventId/polls/$pollId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -272,7 +274,7 @@ class EventsApi {
     required int eventId,
   }) async {
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/events/$eventId/items/contributions'),
+      buildApiUri('/events/$eventId/items/contributions'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -294,7 +296,7 @@ class EventsApi {
     required int quantity,
   }) async {
     final response = await _client.post(
-      Uri.parse('$apiBaseUrl/events/$eventId/items/$itemId/reserve'),
+      buildApiUri('/events/$eventId/items/$itemId/reserve'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -323,7 +325,7 @@ class EventsApi {
     EventItemKind? itemKind,
   }) async {
     final response = await _client.post(
-      Uri.parse('$apiBaseUrl/events/$eventId/items/custom'),
+      buildApiUri('/events/$eventId/items/custom'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -354,7 +356,7 @@ class EventsApi {
     required int itemId,
   }) async {
     final response = await _client.delete(
-      Uri.parse('$apiBaseUrl/events/$eventId/items/$itemId'),
+      buildApiUri('/events/$eventId/items/$itemId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -373,7 +375,7 @@ class EventsApi {
     required int eventId,
   }) async {
     final response = await _client.post(
-      Uri.parse('$apiBaseUrl/events/$eventId/share'),
+      buildApiUri('/events/$eventId/share'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -393,7 +395,7 @@ class EventsApi {
     required String shareToken,
   }) async {
     final response = await _client.post(
-      Uri.parse('$apiBaseUrl/share/claim'),
+      buildApiUri('/share/claim'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -418,7 +420,7 @@ class EventsApi {
     required int eventId,
   }) async {
     final response = await _client.delete(
-      Uri.parse('$apiBaseUrl/events/$eventId'),
+      buildApiUri('/events/$eventId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -437,7 +439,7 @@ class EventsApi {
     required int eventId,
   }) async {
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/events/$eventId/expenses'),
+      buildApiUri('/events/$eventId/expenses'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -459,7 +461,7 @@ class EventsApi {
     required int eventId,
   }) async {
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/events/$eventId/expenses/summary'),
+      buildApiUri('/events/$eventId/expenses/summary'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -486,7 +488,7 @@ class EventsApi {
     DateTime? expenseDate,
   }) async {
     final response = await _client.post(
-      Uri.parse('$apiBaseUrl/events/$eventId/expenses'),
+      buildApiUri('/events/$eventId/expenses'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -520,7 +522,7 @@ class EventsApi {
     required int expenseId,
   }) async {
     final response = await _client.delete(
-      Uri.parse('$apiBaseUrl/events/$eventId/expenses/$expenseId'),
+      buildApiUri('/events/$eventId/expenses/$expenseId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 

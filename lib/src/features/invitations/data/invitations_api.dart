@@ -17,7 +17,7 @@ class InvitationsApi {
     required int eventId,
   }) async {
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/events/$eventId/invitations'),
+      buildApiUri('/events/$eventId/invitations'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -35,7 +35,7 @@ class InvitationsApi {
 
   Future<List<InvitationModel>> fetchMyInvitations(String token) async {
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/my/invitations'),
+      buildApiUri('/my/invitations'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -56,7 +56,7 @@ class InvitationsApi {
     required String identifier,
   }) async {
     final response = await _client.post(
-      Uri.parse('$apiBaseUrl/events/$eventId/invitations'),
+      buildApiUri('/events/$eventId/invitations'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -94,7 +94,7 @@ class InvitationsApi {
     required String status,
   }) async {
     final response = await _client.patch(
-      Uri.parse('$apiBaseUrl/my/invitations/$eventId'),
+      buildApiUri('/my/invitations/$eventId'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -118,9 +118,7 @@ class InvitationsApi {
     required String email,
   }) async {
     final response = await _client.delete(
-      Uri.parse(
-        '$apiBaseUrl/events/$eventId/invitations/${Uri.encodeComponent(email)}',
-      ),
+      buildApiUri('/events/$eventId/invitations/${Uri.encodeComponent(email)}'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode != 200) {
@@ -134,7 +132,7 @@ class InvitationsApi {
     required String status,
   }) async {
     final response = await _client.patch(
-      Uri.parse('$apiBaseUrl/my/invitations/$eventId'),
+      buildApiUri('/my/invitations/$eventId'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',

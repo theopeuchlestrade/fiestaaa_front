@@ -121,7 +121,7 @@ class AuthApi {
 
   Future<SessionData?> validateSession(String token) async {
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/me'),
+      buildApiUri('/me'),
       headers: token.isEmpty ? null : {'Authorization': 'Bearer $token'},
     );
 
@@ -149,9 +149,8 @@ class AuthApi {
     String path, {
     required Map<String, dynamic> body,
   }) {
-    final uri = Uri.parse('$apiBaseUrl$path');
     return _client.post(
-      uri,
+      buildApiUri(path),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(body),
     );
@@ -162,7 +161,7 @@ class AuthApi {
     if (token != null && token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';
     }
-    await _client.post(Uri.parse('$apiBaseUrl/auth/logout'), headers: headers);
+    await _client.post(buildApiUri('/auth/logout'), headers: headers);
   }
 
   ApiException _apiError(http.Response response) {

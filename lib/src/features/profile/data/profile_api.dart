@@ -13,7 +13,7 @@ class ProfileApi {
 
   Future<ProfileInfo> fetchProfile(String token) async {
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/me'),
+      buildApiUri('/me'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -30,9 +30,10 @@ class ProfileApi {
   }
 
   Future<bool> checkHandleAvailability(String handle) async {
-    final uri = Uri.parse(
-      '$apiBaseUrl/handles/availability',
-    ).replace(queryParameters: {'handle': handle});
+    final uri = buildApiUri(
+      '/handles/availability',
+      queryParameters: {'handle': handle},
+    );
     final response = await _client.get(uri);
 
     if (response.statusCode == 200) {
@@ -50,7 +51,7 @@ class ProfileApi {
     required String handle,
   }) async {
     final response = await _client.patch(
-      Uri.parse('$apiBaseUrl/me/handle'),
+      buildApiUri('/me/handle'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -75,12 +76,11 @@ class ProfileApi {
     required String filename,
     required List<int> bytes,
   }) async {
-    final request =
-        http.MultipartRequest('POST', Uri.parse('$apiBaseUrl/me/avatar'))
-          ..headers['Authorization'] = 'Bearer $token'
-          ..files.add(
-            http.MultipartFile.fromBytes('avatar', bytes, filename: filename),
-          );
+    final request = http.MultipartRequest('POST', buildApiUri('/me/avatar'))
+      ..headers['Authorization'] = 'Bearer $token'
+      ..files.add(
+        http.MultipartFile.fromBytes('avatar', bytes, filename: filename),
+      );
 
     final streamed = await _client.send(request);
     final response = await http.Response.fromStream(streamed);
@@ -94,7 +94,7 @@ class ProfileApi {
 
   Future<void> deleteAccount({required String token}) async {
     final response = await _client.delete(
-      Uri.parse('$apiBaseUrl/me'),
+      buildApiUri('/me'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
