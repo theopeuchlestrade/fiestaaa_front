@@ -13,9 +13,7 @@ class PaymentProvidersApi {
   final http.Client _client;
 
   Future<List<PaymentProviderModel>> fetchProviders() async {
-    final response = await _client.get(
-      Uri.parse('$apiBaseUrl/payment-providers'),
-    );
+    final response = await _client.get(buildApiUri('/payment-providers'));
     if (response.statusCode != 200) {
       throw ApiException(
         'Chargement des cagnottes impossible (${response.statusCode})',

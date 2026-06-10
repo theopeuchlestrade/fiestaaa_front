@@ -25,6 +25,17 @@ void main() {
     expect(uri.queryParameters, {'scope': 'mine', 'sort': 'remaining'});
   });
 
+  test('buildApiUri does not double encode escaped path segments', () {
+    const email = 'alice test@example.com';
+    final uri = buildApiUri(
+      '/events/42/invitations/${Uri.encodeComponent(email)}',
+    );
+
+    expect(uri.pathSegments.last, email);
+    expect(uri.toString(), contains('alice%20test@example.com'));
+    expect(uri.toString(), isNot(contains('alice%2520test@example.com')));
+  });
+
   test('buildWsUri converts HTTP API schemes to WebSocket schemes', () {
     final base = Uri.parse(apiBaseUrl);
     final expectedScheme = base.scheme == 'https' ? 'wss' : 'ws';

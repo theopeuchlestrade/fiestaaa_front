@@ -17,9 +17,10 @@ class CarpoolsApi {
     required int eventId,
     String? sortBy,
   }) async {
-    final uri = Uri.parse(
-      '$apiBaseUrl/events/$eventId/carpools',
-    ).replace(queryParameters: sortBy != null ? {'sort': sortBy} : null);
+    final uri = buildApiUri(
+      '/events/$eventId/carpools',
+      queryParameters: sortBy != null ? {'sort': sortBy} : null,
+    );
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -44,7 +45,7 @@ class CarpoolsApi {
     required CarpoolPayload payload,
   }) async {
     final response = await _client.post(
-      Uri.parse('$apiBaseUrl/events/$eventId/carpools'),
+      buildApiUri('/events/$eventId/carpools'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -70,7 +71,7 @@ class CarpoolsApi {
     required CarpoolPatchPayload payload,
   }) async {
     final response = await _client.patch(
-      Uri.parse('$apiBaseUrl/carpools/$carpoolId'),
+      buildApiUri('/carpools/$carpoolId'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -95,7 +96,7 @@ class CarpoolsApi {
     required int carpoolId,
   }) async {
     final response = await _client.delete(
-      Uri.parse('$apiBaseUrl/carpools/$carpoolId'),
+      buildApiUri('/carpools/$carpoolId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -112,7 +113,7 @@ class CarpoolsApi {
     required int carpoolId,
   }) async {
     final response = await _client.post(
-      Uri.parse('$apiBaseUrl/carpools/$carpoolId/join'),
+      buildApiUri('/carpools/$carpoolId/join'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -129,7 +130,7 @@ class CarpoolsApi {
     required int carpoolId,
   }) async {
     final response = await _client.delete(
-      Uri.parse('$apiBaseUrl/carpools/$carpoolId/join'),
+      buildApiUri('/carpools/$carpoolId/join'),
       headers: {'Authorization': 'Bearer $token'},
     );
 

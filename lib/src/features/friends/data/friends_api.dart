@@ -13,7 +13,7 @@ class FriendsApi {
 
   Future<List<FriendModel>> fetchFriends(String token) async {
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/me/friends'),
+      buildApiUri('/me/friends'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -30,7 +30,7 @@ class FriendsApi {
 
   Future<List<FriendRequestModel>> fetchRequests(String token) async {
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/friends/requests'),
+      buildApiUri('/friends/requests'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -49,9 +49,7 @@ class FriendsApi {
     String token,
     String query,
   ) async {
-    final uri = Uri.parse(
-      '$apiBaseUrl/friends/search',
-    ).replace(queryParameters: {'q': query});
+    final uri = buildApiUri('/friends/search', queryParameters: {'q': query});
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -70,7 +68,7 @@ class FriendsApi {
     required String identifier,
   }) async {
     final response = await _client.post(
-      Uri.parse('$apiBaseUrl/friends/requests'),
+      buildApiUri('/friends/requests'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -94,7 +92,7 @@ class FriendsApi {
     required String status,
   }) async {
     final response = await _client.patch(
-      Uri.parse('$apiBaseUrl/friends/requests/$requestId'),
+      buildApiUri('/friends/requests/$requestId'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -114,7 +112,7 @@ class FriendsApi {
     required String identifier,
   }) async {
     final response = await _client.delete(
-      Uri.parse('$apiBaseUrl/friends/${Uri.encodeComponent(identifier)}'),
+      buildApiUri('/friends/${Uri.encodeComponent(identifier)}'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode != 200) {

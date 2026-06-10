@@ -52,16 +52,20 @@ const String sentryTracesSampleRateValue = String.fromEnvironment(
 double get sentryTracesSampleRate =>
     double.tryParse(sentryTracesSampleRateValue) ?? 0;
 
+List<String> _buildPathSegments(Uri base, String path) {
+  final normalizedPath = path.startsWith('/') ? path.substring(1) : path;
+  final relative = Uri.parse(normalizedPath);
+  return <String>[
+    ...base.pathSegments.where((segment) => segment.isNotEmpty),
+    ...relative.pathSegments.where((segment) => segment.isNotEmpty),
+  ];
+}
+
 Uri buildApiUri(String path, {Map<String, String>? queryParameters}) {
   final base = Uri.parse(apiBaseUrl);
-  final normalizedPath = path.startsWith('/') ? path.substring(1) : path;
-  final pathSegments = <String>[
-    ...base.pathSegments.where((segment) => segment.isNotEmpty),
-    ...normalizedPath.split('/').where((segment) => segment.isNotEmpty),
-  ];
 
   return base.replace(
-    pathSegments: pathSegments,
+    pathSegments: _buildPathSegments(base, path),
     queryParameters: queryParameters == null || queryParameters.isEmpty
         ? null
         : queryParameters,
@@ -71,15 +75,10 @@ Uri buildApiUri(String path, {Map<String, String>? queryParameters}) {
 Uri buildWsUri(String path, {Map<String, String>? queryParameters}) {
   final base = Uri.parse(apiBaseUrl);
   final scheme = base.scheme == 'https' ? 'wss' : 'ws';
-  final normalizedPath = path.startsWith('/') ? path.substring(1) : path;
-  final pathSegments = <String>[
-    ...base.pathSegments.where((segment) => segment.isNotEmpty),
-    ...normalizedPath.split('/').where((segment) => segment.isNotEmpty),
-  ];
 
   return base.replace(
     scheme: scheme,
-    pathSegments: pathSegments,
+    pathSegments: _buildPathSegments(base, path),
     queryParameters: queryParameters == null || queryParameters.isEmpty
         ? null
         : queryParameters,

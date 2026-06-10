@@ -18,7 +18,7 @@ class QRCheckinApi {
     required int eventId,
   }) async {
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/events/$eventId/my-qr-code'),
+      buildApiUri('/events/$eventId/my-qr-code'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -48,7 +48,7 @@ class QRCheckinApi {
     required String qrToken,
   }) async {
     final response = await _client.post(
-      Uri.parse('$apiBaseUrl/events/$eventId/scan-qr'),
+      buildApiUri('/events/$eventId/scan-qr'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -97,7 +97,7 @@ class QRCheckinApi {
     required int eventId,
   }) async {
     final response = await _client.get(
-      Uri.parse('$apiBaseUrl/events/$eventId/qr-scan-stats'),
+      buildApiUri('/events/$eventId/qr-scan-stats'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
