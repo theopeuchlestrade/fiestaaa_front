@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-17
+
+### Added
+- Added realtime reconnect backoff for more resilient live updates.
+- Added frontend coverage reporting to CI.
+
+### Changed
+- Switched frontend API URL construction to the shared URI builder.
+- Improved frontend maintenance checks and CI coverage paths.
+- Updated frontend dependencies, CI actions, and Flutter notification packages.
+
+### Fixed
+- Fixed Firebase Messaging handling on unsupported browsers.
+- Fixed Firebase environment documentation.
+- Logged ignored logout cleanup errors for better diagnostics.
+
 ## [0.1.0] - 2026-06-05
 
 Initial public-readiness baseline for the Fiestaaa frontend.
