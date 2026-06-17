@@ -3,6 +3,8 @@ name: Frontend CI
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
   schedule:
     - cron: "0 3 * * 0"
@@ -131,6 +133,7 @@ jobs:
         with:
           context: .
           file: Dockerfile
+          load: true
           push: false
           tags: ghcr.io/${{ github.repository }}:ci-${{ github.sha }}
           build-args: |
@@ -151,6 +154,24 @@ jobs:
             FIESTAAA_FCM_VAPID_KEY=test-vapid-key
             FIREBASE_WEB_API_KEY=test-web-api-key
             FIREBASE_AUTH_DOMAIN=fiestaaa-test.firebaseapp.com
+
+      - name: Install smoke test dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke test web image
+        run: |
+          docker run -d --rm --name fiestaaa-front-ci -p 8080:8080 ghcr.io/${{ github.repository }}:ci-${{ github.sha }}
+          trap 'docker stop fiestaaa-front-ci' EXIT
+          for _ in {1..30}; do
+            if curl -fsS http://127.0.0.1:8080/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          npm run smoke:web -- --url http://127.0.0.1:8080 --timeout-ms 60000
 
   android-build:
     name: Android Compile

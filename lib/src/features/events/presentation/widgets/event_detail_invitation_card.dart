@@ -285,7 +285,7 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text('Annuler'),
+                          child: Text(S.of(context).cancel),
                         ),
                         ElevatedButton(
                           onPressed: () => Navigator.of(context).pop(true),

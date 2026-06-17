@@ -1,8 +1,8 @@
 import 'dart:convert';
 
+import 'package:fiestaaa_front/src/core/api_response.dart';
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
-import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/item_contribution_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/address_suggestion.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_expense_model.dart';
@@ -25,38 +25,35 @@ class EventsApi {
       '/geo/address-search',
       queryParameters: {'q': query, 'limit': '$limit'},
     );
-    final response = await _client.get(
-      uri,
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await _client.get(uri, headers: apiAuthHeaders(token));
 
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as List<dynamic>;
+      final decoded = decodeJsonBody<List<dynamic>>(response);
       return decoded
           .map((e) => AddressSuggestion.fromJson(e as Map<String, dynamic>))
           .toList();
     }
 
-    throw ApiException(
-      'Impossible de vérifier l’adresse (${response.statusCode})',
-      statusCode: response.statusCode,
+    throw _apiError(
+      response,
+      fallbackMessage: 'Impossible de vérifier l’adresse',
     );
   }
 
   Future<List<EventModel>> fetchEvents({required String token}) async {
     final response = await _client.get(
       buildApiUri('/events'),
-      headers: {'Authorization': 'Bearer $token'},
+      headers: apiAuthHeaders(token),
     );
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as List<dynamic>;
+      final decoded = decodeJsonBody<List<dynamic>>(response);
       return decoded
           .map((e) => EventModel.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-    throw ApiException(
-      'Impossible de récupérer les fiestaaa',
-      statusCode: response.statusCode,
+    throw _apiError(
+      response,
+      fallbackMessage: 'Impossible de récupérer les fiestaaa',
     );
   }
 
@@ -66,23 +63,17 @@ class EventsApi {
   }) async {
     final response = await _client.post(
       buildApiUri('/events'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      headers: apiJsonHeaders(token: token),
       body: jsonEncode(payload.toJson()),
     );
 
     if (response.statusCode == 201) {
       return EventModel.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
+        decodeJsonBody<Map<String, dynamic>>(response),
       );
     }
 
-    throw ApiException(
-      'Création impossible (${response.statusCode})',
-      statusCode: response.statusCode,
-    );
+    throw _apiError(response, fallbackMessage: 'Création impossible');
   }
 
   Future<EventModel> updateEvent({
@@ -92,23 +83,17 @@ class EventsApi {
   }) async {
     final response = await _client.put(
       buildApiUri('/events/$eventId'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      headers: apiJsonHeaders(token: token),
       body: jsonEncode(payload.toJson()),
     );
 
     if (response.statusCode == 200) {
       return EventModel.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
+        decodeJsonBody<Map<String, dynamic>>(response),
       );
     }
 
-    throw ApiException(
-      'Mise à jour impossible (${response.statusCode})',
-      statusCode: response.statusCode,
-    );
+    throw _apiError(response, fallbackMessage: 'Mise à jour impossible');
   }
 
   Future<EventModel> fetchEventById({
@@ -117,19 +102,16 @@ class EventsApi {
   }) async {
     final response = await _client.get(
       buildApiUri('/events/$eventId'),
-      headers: {'Authorization': 'Bearer $token'},
+      headers: apiAuthHeaders(token),
     );
 
     if (response.statusCode == 200) {
       return EventModel.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
+        decodeJsonBody<Map<String, dynamic>>(response),
       );
     }
 
-    throw ApiException(
-      'Fiestaaa introuvable (${response.statusCode})',
-      statusCode: response.statusCode,
-    );
+    throw _apiError(response, fallbackMessage: 'Fiestaaa introuvable');
   }
 
   Future<List<EventItemModel>> fetchEventItems(
@@ -143,21 +125,21 @@ class EventsApi {
     );
     final headers = <String, String>{};
     if (token != null && token.trim().isNotEmpty) {
-      headers['Authorization'] = 'Bearer $token';
+      headers.addAll(apiAuthHeaders(token));
     }
     final response = await _client.get(
       uri,
       headers: headers.isEmpty ? null : headers,
     );
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as List<dynamic>;
+      final decoded = decodeJsonBody<List<dynamic>>(response);
       return decoded
           .map((e) => EventItemModel.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-    throw ApiException(
-      'Impossible de récupérer les items (${response.statusCode})',
-      statusCode: response.statusCode,
+    throw _apiError(
+      response,
+      fallbackMessage: 'Impossible de récupérer les items',
     );
   }
 
@@ -167,17 +149,17 @@ class EventsApi {
   }) async {
     final response = await _client.get(
       buildApiUri('/events/$eventId/polls'),
-      headers: {'Authorization': 'Bearer $token'},
+      headers: apiAuthHeaders(token),
     );
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as List<dynamic>;
+      final decoded = decodeJsonBody<List<dynamic>>(response);
       return decoded
           .map((e) => PollModel.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-    throw ApiException(
-      'Impossible de charger les sondages (${response.statusCode})',
-      statusCode: response.statusCode,
+    throw _apiError(
+      response,
+      fallbackMessage: 'Impossible de charger les sondages',
     );
   }
 
@@ -191,10 +173,7 @@ class EventsApi {
   }) async {
     final response = await _client.post(
       buildApiUri('/events/$eventId/polls'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      headers: apiJsonHeaders(token: token),
       body: jsonEncode({
         'question': question,
         'options': options,
@@ -204,14 +183,12 @@ class EventsApi {
     );
 
     if (response.statusCode == 201) {
-      return PollModel.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
-      );
+      return PollModel.fromJson(decodeJsonBody<Map<String, dynamic>>(response));
     }
 
-    throw ApiException(
-      'Impossible de créer le sondage (${response.statusCode})',
-      statusCode: response.statusCode,
+    throw _apiError(
+      response,
+      fallbackMessage: 'Impossible de créer le sondage',
     );
   }
 
@@ -223,17 +200,12 @@ class EventsApi {
   }) async {
     final response = await _client.post(
       buildApiUri('/events/$eventId/polls/$pollId/vote'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      headers: apiJsonHeaders(token: token),
       body: jsonEncode({'option_ids': optionIds}),
     );
 
     if (response.statusCode == 200) {
-      return PollModel.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
-      );
+      return PollModel.fromJson(decodeJsonBody<Map<String, dynamic>>(response));
     }
 
     if (response.statusCode == 410) {
@@ -243,9 +215,9 @@ class EventsApi {
       );
     }
 
-    throw ApiException(
-      'Impossible d’enregistrer le vote (${response.statusCode})',
-      statusCode: response.statusCode,
+    throw _apiError(
+      response,
+      fallbackMessage: 'Impossible d’enregistrer le vote',
     );
   }
 
@@ -256,16 +228,16 @@ class EventsApi {
   }) async {
     final response = await _client.delete(
       buildApiUri('/events/$eventId/polls/$pollId'),
-      headers: {'Authorization': 'Bearer $token'},
+      headers: apiAuthHeaders(token),
     );
 
     if (response.statusCode == 200) {
       return;
     }
 
-    throw ApiException(
-      'Impossible de supprimer le sondage (${response.statusCode})',
-      statusCode: response.statusCode,
+    throw _apiError(
+      response,
+      fallbackMessage: 'Impossible de supprimer le sondage',
     );
   }
 
@@ -275,17 +247,17 @@ class EventsApi {
   }) async {
     final response = await _client.get(
       buildApiUri('/events/$eventId/items/contributions'),
-      headers: {'Authorization': 'Bearer $token'},
+      headers: apiAuthHeaders(token),
     );
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as List<dynamic>;
+      final decoded = decodeJsonBody<List<dynamic>>(response);
       return decoded
           .map((e) => ItemContributionModel.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-    throw ApiException(
-      'Impossible de charger les contributions',
-      statusCode: response.statusCode,
+    throw _apiError(
+      response,
+      fallbackMessage: 'Impossible de charger les contributions',
     );
   }
 
@@ -297,23 +269,17 @@ class EventsApi {
   }) async {
     final response = await _client.post(
       buildApiUri('/events/$eventId/items/$itemId/reserve'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      headers: apiJsonHeaders(token: token),
       body: jsonEncode({'quantity': quantity}),
     );
 
     if (response.statusCode == 200) {
       return EventItemModel.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
+        decodeJsonBody<Map<String, dynamic>>(response),
       );
     }
 
-    throw ApiException(
-      'Impossible de réserver (${response.statusCode})',
-      statusCode: response.statusCode,
-    );
+    throw _apiError(response, fallbackMessage: 'Impossible de réserver');
   }
 
   Future<EventItemModel> createCustomEventItem({
@@ -326,10 +292,7 @@ class EventsApi {
   }) async {
     final response = await _client.post(
       buildApiUri('/events/$eventId/items/custom'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      headers: apiJsonHeaders(token: token),
       body: jsonEncode({
         'name_item': name,
         'max_quantity': maxQuantity,
@@ -340,14 +303,11 @@ class EventsApi {
 
     if (response.statusCode == 200) {
       return EventItemModel.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
+        decodeJsonBody<Map<String, dynamic>>(response),
       );
     }
 
-    throw ApiException(
-      'Impossible d’ajouter l’item (${response.statusCode})',
-      statusCode: response.statusCode,
-    );
+    throw _apiError(response, fallbackMessage: 'Impossible d’ajouter l’item');
   }
 
   Future<void> deleteEventItem({
@@ -357,17 +317,14 @@ class EventsApi {
   }) async {
     final response = await _client.delete(
       buildApiUri('/events/$eventId/items/$itemId'),
-      headers: {'Authorization': 'Bearer $token'},
+      headers: apiAuthHeaders(token),
     );
 
     if (response.statusCode == 200) {
       return;
     }
 
-    throw ApiException(
-      'Suppression impossible (${response.statusCode})',
-      statusCode: response.statusCode,
-    );
+    throw _apiError(response, fallbackMessage: 'Suppression impossible');
   }
 
   Future<String> createShareLink({
@@ -376,18 +333,15 @@ class EventsApi {
   }) async {
     final response = await _client.post(
       buildApiUri('/events/$eventId/share'),
-      headers: {'Authorization': 'Bearer $token'},
+      headers: apiAuthHeaders(token),
     );
 
     if (response.statusCode == 201) {
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = decodeJsonBody<Map<String, dynamic>>(response);
       return decoded['token'] as String;
     }
 
-    throw ApiException(
-      'Impossible de générer le lien (${response.statusCode})',
-      statusCode: response.statusCode,
-    );
+    throw _apiError(response, fallbackMessage: 'Impossible de générer le lien');
   }
 
   Future<EventModel> claimShareToken({
@@ -396,23 +350,17 @@ class EventsApi {
   }) async {
     final response = await _client.post(
       buildApiUri('/share/claim'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      headers: apiJsonHeaders(token: token),
       body: jsonEncode({'token': shareToken}),
     );
 
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = decodeJsonBody<Map<String, dynamic>>(response);
       final eventJson = decoded['event'] as Map<String, dynamic>;
       return EventModel.fromJson(eventJson);
     }
 
-    throw ApiException(
-      'Lien invalide (${response.statusCode})',
-      statusCode: response.statusCode,
-    );
+    throw _apiError(response, fallbackMessage: 'Lien invalide');
   }
 
   Future<void> deleteEvent({
@@ -421,17 +369,14 @@ class EventsApi {
   }) async {
     final response = await _client.delete(
       buildApiUri('/events/$eventId'),
-      headers: {'Authorization': 'Bearer $token'},
+      headers: apiAuthHeaders(token),
     );
 
     if (response.statusCode == 200) {
       return;
     }
 
-    throw ApiException(
-      'Suppression impossible (${response.statusCode})',
-      statusCode: response.statusCode,
-    );
+    throw _apiError(response, fallbackMessage: 'Suppression impossible');
   }
 
   Future<List<EventExpenseModel>> fetchEventExpenses({
@@ -440,11 +385,11 @@ class EventsApi {
   }) async {
     final response = await _client.get(
       buildApiUri('/events/$eventId/expenses'),
-      headers: {'Authorization': 'Bearer $token'},
+      headers: apiAuthHeaders(token),
     );
 
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as List<dynamic>;
+      final decoded = decodeJsonBody<List<dynamic>>(response);
       return decoded
           .map((raw) => EventExpenseModel.fromJson(raw as Map<String, dynamic>))
           .toList();
@@ -462,12 +407,12 @@ class EventsApi {
   }) async {
     final response = await _client.get(
       buildApiUri('/events/$eventId/expenses/summary'),
-      headers: {'Authorization': 'Bearer $token'},
+      headers: apiAuthHeaders(token),
     );
 
     if (response.statusCode == 200) {
       return EventExpensesSummaryModel.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
+        decodeJsonBody<Map<String, dynamic>>(response),
       );
     }
 
@@ -489,10 +434,7 @@ class EventsApi {
   }) async {
     final response = await _client.post(
       buildApiUri('/events/$eventId/expenses'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      headers: apiJsonHeaders(token: token),
       body: jsonEncode({
         'title': title,
         'amount_cents': amountCents,
@@ -506,7 +448,7 @@ class EventsApi {
 
     if (response.statusCode == 201) {
       return EventExpenseModel.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
+        decodeJsonBody<Map<String, dynamic>>(response),
       );
     }
 
@@ -523,7 +465,7 @@ class EventsApi {
   }) async {
     final response = await _client.delete(
       buildApiUri('/events/$eventId/expenses/$expenseId'),
-      headers: {'Authorization': 'Bearer $token'},
+      headers: apiAuthHeaders(token),
     );
 
     if (response.statusCode == 200) {
@@ -540,22 +482,7 @@ class EventsApi {
     http.Response response, {
     required String fallbackMessage,
   }) {
-    try {
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-      final details = decoded['details'] as String?;
-      final error = decoded['error'] as String?;
-      final message = details?.isNotEmpty == true
-          ? details!
-          : (error?.isNotEmpty == true
-                ? error!
-                : '$fallbackMessage (${response.statusCode})');
-      return ApiException(message, statusCode: response.statusCode);
-    } catch (_) {
-      return ApiException(
-        '$fallbackMessage (${response.statusCode})',
-        statusCode: response.statusCode,
-      );
-    }
+    return apiExceptionFromResponse(response, fallbackMessage: fallbackMessage);
   }
 
   void dispose() {

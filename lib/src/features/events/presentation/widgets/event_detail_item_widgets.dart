@@ -586,7 +586,7 @@ class _EventItemTile extends StatelessWidget {
                       ? null
                       : () => _showContributors(context, contributors),
                   icon: const Icon(Icons.visibility_outlined, size: 18),
-                  label: const Text('Voir'),
+                  label: Text(S.of(context).view),
                 ),
               ],
             ),

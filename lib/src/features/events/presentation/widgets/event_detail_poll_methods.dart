@@ -311,7 +311,7 @@ extension _EventDetailPollMethods on _EventDetailPageState {
                       children: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Annuler'),
+                          child: Text(S.of(context).cancel),
                         ),
                         const Spacer(),
                         ElevatedButton.icon(
