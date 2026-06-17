@@ -1,21 +1,13 @@
 import 'dart:convert';
 
+import 'package:fiestaaa_front/src/core/api_response.dart';
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-class ApiException implements Exception {
-  ApiException(this.message, {this.statusCode, this.code});
-
-  final String message;
-  final int? statusCode;
-  final String? code;
-
-  @override
-  String toString() => 'ApiException($statusCode, $code): $message';
-}
+export 'package:fiestaaa_front/src/core/api_response.dart' show ApiException;
 
 class AuthApi {
   AuthApi({http.Client? client}) : _client = client ?? createApiHttpClient();
@@ -26,7 +18,7 @@ class AuthApi {
     final response = await _post('/auth/register', body: {'email': email});
 
     if (response.statusCode == 201) {
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = decodeJsonBody<Map<String, dynamic>>(response);
       return decoded['status'] as String? ?? 'verification_pending';
     }
 
@@ -37,7 +29,7 @@ class AuthApi {
     final response = await _post('/auth/verify-email', body: {'token': token});
 
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = decodeJsonBody<Map<String, dynamic>>(response);
       return decoded['status'] as String? ?? 'verified';
     }
 
@@ -126,7 +118,7 @@ class AuthApi {
     );
 
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = decodeJsonBody<Map<String, dynamic>>(response);
       final publicId = decoded['public_id'] as String?;
       final email = decoded['email'] as String?;
       final handle = decoded['handle'] as String?;
@@ -165,21 +157,10 @@ class AuthApi {
   }
 
   ApiException _apiError(http.Response response) {
-    try {
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-      final details = decoded['details'] as String?;
-      final error = decoded['error'] as String? ?? 'Erreur API';
-      return ApiException(
-        details?.isNotEmpty == true ? details! : error,
-        statusCode: response.statusCode,
-        code: error,
-      );
-    } catch (_) {
-      return ApiException(
-        'Erreur inattendue (${response.statusCode})',
-        statusCode: response.statusCode,
-      );
-    }
+    return apiExceptionFromResponse(
+      response,
+      fallbackMessage: 'Erreur inattendue',
+    );
   }
 
   void dispose() {
@@ -190,7 +171,7 @@ class AuthApi {
     http.Response response, {
     String? fallbackIdentifier,
   }) {
-    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    final decoded = decodeJsonBody<Map<String, dynamic>>(response);
     final token = decoded['token'] as String?;
     final publicId = decoded['public_id'] as String?;
     final email = decoded['email'] as String? ?? fallbackIdentifier;

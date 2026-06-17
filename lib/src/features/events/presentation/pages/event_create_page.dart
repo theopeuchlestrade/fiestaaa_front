@@ -3,6 +3,7 @@ import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/address_suggestion.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_form_helpers.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_provider_model.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
@@ -97,47 +98,13 @@ class _EventCreatePageState extends State<EventCreatePage> {
   }
 
   List<String> _orderedFeatureOptions(S l10n) {
-    final features = <String>[
-      eventFeatureCarpools,
-      eventFeaturePolls,
-      eventFeatureItems,
-      eventFeatureTicketing,
-      eventFeaturePlaylist,
-      eventFeaturePayment,
-      eventFeatureExpenses,
-    ];
-    features.sort((left, right) {
-      final leftLabel = _featureLabel(left, l10n).toLowerCase();
-      final rightLabel = _featureLabel(right, l10n).toLowerCase();
-      return leftLabel.compareTo(rightLabel);
-    });
-    return features;
+    return orderedEventFeatureOptions(l10n);
   }
 
   List<String> _orderedEnabledFeatures(S l10n) {
     return _orderedFeatureOptions(
       l10n,
     ).where(_enabledFeatures.contains).toList(growable: false);
-  }
-
-  String _featureLabel(String feature, S l10n) {
-    switch (feature) {
-      case eventFeatureCarpools:
-        return l10n.carpools;
-      case eventFeaturePolls:
-        return l10n.ephemeralPolls;
-      case eventFeatureItems:
-        return l10n.availableItems;
-      case eventFeatureTicketing:
-        return l10n.ticketing;
-      case eventFeaturePlaylist:
-        return l10n.sharedPlaylist;
-      case eventFeaturePayment:
-        return l10n.payment;
-      case eventFeatureExpenses:
-        return l10n.sharedExpenses;
-    }
-    return feature;
   }
 
   Future<void> _loadPaymentProviders() async {
@@ -447,32 +414,17 @@ class _EventCreatePageState extends State<EventCreatePage> {
   }
 
   PaymentProviderModel? _providerById(int? id) {
-    if (id == null) return null;
-    for (final provider in _providers) {
-      if (provider.id == id) return provider;
-    }
-    return null;
+    return eventPaymentProviderById(_providers, id);
   }
 
   String? _validatePaymentLink(String? value) {
-    if (!_enabledFeatures.contains(eventFeaturePayment)) {
-      return null;
-    }
-    if (_selectedProviderId == null) {
-      return null;
-    }
-    final text = value?.trim() ?? '';
-    if (text.isEmpty) {
-      return S.of(context).linkRequired;
-    }
-    final provider = _providerById(_selectedProviderId);
-    final regExp =
-        provider?.compiledValidationRegex ??
-        RegExp(PaymentProviderModel.defaultValidationRegex);
-    if (!regExp.hasMatch(text)) {
-      return S.of(context).linkFormatInvalid(provider?.name ?? 'attendu');
-    }
-    return null;
+    return validateEventPaymentLink(
+      l10n: S.of(context),
+      enabled: _enabledFeatures.contains(eventFeaturePayment),
+      provider: _providerById(_selectedProviderId),
+      value: value,
+      missingProviderName: 'attendu',
+    );
   }
 
   void _showSnack(String text, {bool isError = false}) {
@@ -486,139 +438,25 @@ class _EventCreatePageState extends State<EventCreatePage> {
   }
 
   Widget _buildPlaylistSection() {
-    final providerOptions = <MapEntry<String?, String>>[
-      MapEntry(null, S.of(context).noPlaylist),
-      const MapEntry('spotify', 'Spotify'),
-      const MapEntry('apple_music', 'Apple Music'),
-      const MapEntry('deezer', 'Deezer'),
-    ];
-    final providerItems = providerOptions
-        .map(
-          (option) => DropdownMenuItem<String?>(
-            value: option.key,
-            child: Text(option.value, overflow: TextOverflow.ellipsis),
-          ),
-        )
-        .toList();
-    final selectedItems = providerOptions
-        .map(
-          (option) => Align(
-            alignment: Alignment.centerLeft,
-            child: Text(option.value, overflow: TextOverflow.ellipsis),
-          ),
-        )
-        .toList();
-
-    final urlField = TextFormField(
-      key: const ValueKey('create_playlist_link_field'),
-      controller: _playlistUrlController,
-      decoration: InputDecoration(
-        labelText: S.of(context).playlistLink,
-        prefixIcon: const Icon(Icons.link),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 12,
-        ),
-      ),
-      validator: (value) {
-        if (!_enabledFeatures.contains(eventFeaturePlaylist)) {
-          return null;
-        }
-        final url = value?.trim() ?? '';
-        final provider = _selectedPlaylistProvider;
-        if (provider == null) {
-          return S.of(context).selectProvider;
-        }
-        if (url.isEmpty) {
-          return S.of(context).playlistLinkRequired;
-        }
-        final regExp = switch (provider) {
-          'spotify' => RegExp(r'^https?://open\.spotify\.com/.+$'),
-          'apple_music' => RegExp(r'^https?://music\.apple\.com/.+$'),
-          'deezer' => RegExp(r'^https?://(www\.)?deezer\.com/.+$'),
-          _ => RegExp(r'^https?://.+$'),
-        };
-        if (!regExp.hasMatch(url)) {
-          return S.of(context).invalidPlaylistUrl;
-        }
-        return null;
+    return EventPlaylistSection(
+      valueKeyPrefix: 'create',
+      enabled: _enabledFeatures.contains(eventFeaturePlaylist),
+      selectedProvider: _selectedPlaylistProvider,
+      urlController: _playlistUrlController,
+      onProviderChanged: (value) {
+        setState(() {
+          _selectedPlaylistProvider = value;
+          _playlistChanged = true;
+          if (value == null) {
+            _playlistUrlController.clear();
+          }
+        });
       },
-      keyboardType: TextInputType.url,
-      textInputAction: TextInputAction.done,
-      enabled: _selectedPlaylistProvider != null,
-      onChanged: (_) {
+      onUrlChanged: () {
         setState(() {
           _playlistChanged = true;
         });
       },
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final stacked = constraints.maxWidth < 420;
-            final providerField = DropdownButtonFormField<String?>(
-              key: ValueKey('create_playlist_provider_field_$stacked'),
-              initialValue: _selectedPlaylistProvider,
-              items: providerItems,
-              selectedItemBuilder: (_) => selectedItems,
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: S.of(context).provider,
-                // prefixIcon: _playlistProviderLogo(
-                //   _selectedPlaylistProvider,
-                //   size: 18,
-                // ),
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-              ),
-              validator: (value) {
-                if (_enabledFeatures.contains(eventFeaturePlaylist) &&
-                    value == null) {
-                  return S.of(context).selectProvider;
-                }
-                return null;
-              },
-              onChanged: (value) {
-                setState(() {
-                  _selectedPlaylistProvider = value;
-                  _playlistChanged = true;
-                  if (value == null) {
-                    _playlistUrlController.clear();
-                  }
-                });
-              },
-            );
-
-            if (stacked) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [providerField, const SizedBox(height: 12), urlField],
-              );
-            }
-
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: providerField),
-                const SizedBox(width: 12),
-                Expanded(flex: 2, child: urlField),
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 6),
-        Text(
-          S.of(context).playlistHelperText,
-          style: TextStyle(color: Theme.of(context).fiestaaaMutedText),
-        ),
-      ],
     );
   }
 
