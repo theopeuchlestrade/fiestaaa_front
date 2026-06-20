@@ -19,50 +19,58 @@ for (let index = 2; index < process.argv.length; index += 1) {
 const url = args.get('url') ?? process.env.SMOKE_URL ?? 'https://fiestaaa.app';
 const timeoutMs = Number(args.get('timeout-ms') ?? process.env.SMOKE_TIMEOUT_MS ?? 30000);
 const locale = args.get('locale') ?? process.env.SMOKE_LOCALE ?? 'fr-FR';
+const viewportArg = args.get('viewport') ?? process.env.SMOKE_VIEWPORT ?? 'all';
 
-const browser = await chromium.launch();
-const page = await browser.newPage({
-  viewport: { width: 1366, height: 900 },
-  deviceScaleFactor: 1,
-  locale,
-});
+const viewports = [
+  {
+    name: 'desktop',
+    viewport: { width: 1366, height: 900 },
+    deviceScaleFactor: 1,
+  },
+  {
+    name: 'mobile',
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  },
+];
 
-const failures = [];
+const selectedViewports = viewportArg === 'all'
+  ? viewports
+  : viewports.filter((candidate) => candidate.name === viewportArg);
+
+if (selectedViewports.length === 0) {
+  console.error(`Unknown viewport "${viewportArg}". Use desktop, mobile, or all.`);
+  process.exit(1);
+}
+
 const ignoredConsoleErrors = [
   /Failed to load resource: the server responded with a status of 401/,
 ];
 
-page.on('console', (message) => {
-  const text = message.text();
-  if (
-    message.type() === 'error' &&
-    !ignoredConsoleErrors.some((pattern) => pattern.test(text))
-  ) {
-    failures.push(`console error: ${text}`);
-  }
-});
-
-page.on('pageerror', (error) => {
-  failures.push(`page error: ${error.message}`);
-});
-
-page.on('requestfailed', (request) => {
-  const failure = request.failure();
-  failures.push(`request failed: ${request.url()} (${failure?.errorText ?? 'unknown'})`);
-});
-
-try {
-  const response = await page.goto(url, {
-    waitUntil: 'domcontentloaded',
-    timeout: timeoutMs,
+function collectPageFailures(page, failures) {
+  page.on('console', (message) => {
+    const text = message.text();
+    if (
+      message.type() === 'error' &&
+      !ignoredConsoleErrors.some((pattern) => pattern.test(text))
+    ) {
+      failures.push(`console error: ${text}`);
+    }
   });
 
-  if (!response || !response.ok()) {
-    throw new Error(`navigation failed with status ${response?.status() ?? 'no response'}`);
-  }
+  page.on('pageerror', (error) => {
+    failures.push(`page error: ${error.message}`);
+  });
 
-  await page.waitForLoadState('networkidle', { timeout: timeoutMs }).catch(() => {});
+  page.on('requestfailed', (request) => {
+    const failure = request.failure();
+    failures.push(`request failed: ${request.url()} (${failure?.errorText ?? 'unknown'})`);
+  });
+}
 
+async function waitForFlutter(page) {
   await page.waitForFunction(
     () => {
       const host = document.querySelector('flt-glass-pane, flutter-view');
@@ -71,7 +79,9 @@ try {
     },
     { timeout: timeoutMs },
   );
+}
 
+async function assertNonBlank(page, viewportName) {
   const screenshot = await page.screenshot({ fullPage: false });
   const png = PNG.sync.read(screenshot);
   let sampled = 0;
@@ -94,21 +104,67 @@ try {
 
   const nonBlankRatio = nonBlank / sampled;
   if (nonBlankRatio < 0.01) {
-    throw new Error(`page appears blank (${(nonBlankRatio * 100).toFixed(2)}% non-blank pixels)`);
+    throw new Error(
+      `${viewportName} page appears blank (${(nonBlankRatio * 100).toFixed(2)}% non-blank pixels)`,
+    );
+  }
+}
+
+async function smokeViewport(browser, targetViewport) {
+  const failures = [];
+  const page = await browser.newPage({
+    viewport: targetViewport.viewport,
+    deviceScaleFactor: targetViewport.deviceScaleFactor,
+    isMobile: targetViewport.isMobile ?? false,
+    hasTouch: targetViewport.hasTouch ?? false,
+    locale,
+  });
+  collectPageFailures(page, failures);
+
+  try {
+    const response = await page.goto(url, {
+      waitUntil: 'domcontentloaded',
+      timeout: timeoutMs,
+    });
+
+    if (!response || !response.ok()) {
+      throw new Error(`navigation failed with status ${response?.status() ?? 'no response'}`);
+    }
+
+    await page.waitForLoadState('networkidle', { timeout: timeoutMs }).catch(() => {});
+    await waitForFlutter(page);
+    await assertNonBlank(page, targetViewport.name);
+
+    if (failures.length > 0) {
+      throw new Error(failures.join('\n'));
+    }
+  } finally {
+    await page.close();
   }
 
-  if (failures.length > 0) {
-    throw new Error(failures.join('\n'));
+}
+
+const browser = await chromium.launch();
+const failures = [];
+
+try {
+  for (const targetViewport of selectedViewports) {
+    try {
+      await smokeViewport(browser, targetViewport);
+      console.log(`Smoke check passed for ${url} (${targetViewport.name})`);
+    } catch (error) {
+      failures.push(
+        `${targetViewport.name}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
-  console.log(`Smoke check passed for ${url}`);
-} catch (error) {
-  console.error(`Smoke check failed for ${url}`);
-  if (failures.length > 0) {
-    console.error(failures.join('\n'));
-  }
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
 } finally {
   await browser.close();
+}
+
+if (failures.length > 0) {
+  console.error(`Smoke check failed for ${url}`);
+  console.error(failures.join('\n'));
+  process.exitCode = 1;
 }
