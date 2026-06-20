@@ -28,19 +28,22 @@ T decodeJsonBody<T>(http.Response response) {
   return jsonDecode(response.body) as T;
 }
 
+String? _nonEmptyString(Object? value) {
+  if (value is! String) return null;
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
+}
+
 ApiException apiExceptionFromResponse(
   http.Response response, {
   required String fallbackMessage,
 }) {
   try {
     final decoded = decodeJsonBody<Map<String, dynamic>>(response);
-    final details = decoded['details'] as String?;
-    final error = decoded['error'] as String?;
-    final message = details?.isNotEmpty == true
-        ? details!
-        : (error?.isNotEmpty == true
-              ? error!
-              : '$fallbackMessage (${response.statusCode})');
+    final details = _nonEmptyString(decoded['details']);
+    final error = _nonEmptyString(decoded['error']);
+    final message =
+        details ?? error ?? '$fallbackMessage (${response.statusCode})';
     return ApiException(message, statusCode: response.statusCode, code: error);
   } catch (_) {
     return ApiException(
