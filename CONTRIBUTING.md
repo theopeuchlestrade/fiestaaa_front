@@ -45,13 +45,11 @@ Install the hooks:
 - Describe the context, change, and impact.
 - Verify `flutter gen-l10n`, `dart format`, `flutter analyze`, `flutter test --dart-define-from-file=.env`, and `ruby scripts/check_markdown_links.rb` before opening the MR.
 - Use a PR title or squash commit message that can become a clear release note.
-  Gitmoji is preferred for new work, for example:
-  - `✨ (events): Add item reservations`
-  - `🐛 (auth): Fix OAuth state refresh`
-  - `🔒 (auth): Harden token validation`
-  - `⬆️ (deps): Bump Flutter dependencies`
-- Conventional Commit titles such as `feat(events): add item reservations` and
-  `fix(auth): refresh OAuth state` remain accepted during the transition.
+  Prefer Conventional Commit titles, for example:
+  - `feat(events): add item reservations`
+  - `fix(auth): refresh OAuth state`
+  - `security(auth): harden token validation`
+  - `chore(deps): bump Flutter dependencies`
 - `CHANGELOG.md` is generated automatically during the release workflow from
   commits on `main`; only edit it manually for historical corrections.
 - Security vulnerabilities must not be reported through a public issue; follow `SECURITY.md`.
