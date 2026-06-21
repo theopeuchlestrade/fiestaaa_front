@@ -6,8 +6,11 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() async {
+    SessionStorage.debugResetStorageBackend();
     await SessionStorage.clear();
   });
+
+  tearDown(SessionStorage.debugResetStorageBackend);
 
   test('save and load round-trip a complete session', () async {
     final session = SessionData(
@@ -58,4 +61,54 @@ void main() {
 
     expect(await SessionStorage.load(), isNull);
   });
+
+  test(
+    'clear removes fallback data even when secure storage deletes succeed',
+    () async {
+      final storage = _FakeSessionStorageBackend(failWrites: true);
+      SessionStorage.debugSetStorageBackend(storage);
+
+      await SessionStorage.save(
+        SessionData(
+          token: 'fallback-token',
+          email: 'fallback@example.com',
+          handle: 'fallback',
+        ),
+      );
+
+      storage.failReads = true;
+      await SessionStorage.clear();
+
+      expect(await SessionStorage.load(), isNull);
+    },
+  );
+}
+
+class _FakeSessionStorageBackend implements SessionStorageBackend {
+  _FakeSessionStorageBackend({this.failWrites = false});
+
+  bool failWrites;
+  bool failReads = false;
+  final Map<String, String> values = <String, String>{};
+
+  @override
+  Future<void> write({required String key, String? value}) async {
+    if (failWrites) throw StateError('write failed');
+    if (value == null) {
+      values.remove(key);
+    } else {
+      values[key] = value;
+    }
+  }
+
+  @override
+  Future<String?> read({required String key}) async {
+    if (failReads) throw StateError('read failed');
+    return values[key];
+  }
+
+  @override
+  Future<void> delete({required String key}) async {
+    values.remove(key);
+  }
 }

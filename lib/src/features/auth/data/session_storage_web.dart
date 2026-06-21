@@ -1,5 +1,12 @@
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
+import 'package:flutter/foundation.dart';
 import 'package:web/web.dart' as web;
+
+abstract class SessionStorageBackend {
+  Future<void> write({required String key, String? value});
+  Future<String?> read({required String key});
+  Future<void> delete({required String key});
+}
 
 class SessionStorage {
   static const _publicIdKey = 'fiestaaa_public_id';
@@ -45,4 +52,10 @@ class SessionStorage {
   static Future<bool> shouldProbeCookieSession() async {
     return web.window.localStorage.getItem(_cookieSessionHintKey) == '1';
   }
+
+  @visibleForTesting
+  static void debugSetStorageBackend(SessionStorageBackend storage) {}
+
+  @visibleForTesting
+  static void debugResetStorageBackend() {}
 }
