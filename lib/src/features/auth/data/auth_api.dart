@@ -48,6 +48,7 @@ class AuthApi {
         'password': password,
         if (handle != null && handle.trim().isNotEmpty) 'handle': handle.trim(),
       },
+      includeBearerResponse: true,
     );
 
     if (response.statusCode == 200) {
@@ -64,6 +65,7 @@ class AuthApi {
     final response = await _post(
       '/auth/login',
       body: {'identifier': identifier, 'password': password},
+      includeBearerResponse: true,
     );
 
     if (response.statusCode == 200) {
@@ -102,6 +104,7 @@ class AuthApi {
         if (displayName != null && displayName.trim().isNotEmpty)
           'name': displayName.trim(),
       },
+      includeBearerResponse: true,
     );
 
     if (response.statusCode == 200) {
@@ -140,10 +143,16 @@ class AuthApi {
   Future<http.Response> _post(
     String path, {
     required Map<String, dynamic> body,
+    bool includeBearerResponse = false,
   }) {
+    final headers = {
+      'Content-Type': 'application/json',
+      if (includeBearerResponse && !kIsWeb)
+        'X-Fiestaaa-Auth-Response': 'bearer',
+    };
     return _client.post(
       buildApiUri(path),
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: jsonEncode(body),
     );
   }

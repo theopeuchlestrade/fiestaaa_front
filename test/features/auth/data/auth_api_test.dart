@@ -34,6 +34,7 @@ void main() {
     final body = jsonDecode(capturedRequest.body) as Map<String, dynamic>;
     expect(capturedRequest.method, 'POST');
     expect(capturedRequest.url.path, endsWith('/auth/oauth/apple'));
+    expect(capturedRequest.headers['X-Fiestaaa-Auth-Response'], 'bearer');
     expect(body['idToken'], 'apple-id-token');
     expect(body['accessToken'], isNull);
     expect(body['email'], 'Apple.User@Example.com');
@@ -71,10 +72,44 @@ void main() {
       final body = jsonDecode(capturedRequest.body) as Map<String, dynamic>;
       expect(capturedRequest.method, 'POST');
       expect(capturedRequest.url.path, endsWith('/auth/oauth/google'));
+      expect(capturedRequest.headers['X-Fiestaaa-Auth-Response'], 'bearer');
       expect(body['idToken'], isNull);
       expect(body['accessToken'], 'google-access-token');
     },
   );
+
+  test('login requests bearer token responses on native clients', () async {
+    late http.Request capturedRequest;
+    final api = AuthApi(
+      client: MockClient((request) async {
+        capturedRequest = request;
+        return http.Response(
+          jsonEncode({
+            'token': 'session-token',
+            'public_id': 'public-user-id',
+            'email': 'native.user@example.com',
+            'handle': 'native_user',
+          }),
+          200,
+          headers: {'Content-Type': 'application/json'},
+        );
+      }),
+    );
+
+    final session = await api.login(
+      identifier: 'native.user@example.com',
+      password: 'MyStr0ng!Pass#2025',
+    );
+
+    final body = jsonDecode(capturedRequest.body) as Map<String, dynamic>;
+    expect(capturedRequest.method, 'POST');
+    expect(capturedRequest.url.path, endsWith('/auth/login'));
+    expect(capturedRequest.headers['X-Fiestaaa-Auth-Response'], 'bearer');
+    expect(body['identifier'], 'native.user@example.com');
+    expect(body['password'], 'MyStr0ng!Pass#2025');
+    expect(session.token, 'session-token');
+    expect(session.email, 'native.user@example.com');
+  });
 
   test(
     'loginWithProvider rejects empty provider tokens before posting',
