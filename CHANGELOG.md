@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-06-24
+
+### Dependencies
+- *(deps)* Bump actions/checkout from 6.0.3 to 7.0.0.
+- *(deps-dev)* Bump playwright from 1.60.0 to 1.61.0 in the npm-dependencies group.
+- *(deps)* Bump nginx from 1.31.1-alpine to 1.31.2-alpine.
+- *(deps)* Bump actions/setup-java from 5.2.0 to 5.3.0.
+- *(deps)* Bump the pub-dependencies group with 2 updates.
+
+### Fixed
+- *(auth)* Request bearer token responses on native clients (#115).
+
+### Internal
+- Clear native session fallback on logout (#116).
+
 ## [0.1.2] - 2026-06-20
 
 ### Added
