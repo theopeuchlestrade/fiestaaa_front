@@ -4,6 +4,7 @@ import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/address_suggestion.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_form_helpers.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/widgets/timezone_selector.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_provider_model.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
@@ -42,6 +43,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
   final _paymentProvidersApi = PaymentProvidersApi();
 
   DateTime _selectedDate = DateTime.now();
+  String _timezone = 'Europe/Paris';
   TimeOfDay _selectedTime = TimeOfDay.now();
   bool _hasEndDateTime = false;
   DateTime? _selectedEndDate;
@@ -349,6 +351,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
         hours: _selectedTime.hour,
         minutes: _selectedTime.minute,
       ),
+      timezone: _timezone,
       endDate: endDate,
       endTime: endTime,
       invitationDeadline: _invitationDeadline,
@@ -926,6 +929,11 @@ class _EventCreatePageState extends State<EventCreatePage> {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        TimezoneSelector(
+          value: _timezone,
+          onChanged: (value) => setState(() => _timezone = value),
         ),
         const SizedBox(height: 12),
         SwitchListTile.adaptive(

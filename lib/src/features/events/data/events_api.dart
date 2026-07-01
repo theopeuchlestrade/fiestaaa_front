@@ -57,6 +57,33 @@ class EventsApi {
     );
   }
 
+  Future<Page<EventModel>> fetchEventsPage({
+    required String token,
+    int limit = 50,
+    String? cursor,
+  }) async {
+    final response = await _client.get(
+      buildApiUri(
+        '/events',
+        queryParameters: {'limit': '$limit', 'cursor': ?cursor},
+      ),
+      headers: apiAuthHeaders(token),
+    );
+    if (response.statusCode != 200) {
+      throw _apiError(
+        response,
+        fallbackMessage: 'Impossible de récupérer les fiestaaa',
+      );
+    }
+    final decoded = decodeJsonBody<List<dynamic>>(response);
+    return Page(
+      items: decoded
+          .map((e) => EventModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      nextCursor: response.headers['x-next-cursor'],
+    );
+  }
+
   Future<EventModel> createEvent({
     required String token,
     required EventPayload payload,
@@ -379,25 +406,49 @@ class EventsApi {
     throw _apiError(response, fallbackMessage: 'Suppression impossible');
   }
 
+  Future<List<EventModel>> fetchTrashedEvents({required String token}) async {
+    final response = await _client.get(
+      buildApiUri('/events/trash'),
+      headers: apiAuthHeaders(token),
+    );
+    if (response.statusCode != 200) {
+      throw _apiError(
+        response,
+        fallbackMessage: 'Impossible de charger la corbeille',
+      );
+    }
+    return decodeJsonBody<List<dynamic>>(
+      response,
+    ).map((raw) => EventModel.fromJson(raw as Map<String, dynamic>)).toList();
+  }
+
+  Future<EventModel> restoreEvent({
+    required String token,
+    required int eventId,
+  }) async {
+    final response = await _client.post(
+      buildApiUri('/events/$eventId/restore'),
+      headers: apiAuthHeaders(token),
+    );
+    if (response.statusCode != 200) {
+      throw _apiError(response, fallbackMessage: 'Restauration impossible');
+    }
+    return EventModel.fromJson(decodeJsonBody<Map<String, dynamic>>(response));
+  }
+
   Future<List<EventExpenseModel>> fetchEventExpenses({
     required String token,
     required int eventId,
   }) async {
-    final response = await _client.get(
-      buildApiUri('/events/$eventId/expenses'),
-      headers: apiAuthHeaders(token),
-    );
-
-    if (response.statusCode == 200) {
-      final decoded = decodeJsonBody<List<dynamic>>(response);
-      return decoded
-          .map((raw) => EventExpenseModel.fromJson(raw as Map<String, dynamic>))
-          .toList();
-    }
-
-    throw _apiError(
-      response,
-      fallbackMessage: 'Impossible de charger les dépenses',
+    return collectCursorPages(
+      request: (cursor) => _client.get(
+        buildApiUri(
+          '/events/$eventId/expenses',
+          queryParameters: {'limit': '100', 'cursor': ?cursor},
+        ),
+        headers: apiAuthHeaders(token),
+      ),
+      decode: EventExpenseModel.fromJson,
     );
   }
 
