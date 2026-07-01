@@ -48,6 +48,13 @@ class EventModel {
     required this.playlistProvider,
     required this.enabledFeatures,
     this.invitationDeadline,
+    this.timezone = 'Europe/Paris',
+    this.canonicalStartAt,
+    this.canonicalEffectiveEndAt,
+    this.lifecycleStatus,
+    this.deletedAt,
+    this.purgeAt,
+    this.deletionReason,
   });
 
   final int id;
@@ -69,6 +76,13 @@ class EventModel {
   final String? playlistProvider;
   final List<String> enabledFeatures;
   final DateTime? invitationDeadline;
+  final String timezone;
+  final DateTime? canonicalStartAt;
+  final DateTime? canonicalEffectiveEndAt;
+  final String? lifecycleStatus;
+  final DateTime? deletedAt;
+  final DateTime? purgeAt;
+  final String? deletionReason;
 
   DateTime get startDateTime =>
       DateTime(date.year, date.month, date.day).add(startTime);
@@ -81,6 +95,10 @@ class EventModel {
   bool get hasEndDateTime => endDate != null && endTime != null;
 
   bool get isFinished {
+    if (lifecycleStatus != null) return lifecycleStatus == 'finished';
+    if (canonicalEffectiveEndAt != null) {
+      return DateTime.now().toUtc().isAfter(canonicalEffectiveEndAt!.toUtc());
+    }
     final now = DateTime.now();
     final computedEnd = endDateTime;
     if (computedEnd != null) {
@@ -93,6 +111,12 @@ class EventModel {
   }
 
   bool get isOngoing {
+    if (lifecycleStatus != null) return lifecycleStatus == 'ongoing';
+    if (canonicalStartAt != null && canonicalEffectiveEndAt != null) {
+      final now = DateTime.now().toUtc();
+      return !now.isBefore(canonicalStartAt!.toUtc()) &&
+          !now.isAfter(canonicalEffectiveEndAt!.toUtc());
+    }
     if (isFinished) return false;
     final now = DateTime.now();
     if (now.isBefore(startDateTime)) return false;
@@ -113,8 +137,7 @@ class EventModel {
     return 'upcoming';
   }
 
-  String get formattedDate =>
-      DateFormat.yMMMMd('fr_FR').format(date); // locale friendly
+  String get formattedDate => DateFormat.yMMMMd().format(date);
 
   String get formattedTime {
     final hours = startTime.inHours.toString().padLeft(2, '0');
@@ -125,7 +148,7 @@ class EventModel {
   EventAddressSummary get shortAddressSummary => _formatShortAddress(address);
 
   String? get formattedEndDate =>
-      endDate == null ? null : DateFormat.yMMMMd('fr_FR').format(endDate!);
+      endDate == null ? null : DateFormat.yMMMMd().format(endDate!);
 
   String? get formattedEndTime {
     final value = endTime;
@@ -139,7 +162,7 @@ class EventModel {
 
   String? get formattedInvitationDeadline => invitationDeadline == null
       ? null
-      : DateFormat.yMMMMd('fr_FR').format(invitationDeadline!);
+      : DateFormat.yMMMMd().format(invitationDeadline!);
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
     final date = DateTime.parse(json['date_event'] as String);
@@ -184,6 +207,17 @@ class EventModel {
           (json['invitation_deadline'] as String?)?.isEmpty ?? true
           ? null
           : DateTime.parse(json['invitation_deadline'] as String),
+      timezone: json['timezone'] as String? ?? 'Europe/Paris',
+      canonicalStartAt: _parseOptionalInstant(
+        json['start_at'] ?? json['starts_at'],
+      ),
+      canonicalEffectiveEndAt: _parseOptionalInstant(
+        json['effective_end_at'] ?? json['effective_ends_at'],
+      ),
+      lifecycleStatus: json['lifecycle_status'] as String?,
+      deletedAt: _parseOptionalInstant(json['deleted_at']),
+      purgeAt: _parseOptionalInstant(json['purge_at']),
+      deletionReason: json['deletion_reason'] as String?,
     );
   }
 
@@ -199,6 +233,11 @@ class EventModel {
     if (value is num) return value.toDouble();
     final parsed = double.tryParse(value.toString());
     return parsed;
+  }
+
+  static DateTime? _parseOptionalInstant(dynamic value) {
+    if (value is! String || value.isEmpty) return null;
+    return DateTime.tryParse(value);
   }
 
   static bool _isSameDay(DateTime a, DateTime b) {
@@ -530,6 +569,7 @@ class EventPayload {
     this.playlistUrl,
     this.playlistProvider,
     this.enabledFeatures,
+    this.timezone = 'Europe/Paris',
   });
 
   final String name;
@@ -549,6 +589,7 @@ class EventPayload {
   final String? playlistUrl;
   final String? playlistProvider;
   final List<String>? enabledFeatures;
+  final String timezone;
 
   Map<String, dynamic> toJson() {
     return {
@@ -556,6 +597,7 @@ class EventPayload {
       'description': description,
       'date_event': DateFormat('yyyy-MM-dd').format(date),
       'start_time': _formatDuration(startTime),
+      'timezone': timezone,
       'end_date': endDate == null
           ? null
           : DateFormat('yyyy-MM-dd').format(endDate!),

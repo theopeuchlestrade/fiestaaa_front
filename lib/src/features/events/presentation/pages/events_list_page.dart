@@ -15,11 +15,13 @@ class EventsListPage extends StatefulWidget {
     required this.onEventSelected,
     required this.session,
     this.onPendingInvitesChanged,
+    this.onOpenTrash,
   });
 
   final SessionData session;
   final EventSelected onEventSelected;
   final ValueChanged<int>? onPendingInvitesChanged;
+  final VoidCallback? onOpenTrash;
 
   @override
   State<EventsListPage> createState() => EventsListPageState();
@@ -160,7 +162,24 @@ class EventsListPageState extends State<EventsListPage> {
 
     return FiestaaaBackground(
       padding: const EdgeInsets.only(bottom: 16),
-      child: SafeArea(child: content),
+      child: SafeArea(
+        child: Column(
+          children: [
+            if (widget.onOpenTrash != null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  tooltip: Localizations.localeOf(context).languageCode == 'fr'
+                      ? 'Corbeille'
+                      : 'Trash',
+                  onPressed: widget.onOpenTrash,
+                  icon: const Icon(Icons.delete_outline),
+                ),
+              ),
+            Expanded(child: content),
+          ],
+        ),
+      ),
     );
   }
 }

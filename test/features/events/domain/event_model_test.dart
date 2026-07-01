@@ -4,6 +4,27 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('canonical lifecycle overrides the device time zone', () {
+    final event = EventModel.fromJson({
+      'event_id': 42,
+      'name_event': 'DST safe',
+      'description': 'Canonical instants',
+      'date_event': '2026-10-25',
+      'start_time': '03:30:00',
+      'address': 'Paris',
+      'timezone': 'Europe/Paris',
+      'start_at': '2026-10-25T02:30:00Z',
+      'effective_end_at': '2026-10-25T23:00:00Z',
+      'lifecycle_status': 'ongoing',
+      'purge_at': '2026-12-01T12:00:00Z',
+    });
+
+    expect(event.timezone, 'Europe/Paris');
+    expect(event.status, 'ongoing');
+    expect(event.isOngoing, isTrue);
+    expect(event.purgeAt, DateTime.parse('2026-12-01T12:00:00Z'));
+  });
+
   test('fromJson infers optional features when enabled_features is absent', () {
     final event = EventModel.fromJson({
       'event_id': 1,
@@ -89,6 +110,7 @@ void main() {
       'description': 'Sunday brunch',
       'date_event': '2030-05-04',
       'start_time': '11:05:00',
+      'timezone': 'Europe/Paris',
       'end_date': null,
       'end_time': null,
       'address': '10 Main Street',

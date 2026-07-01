@@ -3,7 +3,27 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
 void main() {
-  test('apiExceptionFromResponse prefers non-empty details', () {
+  test('collectCursorPages follows response cursors', () async {
+    final cursors = <String?>[];
+    final result = await collectCursorPages<int>(
+      request: (cursor) async {
+        cursors.add(cursor);
+        return cursor == null
+            ? http.Response(
+                '[{"id":1}]',
+                200,
+                headers: {'x-next-cursor': 'next'},
+              )
+            : http.Response('[{"id":2}]', 200);
+      },
+      decode: (json) => json['id'] as int,
+    );
+
+    expect(result, [1, 2]);
+    expect(cursors, [null, 'next']);
+  });
+
+  test('apiExceptionFromResponse never exposes backend details', () {
     final exception = apiExceptionFromResponse(
       http.Response(
         '{"error":"invalid_request","details":"Champ invalide"}',
@@ -12,7 +32,7 @@ void main() {
       fallbackMessage: 'Erreur API',
     );
 
-    expect(exception.message, 'Champ invalide');
+    expect(exception.message, 'invalid_request');
     expect(exception.code, 'invalid_request');
     expect(exception.statusCode, 400);
   });

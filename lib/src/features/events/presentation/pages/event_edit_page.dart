@@ -4,6 +4,7 @@ import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/address_suggestion.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_form_helpers.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/widgets/timezone_selector.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/domain/payment_provider_model.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
@@ -51,6 +52,7 @@ class _EventEditPageState extends State<EventEditPage> {
   final _paymentProvidersApi = PaymentProvidersApi();
 
   late DateTime _selectedDate;
+  late String _timezone;
   late TimeOfDay _selectedTime;
   bool _hasEndDateTime = false;
   DateTime? _selectedEndDate;
@@ -88,6 +90,7 @@ class _EventEditPageState extends State<EventEditPage> {
     _selectedPlaylistProvider = event.playlistProvider;
     _enabledFeatures.addAll(event.enabledFeatures);
     _selectedDate = event.date;
+    _timezone = event.timezone;
     _invitationDeadline = event.invitationDeadline;
     final startDate = event.startDateTime;
     _selectedTime = TimeOfDay(hour: startDate.hour, minute: startDate.minute);
@@ -394,6 +397,7 @@ class _EventEditPageState extends State<EventEditPage> {
         hours: _selectedTime.hour,
         minutes: _selectedTime.minute,
       ),
+      timezone: _timezone,
       endDate: endDate,
       endTime: endTime,
       invitationDeadline: _invitationDeadline,
@@ -672,6 +676,11 @@ class _EventEditPageState extends State<EventEditPage> {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        TimezoneSelector(
+          value: _timezone,
+          onChanged: (value) => setState(() => _timezone = value),
         ),
         const SizedBox(height: 12),
         SwitchListTile.adaptive(

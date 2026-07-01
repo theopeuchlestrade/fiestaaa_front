@@ -5,6 +5,7 @@ import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_create_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_detail_page.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/pages/event_trash_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/events_list_page.dart';
 import 'package:fiestaaa_front/src/features/friends/data/friends_api.dart';
 import 'package:fiestaaa_front/src/features/friends/presentation/pages/friends_page.dart';
@@ -13,6 +14,7 @@ import 'package:fiestaaa_front/src/features/profile/presentation/pages/profile_p
 import 'package:fiestaaa_front/src/core/push_notification_service.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:fiestaaa_front/src/core/theme_service.dart';
+import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +31,7 @@ class HomePage extends StatefulWidget {
     this.onSessionUpdated,
     this.localeService,
     this.themeService,
+    this.initialIndex = 0,
   });
 
   final SessionData session;
@@ -40,6 +43,7 @@ class HomePage extends StatefulWidget {
   final Future<void> Function(SessionData session)? onSessionUpdated;
   final LocaleService? localeService;
   final ThemeService? themeService;
+  final int initialIndex;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -51,7 +55,7 @@ class _HomePageState extends State<HomePage> {
   final _invitesApi = InvitationsApi();
   final _friendsApi = FriendsApi();
   RealtimeClient? _realtime;
-  int _selectedIndex = 0;
+  late int _selectedIndex;
   bool _claimingShare = false;
   bool _shareHandled = false;
   late SessionData _session;
@@ -79,6 +83,13 @@ class _HomePageState extends State<HomePage> {
       ),
     );
     if (!mounted) return;
+    _eventsKey.currentState?.reload();
+  }
+
+  Future<void> _openTrash() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => EventTrashPage(session: _session)),
+    );
     _eventsKey.currentState?.reload();
   }
 
@@ -129,6 +140,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _session = widget.session;
+    _selectedIndex = widget.initialIndex.clamp(0, 3).toInt();
     _loadPendingBadges();
     _startRealtime();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -212,6 +224,24 @@ class _HomePageState extends State<HomePage> {
       _shareHandled = true;
       widget.onShareTokenConsumed?.call();
       _showSnack(e.message);
+    } on ApiTransportException {
+      if (!mounted) return;
+      _shareHandled = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            Localizations.localeOf(context).languageCode == 'fr'
+                ? 'Réseau indisponible'
+                : 'Network unavailable',
+          ),
+          action: SnackBarAction(
+            label: Localizations.localeOf(context).languageCode == 'fr'
+                ? 'Réessayer'
+                : 'Retry',
+            onPressed: _claimShareIfNeeded,
+          ),
+        ),
+      );
     } catch (_) {
       _shareHandled = true;
       widget.onShareTokenConsumed?.call();
@@ -259,6 +289,7 @@ class _HomePageState extends State<HomePage> {
         onEventSelected: _openEvent,
         onPendingInvitesChanged: (count) =>
             setState(() => _pendingEventInvites = count),
+        onOpenTrash: _openTrash,
       ),
       EventCreatePage(session: _session, onEventCreated: _handleEventCreated),
       FriendsPage(

@@ -13,6 +13,41 @@ class ApiException implements Exception {
   String toString() => 'ApiException($statusCode, $code): $message';
 }
 
+class InvalidApiResponseException extends ApiException {
+  InvalidApiResponseException()
+    : super('invalid_response', code: 'invalid_response');
+}
+
+class Page<T> {
+  const Page({required this.items, this.nextCursor});
+
+  final List<T> items;
+  final String? nextCursor;
+
+  bool get hasMore => nextCursor != null && nextCursor!.isNotEmpty;
+}
+
+Future<List<T>> collectCursorPages<T>({
+  required Future<http.Response> Function(String? cursor) request,
+  required T Function(Map<String, dynamic> json) decode,
+}) async {
+  final items = <T>[];
+  String? cursor;
+  do {
+    final response = await request(cursor);
+    if (response.statusCode != 200) {
+      throw apiExceptionFromResponse(
+        response,
+        fallbackMessage: 'request_failed',
+      );
+    }
+    final values = decodeJsonBody<List<dynamic>>(response);
+    items.addAll(values.map((value) => decode(value as Map<String, dynamic>)));
+    cursor = response.headers['x-next-cursor'];
+  } while (cursor != null && cursor.isNotEmpty);
+  return items;
+}
+
 Map<String, String> apiAuthHeaders(String token) {
   return {'Authorization': 'Bearer $token'};
 }
@@ -25,7 +60,11 @@ Map<String, String> apiJsonHeaders({String? token}) {
 }
 
 T decodeJsonBody<T>(http.Response response) {
-  return jsonDecode(response.body) as T;
+  try {
+    return jsonDecode(response.body) as T;
+  } on Object {
+    throw InvalidApiResponseException();
+  }
 }
 
 String? _nonEmptyString(Object? value) {
@@ -40,10 +79,8 @@ ApiException apiExceptionFromResponse(
 }) {
   try {
     final decoded = decodeJsonBody<Map<String, dynamic>>(response);
-    final details = _nonEmptyString(decoded['details']);
     final error = _nonEmptyString(decoded['error']);
-    final message =
-        details ?? error ?? '$fallbackMessage (${response.statusCode})';
+    final message = error ?? '$fallbackMessage (${response.statusCode})';
     return ApiException(message, statusCode: response.statusCode, code: error);
   } catch (_) {
     return ApiException(
