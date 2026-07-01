@@ -1,12 +1,18 @@
 import 'dart:async';
 
 import 'package:fiestaaa_front/src/core/locale_service.dart';
+import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/query_param_sanitizer.dart';
+import 'package:fiestaaa_front/src/core/pending_token_storage.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/data/session_storage.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/auth/presentation/pages/auth_page.dart';
 import 'package:fiestaaa_front/src/features/home/presentation/pages/home_page.dart';
+import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
+import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/pages/event_detail_page.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/pages/event_trash_page.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/src/core/push_notification_service.dart';
 import 'package:fiestaaa_front/src/core/theme_service.dart';
@@ -14,6 +20,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:go_router/go_router.dart';
 
 class FiestaaaApp extends StatefulWidget {
   const FiestaaaApp({super.key});
@@ -23,6 +30,8 @@ class FiestaaaApp extends StatefulWidget {
 }
 
 class _FiestaaaAppState extends State<FiestaaaApp> {
+  static const _shareTokenKey = 'fiestaaa_pending_share_token';
+  static const _verificationTokenKey = 'fiestaaa_pending_verification_token';
   final _authApi = AuthApi();
   final _localeService = LocaleService();
   late final ThemeService _themeService = ThemeService();
@@ -36,13 +45,78 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   PushNotificationIntent? _pendingNotificationIntent;
   int _notificationIntentSerial = 0;
   StreamSubscription<PushNotificationIntent>? _notificationIntentSub;
+  late final GoRouter _router;
 
   @override
   void initState() {
     super.initState();
-    _pendingShareToken = Uri.base.queryParameters['shareToken'];
+    _router = GoRouter(
+      initialLocation: Uri.base.path.isEmpty ? '/' : Uri.base.path,
+      routes: [
+        GoRoute(path: '/', builder: (context, state) => _rootPage()),
+        GoRoute(path: '/auth', builder: (context, state) => _authPage()),
+        GoRoute(
+          path: '/events',
+          builder: (context, state) => _homePage(initialIndex: 0),
+        ),
+        GoRoute(
+          path: '/events/:eventId',
+          builder: (context, state) => _DirectEventPage(
+            session: _session!,
+            eventId: int.parse(state.pathParameters['eventId']!),
+          ),
+        ),
+        GoRoute(
+          path: '/events/:eventId/carpools',
+          redirect: (context, state) =>
+              '/events/${state.pathParameters['eventId']}',
+        ),
+        GoRoute(
+          path: '/events/:eventId/expenses',
+          redirect: (context, state) =>
+              '/events/${state.pathParameters['eventId']}',
+        ),
+        GoRoute(
+          path: '/invitations',
+          builder: (context, state) => _homePage(initialIndex: 0),
+        ),
+        GoRoute(
+          path: '/friends',
+          builder: (context, state) => _homePage(initialIndex: 2),
+        ),
+        GoRoute(
+          path: '/profile',
+          builder: (context, state) => _homePage(initialIndex: 3),
+        ),
+        GoRoute(
+          path: '/trash',
+          builder: (context, state) => EventTrashPage(session: _session!),
+        ),
+      ],
+      redirect: (context, state) {
+        if (_loadingSession) return state.matchedLocation == '/' ? null : '/';
+        final authenticated = _session != null;
+        if (!authenticated && state.matchedLocation != '/auth') return '/auth';
+        if (authenticated && state.matchedLocation == '/auth') return '/events';
+        if (authenticated && state.matchedLocation == '/') return '/events';
+        return null;
+      },
+    );
+    _pendingShareToken =
+        Uri.base.queryParameters['shareToken'] ??
+        PendingTokenStorage.read(_shareTokenKey);
     _pendingEmailVerificationToken =
-        Uri.base.queryParameters['verifyEmailToken'];
+        Uri.base.queryParameters['verifyEmailToken'] ??
+        PendingTokenStorage.read(_verificationTokenKey);
+    if (_pendingShareToken != null) {
+      PendingTokenStorage.write(_shareTokenKey, _pendingShareToken!);
+    }
+    if (_pendingEmailVerificationToken != null) {
+      PendingTokenStorage.write(
+        _verificationTokenKey,
+        _pendingEmailVerificationToken!,
+      );
+    }
     if (kIsWeb &&
         (_pendingShareToken != null ||
             _pendingEmailVerificationToken != null)) {
@@ -98,6 +172,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
           _session = refreshed;
           _loadingSession = false;
         });
+        _router.refresh();
         if (refreshed != null) {
           unawaited(PushNotificationService.instance.syncSession(refreshed));
           await SessionStorage.save(refreshed);
@@ -109,6 +184,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
         _session = null;
         _loadingSession = false;
       });
+      _router.refresh();
       return;
     }
 
@@ -117,6 +193,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       _session = session;
       _loadingSession = false;
     });
+    _router.refresh();
     unawaited(PushNotificationService.instance.syncSession(session));
     unawaited(_refreshRestoredSession(session));
   }
@@ -145,6 +222,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       _session = refreshed;
       _loadingSession = false;
     });
+    _router.refresh();
 
     if (refreshed != null) {
       unawaited(PushNotificationService.instance.syncSession(refreshed));
@@ -172,6 +250,20 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
           _authFlashIsError = false;
           break;
       }
+      PendingTokenStorage.remove(_verificationTokenKey);
+    } on ApiTransportException {
+      _authFlashCode = 'network_error';
+      _authFlashIsError = true;
+      return;
+    } on ApiException catch (error) {
+      if (error.code == 'token_expired' ||
+          error.code == 'invalid_token' ||
+          error.statusCode == 410) {
+        PendingTokenStorage.remove(_verificationTokenKey);
+      }
+      _pendingRegistrationCompletionToken = null;
+      _authFlashCode = 'email_verification_failed';
+      _authFlashIsError = true;
     } catch (_) {
       _pendingRegistrationCompletionToken = null;
       _authFlashCode = 'email_verification_failed';
@@ -191,6 +283,8 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       _authFlashCode = null;
       _authFlashIsError = false;
     });
+    _router.refresh();
+    _router.go('/events');
   }
 
   void _handlePushNotificationIntent(PushNotificationIntent intent) {
@@ -204,6 +298,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       _pendingNotificationIntent = intent;
       _notificationIntentSerial++;
     });
+    if (_session != null) _router.go('/friends');
   }
 
   Future<void> _handleLogout() async {
@@ -223,6 +318,8 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       _authFlashCode = null;
       _authFlashIsError = false;
     });
+    _router.refresh();
+    _router.go('/auth');
   }
 
   @override
@@ -232,6 +329,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     _notificationIntentSub?.cancel();
     _authApi.dispose();
     PushNotificationService.instance.dispose();
+    _router.dispose();
     super.dispose();
   }
 
@@ -246,7 +344,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Fiestaaa',
       debugShowCheckedModeBanner: false,
       theme: buildFiestaaaTheme(),
@@ -267,32 +365,94 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
         }
         return LocaleService.resolveDeviceLocales(deviceLocales);
       },
-      home: _loadingSession
-          ? const _SplashScreen()
-          : _session == null
-          ? AuthPage(
-              onAuthenticated: _handleAuthenticated,
-              flashCode: _authFlashCode,
-              flashIsError: _authFlashIsError,
-              pendingRegistrationToken: _pendingRegistrationCompletionToken,
-            )
-          : HomePage(
-              session: _session!,
-              onLogout: _handleLogout,
-              onSessionUpdated: _handleAuthenticated,
-              initialShareToken: _pendingShareToken,
-              notificationIntent: _pendingNotificationIntent,
-              notificationIntentSerial: _notificationIntentSerial,
-              onShareTokenConsumed: () {
-                setState(() {
-                  _pendingShareToken = null;
-                });
-              },
-              localeService: _localeService,
-              themeService: _themeService,
-            ),
+      routerConfig: _router,
     );
   }
+
+  Widget _rootPage() => _loadingSession
+      ? const _SplashScreen()
+      : _session == null
+      ? _authPage()
+      : _homePage();
+
+  Widget _authPage() => AuthPage(
+    onAuthenticated: _handleAuthenticated,
+    flashCode: _authFlashCode,
+    flashIsError: _authFlashIsError,
+    pendingRegistrationToken: _pendingRegistrationCompletionToken,
+  );
+
+  Widget _homePage({int initialIndex = 0}) => HomePage(
+    session: _session!,
+    onLogout: _handleLogout,
+    onSessionUpdated: _handleAuthenticated,
+    initialShareToken: _pendingShareToken,
+    notificationIntent: _pendingNotificationIntent,
+    notificationIntentSerial: _notificationIntentSerial,
+    initialIndex: initialIndex,
+    onShareTokenConsumed: () {
+      PendingTokenStorage.remove(_shareTokenKey);
+      setState(() => _pendingShareToken = null);
+    },
+    localeService: _localeService,
+    themeService: _themeService,
+  );
+}
+
+class _DirectEventPage extends StatefulWidget {
+  const _DirectEventPage({required this.session, required this.eventId});
+
+  final SessionData session;
+  final int eventId;
+
+  @override
+  State<_DirectEventPage> createState() => _DirectEventPageState();
+}
+
+class _DirectEventPageState extends State<_DirectEventPage> {
+  final EventsApi _api = EventsApi();
+  late Future<EventModel> _event;
+
+  @override
+  void initState() {
+    super.initState();
+    _event = _api.fetchEventById(
+      token: widget.session.token,
+      eventId: widget.eventId,
+    );
+  }
+
+  @override
+  void dispose() {
+    _api.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<EventModel>(
+    future: _event,
+    builder: (context, snapshot) {
+      if (snapshot.hasError) {
+        return Scaffold(
+          body: Center(
+            child: FilledButton(
+              onPressed: () => setState(() {
+                _event = _api.fetchEventById(
+                  token: widget.session.token,
+                  eventId: widget.eventId,
+                );
+              }),
+              child: const Text('Retry'),
+            ),
+          ),
+        );
+      }
+      if (!snapshot.hasData) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
+      return EventDetailPage(event: snapshot.data!, session: widget.session);
+    },
+  );
 }
 
 class _SplashScreen extends StatelessWidget {
