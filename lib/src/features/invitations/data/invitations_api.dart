@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
-import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
+import 'package:fiestaaa_front/src/core/api_response.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:http/http.dart' as http;
 
@@ -16,37 +16,28 @@ class InvitationsApi {
     required String token,
     required int eventId,
   }) async {
-    final response = await _client.get(
-      buildApiUri('/events/$eventId/invitations'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as List<dynamic>;
-      return decoded
-          .map((e) => InvitationModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw ApiException(
-      'Impossible de charger les invitations',
-      statusCode: response.statusCode,
+    return collectCursorPages(
+      request: (cursor) => _client.get(
+        buildApiUri(
+          '/events/$eventId/invitations',
+          queryParameters: {'limit': '100', 'cursor': ?cursor},
+        ),
+        headers: apiAuthHeaders(token),
+      ),
+      decode: InvitationModel.fromJson,
     );
   }
 
   Future<List<InvitationModel>> fetchMyInvitations(String token) async {
-    final response = await _client.get(
-      buildApiUri('/my/invitations'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as List<dynamic>;
-      return decoded
-          .map((e) => InvitationModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw ApiException(
-      'Impossible de charger vos invitations',
-      statusCode: response.statusCode,
+    return collectCursorPages(
+      request: (cursor) => _client.get(
+        buildApiUri(
+          '/my/invitations',
+          queryParameters: {'limit': '100', 'cursor': ?cursor},
+        ),
+        headers: apiAuthHeaders(token),
+      ),
+      decode: InvitationModel.fromJson,
     );
   }
 

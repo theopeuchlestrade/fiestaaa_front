@@ -16,23 +16,30 @@ class EventsListPage extends StatefulWidget {
     required this.session,
     this.onPendingInvitesChanged,
     this.onOpenTrash,
+    this.eventsApi,
+    this.invitationsApi,
   });
 
   final SessionData session;
   final EventSelected onEventSelected;
   final ValueChanged<int>? onPendingInvitesChanged;
   final VoidCallback? onOpenTrash;
+  final EventsApi? eventsApi;
+  final InvitationsApi? invitationsApi;
 
   @override
   State<EventsListPage> createState() => EventsListPageState();
 }
 
 class EventsListPageState extends State<EventsListPage> {
-  final _api = EventsApi();
-  final _invitationsApi = InvitationsApi();
+  late final EventsApi _api = widget.eventsApi ?? EventsApi();
+  late final InvitationsApi _invitationsApi =
+      widget.invitationsApi ?? InvitationsApi();
   List<EventModel>? _events;
   Map<int, InvitationModel> _myInvitations = {};
   bool _loading = true;
+  bool _loadingMore = false;
+  String? _nextCursor;
   String? _error;
 
   @override
@@ -74,7 +81,7 @@ class EventsListPageState extends State<EventsListPage> {
     });
     try {
       final token = widget.session.token;
-      final events = await _api.fetchEvents(token: token);
+      final page = await _api.fetchEventsPage(token: token);
       List<InvitationModel> invitations = [];
       try {
         invitations = await _invitationsApi.fetchMyInvitations(token);
@@ -83,7 +90,8 @@ class EventsListPageState extends State<EventsListPage> {
       }
       if (!mounted) return;
       setState(() {
-        _events = events;
+        _events = page.items;
+        _nextCursor = page.nextCursor;
         _myInvitations = {
           for (final invitation in invitations) invitation.eventId: invitation,
         };
@@ -100,6 +108,34 @@ class EventsListPageState extends State<EventsListPage> {
           _loading = false;
         });
       }
+    }
+  }
+
+  Future<void> _loadMore() async {
+    final cursor = _nextCursor;
+    if (cursor == null || _loadingMore) return;
+    setState(() => _loadingMore = true);
+    try {
+      final page = await _api.fetchEventsPage(
+        token: widget.session.token,
+        cursor: cursor,
+      );
+      if (!mounted) return;
+      final known = _events?.map((event) => event.id).toSet() ?? <int>{};
+      setState(() {
+        _events = [
+          ...?_events,
+          ...page.items.where((event) => known.add(event.id)),
+        ];
+        _nextCursor = page.nextCursor;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.of(context).unableToLoadFiestaaa)),
+      );
+    } finally {
+      if (mounted) setState(() => _loadingMore = false);
     }
   }
 
@@ -156,6 +192,8 @@ class EventsListPageState extends State<EventsListPage> {
           sessionEmail: widget.session.email,
           invitations: _myInvitations,
           onRefresh: _loadEvents,
+          onLoadMore: _nextCursor == null ? null : _loadMore,
+          loadingMore: _loadingMore,
         );
       }
     }
@@ -191,6 +229,8 @@ class _EventsGrid extends StatelessWidget {
     required this.sessionEmail,
     required this.invitations,
     required this.onRefresh,
+    required this.onLoadMore,
+    required this.loadingMore,
   });
 
   final List<EventModel> events;
@@ -198,6 +238,8 @@ class _EventsGrid extends StatelessWidget {
   final String sessionEmail;
   final Map<int, InvitationModel> invitations;
   final Future<void> Function() onRefresh;
+  final Future<void> Function()? onLoadMore;
+  final bool loadingMore;
 
   @override
   Widget build(BuildContext context) {
@@ -332,6 +374,26 @@ class _EventsGrid extends StatelessWidget {
                   }, childCount: sortedEvents.length),
                 ),
               ),
+              if (onLoadMore != null)
+                SliverToBoxAdapter(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      child: loadingMore
+                          ? const CircularProgressIndicator()
+                          : OutlinedButton.icon(
+                              onPressed: onLoadMore,
+                              icon: const Icon(Icons.expand_more),
+                              label: Text(
+                                Localizations.localeOf(context).languageCode ==
+                                        'fr'
+                                    ? 'Charger plus'
+                                    : 'Load more',
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
             ],
           );
         },
