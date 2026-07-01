@@ -20,6 +20,8 @@ const url = args.get('url') ?? process.env.SMOKE_URL ?? 'https://fiestaaa.app';
 const timeoutMs = Number(args.get('timeout-ms') ?? process.env.SMOKE_TIMEOUT_MS ?? 30000);
 const locale = args.get('locale') ?? process.env.SMOKE_LOCALE ?? 'fr-FR';
 const viewportArg = args.get('viewport') ?? process.env.SMOKE_VIEWPORT ?? 'all';
+const expectedCspOrigin =
+  args.get('expect-csp-origin') ?? process.env.SMOKE_EXPECT_CSP_ORIGIN;
 
 const viewports = [
   {
@@ -129,6 +131,14 @@ async function smokeViewport(browser, targetViewport) {
 
     if (!response || !response.ok()) {
       throw new Error(`navigation failed with status ${response?.status() ?? 'no response'}`);
+    }
+    if (expectedCspOrigin) {
+      const csp = response.headers()['content-security-policy'] ?? '';
+      if (!csp.includes(expectedCspOrigin)) {
+        throw new Error(
+          `Content-Security-Policy does not contain ${expectedCspOrigin}`,
+        );
+      }
     }
 
     await page.waitForLoadState('networkidle', { timeout: timeoutMs }).catch(() => {});

@@ -8,6 +8,7 @@ WORKDIR /app
 
 # Build-time configuration (required)
 ARG FIESTAAA_API_BASE_URL
+ARG FIESTAAA_APP_BASE_URL
 ARG FIESTAAA_GOOGLE_WEB_CLIENT_ID
 ARG FIESTAAA_APPLE_SERVICE_ID
 ARG FIESTAAA_APPLE_REDIRECT_URI
@@ -28,6 +29,13 @@ RUN flutter pub get --enforce-lockfile
 
 # Source code
 COPY . .
+
+# Keep the web server policy aligned with the public origins compiled into the
+# application. The generated file contains public origins only.
+RUN dart run tool/generate_nginx_config.dart \
+  "--api-base-url=${FIESTAAA_API_BASE_URL}" \
+  --template=nginx.conf \
+  --output=build/nginx.conf
 
 # Keep l10n generation explicit so fresh clones and CI builds do not rely on
 # tool-specific implicit generation behavior.
@@ -69,6 +77,7 @@ firebase_web_api_key="$(tr -d '\r\n' </run/secrets/FIREBASE_WEB_API_KEY)"
 
 flutter build web --release \
   "--dart-define=FIESTAAA_API_BASE_URL=${FIESTAAA_API_BASE_URL}" \
+  "--dart-define=FIESTAAA_APP_BASE_URL=${FIESTAAA_APP_BASE_URL}" \
   "--dart-define=FIESTAAA_GOOGLE_WEB_CLIENT_ID=${FIESTAAA_GOOGLE_WEB_CLIENT_ID}" \
   "--dart-define=FIESTAAA_APPLE_SERVICE_ID=${FIESTAAA_APPLE_SERVICE_ID}" \
   "--dart-define=FIESTAAA_APPLE_REDIRECT_URI=${FIESTAAA_APPLE_REDIRECT_URI}" \
@@ -101,7 +110,7 @@ BASH
 # Pinned Nginx runtime image for deterministic production serving (1.31.1-alpine)
 FROM nginx:1.31.2-alpine@sha256:54f2a904c251d5a34adf545a72d32515a15e08418dae0266e23be2e18c66fefa AS runtime
 LABEL org.opencontainers.image.source="https://github.com/theopeuchlestrade/fiestaaa_front"
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/build/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/build/web /usr/share/nginx/html
 RUN sed -i \
       -e 's#pid[[:space:]]\+/run/nginx.pid;#pid /tmp/nginx.pid;#' \
