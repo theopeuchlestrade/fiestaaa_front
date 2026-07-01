@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
-import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
+import 'package:fiestaaa_front/src/core/api_response.dart';
 import 'package:fiestaaa_front/src/features/friends/domain/friend_model.dart';
 import 'package:http/http.dart' as http;
 
@@ -12,36 +12,28 @@ class FriendsApi {
   final http.Client _client;
 
   Future<List<FriendModel>> fetchFriends(String token) async {
-    final response = await _client.get(
-      buildApiUri('/me/friends'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as List<dynamic>;
-      return decoded
-          .map((e) => FriendModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw ApiException(
-      'Impossible de charger vos amis',
-      statusCode: response.statusCode,
+    return collectCursorPages(
+      request: (cursor) => _client.get(
+        buildApiUri(
+          '/me/friends',
+          queryParameters: {'limit': '100', 'cursor': ?cursor},
+        ),
+        headers: apiAuthHeaders(token),
+      ),
+      decode: FriendModel.fromJson,
     );
   }
 
   Future<List<FriendRequestModel>> fetchRequests(String token) async {
-    final response = await _client.get(
-      buildApiUri('/friends/requests'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as List<dynamic>;
-      return decoded
-          .map((e) => FriendRequestModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw ApiException(
-      'Impossible de charger les demandes d’ami',
-      statusCode: response.statusCode,
+    return collectCursorPages(
+      request: (cursor) => _client.get(
+        buildApiUri(
+          '/friends/requests',
+          queryParameters: {'limit': '100', 'cursor': ?cursor},
+        ),
+        headers: apiAuthHeaders(token),
+      ),
+      decode: FriendRequestModel.fromJson,
     );
   }
 

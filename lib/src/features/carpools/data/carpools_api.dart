@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
-import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
+import 'package:fiestaaa_front/src/core/api_response.dart';
 import 'package:fiestaaa_front/src/features/carpools/domain/carpool_model.dart';
 import 'package:http/http.dart' as http;
 
@@ -17,25 +17,15 @@ class CarpoolsApi {
     required int eventId,
     String? sortBy,
   }) async {
-    final uri = buildApiUri(
-      '/events/$eventId/carpools',
-      queryParameters: sortBy != null ? {'sort': sortBy} : null,
-    );
-    final response = await _client.get(
-      uri,
-      headers: {'Authorization': 'Bearer $token'},
-    );
-
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as List<dynamic>;
-      return decoded
-          .map((e) => CarpoolModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-
-    throw ApiException(
-      'Impossible de récupérer les covoitures (${response.statusCode})',
-      statusCode: response.statusCode,
+    return collectCursorPages(
+      request: (cursor) => _client.get(
+        buildApiUri(
+          '/events/$eventId/carpools',
+          queryParameters: {'limit': '100', 'cursor': ?cursor, 'sort': ?sortBy},
+        ),
+        headers: apiAuthHeaders(token),
+      ),
+      decode: CarpoolModel.fromJson,
     );
   }
 
