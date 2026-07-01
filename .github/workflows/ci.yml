@@ -138,6 +138,7 @@ jobs:
           tags: ghcr.io/${{ github.repository }}:ci-${{ github.sha }}
           build-args: |
             FIESTAAA_API_BASE_URL=https://api.example.test
+            FIESTAAA_APP_BASE_URL=https://fiestaaa.example.test
             FIESTAAA_APPLE_REDIRECT_URI=https://fiestaaa.example.test/auth/callback
             FIESTAAA_APPLE_SERVICE_ID=com.example.fiestaaa.web
             FIESTAAA_GOOGLE_WEB_CLIENT_ID=test-web-client-id.apps.googleusercontent.com
