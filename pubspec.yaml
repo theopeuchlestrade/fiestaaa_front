@@ -1,7 +1,7 @@
 name: fiestaaa_front
 description: "Flutter frontend for Fiestaaa."
 publish_to: 'none'
-version: 0.1.3
+version: 0.2.0
 homepage: https://fiestaaa.app
 repository: https://github.com/theopeuchlestrade/fiestaaa_front
 issue_tracker: https://github.com/theopeuchlestrade/fiestaaa_front/issues

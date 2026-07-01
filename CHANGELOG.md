@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-01
+
+### Added
+- Added timezone-aware event creation and editing with a searchable IANA
+  timezone selector.
+- Added an event trash screen with purge dates and owner restore actions.
+- Added declarative deep links for authentication, events, invitations,
+  friends, profile, carpools, expenses, and trash.
+- Added progressive pagination support across large lists.
+
+### Changed
+- Centralized HTTP behavior in a shared client with typed errors, a 15-second
+  timeout, client-version headers, and global unauthorized-session handling.
+- Moved friends, event detail, expenses, carpools, and QR state out of widgets
+  into injectable feature controllers.
+- Raised enforced Flutter test coverage to 20 percent.
+- Localized dates, times, EUR amounts, and timezone errors in French and
+  English.
+
+### Fixed
+- Aligned Docker build-time application and API origins with the generated
+  Content Security Policy and smoke tests.
+- Made event status calculations use canonical instants across device
+  timezones and daylight saving transitions.
+- Preserved share and verification tokens across network failures while
+  removing sensitive values immediately from browser URLs.
+- Routed push intents and legacy query parameters through the declarative
+  navigator.
+
+### Dependencies
+- Removed unused UI and permission packages, moved launcher icon tooling to
+  development dependencies, and updated Playwright.
+
 ## [0.1.3] - 2026-06-24
 
 ### Dependencies
