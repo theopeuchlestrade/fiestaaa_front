@@ -32,6 +32,9 @@ class FriendsPage extends StatefulWidget {
     this.realtimeStream,
     this.inviteFlow,
     this.requestsOpenSerial = 0,
+    this.friendsApi,
+    this.eventsApi,
+    this.invitationsApi,
   });
 
   final SessionData session;
@@ -39,6 +42,9 @@ class FriendsPage extends StatefulWidget {
   final Stream<Map<String, dynamic>>? realtimeStream;
   final FriendsPageInviteFlow? inviteFlow;
   final int requestsOpenSerial;
+  final FriendsApi? friendsApi;
+  final EventsApi? eventsApi;
+  final InvitationsApi? invitationsApi;
 
   @override
   State<FriendsPage> createState() => _FriendsPageState();
@@ -46,9 +52,10 @@ class FriendsPage extends StatefulWidget {
 
 class _FriendsPageState extends State<FriendsPage>
     with SingleTickerProviderStateMixin {
-  final _api = FriendsApi();
-  final _eventsApi = EventsApi();
-  final _invitationsApi = InvitationsApi();
+  late final FriendsApi _api = widget.friendsApi ?? FriendsApi();
+  late final EventsApi _eventsApi = widget.eventsApi ?? EventsApi();
+  late final InvitationsApi _invitationsApi =
+      widget.invitationsApi ?? InvitationsApi();
   final _inviteController = TextEditingController();
   final _friendsFilterController = TextEditingController();
   late final TabController _tabController;

@@ -110,6 +110,18 @@ jobs:
       - name: Run tests with coverage
         run: flutter test --coverage --dart-define-from-file=.env.ci
 
+      - name: Enforce 20% line coverage
+        run: |
+          awk -F: '
+            /^LF:/ { total += $2 }
+            /^LH:/ { hit += $2 }
+            END {
+              coverage = total == 0 ? 0 : (100 * hit / total)
+              printf "Flutter line coverage: %.2f%% (%d/%d)\n", coverage, hit, total
+              if (coverage < 20) exit 1
+            }
+          ' coverage/lcov.info
+
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v7
@@ -172,7 +184,7 @@ jobs:
             fi
             sleep 1
           done
-          npm run smoke:web -- --url http://127.0.0.1:8080 --timeout-ms 60000
+          npm run smoke:web -- --url http://127.0.0.1:8080 --timeout-ms 60000 --expect-csp-origin https://api.example.test
 
   android-build:
     name: Android Compile
