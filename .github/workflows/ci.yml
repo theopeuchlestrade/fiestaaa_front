@@ -110,7 +110,7 @@ jobs:
       - name: Run tests with coverage
         run: flutter test --coverage --dart-define-from-file=.env.ci
 
-      - name: Enforce 20% line coverage
+      - name: Enforce 22% line coverage
         run: |
           awk -F: '
             /^LF:/ { total += $2 }
@@ -118,7 +118,7 @@ jobs:
             END {
               coverage = total == 0 ? 0 : (100 * hit / total)
               printf "Flutter line coverage: %.2f%% (%d/%d)\n", coverage, hit, total
-              if (coverage < 20) exit 1
+              if (coverage < 22) exit 1
             }
           ' coverage/lcov.info
 

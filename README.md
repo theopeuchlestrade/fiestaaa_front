@@ -118,6 +118,8 @@ flutter test --coverage --dart-define-from-file=.env
 ```
 
 CI uploads the generated `coverage/lcov.info` report as a workflow artifact.
+The quality job enforces a 22% line-coverage floor, ratcheted upward as critical
+flows gain direct tests.
 
 **Fresh clone sequence:**
 ```bash
