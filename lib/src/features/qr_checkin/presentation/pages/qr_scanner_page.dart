@@ -1,4 +1,5 @@
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/data/qr_checkin_api.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/domain/qr_checkin_models.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
@@ -121,7 +122,11 @@ class _QRScannerPageState extends State<QRScannerPage> {
           _lastScanResult = QRScanResult(
             success: false,
             status: 'error',
-            message: '${S.of(context).error}: ${e.toString()}',
+            message: localizedApiError(
+              S.of(context),
+              e,
+              fallback: S.of(context).actionFailed,
+            ),
           );
           _isScanning = false;
           _awaitingNextScan = true;

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
@@ -182,7 +183,13 @@ class _FriendsPageState extends State<FriendsPage>
       });
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.message);
+      setState(
+        () => _error = localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).unableToLoadFriends,
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _error = S.of(context).unableToLoadFriends);
@@ -206,7 +213,13 @@ class _FriendsPageState extends State<FriendsPage>
       setState(() => _ownedEvents = ownedEvents);
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _ownedEventsError = e.message);
+      setState(
+        () => _ownedEventsError = localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).unableToLoadFiestaaa,
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _ownedEventsError = S.of(context).unableToLoadFiestaaa);
@@ -239,7 +252,13 @@ class _FriendsPageState extends State<FriendsPage>
       });
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _eventInvitationsError = e.message);
+      setState(
+        () => _eventInvitationsError = localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).unableToLoadInvitations,
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
       setState(
@@ -265,7 +284,13 @@ class _FriendsPageState extends State<FriendsPage>
       _notifyPendingRequests(pending);
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _requestError = e.message);
+      setState(
+        () => _requestError = localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).unableToLoadRequests,
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _requestError = S.of(context).unableToLoadRequests);
@@ -350,7 +375,14 @@ class _FriendsPageState extends State<FriendsPage>
       await _fetchRequests();
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).unableToSendRequest,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).unableToSendRequest, isError: true);
@@ -382,7 +414,14 @@ class _FriendsPageState extends State<FriendsPage>
       );
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).actionFailed, isError: true);
@@ -429,7 +468,14 @@ class _FriendsPageState extends State<FriendsPage>
       _showSnack(S.of(context).friendRemoved);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).removeImpossible,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).removeImpossible, isError: true);
@@ -583,7 +629,14 @@ class _FriendsPageState extends State<FriendsPage>
       );
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).unableToLoadInvitations,
+        ),
+        isError: true,
+      );
       return;
     } catch (_) {
       if (!mounted) return;
@@ -725,7 +778,8 @@ class _FriendsPageState extends State<FriendsPage>
     var successCount = 0;
     String? firstError;
     var deadlineExpired = false;
-    final creationFailed = S.of(context).creationFailed;
+    final l10n = S.of(context);
+    final creationFailed = l10n.creationFailed;
 
     try {
       for (final identifier in identifiers) {
@@ -737,7 +791,7 @@ class _FriendsPageState extends State<FriendsPage>
           );
           successCount++;
         } on ApiException catch (e) {
-          firstError ??= e.message;
+          firstError ??= localizedApiError(l10n, e, fallback: creationFailed);
           if (e.statusCode == 410) {
             deadlineExpired = true;
             break;

@@ -52,7 +52,10 @@ class FriendsApi {
           .map((e) => FriendSearchResult.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-    throw ApiException('Recherche impossible', statusCode: response.statusCode);
+    throw apiExceptionFromResponse(
+      response,
+      fallbackMessage: 'friend_search_failed',
+    );
   }
 
   Future<FriendRequestModel> sendRequest({
@@ -72,9 +75,9 @@ class FriendsApi {
         jsonDecode(response.body) as Map<String, dynamic>,
       );
     }
-    throw ApiException(
-      'Impossible d’envoyer la demande',
-      statusCode: response.statusCode,
+    throw apiExceptionFromResponse(
+      response,
+      fallbackMessage: 'friend_request_failed',
     );
   }
 
@@ -96,7 +99,10 @@ class FriendsApi {
         jsonDecode(response.body) as Map<String, dynamic>,
       );
     }
-    throw ApiException('Action impossible', statusCode: response.statusCode);
+    throw apiExceptionFromResponse(
+      response,
+      fallbackMessage: 'friend_request_action_failed',
+    );
   }
 
   Future<void> deleteFriend({
@@ -108,9 +114,9 @@ class FriendsApi {
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode != 200) {
-      throw ApiException(
-        'Suppression impossible',
-        statusCode: response.statusCode,
+      throw apiExceptionFromResponse(
+        response,
+        fallbackMessage: 'friend_delete_failed',
       );
     }
   }
