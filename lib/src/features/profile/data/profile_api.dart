@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
+import 'package:fiestaaa_front/src/core/api_response.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
-import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/profile/domain/profile_info.dart';
 import 'package:http/http.dart' as http;
 
@@ -23,9 +23,9 @@ class ProfileApi {
       );
     }
 
-    throw ApiException(
-      'Impossible de récupérer le profil',
-      statusCode: response.statusCode,
+    throw apiExceptionFromResponse(
+      response,
+      fallbackMessage: 'profile_load_failed',
     );
   }
 
@@ -41,7 +41,10 @@ class ProfileApi {
       return decoded['available'] as bool? ?? false;
     }
     if (response.statusCode == 400) {
-      throw ApiException('Handle invalide', statusCode: response.statusCode);
+      throw apiExceptionFromResponse(
+        response,
+        fallbackMessage: 'invalid_handle',
+      );
     }
     throw _apiError(response);
   }
@@ -65,7 +68,7 @@ class ProfileApi {
       );
     }
     if (response.statusCode == 409) {
-      throw ApiException('Identifiant déjà pris', statusCode: 409);
+      throw apiExceptionFromResponse(response, fallbackMessage: 'handle_taken');
     }
 
     throw _apiError(response);
@@ -105,22 +108,10 @@ class ProfileApi {
     throw _apiError(response);
   }
 
-  ApiException _apiError(http.Response response) {
-    try {
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-      final details = decoded['details'] as String?;
-      final error = decoded['error'] as String? ?? 'Erreur API';
-      return ApiException(
-        details?.isNotEmpty == true ? details! : error,
-        statusCode: response.statusCode,
-      );
-    } catch (_) {
-      return ApiException(
-        'Erreur inattendue (${response.statusCode})',
-        statusCode: response.statusCode,
-      );
-    }
-  }
+  ApiException _apiError(http.Response response) => apiExceptionFromResponse(
+    response,
+    fallbackMessage: 'profile_request_failed',
+  );
 
   void dispose() {
     _client.close();

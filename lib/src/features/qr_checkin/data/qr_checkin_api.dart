@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
+import 'package:fiestaaa_front/src/core/api_response.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
-import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/domain/qr_checkin_models.dart';
 import 'package:http/http.dart' as http;
 
@@ -28,16 +28,9 @@ class QRCheckinApi {
       );
     }
 
-    if (response.statusCode == 403) {
-      throw ApiException(
-        'Vous n\'êtes pas autorisé à accéder à ce QR code',
-        statusCode: response.statusCode,
-      );
-    }
-
-    throw ApiException(
-      'Impossible de récupérer le QR code (${response.statusCode})',
-      statusCode: response.statusCode,
+    throw apiExceptionFromResponse(
+      response,
+      fallbackMessage: 'qr_code_load_failed',
     );
   }
 
@@ -75,20 +68,17 @@ class QRCheckinApi {
         // It's a QRScanResponse with details
         return QRScanResult.fromJson(decoded);
       }
-      throw ApiException('Non autorisé', statusCode: response.statusCode);
-    }
-
-    if (response.statusCode == 404) {
-      throw ApiException(
-        'QR code introuvable',
-        statusCode: response.statusCode,
+      throw apiExceptionFromResponse(
+        response,
+        fallbackMessage: 'qr_scan_forbidden',
       );
     }
 
-    throw ApiException(
-      'Erreur lors du scan (${response.statusCode})',
-      statusCode: response.statusCode,
-    );
+    if (response.statusCode == 404) {
+      throw apiExceptionFromResponse(response, fallbackMessage: 'qr_not_found');
+    }
+
+    throw apiExceptionFromResponse(response, fallbackMessage: 'qr_scan_failed');
   }
 
   /// Get check-in statistics for an event (organizer only)
@@ -107,9 +97,9 @@ class QRCheckinApi {
       );
     }
 
-    throw ApiException(
-      'Impossible de récupérer les statistiques (${response.statusCode})',
-      statusCode: response.statusCode,
+    throw apiExceptionFromResponse(
+      response,
+      fallbackMessage: 'qr_stats_load_failed',
     );
   }
 

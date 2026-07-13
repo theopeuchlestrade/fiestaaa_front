@@ -8,6 +8,7 @@ import 'package:fiestaaa_front/src/features/profile/presentation/pages/avatar_fi
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'package:intl/intl.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -93,7 +94,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       setState(() {
         _handleAvailable = false;
-        _handleStatus = e.message;
+        _handleStatus = localizedApiError(l10n, e, fallback: l10n.checkFailed);
       });
     } catch (_) {
       if (!mounted) return;
@@ -142,10 +143,11 @@ class _ProfilePageState extends State<ProfilePage> {
       _showSnack(l10n.identifierUpdated);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      final message = localizedApiError(l10n, e, fallback: l10n.updateFailed);
+      _showSnack(message, isError: true);
       setState(() {
         _handleAvailable = false;
-        _handleStatus = e.message;
+        _handleStatus = message;
       });
     } catch (_) {
       if (!mounted) return;
@@ -195,7 +197,10 @@ class _ProfilePageState extends State<ProfilePage> {
       widget.onLogout();
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(l10n, e, fallback: l10n.deletionFailed),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(l10n.deletionFailed, isError: true);
@@ -359,7 +364,10 @@ class _ProfilePageState extends State<ProfilePage> {
       _showSnack(l10n.photoUpdated);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(l10n, e, fallback: l10n.uploadFailed),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(l10n.uploadFailed, isError: true);

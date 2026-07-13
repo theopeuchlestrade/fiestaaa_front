@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/data/qr_checkin_api.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/domain/qr_checkin_models.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
@@ -84,7 +85,11 @@ class _MyQRCodePageState extends State<MyQRCodePage> {
         _countdownTimer?.cancel();
         _refreshTimer?.cancel();
         setState(() {
-          _error = e.toString();
+          _error = localizedApiError(
+            S.of(context),
+            e,
+            fallback: S.of(context).error,
+          );
           _isLoading = false;
           _isRefreshing = false;
         });
