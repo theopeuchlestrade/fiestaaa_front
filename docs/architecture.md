@@ -26,6 +26,10 @@ The generated Firebase service worker comes from
 `web/firebase-messaging-sw.template.js` and local environment values. The
 generated `web/firebase-messaging-sw.js` file is ignored.
 
+The frontend pins the backend OpenAPI snapshot hash in
+`tool/backend_openapi_contract.json`. CI compares it with the backend `main`
+branch so contract changes require an explicit frontend compatibility review.
+
 ## Public vs Private Operations
 
 This repository contains the frontend source, local build instructions,
