@@ -2,15 +2,26 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'platform_http_client_stub.dart'
     if (dart.library.js_interop) 'platform_http_client_web.dart';
 
 class ApiHttpClient extends http.BaseClient {
-  ApiHttpClient(this._inner, {this.timeout = const Duration(seconds: 15)});
+  ApiHttpClient(
+    this._inner, {
+    this.timeout = const Duration(seconds: 15),
+    Future<String>? clientVersion,
+  }) : _clientVersion = clientVersion ?? _platformClientVersion;
 
   final http.Client _inner;
   final Duration timeout;
+  final Future<String> _clientVersion;
+
+  static final Future<String> _platformClientVersion =
+      PackageInfo.fromPlatform()
+          .then((info) => 'flutter/${info.version}')
+          .onError((_, _) => 'flutter/unknown');
 
   static final StreamController<void> _unauthorizedController =
       StreamController<void>.broadcast();
@@ -19,9 +30,10 @@ class ApiHttpClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    final clientVersion = await _clientVersion;
     request.headers.putIfAbsent(
       'X-Fiestaaa-Client-Version',
-      () => 'flutter/0.1.2',
+      () => clientVersion,
     );
     if (kIsWeb) {
       final authHeader = request.headers.keys.firstWhere(

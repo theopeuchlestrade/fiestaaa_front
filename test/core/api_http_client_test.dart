@@ -13,10 +13,11 @@ void main() {
         captured = request;
         return http.Response('{}', 200);
       }),
+      clientVersion: Future.value('flutter/0.2.0'),
     );
 
     await client.get(Uri.parse('https://example.test/me'));
-    expect(captured.headers['X-Fiestaaa-Client-Version'], 'flutter/0.1.2');
+    expect(captured.headers['X-Fiestaaa-Client-Version'], 'flutter/0.2.0');
   });
 
   test('emits a global unauthorized signal', () async {

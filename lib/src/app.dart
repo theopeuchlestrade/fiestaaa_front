@@ -22,6 +22,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
+@visibleForTesting
+int? parseEventRouteId(String? raw) {
+  final value = int.tryParse(raw ?? '');
+  return value != null && value > 0 ? value : null;
+}
+
 class FiestaaaApp extends StatefulWidget {
   const FiestaaaApp({super.key});
 
@@ -61,9 +67,13 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
         ),
         GoRoute(
           path: '/events/:eventId',
+          redirect: (context, state) =>
+              parseEventRouteId(state.pathParameters['eventId']) == null
+              ? '/events'
+              : null,
           builder: (context, state) => _DirectEventPage(
             session: _session!,
-            eventId: int.parse(state.pathParameters['eventId']!),
+            eventId: parseEventRouteId(state.pathParameters['eventId'])!,
           ),
         ),
         GoRoute(
