@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "contract:backend": "node tool/check_backend_contract.mjs",
     "smoke:web": "node tool/smoke_web.mjs"
   },
   "devDependencies": {

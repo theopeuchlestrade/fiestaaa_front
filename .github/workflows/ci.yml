@@ -55,6 +55,16 @@ jobs:
       - name: Check Dockerfile
         run: docker build --check .
 
+  backend-contract:
+    name: Backend Contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7.0.0
+
+      - name: Verify backend OpenAPI snapshot
+        run: npm run contract:backend
+
   quality:
     name: Analyze and Test
     runs-on: ubuntu-latest
@@ -332,6 +342,7 @@ jobs:
       - workflow-lint
       - secret-scan
       - dockerfile-check
+      - backend-contract
       - quality
       - web-container-build
       - android-build
@@ -343,6 +354,7 @@ jobs:
           if [ "${{ needs.workflow-lint.result }}" != "success" ] ||
              [ "${{ needs.secret-scan.result }}" != "success" ] ||
              [ "${{ needs.dockerfile-check.result }}" != "success" ] ||
+             [ "${{ needs.backend-contract.result }}" != "success" ] ||
              [ "${{ needs.quality.result }}" != "success" ] ||
              [ "${{ needs.web-container-build.result }}" != "success" ] ||
              [ "${{ needs.android-build.result }}" != "success" ]; then
