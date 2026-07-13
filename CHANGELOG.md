@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added a pinned backend OpenAPI contract check so incompatible API changes
+  require an explicit frontend review.
+- Added direct data-layer coverage for profile, QR check-in, and carpool flows.
+
+### Changed
+- Derived the client-version header from application package metadata instead
+  of a hard-coded version.
+- Raised the enforced frontend line-coverage floor to 22 percent.
+
+### Fixed
+- Redirected malformed event deep links safely instead of throwing during route
+  construction.
+- Localized API and transport errors consistently without displaying raw
+  backend messages.
+
+### Dependencies
+- Updated Flutter packages and the Docker, Java, and Buildx GitHub Actions.
+
 ## [0.2.0] - 2026-07-01
 
 ### Added
