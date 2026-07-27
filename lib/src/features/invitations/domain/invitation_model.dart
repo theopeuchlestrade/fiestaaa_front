@@ -1,5 +1,6 @@
 class InvitationModel {
   InvitationModel({
+    this.invitationId,
     required this.eventId,
     this.userId,
     required this.email,
@@ -10,6 +11,7 @@ class InvitationModel {
     this.eventName,
   });
 
+  final int? invitationId;
   final int eventId;
   final int? userId;
   final String email;
@@ -21,6 +23,7 @@ class InvitationModel {
 
   factory InvitationModel.fromJson(Map<String, dynamic> json) {
     return InvitationModel(
+      invitationId: (json['invitation_id'] as num?)?.toInt(),
       eventId: (json['event_id'] as num).toInt(),
       userId: (json['user_id'] as num?)?.toInt(),
       email: json['email'] as String,

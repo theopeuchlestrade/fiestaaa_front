@@ -51,6 +51,8 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   PushNotificationIntent? _pendingNotificationIntent;
   int _notificationIntentSerial = 0;
   StreamSubscription<PushNotificationIntent>? _notificationIntentSub;
+  StreamSubscription<void>? _unauthorizedSub;
+  bool _handlingUnauthorized = false;
   late final GoRouter _router;
 
   @override
@@ -64,6 +66,10 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
         GoRoute(
           path: '/events',
           builder: (context, state) => _homePage(initialIndex: 0),
+        ),
+        GoRoute(
+          path: '/events/new',
+          builder: (context, state) => _homePage(initialIndex: 1),
         ),
         GoRoute(
           path: '/events/:eventId',
@@ -137,6 +143,9 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     _notificationIntentSub = PushNotificationService.instance.intents.listen(
       _handlePushNotificationIntent,
     );
+    _unauthorizedSub = ApiHttpClient.unauthorized.listen((_) {
+      unawaited(_handleUnauthorized());
+    });
     unawaited(_init());
   }
 
@@ -144,6 +153,9 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     await _timed(
       'LocaleService.loadSavedLocale',
       _localeService.loadSavedLocale,
+    );
+    PushNotificationService.instance.setLocaleTag(
+      _localeService.locale?.toLanguageTag(),
     );
     await _timed('ThemeService.loadSavedTheme', _themeService.loadSavedTheme);
     await _timed(
@@ -154,6 +166,9 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   }
 
   void _onLocaleChanged() {
+    PushNotificationService.instance.setLocaleTag(
+      _localeService.locale?.toLanguageTag(),
+    );
     if (mounted) setState(() {});
   }
 
@@ -332,11 +347,32 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     _router.go('/auth');
   }
 
+  Future<void> _handleUnauthorized() async {
+    if (_session == null || _loadingSession || _handlingUnauthorized) return;
+    _handlingUnauthorized = true;
+    try {
+      await PushNotificationService.instance.clearSession();
+      await SessionStorage.clear();
+      if (!mounted || _session == null) return;
+      setState(() {
+        _session = null;
+        _pendingRegistrationCompletionToken = null;
+        _authFlashCode = 'session_expired';
+        _authFlashIsError = true;
+      });
+      _router.refresh();
+      _router.go('/auth');
+    } finally {
+      _handlingUnauthorized = false;
+    }
+  }
+
   @override
   void dispose() {
     _localeService.removeListener(_onLocaleChanged);
     _themeService.removeListener(_onThemeChanged);
     _notificationIntentSub?.cancel();
+    _unauthorizedSub?.cancel();
     _authApi.dispose();
     PushNotificationService.instance.dispose();
     _router.dispose();
@@ -460,7 +496,16 @@ class _DirectEventPageState extends State<_DirectEventPage> {
       if (!snapshot.hasData) {
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
       }
-      return EventDetailPage(event: snapshot.data!, session: widget.session);
+      return EventDetailPage(
+        event: snapshot.data!,
+        session: widget.session,
+        onEventRemoved: (_) => context.go('/events'),
+        onInvitationStatusChanged: (_, status) {
+          if (status == 'Declined' || status == 'Expired') {
+            context.go('/events');
+          }
+        },
+      );
     },
   );
 }

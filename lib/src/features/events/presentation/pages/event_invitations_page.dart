@@ -187,6 +187,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
         token: widget.session.token,
         eventId: invitation.eventId,
         email: invitation.email,
+        invitationId: invitation.invitationId,
       );
       if (!mounted) return;
       await _fetch();

@@ -4,8 +4,6 @@ import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_create_page.dart';
-import 'package:fiestaaa_front/src/features/events/presentation/pages/event_detail_page.dart';
-import 'package:fiestaaa_front/src/features/events/presentation/pages/event_trash_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/events_list_page.dart';
 import 'package:fiestaaa_front/src/features/friends/data/friends_api.dart';
 import 'package:fiestaaa_front/src/features/friends/presentation/pages/friends_page.dart';
@@ -18,6 +16,7 @@ import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -63,51 +62,27 @@ class _HomePageState extends State<HomePage> {
   int _pendingFriendRequests = 0;
   int _friendsRequestsOpenSerial = 0;
   int _lastHandledNotificationIntentSerial = 0;
+  int _badgesGeneration = 0;
+  late List<Widget?> _pages;
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    const locations = ['/events', '/events/new', '/friends', '/profile'];
+    context.go(locations[index]);
   }
 
   Future<void> _openEvent(EventModel event) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => EventDetailPage(
-          event: event,
-          session: _session,
-          onEventUpdated: () => _eventsKey.currentState?.reload(),
-          onEventRemoved: _handleEventRemoved,
-          onInvitationStatusChanged: _updateInvitationStatus,
-        ),
-      ),
-    );
+    await context.push('/events/${event.id}');
     if (!mounted) return;
     _eventsKey.currentState?.reload();
   }
 
   Future<void> _openTrash() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => EventTrashPage(session: _session)),
-    );
+    await context.push('/trash');
     _eventsKey.currentState?.reload();
   }
 
   void _handleEventCreated() {
-    setState(() {
-      _selectedIndex = 0;
-    });
-    _eventsKey.currentState?.reload();
-  }
-
-  void _handleEventRemoved(int eventId) {
-    if (_eventsKey.currentState != null) {
-      _eventsKey.currentState!.removeEvent(eventId);
-    }
-  }
-
-  void _updateInvitationStatus(int eventId, String status) {
-    _eventsKey.currentState?.updateInvitationStatus(eventId, status);
+    context.go('/events');
   }
 
   void _startRealtime() {
@@ -141,6 +116,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _session = widget.session;
     _selectedIndex = widget.initialIndex.clamp(0, 3).toInt();
+    _pages = List<Widget?>.filled(4, null);
     _loadPendingBadges();
     _startRealtime();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -158,6 +134,7 @@ class _HomePageState extends State<HomePage> {
     super.didUpdateWidget(oldWidget);
     if (widget.session.token != oldWidget.session.token) {
       _session = widget.session;
+      _pages = List<Widget?>.filled(4, null);
       _loadPendingBadges();
       _startRealtime();
     }
@@ -176,6 +153,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    _badgesGeneration++;
     _shareApi.dispose();
     _invitesApi.dispose();
     _friendsApi.dispose();
@@ -184,9 +162,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadPendingBadges() async {
+    final generation = ++_badgesGeneration;
     try {
       final invites = await _invitesApi.fetchMyInvitations(_session.token);
-      if (!mounted) return;
+      if (!mounted || generation != _badgesGeneration) return;
       final waiting = invites.where((inv) => inv.status == 'Waiting').length;
       setState(() => _pendingEventInvites = waiting);
     } catch (_) {
@@ -195,7 +174,7 @@ class _HomePageState extends State<HomePage> {
 
     try {
       final requests = await _friendsApi.fetchRequests(_session.token);
-      if (!mounted) return;
+      if (!mounted || generation != _badgesGeneration) return;
       final pending = requests
           .where((r) => r.status == 'Pending' && r.isIncoming(_session.email))
           .length;
@@ -282,41 +261,16 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final l10n = S.of(context);
-    final pages = [
-      EventsListPage(
-        key: _eventsKey,
-        session: _session,
-        onEventSelected: _openEvent,
-        onPendingInvitesChanged: (count) =>
-            setState(() => _pendingEventInvites = count),
-        onOpenTrash: _openTrash,
-      ),
-      EventCreatePage(session: _session, onEventCreated: _handleEventCreated),
-      FriendsPage(
-        session: _session,
-        onPendingRequestsChanged: (count) =>
-            setState(() => _pendingFriendRequests = count),
-        realtimeStream: _realtime?.stream,
-        requestsOpenSerial: _friendsRequestsOpenSerial,
-      ),
-      ProfilePage(
-        session: _session,
-        onLogout: widget.onLogout,
-        onSessionUpdated: (session) async {
-          setState(() {
-            _session = session;
-          });
-          if (widget.onSessionUpdated != null) {
-            await widget.onSessionUpdated!(session);
-          }
-        },
-        localeService: widget.localeService,
-        themeService: widget.themeService,
-      ),
-    ];
+    _pages[_selectedIndex] ??= _buildPage(_selectedIndex);
 
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: pages),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: List.generate(
+          _pages.length,
+          (index) => _pages[index] ?? const SizedBox.shrink(),
+        ),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
@@ -340,6 +294,45 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
+
+  Widget _buildPage(int index) {
+    return switch (index) {
+      0 => EventsListPage(
+        key: _eventsKey,
+        session: _session,
+        onEventSelected: _openEvent,
+        onPendingInvitesChanged: (count) =>
+            setState(() => _pendingEventInvites = count),
+        onOpenTrash: _openTrash,
+      ),
+      1 => EventCreatePage(
+        session: _session,
+        onEventCreated: _handleEventCreated,
+      ),
+      2 => FriendsPage(
+        session: _session,
+        onPendingRequestsChanged: (count) =>
+            setState(() => _pendingFriendRequests = count),
+        realtimeStream: _realtime?.stream,
+        requestsOpenSerial: _friendsRequestsOpenSerial,
+      ),
+      _ => ProfilePage(
+        session: _session,
+        onLogout: widget.onLogout,
+        onSessionUpdated: (session) async {
+          setState(() {
+            _session = session;
+            _pages = List<Widget?>.filled(4, null);
+          });
+          if (widget.onSessionUpdated != null) {
+            await widget.onSessionUpdated!(session);
+          }
+        },
+        localeService: widget.localeService,
+        themeService: widget.themeService,
+      ),
+    };
   }
 
   Widget _iconWithBadge(IconData icon, int count) {

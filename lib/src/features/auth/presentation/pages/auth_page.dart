@@ -184,6 +184,7 @@ Bug report
       'email_verified' => l10n.emailVerified,
       'complete_registration_ready' => l10n.completeRegistrationReady,
       'email_verification_failed' => l10n.emailVerificationFailed,
+      'session_expired' => l10n.sessionExpired,
       _ => null,
     };
     if (message == null || message.isEmpty) {

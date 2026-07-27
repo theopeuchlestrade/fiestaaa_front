@@ -1,11 +1,8 @@
-import 'dart:async';
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:fiestaaa_front/firebase_options.dart';
 import 'package:fiestaaa_front/src/app.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
-import 'package:fiestaaa_front/src/core/push_notification_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -25,36 +22,35 @@ Future<T> _timedStartup<T>(String label, Future<T> Function() action) async {
   }
 }
 
-void _scheduleStartupTask(String label, Future<void> Function() action) {
-  unawaited(
-    _timedStartup(label, action).catchError((Object error, StackTrace _) {
-      debugPrint('Fiestaaa startup $label failed: $error');
-    }),
-  );
-}
-
 Future<void> _bootstrap() async {
   final startupWatch = Stopwatch()..start();
   WidgetsFlutterBinding.ensureInitialized();
   tz.initializeTimeZones();
-  await _timedStartup(
-    'Firebase.initializeApp',
-    () =>
-        Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
-  );
-  if (!kIsWeb) {
+  var firebaseReady = false;
+  try {
+    await _timedStartup(
+      'Firebase.initializeApp',
+      () => Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      ),
+    );
+    firebaseReady = true;
+  } catch (error) {
+    debugPrint('Fiestaaa startup Firebase.initializeApp failed: $error');
+  }
+  if (firebaseReady && !kIsWeb) {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
-  await _timedStartup(
-    'initializeDateFormatting',
-    () => initializeDateFormatting('fr_FR'),
-  );
+  try {
+    await _timedStartup(
+      'initializeDateFormatting',
+      () => initializeDateFormatting(),
+    );
+  } catch (error) {
+    debugPrint('Fiestaaa startup initializeDateFormatting failed: $error');
+  }
   runApp(const FiestaaaApp());
   WidgetsBinding.instance.addPostFrameCallback((_) {
-    _scheduleStartupTask(
-      'PushNotificationService.init',
-      PushNotificationService.instance.init,
-    );
     debugPrint(
       'Fiestaaa startup first frame scheduled after '
       '${startupWatch.elapsedMilliseconds}ms',
