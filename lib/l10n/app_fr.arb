@@ -972,5 +972,6 @@
   "completeRegistrationReady": "Ton email est vérifié. Choisis ton mot de passe pour terminer la création du compte.",
   "registrationCompleted": "Compte finalisé. Bienvenue !",
   "emailVerified": "Ton email est vérifié. Tu peux maintenant te connecter.",
-  "emailVerificationFailed": "Ce lien de vérification est invalide ou expiré."
+  "emailVerificationFailed": "Ce lien de vérification est invalide ou expiré.",
+  "sessionExpired": "Ta session a expiré. Reconnecte-toi."
 }

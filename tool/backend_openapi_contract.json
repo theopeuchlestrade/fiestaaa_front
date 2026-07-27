@@ -1,6 +1,6 @@
 {
   "repository": "theopeuchlestrade/fiestaaa_back",
   "ref": "main",
-  "sourcePath": "src/docs.rs",
-  "snapshotSha256": "3c257e8f3b918ccd0dfbe53c82014d313f30ef05d4c360d07c54a52a62366b96"
+  "sourcePath": "openapi.json",
+  "acceptedSpecPath": "backend_openapi.json"
 }

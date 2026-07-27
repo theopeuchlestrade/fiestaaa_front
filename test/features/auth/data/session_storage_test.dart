@@ -27,6 +27,24 @@ void main() {
     expect(restored?.handle, session.handle);
   });
 
+  test('persists a session with one atomic secure-storage write', () async {
+    final storage = _FakeSessionStorageBackend();
+    SessionStorage.debugSetStorageBackend(storage);
+
+    await SessionStorage.save(
+      SessionData(
+        token: 'token-123',
+        publicId: 'public-id',
+        email: 'me@example.com',
+        handle: 'fiestaaa',
+      ),
+    );
+
+    expect(storage.writeCount, 1);
+    expect(storage.values, hasLength(1));
+    expect((await SessionStorage.load())?.publicId, 'public-id');
+  });
+
   test('save removes an old persisted handle when session has none', () async {
     await SessionStorage.save(
       SessionData(
@@ -89,10 +107,12 @@ class _FakeSessionStorageBackend implements SessionStorageBackend {
 
   bool failWrites;
   bool failReads = false;
+  int writeCount = 0;
   final Map<String, String> values = <String, String>{};
 
   @override
   Future<void> write({required String key, String? value}) async {
+    writeCount++;
     if (failWrites) throw StateError('write failed');
     if (value == null) {
       values.remove(key);

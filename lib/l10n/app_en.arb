@@ -956,5 +956,6 @@
   "completeRegistrationReady": "Your email is verified. Choose your password to finish creating your account.",
   "registrationCompleted": "Account setup complete. Welcome!",
   "emailVerified": "Your email has been verified. You can now sign in.",
-  "emailVerificationFailed": "This verification link is invalid or expired."
+  "emailVerificationFailed": "This verification link is invalid or expired.",
+  "sessionExpired": "Your session has expired. Sign in again."
 }

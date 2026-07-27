@@ -107,9 +107,13 @@ class InvitationsApi {
     required String token,
     required int eventId,
     required String email,
+    int? invitationId,
   }) async {
+    final identifier = invitationId?.toString() ?? email;
     final response = await _client.delete(
-      buildApiUri('/events/$eventId/invitations/${Uri.encodeComponent(email)}'),
+      buildApiUri(
+        '/events/$eventId/invitations/${Uri.encodeComponent(identifier)}',
+      ),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode != 200) {
@@ -142,20 +146,7 @@ class InvitationsApi {
     http.Response response, {
     required String fallbackMessage,
   }) {
-    try {
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-      final details = decoded['details'] as String?;
-      final error = decoded['error'] as String?;
-      final message = details?.isNotEmpty == true
-          ? details!
-          : (error?.isNotEmpty == true ? error! : fallbackMessage);
-      return ApiException(message, statusCode: response.statusCode);
-    } catch (_) {
-      return ApiException(
-        '$fallbackMessage (${response.statusCode})',
-        statusCode: response.statusCode,
-      );
-    }
+    return apiExceptionFromResponse(response, fallbackMessage: fallbackMessage);
   }
 
   void dispose() {

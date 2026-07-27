@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/notifications/data/notifications_api.dart';
@@ -79,10 +80,19 @@ class PushNotificationService {
   bool _syncInProgress = false;
   int _syncRetryAttempt = 0;
   bool _blocked = false;
+  String? _selectedLocaleTag;
+  String? _clientAppVersion;
   final StreamController<PushNotificationIntent> _intentController =
       StreamController<PushNotificationIntent>.broadcast();
 
   Stream<PushNotificationIntent> get intents => _intentController.stream;
+
+  void setLocaleTag(String? localeTag) {
+    final normalized = localeTag?.trim();
+    _selectedLocaleTag = normalized == null || normalized.isEmpty
+        ? null
+        : normalized;
+  }
 
   @visibleForTesting
   bool get isBlocked => _blocked;
@@ -102,6 +112,7 @@ class PushNotificationService {
       _initialized = true;
 
       await _messaging.setAutoInitEnabled(true);
+      await _loadAppVersion();
       await _requestPermissions();
       await _initLocalNotifications();
       await _messaging.setForegroundNotificationPresentationOptions(
@@ -314,14 +325,25 @@ class PushNotificationService {
   }
 
   String? _locale() {
+    if (_selectedLocaleTag != null) return _selectedLocaleTag;
     final loc = PlatformDispatcher.instance.locale;
     final code = loc.toLanguageTag();
     return code.isEmpty ? null : code;
   }
 
   String? _appVersion() {
-    // Could be wired later from package_info_plus; keep nullable for now.
-    return null;
+    return _clientAppVersion;
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      _clientAppVersion = info.buildNumber.isEmpty
+          ? info.version
+          : '${info.version}+${info.buildNumber}';
+    } catch (_) {
+      _clientAppVersion = null;
+    }
   }
 
   Future<void> _initLocalNotifications() async {
