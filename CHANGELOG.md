@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added full backend OpenAPI snapshot validation for frontend contract changes.
+- Added stable invitation identifier support with a temporary email fallback
+  for compatibility with older backend responses.
+
+### Changed
+- Centralized and deduplicated expired-session handling across the application.
+- Moved tab and event navigation to explicit GoRouter routes and mounted event
+  tabs lazily.
+- Stored native sessions atomically with migration from the previous format.
+- Sent the selected application locale and actual package version when
+  registering push-notification devices.
+- Hardened immutable Web asset caching while keeping the application shell
+  revalidatable.
+
+### Fixed
+- Prevented stale asynchronous refresh responses from replacing newer state.
+- Redirected safely after event deletion or access loss and avoided duplicate
+  navigation after concurrent unauthorized responses.
+
+### Dependencies
+- Updated Flutter and Playwright dependencies, Nginx, Java setup, and GitHub
+  Actions pins.
+
 ## [0.2.1] - 2026-07-13
 
 ### Added
