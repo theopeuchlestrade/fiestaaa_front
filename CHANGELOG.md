@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-29
+
 ### Added
 - Added full backend OpenAPI snapshot validation for frontend contract changes.
 - Added stable invitation identifier support with a temporary email fallback
