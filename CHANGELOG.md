@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Enforced a public HTTPS API origin when building the production web image.
+- Simplified the Google Identity Services popup flow to rely on its explicit
+  error callback and exchange the access token only through the backend.
+
+### Fixed
+- Prevented production authentication requests and Content Security Policy
+  directives from targeting loopback addresses such as `localhost`.
+
 ## [0.3.0] - 2026-07-29
 
 ### Added
