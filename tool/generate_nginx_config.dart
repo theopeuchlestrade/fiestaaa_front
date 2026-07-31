@@ -12,7 +12,19 @@ String _argument(List<String> arguments, String name) {
   return value.trim();
 }
 
-String _origin(Uri uri) {
+bool _flag(List<String> arguments, String name) =>
+    arguments.contains('--$name');
+
+bool _isLoopbackHost(String host) {
+  final normalized = host.toLowerCase();
+  if (normalized == 'localhost' || normalized.endsWith('.localhost')) {
+    return true;
+  }
+  return InternetAddress.tryParse(normalized)?.isLoopback ?? false;
+}
+
+Uri validateApiBaseUrl(String value, {bool production = false}) {
+  final uri = Uri.parse(value.trim());
   if (!uri.hasScheme || uri.host.isEmpty) {
     throw ArgumentError.value(uri, 'api-base-url', 'Must be an absolute URL');
   }
@@ -23,11 +35,32 @@ String _origin(Uri uri) {
       'Only HTTP and HTTPS URLs are supported',
     );
   }
+  if (production && uri.scheme != 'https') {
+    throw ArgumentError.value(
+      uri,
+      'api-base-url',
+      'Production API URLs must use HTTPS',
+    );
+  }
+  if (production && _isLoopbackHost(uri.host)) {
+    throw ArgumentError.value(
+      uri,
+      'api-base-url',
+      'Production API URLs must not target a loopback host',
+    );
+  }
+  return uri;
+}
+
+String _origin(Uri uri) {
   return uri.replace(path: '', query: null, fragment: null).toString();
 }
 
 void main(List<String> arguments) {
-  final apiUri = Uri.parse(_argument(arguments, 'api-base-url'));
+  final apiUri = validateApiBaseUrl(
+    _argument(arguments, 'api-base-url'),
+    production: _flag(arguments, 'production'),
+  );
   final templatePath = _argument(arguments, 'template');
   final outputPath = _argument(arguments, 'output');
   final apiOrigin = _origin(apiUri);

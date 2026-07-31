@@ -33,6 +33,7 @@ COPY . .
 # Keep the web server policy aligned with the public origins compiled into the
 # application. The generated file contains public origins only.
 RUN dart run tool/generate_nginx_config.dart \
+  --production \
   "--api-base-url=${FIESTAAA_API_BASE_URL}" \
   --template=nginx.conf \
   --output=build/nginx.conf
