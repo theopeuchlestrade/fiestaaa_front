@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-09-05
+
+### Fixed
+- Aligned the dependency lockfile with the pinned Flutter SDK.
+- Updated Android build tooling and compile SDK to support flutter_secure_storage 11.
+- Made web smoke checks wait for Flutter's first painted frame and honor the configured timeout.
+
+### Dependencies
+- Updated Flutter dependencies, including secure storage, Firebase, GoRouter, Sentry and Apple sign-in.
+- Updated Playwright, the Nginx container image, and CI actions.
+
 ## [0.3.1] - 2026-07-31
 
 ### Changed
