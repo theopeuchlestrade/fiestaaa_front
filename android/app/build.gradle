@@ -23,7 +23,7 @@ def hasReleaseSigning =
 
 android {
     namespace = "com.fiestaaa.fiestaaa"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
