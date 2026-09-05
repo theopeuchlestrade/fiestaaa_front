@@ -79,37 +79,43 @@ async function waitForFlutter(page) {
       const canvases = Array.from(document.querySelectorAll('canvas'));
       return Boolean(host) || canvases.some((canvas) => canvas.width > 0 && canvas.height > 0);
     },
+    undefined,
     { timeout: timeoutMs },
   );
 }
 
 async function assertNonBlank(page, viewportName) {
-  const screenshot = await page.screenshot({ fullPage: false });
-  const png = PNG.sync.read(screenshot);
-  let sampled = 0;
-  let nonBlank = 0;
-  const step = 8;
+  const deadline = Date.now() + timeoutMs;
+  let nonBlankRatio = 0;
+  do {
+    const screenshot = await page.screenshot({ fullPage: false });
+    const png = PNG.sync.read(screenshot);
+    let sampled = 0;
+    let nonBlank = 0;
+    const step = 8;
 
-  for (let y = 0; y < png.height; y += step) {
-    for (let x = 0; x < png.width; x += step) {
-      const offset = (png.width * y + x) << 2;
-      const r = png.data[offset];
-      const g = png.data[offset + 1];
-      const b = png.data[offset + 2];
-      const a = png.data[offset + 3];
-      sampled += 1;
-      if (a > 16 && (r < 245 || g < 245 || b < 245)) {
-        nonBlank += 1;
+    for (let y = 0; y < png.height; y += step) {
+      for (let x = 0; x < png.width; x += step) {
+        const offset = (png.width * y + x) << 2;
+        const r = png.data[offset];
+        const g = png.data[offset + 1];
+        const b = png.data[offset + 2];
+        const a = png.data[offset + 3];
+        sampled += 1;
+        if (a > 16 && (r < 245 || g < 245 || b < 245)) {
+          nonBlank += 1;
+        }
       }
     }
-  }
 
-  const nonBlankRatio = nonBlank / sampled;
-  if (nonBlankRatio < 0.01) {
-    throw new Error(
-      `${viewportName} page appears blank (${(nonBlankRatio * 100).toFixed(2)}% non-blank pixels)`,
-    );
-  }
+    nonBlankRatio = nonBlank / sampled;
+    if (nonBlankRatio >= 0.01) return;
+    // Flutter can attach its host before painting the first frame.
+    await page.waitForTimeout(100);
+  } while (Date.now() < deadline);
+  throw new Error(
+    `${viewportName} page appears blank (${(nonBlankRatio * 100).toFixed(2)}% non-blank pixels)`,
+  );
 }
 
 async function smokeViewport(browser, targetViewport) {
