@@ -16,28 +16,32 @@ extension _EventDetailDataMethods on _EventDetailPageState {
   void _startRealtime() {
     _realtimeSub?.cancel();
     _realtime?.dispose();
-    _realtime = RealtimeClient(
-      token: widget.session.token,
-      eventId: _currentEvent.id,
-    )..connect();
+    _realtime =
+        widget.realtimeClientFactory?.call(
+          widget.session.token,
+          _currentEvent.id,
+        ) ??
+        RealtimeClient(token: widget.session.token, eventId: _currentEvent.id);
+    _realtime!.connect();
     _realtimeSub = _realtime?.stream.listen(_handleRealtimeMessage);
   }
 
   void _handleRealtimeMessage(Map<String, dynamic> message) {
     final type = message['type'] as String?;
-    if (type == null) return;
+    if (!mounted || type == null) return;
     final eventId = message['event_id'];
     if (eventId is int && eventId != _currentEvent.id) {
       return;
     }
     switch (type) {
+      case 'realtime.ready':
+        _resync();
+        break;
       case 'event.updated':
         _refreshEvent();
         break;
       case 'event.deleted':
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
-        }
+        _leaveUnavailableEvent();
         break;
       case 'event.items.changed':
         _loadItems(showLoading: false);
@@ -53,22 +57,101 @@ extension _EventDetailDataMethods on _EventDetailPageState {
     }
   }
 
-  Future<void> _refreshEvent() async {
+  Future<void> _resync() => _refreshQueue.run('resync', _resyncOnce);
+
+  Future<void> _resyncOnce() async {
+    await _refreshEvent();
+    if (!mounted || _eventUnavailable) return;
+    await Future.wait([
+      _loadMyInvitation(),
+      _loadItems(showLoading: false),
+      _loadPolls(showLoading: false),
+    ]);
+  }
+
+  void _showRefreshFailure() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(S.of(context).unableToLoadFiestaaa),
+        action: SnackBarAction(label: S.of(context).retry, onPressed: _resync),
+      ),
+    );
+  }
+
+  void _leaveUnavailableEvent() {
+    if (!mounted || _eventUnavailable) return;
+    _eventUnavailable = true;
+    _realtimeSub?.cancel();
+    _realtime?.dispose();
+    widget.onEventRemoved?.call(_currentEvent.id);
+    _showSnack(S.of(context).realtimeEventUnavailable);
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      context.go('/events');
+    }
+  }
+
+  Future<void> _refreshEvent() =>
+      _refreshQueue.run('_refreshEvent', () => _refreshEventOnce());
+
+  Future<void> _refreshEventOnce() async {
+    if (!mounted) return;
+    final requestScope = (
+      _scopeGeneration,
+      widget.session.token,
+      widget.event.id,
+    );
     try {
       final updated = await _eventsApi.fetchEventById(
         token: widget.session.token,
         eventId: _currentEvent.id,
       );
-      if (!mounted) return;
-      _updateState(() => _currentEvent = updated);
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
+        return;
+      }
+      _updateState(() {
+        _currentEvent = updated;
+        _eventUnavailable = false;
+      });
+    } on ApiException catch (error) {
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
+        return;
+      }
+      if ([403, 404, 410].contains(error.statusCode)) {
+        _leaveUnavailableEvent();
+      } else {
+        _showRefreshFailure();
+      }
     } catch (_) {
-      // ignore refresh failure
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
+        return;
+      }
+      _showRefreshFailure();
     }
   }
 
-  Future<void> _loadMyInvitation() async {
+  Future<void> _loadMyInvitation() =>
+      _refreshQueue.run('_loadMyInvitation', () => _loadMyInvitationOnce());
+
+  Future<void> _loadMyInvitationOnce() async {
+    if (!mounted) return;
+    final requestScope = (
+      _scopeGeneration,
+      widget.session.token,
+      widget.event.id,
+    );
     if (_isOwner) {
-      _updateState(() => _myInvitation = null);
+      _updateState(() {
+        _myInvitation = null;
+        _loadingMyInvitation = false;
+      });
       return;
     }
     _updateState(() {
@@ -78,7 +161,11 @@ extension _EventDetailDataMethods on _EventDetailPageState {
       final mine = await _invitationsApi.fetchMyInvitations(
         widget.session.token,
       );
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
+        return;
+      }
       InvitationModel? match;
       for (final inv in mine) {
         if (inv.eventId == _currentEvent.id) {
@@ -90,12 +177,16 @@ extension _EventDetailDataMethods on _EventDetailPageState {
         _myInvitation = match;
       });
     } catch (_) {
-      if (!mounted) return;
-      _updateState(() {
-        _myInvitation = null;
-      });
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
+        return;
+      }
+      _showRefreshFailure();
     } finally {
-      if (mounted) {
+      if (mounted &&
+          requestScope ==
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
         _updateState(() {
           _loadingMyInvitation = false;
         });

@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
@@ -32,6 +33,10 @@ class EventsListPage extends StatefulWidget {
 }
 
 class EventsListPageState extends State<EventsListPage> {
+  final _refreshQueue = RefreshQueue();
+  int _scopeGeneration = 0;
+  int _paginationGeneration = 0;
+
   late final EventsApi _api = widget.eventsApi ?? EventsApi();
   late final InvitationsApi _invitationsApi =
       widget.invitationsApi ?? InvitationsApi();
@@ -46,6 +51,17 @@ class EventsListPageState extends State<EventsListPage> {
   void initState() {
     super.initState();
     _loadEvents();
+  }
+
+  @override
+  void didUpdateWidget(covariant EventsListPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.session.token != widget.session.token) {
+      _scopeGeneration++;
+      _events = null;
+      _myInvitations = {};
+      _loadEvents();
+    }
   }
 
   Future<void> reload() => _loadEvents();
@@ -74,9 +90,16 @@ class EventsListPageState extends State<EventsListPage> {
     });
   }
 
-  Future<void> _loadEvents() async {
+  Future<void> _loadEvents() =>
+      _refreshQueue.run('_loadEvents', () => _loadEventsOnce());
+
+  Future<void> _loadEventsOnce() async {
+    if (!mounted) return;
+    final requestScope = (_scopeGeneration, widget.session.token);
+    _paginationGeneration++;
+    _loadingMore = false;
     setState(() {
-      _loading = true;
+      _loading = _events == null;
       _error = null;
     });
     try {
@@ -86,9 +109,16 @@ class EventsListPageState extends State<EventsListPage> {
       try {
         invitations = await _invitationsApi.fetchMyInvitations(token);
       } catch (_) {
+        if (!mounted ||
+            requestScope != (_scopeGeneration, widget.session.token)) {
+          return;
+        }
         invitations = const [];
       }
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope != (_scopeGeneration, widget.session.token)) {
+        return;
+      }
       setState(() {
         _events = page.items;
         _nextCursor = page.nextCursor;
@@ -98,12 +128,15 @@ class EventsListPageState extends State<EventsListPage> {
         _notifyPendingInvites();
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope != (_scopeGeneration, widget.session.token)) {
+        return;
+      }
       setState(() {
         _error = S.of(context).unableToLoadFiestaaa;
       });
     } finally {
-      if (mounted) {
+      if (mounted && requestScope == (_scopeGeneration, widget.session.token)) {
         setState(() {
           _loading = false;
         });
@@ -112,6 +145,7 @@ class EventsListPageState extends State<EventsListPage> {
   }
 
   Future<void> _loadMore() async {
+    final requestScope = (_scopeGeneration, _paginationGeneration);
     final cursor = _nextCursor;
     if (cursor == null || _loadingMore) return;
     setState(() => _loadingMore = true);
@@ -120,7 +154,10 @@ class EventsListPageState extends State<EventsListPage> {
         token: widget.session.token,
         cursor: cursor,
       );
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope != (_scopeGeneration, _paginationGeneration)) {
+        return;
+      }
       final known = _events?.map((event) => event.id).toSet() ?? <int>{};
       setState(() {
         _events = [
@@ -130,12 +167,18 @@ class EventsListPageState extends State<EventsListPage> {
         _nextCursor = page.nextCursor;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope != (_scopeGeneration, _paginationGeneration)) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(S.of(context).unableToLoadFiestaaa)),
       );
     } finally {
-      if (mounted) setState(() => _loadingMore = false);
+      if (mounted &&
+          requestScope == (_scopeGeneration, _paginationGeneration)) {
+        setState(() => _loadingMore = false);
+      }
     }
   }
 
@@ -149,6 +192,7 @@ class EventsListPageState extends State<EventsListPage> {
 
   @override
   void dispose() {
+    _refreshQueue.dispose();
     _api.dispose();
     _invitationsApi.dispose();
     super.dispose();
@@ -168,6 +212,7 @@ class EventsListPageState extends State<EventsListPage> {
             Icon(Icons.wifi_off, color: theme.fiestaaaMutedText, size: 40),
             const SizedBox(height: 12),
             Text(_error!, textAlign: TextAlign.center),
+            TextButton(onPressed: reload, child: Text(S.of(context).retry)),
           ],
         ),
       );

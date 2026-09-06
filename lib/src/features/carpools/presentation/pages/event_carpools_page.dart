@@ -1,3 +1,5 @@
+import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
+import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'package:flutter/material.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
@@ -36,6 +38,9 @@ class EventCarpoolsPage extends StatefulWidget {
 }
 
 class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
+  final _refreshQueue = RefreshQueue();
+  int _scopeGeneration = 0;
+
   final _carpoolsApi = CarpoolsApi();
   List<CarpoolModel>? _carpools;
   bool _loading = true;
@@ -57,7 +62,21 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
   }
 
   @override
+  void didUpdateWidget(covariant EventCarpoolsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.eventId != widget.eventId ||
+        oldWidget.session.token != widget.session.token) {
+      _scopeGeneration++;
+      _carpools = null;
+      _realtime?.dispose();
+      _setupRealtime();
+      _loadCarpools();
+    }
+  }
+
+  @override
   void dispose() {
+    _refreshQueue.dispose();
     _realtime?.dispose();
     _carpoolsApi.dispose();
     super.dispose();
@@ -72,6 +91,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
     _realtime!.stream.listen((event) {
       if (!mounted) return;
       if ([
+        'realtime.ready',
         'carpool_created',
         'carpool_updated',
         'carpool_deleted',
@@ -83,9 +103,18 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
     });
   }
 
-  Future<void> _loadCarpools() async {
+  Future<void> _loadCarpools() =>
+      _refreshQueue.run('_loadCarpools', () => _loadCarpoolsOnce());
+
+  Future<void> _loadCarpoolsOnce() async {
+    if (!mounted) return;
+    final requestScope = (
+      _scopeGeneration,
+      widget.session.token,
+      widget.eventId,
+    );
     setState(() {
-      _loading = true;
+      _loading = _carpools == null;
       _error = null;
     });
     try {
@@ -94,13 +123,23 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
         eventId: widget.eventId,
         sortBy: _sortBy,
       );
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.eventId)) {
+        return;
+      }
       setState(() => _carpools = data);
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.eventId)) {
+        return;
+      }
       setState(() => _error = e.toString());
     } finally {
-      if (mounted) {
+      if (mounted &&
+          requestScope ==
+              (_scopeGeneration, widget.session.token, widget.eventId)) {
         setState(() => _loading = false);
       }
     }
@@ -383,9 +422,13 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
       ),
     );
 
-    if (widget.compactModal) return content;
+    final realtimeContent = RealtimeStatusBanner(
+      stream: _realtime?.stream,
+      child: content,
+    );
+    if (widget.compactModal) return realtimeContent;
 
-    return Scaffold(body: FiestaaaPageLayout(child: content));
+    return Scaffold(body: FiestaaaPageLayout(child: realtimeContent));
   }
 
   Widget _buildWarningBanner(S l10n) {

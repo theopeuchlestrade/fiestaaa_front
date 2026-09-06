@@ -1,7 +1,18 @@
 part of '../pages/event_detail_page.dart';
 
 extension _EventDetailItemMethods on _EventDetailPageState {
-  Future<void> _loadItems({bool showLoading = true}) async {
+  Future<void> _loadItems({bool showLoading = true}) => _refreshQueue.run(
+    '_loadItems',
+    () => _loadItemsOnce(showLoading: showLoading),
+  );
+
+  Future<void> _loadItemsOnce({bool showLoading = true}) async {
+    if (!mounted) return;
+    final requestScope = (
+      _scopeGeneration,
+      widget.session.token,
+      widget.event.id,
+    );
     _updateState(() {
       if (showLoading) _loadingItems = true;
       _itemsError = null;
@@ -12,23 +23,37 @@ extension _EventDetailItemMethods on _EventDetailPageState {
         token: widget.session.token,
         scope: _itemsScope.apiValue,
       );
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
+        return;
+      }
       _updateState(() {
         _eventItems = data;
       });
       await _loadContributions();
     } on ApiException catch (e) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
+        return;
+      }
       _updateState(() {
         _itemsError = e.message;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
+        return;
+      }
       _updateState(() {
         _itemsError = S.of(context).unableToLoadItems;
       });
     } finally {
-      if (mounted && showLoading) {
+      if (mounted &&
+          requestScope ==
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
         _updateState(() {
           _loadingItems = false;
         });
@@ -36,7 +61,18 @@ extension _EventDetailItemMethods on _EventDetailPageState {
     }
   }
 
-  Future<void> _loadPolls({bool showLoading = true}) async {
+  Future<void> _loadPolls({bool showLoading = true}) => _refreshQueue.run(
+    '_loadPolls',
+    () => _loadPollsOnce(showLoading: showLoading),
+  );
+
+  Future<void> _loadPollsOnce({bool showLoading = true}) async {
+    if (!mounted) return;
+    final requestScope = (
+      _scopeGeneration,
+      widget.session.token,
+      widget.event.id,
+    );
     _updateState(() {
       if (showLoading) _loadingPolls = true;
       _pollsError = null;
@@ -46,20 +82,34 @@ extension _EventDetailItemMethods on _EventDetailPageState {
         token: widget.session.token,
         eventId: _currentEvent.id,
       );
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
+        return;
+      }
       _updateState(() => _polls = data);
     } on ApiException catch (e) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
+        return;
+      }
       _updateState(
         () => _pollsError = e.statusCode == 403
             ? S.of(context).acceptInvitationBeforeVoting
             : e.message,
       );
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
+        return;
+      }
       _updateState(() => _pollsError = S.of(context).unableToLoadPolls);
     } finally {
-      if (mounted && showLoading) {
+      if (mounted &&
+          requestScope ==
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
         _updateState(() {
           _loadingPolls = false;
         });
@@ -67,19 +117,37 @@ extension _EventDetailItemMethods on _EventDetailPageState {
     }
   }
 
-  Future<void> _loadContributions() async {
+  Future<void> _loadContributions() =>
+      _refreshQueue.run('_loadContributions', () => _loadContributionsOnce());
+
+  Future<void> _loadContributionsOnce() async {
+    if (!mounted) return;
+    final requestScope = (
+      _scopeGeneration,
+      widget.session.token,
+      widget.event.id,
+    );
     try {
       final data = await _eventsApi.fetchEventItemContributions(
         token: widget.session.token,
         eventId: widget.event.id,
       );
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
+        return;
+      }
       final map = <int, List<ItemContributionModel>>{};
       for (final c in data) {
         map.putIfAbsent(c.itemId, () => []).add(c);
       }
       _updateState(() => _contributions = map);
     } catch (_) {
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.event.id)) {
+        return;
+      }
       // silently ignore; UI will just not show avatars
     }
   }

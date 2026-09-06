@@ -1,3 +1,5 @@
+import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
+import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'dart:async';
 
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
@@ -40,6 +42,9 @@ class EventExpensesPage extends StatefulWidget {
 }
 
 class _EventExpensesPageState extends State<EventExpensesPage> {
+  final _refreshQueue = RefreshQueue();
+  int _scopeGeneration = 0;
+
   final _eventsApi = EventsApi();
   final _invitationsApi = InvitationsApi();
 
@@ -80,7 +85,25 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
   }
 
   @override
+  void didUpdateWidget(covariant EventExpensesPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.realtimeStream != widget.realtimeStream) {
+      _realtimeSub?.cancel();
+      _realtimeSub = widget.realtimeStream?.listen(_handleRealtime);
+    }
+    if (oldWidget.eventId != widget.eventId ||
+        oldWidget.session.token != widget.session.token) {
+      _scopeGeneration++;
+      _expenses = const [];
+      _summary = null;
+      _invitations = const [];
+      _loadData();
+    }
+  }
+
+  @override
   void dispose() {
+    _refreshQueue.dispose();
     _realtimeSub?.cancel();
     _eventsApi.dispose();
     _invitationsApi.dispose();
@@ -89,13 +112,27 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
 
   void _handleRealtime(Map<String, dynamic> message) {
     final type = message['type'] as String?;
-    if (type != 'event_expenses_changed') return;
+    if (!mounted ||
+        (type != 'event_expenses_changed' && type != 'realtime.ready')) {
+      return;
+    }
     final eventId = message['event_id'];
     if (eventId is int && eventId != widget.eventId) return;
     _loadData(showLoading: false);
   }
 
-  Future<void> _loadData({bool showLoading = true}) async {
+  Future<void> _loadData({bool showLoading = true}) => _refreshQueue.run(
+    '_loadData',
+    () => _loadDataOnce(showLoading: showLoading),
+  );
+
+  Future<void> _loadDataOnce({bool showLoading = true}) async {
+    if (!mounted) return;
+    final requestScope = (
+      _scopeGeneration,
+      widget.session.token,
+      widget.eventId,
+    );
     if (showLoading) {
       setState(() {
         _loading = true;
@@ -118,7 +155,11 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
           eventId: widget.eventId,
         ),
       ]);
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.eventId)) {
+        return;
+      }
       setState(() {
         _expenses = results[0] as List<EventExpenseModel>;
         _summary = results[1] as EventExpensesSummaryModel;
@@ -126,13 +167,24 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
         _error = null;
       });
     } on ApiException catch (e) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.eventId)) {
+        return;
+      }
       setState(() => _error = e.message);
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.eventId)) {
+        return;
+      }
       setState(() => _error = S.of(context).sharedExpensesLoadFailed);
     } finally {
-      if (mounted && showLoading) {
+      if (mounted &&
+          requestScope ==
+              (_scopeGeneration, widget.session.token, widget.eventId) &&
+          showLoading) {
         setState(() => _loading = false);
       }
     }
@@ -573,8 +625,12 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
       ),
     );
 
-    if (widget.compactModal) return content;
-    return Scaffold(body: FiestaaaPageLayout(child: content));
+    final realtimeContent = RealtimeStatusBanner(
+      stream: widget.realtimeStream,
+      child: content,
+    );
+    if (widget.compactModal) return realtimeContent;
+    return Scaffold(body: FiestaaaPageLayout(child: realtimeContent));
   }
 
   Widget _buildHeroSection(S l10n) {

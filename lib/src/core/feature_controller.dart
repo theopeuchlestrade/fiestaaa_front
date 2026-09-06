@@ -1,12 +1,13 @@
+import 'refresh_queue.dart';
 import 'package:flutter/foundation.dart';
 
 abstract class FeatureController extends ChangeNotifier {
   bool loading = false;
   Object? error;
   bool _disposed = false;
-  Future<void>? _refresh;
+  final _refreshQueue = RefreshQueue();
 
-  Future<void> refresh() => _refresh ??= _runRefresh();
+  Future<void> refresh() => _refreshQueue.run('load', _runRefresh);
 
   Future<void> _runRefresh() async {
     loading = true;
@@ -18,7 +19,6 @@ abstract class FeatureController extends ChangeNotifier {
       error = value;
     } finally {
       loading = false;
-      _refresh = null;
       notifySafely();
     }
   }
@@ -34,6 +34,7 @@ abstract class FeatureController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _refreshQueue.dispose();
     super.dispose();
   }
 }

@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 const _initialReconnectDelay = Duration(seconds: 2);
@@ -56,70 +57,112 @@ class RealtimeReconnectBackoff {
   }
 }
 
+enum RealtimeConnectionState {
+  connecting,
+  connected,
+  interrupted,
+  disabled,
+  closed,
+}
+
 class RealtimeClient {
   RealtimeClient({
     required this.token,
     this.eventId,
     http.Client? httpClient,
     RealtimeReconnectBackoff? reconnectBackoff,
+    WebSocketChannel Function(Uri)? channelFactory,
   }) : _httpClient = httpClient ?? createApiHttpClient(),
        _ownsHttpClient = httpClient == null,
-       _reconnectBackoff = reconnectBackoff ?? RealtimeReconnectBackoff();
+       _reconnectBackoff = reconnectBackoff ?? RealtimeReconnectBackoff(),
+       _channelFactory = channelFactory ?? WebSocketChannel.connect;
 
   final String token;
   int? eventId;
   final http.Client _httpClient;
   final bool _ownsHttpClient;
   final RealtimeReconnectBackoff _reconnectBackoff;
+  final WebSocketChannel Function(Uri) _channelFactory;
+  final connectionState = ValueNotifier(RealtimeConnectionState.connecting);
 
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
   Timer? _reconnectTimer;
+  Timer? _readyTimer;
   final _controller = StreamController<Map<String, dynamic>>.broadcast(
     sync: true,
   );
-  bool _manuallyClosed = false;
+  bool _disposed = false;
   int _connectGeneration = 0;
 
-  Stream<Map<String, dynamic>> get stream => _controller.stream;
+  late final Stream<Map<String, dynamic>> _publicStream = Stream.multi((sink) {
+    if (_disposed) {
+      sink.close();
+      return;
+    }
+    final subscription = _controller.stream.listen(
+      sink.add,
+      onError: sink.addError,
+      onDone: sink.close,
+    );
+    sink.add({'type': 'realtime.status', 'state': connectionState.value.name});
+    sink.onCancel = subscription.cancel;
+  }, isBroadcast: true);
+
+  Stream<Map<String, dynamic>> get stream => _publicStream;
+
+  void _setState(RealtimeConnectionState state) {
+    if (_disposed || connectionState.value == state) return;
+    connectionState.value = state;
+    // Local state events also reach screens that share this client's stream.
+    _controller.add({'type': 'realtime.status', 'state': state.name});
+  }
 
   void connect() {
-    _manuallyClosed = false;
-    _cancelReconnectTimer();
+    if (_disposed) return;
     _reconnectBackoff.reset();
-    unawaited(_openChannel());
+    unawaited(_reconnect());
   }
 
   void updateEvent(int? id) {
+    if (_disposed || id == eventId) return;
     eventId = id;
     unawaited(_reconnect());
   }
 
-  Future<void> _openChannel() async {
-    final generation = ++_connectGeneration;
+  Future<void> _openChannel(int generation) async {
     final targetEventId = eventId;
-
     try {
       final ticket = await _fetchTicket(targetEventId);
-      if (_manuallyClosed || generation != _connectGeneration) return;
-
-      final uri = buildWsUri(
-        '/ws',
-        queryParameters: {
-          'ticket': ticket,
-          if (targetEventId != null) 'event_id': '$targetEventId',
-        },
+      if (_disposed || generation != _connectGeneration) return;
+      final channel = _channelFactory(
+        buildWsUri(
+          '/ws',
+          queryParameters: {
+            'ticket': ticket,
+            if (targetEventId != null) 'event_id': '$targetEventId',
+          },
+        ),
       );
-
-      _channel = WebSocketChannel.connect(uri);
-      _subscription = _channel!.stream.listen(
-        _handleData,
-        onError: (_) => _reconnectSoon(),
-        onDone: _reconnectSoon,
+      _channel = channel;
+      _readyTimer = Timer(const Duration(seconds: 20), () {
+        if (generation == _connectGeneration) _reconnectSoon();
+      });
+      _subscription = channel.stream.listen(
+        (data) {
+          if (!_disposed && generation == _connectGeneration) _handleData(data);
+        },
+        onError: (_) {
+          if (generation == _connectGeneration) _reconnectSoon();
+        },
+        onDone: () {
+          if (generation == _connectGeneration) _reconnectSoon();
+        },
         cancelOnError: true,
       );
+      await channel.ready;
     } catch (_) {
-      if (_manuallyClosed || generation != _connectGeneration) return;
+      if (_disposed || generation != _connectGeneration) return;
       _reconnectSoon();
     }
   }
@@ -134,80 +177,89 @@ class RealtimeClient {
       ),
       headers: {'Authorization': 'Bearer $token'},
     );
-
     if (response.statusCode != 200) {
       throw StateError('Ticket request failed: ${response.statusCode}');
     }
-
     final decoded = jsonDecode(response.body);
     if (decoded is! Map<String, dynamic>) {
       throw const FormatException('Invalid realtime ticket payload');
     }
-
     final ticket = decoded['ticket'];
     if (ticket is! String || ticket.isEmpty) {
       throw const FormatException('Missing realtime ticket');
     }
-
     return ticket;
   }
 
-  Future<void> _closeCurrentChannel() async {
-    await _subscription?.cancel();
+  void _closeCurrentChannel() {
+    // Detach first so an old close cannot clear a newer connection.
+    final subscription = _subscription;
+    final channel = _channel;
     _subscription = null;
-    await _channel?.sink.close();
     _channel = null;
+    _readyTimer?.cancel();
+    _readyTimer = null;
+    unawaited(subscription?.cancel());
+    // Waiting for a peer's close handshake must not block recovery/disposal.
+    if (channel != null) {
+      unawaited(channel.sink.close().catchError((Object _) {}));
+    }
   }
 
   void _reconnectSoon() {
-    if (_manuallyClosed || _reconnectTimer?.isActive == true) return;
-    final generation = _connectGeneration;
-    final delay = _reconnectBackoff.nextDelay();
-    _reconnectTimer = Timer(delay, () {
+    if (_disposed || _reconnectTimer?.isActive == true) return;
+    _setState(RealtimeConnectionState.interrupted);
+    final generation = ++_connectGeneration;
+    _closeCurrentChannel();
+    _reconnectTimer = Timer(_reconnectBackoff.nextDelay(), () {
       _reconnectTimer = null;
-      if (_manuallyClosed || generation != _connectGeneration) {
-        return;
-      }
-      unawaited(_reconnect());
+      if (_disposed || generation != _connectGeneration) return;
+      unawaited(_openChannel(generation));
     });
   }
 
   Future<void> _reconnect() async {
-    if (_manuallyClosed) return;
-    _cancelReconnectTimer();
-    _connectGeneration++;
-    await _closeCurrentChannel();
-    if (_manuallyClosed) return;
-    await _openChannel();
+    if (_disposed) return;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    final generation = ++_connectGeneration;
+    _closeCurrentChannel();
+    _setState(RealtimeConnectionState.connecting);
+    await _openChannel(generation);
   }
 
   void _handleData(dynamic data) {
-    _reconnectBackoff.reset();
-    if (data is String) {
-      try {
-        final decoded = jsonDecode(data);
-        if (decoded is Map<String, dynamic>) {
-          _controller.add(decoded);
-        }
-      } catch (_) {
-        // ignore malformed payloads
-      }
+    if (data is! String) return;
+    Map<String, dynamic> message;
+    try {
+      final decoded = jsonDecode(data);
+      if (decoded is! Map<String, dynamic>) return;
+      message = decoded;
+    } catch (_) {
+      return;
     }
+    if (message['type'] == 'realtime.ready') {
+      _readyTimer?.cancel();
+      _reconnectBackoff.reset();
+      _setState(RealtimeConnectionState.connected);
+    } else if (message['type'] == 'warning' &&
+        message['payload'] is Map &&
+        message['payload']['message'] == 'realtime_disabled') {
+      _readyTimer?.cancel();
+      _setState(RealtimeConnectionState.disabled);
+    }
+    _controller.add(message);
   }
 
   Future<void> dispose() async {
-    _manuallyClosed = true;
+    if (_disposed) return;
+    _setState(RealtimeConnectionState.closed);
+    _disposed = true;
     _connectGeneration++;
-    _cancelReconnectTimer();
-    await _closeCurrentChannel();
-    if (_ownsHttpClient) {
-      _httpClient.close();
-    }
-    await _controller.close();
-  }
-
-  void _cancelReconnectTimer() {
     _reconnectTimer?.cancel();
-    _reconnectTimer = null;
+    _closeCurrentChannel();
+    if (_ownsHttpClient) _httpClient.close();
+    connectionState.dispose();
+    await _controller.close();
   }
 }

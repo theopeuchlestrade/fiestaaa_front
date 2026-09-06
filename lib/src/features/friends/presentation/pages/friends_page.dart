@@ -1,3 +1,5 @@
+import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
+import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'dart:async';
 
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
@@ -53,6 +55,9 @@ class FriendsPage extends StatefulWidget {
 
 class _FriendsPageState extends State<FriendsPage>
     with SingleTickerProviderStateMixin {
+  final _refreshQueue = RefreshQueue();
+  int _scopeGeneration = 0;
+
   late final FriendsApi _api = widget.friendsApi ?? FriendsApi();
   late final EventsApi _eventsApi = widget.eventsApi ?? EventsApi();
   late final InvitationsApi _invitationsApi =
@@ -110,6 +115,7 @@ class _FriendsPageState extends State<FriendsPage>
 
   @override
   void dispose() {
+    _refreshQueue.dispose();
     _debounce?.cancel();
     _realtimeSub?.cancel();
     _inviteController.dispose();
@@ -128,7 +134,9 @@ class _FriendsPageState extends State<FriendsPage>
       _realtimeSub?.cancel();
       _realtimeSub = widget.realtimeStream?.listen(_handleRealtime);
     }
-    if (oldWidget.inviteFlow?.eventId != widget.inviteFlow?.eventId) {
+    if (oldWidget.inviteFlow?.eventId != widget.inviteFlow?.eventId ||
+        oldWidget.session.token != widget.session.token) {
+      _scopeGeneration++;
       _selectedFriendKeysValue.clear();
       _refreshAll();
     }
@@ -153,7 +161,9 @@ class _FriendsPageState extends State<FriendsPage>
   void _handleRealtime(Map<String, dynamic> message) {
     final type = message['type'] as String?;
     if (type == null) return;
-    if (type == 'friend_requests.changed' || type == 'friendships.changed') {
+    if (type == 'realtime.ready' ||
+        type == 'friend_requests.changed' ||
+        type == 'friendships.changed') {
       _refreshAll();
       return;
     }
@@ -169,20 +179,45 @@ class _FriendsPageState extends State<FriendsPage>
     }
   }
 
-  Future<void> _fetchFriends() async {
+  Future<void> _fetchFriends() =>
+      _refreshQueue.run('_fetchFriends', () => _fetchFriendsOnce());
+
+  Future<void> _fetchFriendsOnce() async {
+    if (!mounted) return;
+    final requestScope = (
+      _scopeGeneration,
+      widget.session.token,
+      widget.inviteFlow?.eventId,
+    );
     setState(() {
-      _loading = true;
+      _loading = _friends.isEmpty;
       _error = null;
     });
     try {
       final data = await _api.fetchFriends(widget.session.token);
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
+        return;
+      }
       setState(() {
         _friends = data;
         _pruneSelectedFriendKeys();
       });
     } on ApiException catch (e) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
+        return;
+      }
       setState(
         () => _error = localizedApiError(
           S.of(context),
@@ -191,28 +226,67 @@ class _FriendsPageState extends State<FriendsPage>
         ),
       );
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
+        return;
+      }
       setState(() => _error = S.of(context).unableToLoadFriends);
     } finally {
-      if (mounted) {
+      if (mounted &&
+          requestScope ==
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
         setState(() => _loading = false);
       }
     }
   }
 
-  Future<void> _fetchOwnedEvents() async {
+  Future<void> _fetchOwnedEvents() =>
+      _refreshQueue.run('_fetchOwnedEvents', () => _fetchOwnedEventsOnce());
+
+  Future<void> _fetchOwnedEventsOnce() async {
+    if (!mounted) return;
+    final requestScope = (
+      _scopeGeneration,
+      widget.session.token,
+      widget.inviteFlow?.eventId,
+    );
     setState(() {
-      _loadingOwnedEvents = true;
+      _loadingOwnedEvents = _ownedEvents == null;
       _ownedEventsError = null;
     });
     try {
       final events = await _eventsApi.fetchEvents(token: widget.session.token);
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
+        return;
+      }
       final ownedEvents = events.where(_isOwnedInvitableEvent).toList()
         ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
       setState(() => _ownedEvents = ownedEvents);
     } on ApiException catch (e) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
+        return;
+      }
       setState(
         () => _ownedEventsError = localizedApiError(
           S.of(context),
@@ -221,16 +295,41 @@ class _FriendsPageState extends State<FriendsPage>
         ),
       );
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
+        return;
+      }
       setState(() => _ownedEventsError = S.of(context).unableToLoadFiestaaa);
     } finally {
-      if (mounted) {
+      if (mounted &&
+          requestScope ==
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
         setState(() => _loadingOwnedEvents = false);
       }
     }
   }
 
-  Future<void> _fetchEventInvitations() async {
+  Future<void> _fetchEventInvitations() => _refreshQueue.run(
+    '_fetchEventInvitations',
+    () => _fetchEventInvitationsOnce(),
+  );
+
+  Future<void> _fetchEventInvitationsOnce() async {
+    if (!mounted) return;
+    final requestScope = (
+      _scopeGeneration,
+      widget.session.token,
+      widget.inviteFlow?.eventId,
+    );
     final flow = widget.inviteFlow;
     if (flow == null) return;
 
@@ -243,7 +342,15 @@ class _FriendsPageState extends State<FriendsPage>
         token: widget.session.token,
         eventId: flow.eventId,
       );
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
+        return;
+      }
       setState(() {
         _invitedFriendIdentifiersValue
           ..clear()
@@ -251,7 +358,15 @@ class _FriendsPageState extends State<FriendsPage>
         _pruneSelectedFriendKeys();
       });
     } on ApiException catch (e) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
+        return;
+      }
       setState(
         () => _eventInvitationsError = localizedApiError(
           S.of(context),
@@ -260,30 +375,69 @@ class _FriendsPageState extends State<FriendsPage>
         ),
       );
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
+        return;
+      }
       setState(
         () => _eventInvitationsError = S.of(context).unableToLoadInvitations,
       );
     } finally {
-      if (mounted) {
+      if (mounted &&
+          requestScope ==
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
         setState(() => _loadingEventInvitations = false);
       }
     }
   }
 
-  Future<void> _fetchRequests() async {
+  Future<void> _fetchRequests() =>
+      _refreshQueue.run('_fetchRequests', () => _fetchRequestsOnce());
+
+  Future<void> _fetchRequestsOnce() async {
+    if (!mounted) return;
+    final requestScope = (
+      _scopeGeneration,
+      widget.session.token,
+      widget.inviteFlow?.eventId,
+    );
     setState(() {
-      _loadingRequests = true;
+      _loadingRequests = _requests.isEmpty;
       _requestError = null;
     });
     try {
       final data = await _api.fetchRequests(widget.session.token);
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
+        return;
+      }
       final pending = data.where((r) => r.status == 'Pending').toList();
       setState(() => _requests = pending);
       _notifyPendingRequests(pending);
     } on ApiException catch (e) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
+        return;
+      }
       setState(
         () => _requestError = localizedApiError(
           S.of(context),
@@ -292,10 +446,24 @@ class _FriendsPageState extends State<FriendsPage>
         ),
       );
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
+        return;
+      }
       setState(() => _requestError = S.of(context).unableToLoadRequests);
     } finally {
-      if (mounted) {
+      if (mounted &&
+          requestScope ==
+              (
+                _scopeGeneration,
+                widget.session.token,
+                widget.inviteFlow?.eventId,
+              )) {
         setState(() => _loadingRequests = false);
       }
     }
@@ -838,27 +1006,31 @@ class _FriendsPageState extends State<FriendsPage>
   @override
   Widget build(BuildContext context) {
     if (_isInviteSelectionMode) {
-      return _EventInviteSelectionView(
-        eventName: widget.inviteFlow!.eventName,
-        filterController: _friendsFilterController,
-        query: _friendsFilterController.text.trim(),
-        totalFriendsCount: _friends.length,
-        filteredFriendsCount: _filteredFriends.length,
-        selectedCount: _selectedFriendKeysValue.length,
-        loading: _loading || _isLoadingEventInvitations,
-        error: _error ?? _eventInvitationsError,
-        friends: _filteredFriends,
-        inviting: _isInvitingFriendsToEvent,
-        selectedKeys: _selectedFriendKeysValue,
-        onRefresh: () async {
-          await Future.wait([_fetchFriends(), _fetchEventInvitations()]);
-        },
-        onClearFilter: () => _friendsFilterController.clear(),
-        onToggleSelection: _toggleFriendSelection,
-        onCancel: () => Navigator.of(context).maybePop(),
-        onInvite: _selectedFriendKeysValue.isEmpty || _isInvitingFriendsToEvent
-            ? null
-            : _inviteSelectedFriendsToEvent,
+      return RealtimeStatusBanner(
+        stream: widget.realtimeStream,
+        child: _EventInviteSelectionView(
+          eventName: widget.inviteFlow!.eventName,
+          filterController: _friendsFilterController,
+          query: _friendsFilterController.text.trim(),
+          totalFriendsCount: _friends.length,
+          filteredFriendsCount: _filteredFriends.length,
+          selectedCount: _selectedFriendKeysValue.length,
+          loading: _loading || _isLoadingEventInvitations,
+          error: _error ?? _eventInvitationsError,
+          friends: _filteredFriends,
+          inviting: _isInvitingFriendsToEvent,
+          selectedKeys: _selectedFriendKeysValue,
+          onRefresh: () async {
+            await Future.wait([_fetchFriends(), _fetchEventInvitations()]);
+          },
+          onClearFilter: () => _friendsFilterController.clear(),
+          onToggleSelection: _toggleFriendSelection,
+          onCancel: () => Navigator.of(context).maybePop(),
+          onInvite:
+              _selectedFriendKeysValue.isEmpty || _isInvitingFriendsToEvent
+              ? null
+              : _inviteSelectedFriendsToEvent,
+        ),
       );
     }
 
@@ -871,65 +1043,68 @@ class _FriendsPageState extends State<FriendsPage>
     final visibleFriends = _filteredFriends;
     final friendEntries = _buildFriendEntries(visibleFriends);
 
-    return FiestaaaPageLayout(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          FiestaaaPageHeader(
-            title: S.of(context).myFriends,
-            subtitle: S.of(context).addContactsManageRequests,
-            bottomSpacing: 12,
-          ),
-          _FriendsOverviewCard(
-            friendCount: _friends.length,
-            incomingCount: incoming.length,
-            outgoingCount: outgoing.length,
-          ),
-          const SizedBox(height: 16),
-          _FriendsTabs(
-            controller: _tabController,
-            pendingIncomingCount: incoming.length,
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _FriendsDirectoryTab(
-                  filterController: _friendsFilterController,
-                  query: _friendsFilterController.text.trim(),
-                  totalFriendsCount: _friends.length,
-                  filteredFriendsCount: visibleFriends.length,
-                  loading: _loading,
-                  error: _error,
-                  entries: friendEntries,
-                  onRefresh: _refreshAll,
-                  onClearFilter: () => _friendsFilterController.clear(),
-                  onInviteToEvent: _openInviteSheetForFriend,
-                  onRemove: _removeFriend,
-                ),
-                _RequestsTab(
-                  loading: _loadingRequests,
-                  error: _requestError,
-                  incoming: incoming,
-                  outgoing: outgoing,
-                  userEmail: widget.session.email,
-                  onRefresh: _refreshAll,
-                  onAccept: (req) => _respondRequest(req, 'Accepted'),
-                  onDecline: (req) => _respondRequest(req, 'Declined'),
-                ),
-                _AddFriendTab(
-                  controller: _inviteController,
-                  searching: _searching,
-                  suggestions: _suggestions,
-                  sending: _sending,
-                  onRefresh: _refreshAll,
-                  onSend: _sendRequest,
-                ),
-              ],
+    return RealtimeStatusBanner(
+      stream: widget.realtimeStream,
+      child: FiestaaaPageLayout(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FiestaaaPageHeader(
+              title: S.of(context).myFriends,
+              subtitle: S.of(context).addContactsManageRequests,
+              bottomSpacing: 12,
             ),
-          ),
-        ],
+            _FriendsOverviewCard(
+              friendCount: _friends.length,
+              incomingCount: incoming.length,
+              outgoingCount: outgoing.length,
+            ),
+            const SizedBox(height: 16),
+            _FriendsTabs(
+              controller: _tabController,
+              pendingIncomingCount: incoming.length,
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _FriendsDirectoryTab(
+                    filterController: _friendsFilterController,
+                    query: _friendsFilterController.text.trim(),
+                    totalFriendsCount: _friends.length,
+                    filteredFriendsCount: visibleFriends.length,
+                    loading: _loading,
+                    error: _error,
+                    entries: friendEntries,
+                    onRefresh: _refreshAll,
+                    onClearFilter: () => _friendsFilterController.clear(),
+                    onInviteToEvent: _openInviteSheetForFriend,
+                    onRemove: _removeFriend,
+                  ),
+                  _RequestsTab(
+                    loading: _loadingRequests,
+                    error: _requestError,
+                    incoming: incoming,
+                    outgoing: outgoing,
+                    userEmail: widget.session.email,
+                    onRefresh: _refreshAll,
+                    onAccept: (req) => _respondRequest(req, 'Accepted'),
+                    onDecline: (req) => _respondRequest(req, 'Declined'),
+                  ),
+                  _AddFriendTab(
+                    controller: _inviteController,
+                    searching: _searching,
+                    suggestions: _suggestions,
+                    sending: _sending,
+                    onRefresh: _refreshAll,
+                    onSend: _sendRequest,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

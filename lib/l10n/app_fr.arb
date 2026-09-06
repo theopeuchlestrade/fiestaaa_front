@@ -973,5 +973,8 @@
   "registrationCompleted": "Compte finalisé. Bienvenue !",
   "emailVerified": "Ton email est vérifié. Tu peux maintenant te connecter.",
   "emailVerificationFailed": "Ce lien de vérification est invalide ou expiré.",
-  "sessionExpired": "Ta session a expiré. Reconnecte-toi."
+  "sessionExpired": "Ta session a expiré. Reconnecte-toi.",
+  "realtimeInterrupted": "Connexion interrompue · reconnexion en cours",
+  "realtimeDisabled": "Mises à jour en direct indisponibles",
+  "realtimeEventUnavailable": "Cette fiestaaa a été supprimée ou n’est plus accessible."
 }
