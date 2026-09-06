@@ -1,3 +1,6 @@
+import 'package:go_router/go_router.dart';
+import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
+import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'dart:async';
 
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
@@ -85,8 +88,17 @@ class EventDetailPage extends StatefulWidget {
     this.onEventUpdated,
     this.onEventRemoved,
     this.onInvitationStatusChanged,
+    this.eventsApi,
+    this.invitationsApi,
+    this.paymentProvidersApi,
+    this.realtimeClientFactory,
   });
 
+  final EventsApi? eventsApi;
+  final InvitationsApi? invitationsApi;
+  final PaymentProvidersApi? paymentProvidersApi;
+  final RealtimeClient Function(String token, int eventId)?
+  realtimeClientFactory;
   final EventModel event;
   final SessionData session;
   final VoidCallback? onEventUpdated;
@@ -98,11 +110,15 @@ class EventDetailPage extends StatefulWidget {
 }
 
 class _EventDetailPageState extends State<EventDetailPage> {
-  final _eventsApi = EventsApi();
-  final _invitationsApi = InvitationsApi();
-  final _paymentProvidersApi = PaymentProvidersApi();
+  final _refreshQueue = RefreshQueue();
+  int _scopeGeneration = 0;
+  late final _eventsApi = widget.eventsApi ?? EventsApi();
+  late final _invitationsApi = widget.invitationsApi ?? InvitationsApi();
+  late final _paymentProvidersApi =
+      widget.paymentProvidersApi ?? PaymentProvidersApi();
   final ValueNotifier<int> _modalRefreshTick = ValueNotifier<int>(0);
   late EventModel _currentEvent;
+  bool _eventUnavailable = false;
   List<EventItemModel>? _eventItems;
   Map<int, List<ItemContributionModel>> _contributions = {};
   bool _loadingItems = true;
@@ -151,7 +167,25 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   @override
+  void didUpdateWidget(covariant EventDetailPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.event.id != widget.event.id ||
+        oldWidget.session.token != widget.session.token) {
+      _scopeGeneration++;
+      _currentEvent = widget.event;
+      _eventUnavailable = false;
+      _eventItems = null;
+      _polls = null;
+      _myInvitation = null;
+      _contributions = {};
+      _startRealtime();
+      _resync();
+    }
+  }
+
+  @override
   void dispose() {
+    _refreshQueue.dispose();
     _eventsApi.dispose();
     _invitationsApi.dispose();
     _paymentProvidersApi.dispose();
@@ -199,54 +233,54 @@ class _EventDetailPageState extends State<EventDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FiestaaaPageLayout(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            await _loadPolls(showLoading: false);
-            await _loadItems(showLoading: false);
-          },
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              _buildHeader(),
-              if (_isReadOnly) _buildReadOnlyBanner(),
-              if (!_isOwner)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _InvitationStatusCard(
-                    invitation: _myInvitation,
-                    loading: _loadingMyInvitation,
-                    onRespond: _respondInvitation,
-                    readOnly: _isReadOnly,
-                    deadline: _currentEvent.invitationDeadline,
+      body: RealtimeStatusBanner(
+        stream: _realtime?.stream,
+        child: FiestaaaPageLayout(
+          child: RefreshIndicator(
+            onRefresh: _resync,
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                _buildHeader(),
+                if (_isReadOnly) _buildReadOnlyBanner(),
+                if (!_isOwner)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _InvitationStatusCard(
+                      invitation: _myInvitation,
+                      loading: _loadingMyInvitation,
+                      onRespond: _respondInvitation,
+                      readOnly: _isReadOnly,
+                      deadline: _currentEvent.invitationDeadline,
+                    ),
                   ),
-                ),
-              _DetailTile(
-                icon: Icons.event,
-                label: S.of(context).dateAndTime,
-                value: _scheduleValue(),
-              ),
-              if (_currentEvent.invitationDeadline != null &&
-                  !_isOwner &&
-                  _isWaitingInvitation)
                 _DetailTile(
-                  icon: Icons.hourglass_bottom,
-                  label: S.of(context).responseBefore,
-                  value:
-                      _currentEvent.formattedInvitationDeadline ??
-                      DateFormat.yMMMMd(
-                        'fr_FR',
-                      ).format(_currentEvent.invitationDeadline!),
+                  icon: Icons.event,
+                  label: S.of(context).dateAndTime,
+                  value: _scheduleValue(),
                 ),
-              _buildLocationSection(),
-              _DetailTile(
-                icon: Icons.description,
-                label: S.of(context).description,
-                value: _currentEvent.description,
-              ),
-              const SizedBox(height: 20),
-              _buildFeatureActionsSection(),
-            ],
+                if (_currentEvent.invitationDeadline != null &&
+                    !_isOwner &&
+                    _isWaitingInvitation)
+                  _DetailTile(
+                    icon: Icons.hourglass_bottom,
+                    label: S.of(context).responseBefore,
+                    value:
+                        _currentEvent.formattedInvitationDeadline ??
+                        DateFormat.yMMMMd(
+                          'fr_FR',
+                        ).format(_currentEvent.invitationDeadline!),
+                  ),
+                _buildLocationSection(),
+                _DetailTile(
+                  icon: Icons.description,
+                  label: S.of(context).description,
+                  value: _currentEvent.description,
+                ),
+                const SizedBox(height: 20),
+                _buildFeatureActionsSection(),
+              ],
+            ),
           ),
         ),
       ),

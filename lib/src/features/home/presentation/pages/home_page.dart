@@ -1,3 +1,5 @@
+import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
+import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'package:fiestaaa_front/src/core/locale_service.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
@@ -49,6 +51,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final _refreshQueue = RefreshQueue();
+  int _scopeGeneration = 0;
+
   final GlobalKey<EventsListPageState> _eventsKey = GlobalKey();
   final _shareApi = EventsApi();
   final _invitesApi = InvitationsApi();
@@ -96,6 +101,10 @@ class _HomePageState extends State<HomePage> {
     if (type == null) return;
 
     switch (type) {
+      case 'realtime.ready':
+        _eventsKey.currentState?.reload();
+        _loadPendingBadges();
+        break;
       case 'events.changed':
         _eventsKey.currentState?.reload();
         break;
@@ -133,6 +142,7 @@ class _HomePageState extends State<HomePage> {
   void didUpdateWidget(covariant HomePage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.session.token != oldWidget.session.token) {
+      _scopeGeneration++;
       _session = widget.session;
       _pages = List<Widget?>.filled(4, null);
       _loadPendingBadges();
@@ -153,6 +163,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    _refreshQueue.dispose();
     _badgesGeneration++;
     _shareApi.dispose();
     _invitesApi.dispose();
@@ -161,7 +172,12 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  Future<void> _loadPendingBadges() async {
+  Future<void> _loadPendingBadges() =>
+      _refreshQueue.run('_loadPendingBadges', () => _loadPendingBadgesOnce());
+
+  Future<void> _loadPendingBadgesOnce() async {
+    if (!mounted) return;
+    final requestScope = (_scopeGeneration, _session.token);
     final generation = ++_badgesGeneration;
     try {
       final invites = await _invitesApi.fetchMyInvitations(_session.token);
@@ -169,6 +185,9 @@ class _HomePageState extends State<HomePage> {
       final waiting = invites.where((inv) => inv.status == 'Waiting').length;
       setState(() => _pendingEventInvites = waiting);
     } catch (_) {
+      if (!mounted || requestScope != (_scopeGeneration, _session.token)) {
+        return;
+      }
       // ignore badge failures
     }
 
@@ -180,6 +199,9 @@ class _HomePageState extends State<HomePage> {
           .length;
       setState(() => _pendingFriendRequests = pending);
     } catch (_) {
+      if (!mounted || requestScope != (_scopeGeneration, _session.token)) {
+        return;
+      }
       // ignore badge failures
     }
   }
@@ -264,11 +286,14 @@ class _HomePageState extends State<HomePage> {
     _pages[_selectedIndex] ??= _buildPage(_selectedIndex);
 
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: List.generate(
-          _pages.length,
-          (index) => _pages[index] ?? const SizedBox.shrink(),
+      body: RealtimeStatusBanner(
+        stream: _realtime?.stream,
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: List.generate(
+            _pages.length,
+            (index) => _pages[index] ?? const SizedBox.shrink(),
+          ),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(

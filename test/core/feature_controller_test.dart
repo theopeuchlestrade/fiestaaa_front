@@ -17,7 +17,7 @@ class _Controller extends FeatureController {
 }
 
 void main() {
-  test('coalesces concurrent refresh calls', () async {
+  test('retains an invalidation received during refresh', () async {
     final controller = _Controller()..blocker = Completer<void>();
 
     final first = controller.refresh();
@@ -27,7 +27,7 @@ void main() {
     expect(controller.loading, isTrue);
     controller.blocker!.complete();
     await Future.wait([first, second]);
-    expect(controller.calls, 1);
+    expect(controller.calls, 2);
     expect(controller.loading, isFalse);
   });
 

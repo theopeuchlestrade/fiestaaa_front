@@ -957,5 +957,8 @@
   "registrationCompleted": "Account setup complete. Welcome!",
   "emailVerified": "Your email has been verified. You can now sign in.",
   "emailVerificationFailed": "This verification link is invalid or expired.",
-  "sessionExpired": "Your session has expired. Sign in again."
+  "sessionExpired": "Your session has expired. Sign in again.",
+  "realtimeInterrupted": "Connection interrupted · reconnecting",
+  "realtimeDisabled": "Live updates unavailable",
+  "realtimeEventUnavailable": "This fiestaaa was deleted or is no longer accessible."
 }

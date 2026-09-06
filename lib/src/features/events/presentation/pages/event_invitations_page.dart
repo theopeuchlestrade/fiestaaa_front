@@ -1,3 +1,5 @@
+import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
+import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'dart:async';
 
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
@@ -37,6 +39,9 @@ class EventInvitationsPage extends StatefulWidget {
 }
 
 class _EventInvitationsPageState extends State<EventInvitationsPage> {
+  final _refreshQueue = RefreshQueue();
+  int _scopeGeneration = 0;
+
   final _api = InvitationsApi();
   final _friendsApi = FriendsApi();
   List<InvitationModel> _invitations = [];
@@ -64,6 +69,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
 
   @override
   void dispose() {
+    _refreshQueue.dispose();
     _realtimeSub?.cancel();
     _api.dispose();
     _emailController.dispose();
@@ -74,6 +80,13 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   @override
   void didUpdateWidget(covariant EventInvitationsPage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.eventId != widget.eventId ||
+        oldWidget.session.token != widget.session.token) {
+      _scopeGeneration++;
+      _invitations = [];
+      _fetch();
+      _loadFriendsAndRequests();
+    }
     if (oldWidget.realtimeStream != widget.realtimeStream) {
       _realtimeSub?.cancel();
       _realtimeSub = widget.realtimeStream?.listen(_handleRealtime);
@@ -85,18 +98,34 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     if (type == null) return;
     final eventId = message['event_id'];
     if (eventId is int && eventId != widget.eventId) return;
-    if (type == 'event.invitations.changed') {
+    if (type == 'realtime.ready') _loadFriendsAndRequests();
+    if (type == 'event.invitations.changed' || type == 'realtime.ready') {
       _fetch();
     }
   }
 
-  Future<void> _loadFriendsAndRequests() async {
+  Future<void> _loadFriendsAndRequests() => _refreshQueue.run(
+    '_loadFriendsAndRequests',
+    () => _loadFriendsAndRequestsOnce(),
+  );
+
+  Future<void> _loadFriendsAndRequestsOnce() async {
+    if (!mounted) return;
+    final requestScope = (
+      _scopeGeneration,
+      widget.session.token,
+      widget.eventId,
+    );
     try {
       final results = await Future.wait([
         _friendsApi.fetchFriends(widget.session.token),
         _friendsApi.fetchRequests(widget.session.token),
       ]);
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.eventId)) {
+        return;
+      }
       setState(() {
         _friends = results[0] as List<FriendModel>;
         _friendRequests = results[1] as List<FriendRequestModel>;
@@ -104,13 +133,26 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     } on ApiException {
       // Friend relationship badges are secondary here.
     } catch (_) {
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.eventId)) {
+        return;
+      }
       // Ignore and keep invitation management available.
     }
   }
 
-  Future<void> _fetch() async {
+  Future<void> _fetch() => _refreshQueue.run('_fetch', () => _fetchOnce());
+
+  Future<void> _fetchOnce() async {
+    if (!mounted) return;
+    final requestScope = (
+      _scopeGeneration,
+      widget.session.token,
+      widget.eventId,
+    );
     setState(() {
-      _loading = true;
+      _loading = _invitations.isEmpty;
       _error = null;
     });
     try {
@@ -118,18 +160,34 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
         token: widget.session.token,
         eventId: widget.eventId,
       );
-      if (!mounted) return;
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.eventId)) {
+        return;
+      }
       setState(() {
         _invitations = all
             .where((inv) => inv.eventId == widget.eventId)
             .toList();
       });
     } on ApiException catch (e) {
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.eventId)) {
+        return;
+      }
       setState(() => _error = e.message);
     } catch (_) {
+      if (!mounted ||
+          requestScope !=
+              (_scopeGeneration, widget.session.token, widget.eventId)) {
+        return;
+      }
       setState(() => _error = S.of(context).unableToLoadInvitations);
     } finally {
-      if (mounted) {
+      if (mounted &&
+          requestScope ==
+              (_scopeGeneration, widget.session.token, widget.eventId)) {
         setState(() => _loading = false);
       }
     }
@@ -459,9 +517,13 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       ),
     );
 
-    if (widget.compactModal) return content;
+    final realtimeContent = RealtimeStatusBanner(
+      stream: widget.realtimeStream,
+      child: content,
+    );
+    if (widget.compactModal) return realtimeContent;
 
-    return Scaffold(body: FiestaaaPageLayout(child: content));
+    return Scaffold(body: FiestaaaPageLayout(child: realtimeContent));
   }
 
   List<Widget> _buildInvitationSections() {

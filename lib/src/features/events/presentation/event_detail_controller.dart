@@ -12,7 +12,14 @@ class EventDetailController extends FeatureController {
     Stream<Map<String, dynamic>>? realtime,
   }) : api = api ?? EventsApi() {
     _subscription = realtime?.listen((message) {
-      if (message['type'] == 'events.changed') refresh();
+      if ([
+            'events.changed',
+            'event.updated',
+            'realtime.ready',
+          ].contains(message['type']) &&
+          (message['event_id'] == null || message['event_id'] == eventId)) {
+        refresh();
+      }
     });
   }
 
