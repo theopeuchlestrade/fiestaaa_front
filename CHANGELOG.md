@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-07
+
+### Added
+- Added server-backed event search and filters, with criteria retained in the URL.
+- Added account-scoped local creation drafts, shared form sections and unsaved-change protection.
+- Added adaptive navigation and a personal event summary for invitations, contributions and unanswered polls.
+
+### Changed
+- Improved event cards, loading and empty states, localization, dark-theme contrast and accessibility.
+- Bundled Manrope and added Linux/macOS visual references across responsive layouts.
+
+### Fixed
+- Preserved event cards and invitation counts after refresh failures, restored loaded pages and ignored stale search responses.
+- Resynchronized screens when realtime connections recover.
+- Enforced a total HTTP response deadline, including response body reads.
+
 ## [0.3.2] - 2026-09-05
 
 ### Fixed
