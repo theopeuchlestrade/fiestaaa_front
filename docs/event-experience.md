@@ -50,9 +50,11 @@ successful creation, edit-exit confirmation, and personal summaries. The visual
 matrix covers 360/720/1024/1440 pixels, 100%/200% text, both themes and French/English.
 Six golden images per platform cover the three screens. Linux and macOS
 references are kept separate because their font rasterization differs; pixel
-comparisons remain exact. Generate Linux references with the pinned Flutter CI
-image and macOS references with the matching local SDK. Selected cases check tap-target labels
-and minimum Android tap-target sizes.
+comparisons remain exact. Use the Flutter version pinned in CI on each platform. Linux references were
+reviewed from the test-image artifacts produced by the existing GitHub CI runner;
+failed comparisons upload diagnostic images without updating references or
+relaxing the comparison. Selected cases check tap-target labels and minimum
+Android tap-target sizes.
 
 Run frontend analysis/tests with the CI defines and maintain the 22% coverage
 floor. Backend library and event integration tests use the isolated `db-test`
