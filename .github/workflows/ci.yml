@@ -120,6 +120,14 @@ jobs:
       - name: Run tests with coverage
         run: flutter test --coverage --dart-define-from-file=.env.ci
 
+      - name: Upload visual failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-visual-failures
+          path: test/features/events/presentation/failures
+          if-no-files-found: ignore
+
       - name: Enforce 22% line coverage
         run: |
           awk -F: '

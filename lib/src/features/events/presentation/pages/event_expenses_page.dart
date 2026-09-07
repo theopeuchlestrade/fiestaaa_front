@@ -822,7 +822,7 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                       ? l10n.expenseReceives(balance.formattedBalance)
                       : l10n.expenseOwes(
                           NumberFormat.currency(
-                            locale: 'fr_FR',
+                            locale: Intl.getCurrentLocale(),
                             symbol: '€',
                           ).format((-balance.balanceCents) / 100),
                         ),

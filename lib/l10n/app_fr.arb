@@ -976,5 +976,70 @@
   "sessionExpired": "Ta session a expiré. Reconnecte-toi.",
   "realtimeInterrupted": "Connexion interrompue · reconnexion en cours",
   "realtimeDisabled": "Mises à jour en direct indisponibles",
-  "realtimeEventUnavailable": "Cette fiestaaa a été supprimée ou n’est plus accessible."
+  "realtimeEventUnavailable": "Cette fiestaaa a été supprimée ou n’est plus accessible.",
+  "eventsSearch": "Rechercher un événement",
+  "eventsUpcoming": "À venir",
+  "eventsInvitations": "Invitations",
+  "eventsOwned": "Organisés par moi",
+  "eventsPast": "Passés",
+  "eventsEmptyFilter": "Aucun événement dans cette catégorie",
+  "eventsEmptySearch": "Aucun événement ne correspond à votre recherche",
+  "eventsFirstCreate": "Créer ma première Fiestaaa",
+  "eventsEmptyHelp": "Créez un événement ou retrouvez ici les invitations de vos proches.",
+  "eventsClearSearch": "Effacer la recherche",
+  "eventsChangeFilter": "Voir les événements à venir",
+  "eventsRefreshFailed": "Actualisation impossible. Les informations affichées peuvent être anciennes.",
+  "eventsInvitationsFailed": "Les invitations n’ont pas pu être actualisées.",
+  "eventsLoadMore": "Charger plus",
+  "eventsTrash": "Corbeille",
+  "formAdvanced": "Dates et options avancées",
+  "formModules": "Modules de l’événement",
+  "formAdvancedHint": "Fin, fuseau horaire et date limite de réponse",
+  "formModulesHint": "Choisissez les fonctionnalités utiles à votre événement",
+  "draftFound": "Reprendre votre brouillon ?",
+  "draftResume": "Reprendre le brouillon",
+  "draftDelete": "Supprimer le brouillon",
+  "draftSaved": "Brouillon enregistré sur cet appareil",
+  "draftFailed": "Le brouillon n’a pas pu être enregistré. Gardez cette page ouverte pour conserver votre saisie.",
+  "draftInvalid": "Ce brouillon est illisible ou incompatible. Vous pouvez créer un nouvel événement.",
+  "formLeaveTitle": "Quitter sans enregistrer ?",
+  "formLeaveBody": "Vos modifications non enregistrées seront perdues.",
+  "formStay": "Rester",
+  "formLeave": "Quitter sans enregistrer",
+  "eventForYou": "Pour vous",
+  "eventAllCaughtUp": "Tout est à jour",
+  "eventSummaryUnavailable": "Informations indisponibles",
+  "eventYourItems": "Vos contributions à apporter",
+  "eventYourPolls": "Sondages à compléter",
+  "eventYourInvitation": "Répondre à l’invitation",
+  "eventTimezone": "Fuseau horaire",
+  "eventTimezoneSearch": "Rechercher un fuseau",
+  "eventNetworkUnavailable": "Réseau indisponible",
+  "eventDaysShort": "{count} j",
+  "eventHoursShort": "{hours} h {minutes} min",
+  "eventMinutesShort": "{count} min",
+  "@eventDaysShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@eventHoursShort": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "@eventMinutesShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -26,3 +26,9 @@ marketing materials.
 
 Fiestaaa names, logos, app icons, screenshots, public copy, domains, and other
 brand assets are covered by `TRADEMARKS.md`, not by the source-code license.
+
+## Manrope font
+
+The bundled Manrope variable font is distributed under the SIL Open Font License
+1.1. Copyright and license: `assets/fonts/OFL.txt`. Source:
+https://github.com/google/fonts/tree/main/ofl/manrope.

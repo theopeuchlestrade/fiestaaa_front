@@ -1,3 +1,6 @@
+import 'package:fiestaaa_front/src/features/events/presentation/event_form_browser_guard.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/event_form_session.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_form_content.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
@@ -25,17 +28,22 @@ class EventEditPage extends StatefulWidget {
   const EventEditPage({
     super.key,
     required this.session,
+    this.eventsApi,
+    this.paymentProvidersApi,
     required this.initialEvent,
   });
 
   final SessionData session;
+  final EventsApi? eventsApi;
+  final PaymentProvidersApi? paymentProvidersApi;
   final EventModel initialEvent;
 
   @override
   State<EventEditPage> createState() => _EventEditPageState();
 }
 
-class _EventEditPageState extends State<EventEditPage> {
+class _EventEditPageState extends State<EventEditPage>
+    with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
@@ -48,8 +56,9 @@ class _EventEditPageState extends State<EventEditPage> {
   AddressSuggestion? _selectedSuggestion;
   bool _searchingAddress = false;
   String? _addressSearchError;
-  final _api = EventsApi();
-  final _paymentProvidersApi = PaymentProvidersApi();
+  late final _api = widget.eventsApi ?? EventsApi();
+  late final _paymentProvidersApi =
+      widget.paymentProvidersApi ?? PaymentProvidersApi();
 
   late DateTime _selectedDate;
   late String _timezone;
@@ -59,6 +68,7 @@ class _EventEditPageState extends State<EventEditPage> {
   TimeOfDay? _selectedEndTime;
   DateTime? _invitationDeadline;
   bool _submitting = false;
+  bool _validating = false;
   bool _deleting = false;
   bool _loadingProviders = true;
   String? _providersError;
@@ -68,6 +78,72 @@ class _EventEditPageState extends State<EventEditPage> {
   String? _selectedPlaylistProvider;
   bool _playlistChanged = false;
   final Set<String> _enabledFeatures = <String>{};
+
+  final _advancedController = ExpansibleController();
+  final _modulesController = ExpansibleController();
+  EventFormSession? _formSession;
+  EventFormBrowserGuard? _browserGuard;
+  bool _allowPop = false;
+  bool _initializingForm = true;
+  List<TextEditingController> get _textControllers => [
+    _nameController,
+    _descriptionController,
+    _addressController,
+    _paymentIdentifierController,
+    _paymentAmountController,
+    _playlistUrlController,
+  ];
+  Map<String, dynamic> _snapshot() => {
+    'name': _nameController.text,
+    'description': _descriptionController.text,
+    'address': _addressController.text,
+    'paymentIdentifier': _paymentIdentifierController.text,
+    'paymentAmount': _paymentAmountController.text,
+    'playlistUrl': _playlistUrlController.text,
+    'date': _selectedDate.toIso8601String(),
+    'timezone': _timezone,
+    'time': '${_selectedTime.hour}:${_selectedTime.minute}',
+    'hasEnd': _hasEndDateTime,
+    'endDate': _selectedEndDate?.toIso8601String(),
+    'endTime': _selectedEndTime == null
+        ? null
+        : '${_selectedEndTime!.hour}:${_selectedEndTime!.minute}',
+    'deadline': _invitationDeadline?.toIso8601String(),
+    'provider': _selectedProviderId,
+    'perPerson': _paymentPerPerson,
+    'playlistProvider': _selectedPlaylistProvider,
+    'features': (_enabledFeatures.toList()..sort()),
+  };
+  void _trackForm() => _formSession?.changed(_snapshot());
+  void _sessionChanged() {
+    if (mounted) super.setState(() {});
+  }
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    if (!_initializingForm) _trackForm();
+  }
+
+  Future<bool> _prepareLeave() async {
+    if (_submitting || _validating) return false;
+    if (_formSession?.dirty != true) return true;
+    if (await _formSession!.flush()) return true;
+    if (!mounted) return false;
+    return confirmLeaveEventForm(context);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) _formSession?.flush();
+  }
+
+  Future<void> _handlePop(bool didPop, Object? result) async {
+    if (didPop || !await _prepareLeave() || !mounted) return;
+    setState(() => _allowPop = true);
+    await WidgetsBinding.instance.endOfFrame;
+    if (mounted) Navigator.of(context).pop(result);
+  }
 
   @override
   void initState() {
@@ -112,10 +188,32 @@ class _EventEditPageState extends State<EventEditPage> {
     }
     _addressController.addListener(_onAddressChanged);
     _loadPaymentProviders();
+    WidgetsBinding.instance.addObserver(this);
+    _browserGuard = EventFormBrowserGuard(
+      isDirty: () => _formSession?.dirty == true,
+      flush: () {
+        _formSession?.flush();
+      },
+    );
+    _formSession = EventFormSession(
+      account: widget.session.email,
+      persist: false,
+    )..addListener(_sessionChanged);
+    for (final controller in _textControllers) {
+      controller.addListener(_trackForm);
+    }
+    _formSession!.start(_snapshot());
+    _initializingForm = false;
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _browserGuard?.dispose();
+    _formSession?.dispose();
+    _advancedController.dispose();
+    _modulesController.dispose();
+
     _addressController.removeListener(_onAddressChanged);
     _nameController.dispose();
     _descriptionController.dispose();
@@ -124,8 +222,8 @@ class _EventEditPageState extends State<EventEditPage> {
     _paymentAmountController.dispose();
     _playlistUrlController.dispose();
     _addressFocus.dispose();
-    _api.dispose();
-    _paymentProvidersApi.dispose();
+    if (widget.eventsApi == null) _api.dispose();
+    if (widget.paymentProvidersApi == null) _paymentProvidersApi.dispose();
     super.dispose();
   }
 
@@ -202,7 +300,16 @@ class _EventEditPageState extends State<EventEditPage> {
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
+      initialDate:
+          DateUtils.dateOnly(_selectedDate).isBefore(
+            DateUtils.dateOnly(
+              DateTime.now().subtract(const Duration(days: 1)),
+            ),
+          )
+          ? DateTime.now()
+          : _selectedDate.isAfter(DateTime.now().add(const Duration(days: 365)))
+          ? DateTime.now().add(const Duration(days: 365))
+          : _selectedDate,
       firstDate: DateTime.now().subtract(const Duration(days: 1)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       locale: Localizations.localeOf(context),
@@ -336,7 +443,24 @@ class _EventEditPageState extends State<EventEditPage> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_submitting || _validating) return;
+    setState(() => _validating = true);
+    bool valid;
+    try {
+      valid = await validateExpandedEventForm(
+        _formKey,
+        _advancedController,
+        _modulesController,
+      );
+    } finally {
+      if (mounted) setState(() => _validating = false);
+    }
+    if (!valid || !mounted) return;
+    if (_enabledFeatures.contains(eventFeaturePayment) &&
+        (_loadingProviders || _providerById(_selectedProviderId) == null)) {
+      _showSnack(S.of(context).selectProvider, isError: true);
+      return;
+    }
     if (_selectedSuggestion == null) {
       setState(() {
         _addressSearchError = S.of(context).validateAddressFromSearch;
@@ -430,6 +554,11 @@ class _EventEditPageState extends State<EventEditPage> {
         payload: payload,
       );
       if (!mounted) return;
+      await _formSession!.complete();
+      if (!mounted) return;
+      setState(() => _allowPop = true);
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
       Navigator.of(context).pop(EventEditPageResult.updated(updated));
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -481,6 +610,11 @@ class _EventEditPageState extends State<EventEditPage> {
         eventId: widget.initialEvent.id,
       );
       if (!mounted) return;
+      await _formSession!.complete();
+      if (!mounted) return;
+      setState(() => _allowPop = true);
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
       Navigator.of(context).pop(const EventEditPageResult.deleted());
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -499,6 +633,13 @@ class _EventEditPageState extends State<EventEditPage> {
     final scheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          MediaQuery.textScalerOf(context).scale(48) + 40,
+        ),
         content: Text(text),
         backgroundColor: isError ? scheme.error : null,
       ),
@@ -677,6 +818,15 @@ class _EventEditPageState extends State<EventEditPage> {
             ),
           ],
         ),
+      ],
+    );
+  }
+
+  Widget _buildAdvancedSchedule() {
+    final l10n = S.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         const SizedBox(height: 12),
         TimezoneSelector(
           value: _timezone,
@@ -780,7 +930,13 @@ class _EventEditPageState extends State<EventEditPage> {
     ];
 
     return DropdownButtonFormField<int?>(
-      initialValue: _selectedProviderId,
+      key: ValueKey((
+        _selectedProviderId,
+        _providers.map((p) => p.id).join(','),
+      )),
+      initialValue: _providerById(_selectedProviderId) == null
+          ? null
+          : _selectedProviderId,
       items: items,
       decoration: InputDecoration(
         labelText: S.of(context).associatedPayment,
@@ -1089,110 +1245,57 @@ class _EventEditPageState extends State<EventEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: FiestaaaPageLayout(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Align(alignment: Alignment.centerLeft, child: BackButton()),
-              const SizedBox(height: 4),
-              FiestaaaPageHeader(title: S.of(context).editFiestaaa),
-              Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: InputDecoration(
-                        labelText: S.of(context).fiestaaaName,
-                        prefixIcon: const Icon(Icons.celebration),
-                      ),
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? S.of(context).fieldRequired
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _descriptionController,
-                      minLines: 3,
-                      maxLines: 5,
-                      decoration: InputDecoration(
-                        labelText: S.of(context).description,
-                        alignLabelWithHint: true,
-                        prefixIcon: const Icon(Icons.description),
-                      ),
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? S.of(context).fieldRequired
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildAddressField(),
-                    const SizedBox(height: 16),
-                    _buildScheduleSection(),
-                    const SizedBox(height: 16),
-                    _buildInvitationDeadlineField(),
-                    const SizedBox(height: 16),
-                    _buildFeatureModulesSection(),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _submitting || _deleting ? null : _submit,
-                        child: _submitting
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(S.of(context).save),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Divider(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.outlineVariant.withValues(alpha: 0.8),
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _submitting || _deleting
-                            ? null
-                            : _confirmDeleteEvent,
-                        icon: _deleting
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.delete_outline),
-                        label: Text(S.of(context).deleteFiestaaa),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Theme.of(context).colorScheme.error,
-                          side: BorderSide(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+    final l = S.of(context);
+    if (_initializingForm) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final content = EventFormContent(
+      formKey: _formKey,
+      title: l.editFiestaaa,
+      name: _nameController,
+      description: _descriptionController,
+      address: _buildAddressField(),
+      schedule: _buildScheduleSection(),
+      advanced: Column(
+        children: [
+          _buildAdvancedSchedule(),
+          const SizedBox(height: 16),
+          _buildInvitationDeadlineField(),
+        ],
+      ),
+      modules: _buildFeatureModulesSection(),
+      advancedController: _advancedController,
+      modulesController: _modulesController,
+      advancedSummary:
+          '$_timezone${_selectedEndDate == null ? '' : ' · ${DateFormat.yMMMd(l.localeName).format(_selectedEndDate!)}'}${_invitationDeadline == null ? '' : ' · ${DateFormat.yMMMd(l.localeName).format(_invitationDeadline!)}'}',
+      modulesSummary: _enabledFeatures.isEmpty
+          ? l.formModulesHint
+          : _orderedEnabledFeatures(
+              l,
+            ).map((feature) => eventFeatureLabel(feature, l)).join(', '),
+      advancedOpen:
+          _hasEndDateTime ||
+          _invitationDeadline != null ||
+          _timezone != 'Europe/Paris',
+      modulesOpen: _enabledFeatures.isNotEmpty,
+      onSubmit: _submit,
+      submitting: _submitting || _validating || _deleting,
+      submitLabel: l.save,
+      back: true,
+      onBack: () => _handlePop(false, null),
+      footer: Padding(
+        padding: const EdgeInsets.only(top: 20),
+        child: OutlinedButton.icon(
+          onPressed: _submitting || _deleting ? null : _confirmDeleteEvent,
+          icon: const Icon(Icons.delete_outline),
+          label: Text(l.deleteFiestaaa),
         ),
       ),
+    );
+    return PopScope<Object?>(
+      canPop: _allowPop || _formSession?.dirty != true,
+      onPopInvokedWithResult: _handlePop,
+      child: Scaffold(body: content),
     );
   }
 }

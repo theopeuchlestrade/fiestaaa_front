@@ -49,8 +49,10 @@ class EventExpenseModel {
 
   double get amountEuros => amountCents / 100;
 
-  String get formattedAmount =>
-      NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(amountEuros);
+  String get formattedAmount => NumberFormat.currency(
+    locale: Intl.getCurrentLocale(),
+    symbol: '€',
+  ).format(amountEuros);
 
   factory EventExpenseModel.fromJson(Map<String, dynamic> json) {
     final participantsJson = json['participants'] as List<dynamic>? ?? const [];
@@ -95,7 +97,7 @@ class EventExpenseBalanceModel {
 
   String formatCents(int value) {
     return NumberFormat.currency(
-      locale: 'fr_FR',
+      locale: Intl.getCurrentLocale(),
       symbol: '€',
     ).format(value / 100);
   }
@@ -132,7 +134,7 @@ class EventExpenseSettlementModel {
   final int amountCents;
 
   String get formattedAmount => NumberFormat.currency(
-    locale: 'fr_FR',
+    locale: Intl.getCurrentLocale(),
     symbol: '€',
   ).format(amountCents / 100);
 
@@ -161,7 +163,7 @@ class EventExpensesSummaryModel {
   final List<EventExpenseSettlementModel> settlements;
 
   String get formattedTotal => NumberFormat.currency(
-    locale: 'fr_FR',
+    locale: Intl.getCurrentLocale(),
     symbol: '€',
   ).format(totalExpensesCents / 100);
 

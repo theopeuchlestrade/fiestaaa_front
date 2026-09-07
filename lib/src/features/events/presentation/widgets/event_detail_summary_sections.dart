@@ -228,7 +228,10 @@ extension _EventDetailSummarySections on _EventDetailPageState {
         provider?.name ?? 'Fournisseur #${_currentEvent.paymentProviderId}';
     final amount = _currentEvent.paymentRequestedAmount;
     final amountText = amount != null
-        ? NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(amount)
+        ? NumberFormat.currency(
+            locale: Intl.getCurrentLocale(),
+            symbol: '€',
+          ).format(amount)
         : l10n.amountNotSpecified;
     final amountDescription = _currentEvent.paymentPerPerson
         ? l10n.contributionPerPerson(amountText)

@@ -31,6 +31,28 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       _updateState(() {
         _eventItems = data;
       });
+      try {
+        final summary = _itemsScope == EventItemsScope.all
+            ? data
+            : await _eventsApi.fetchEventItems(
+                widget.event.id,
+                token: widget.session.token,
+                scope: EventItemsScope.all.apiValue,
+              );
+        if (!mounted ||
+            requestScope !=
+                (_scopeGeneration, widget.session.token, widget.event.id)) {
+          return;
+        }
+        _updateState(() => _summaryItems = summary);
+      } catch (_) {
+        if (!mounted ||
+            requestScope !=
+                (_scopeGeneration, widget.session.token, widget.event.id)) {
+          return;
+        }
+        _updateState(() => _summaryItems = null);
+      }
       await _loadContributions();
     } on ApiException catch (e) {
       if (!mounted ||
@@ -40,6 +62,7 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       }
       _updateState(() {
         _itemsError = e.message;
+        _summaryItems = null;
       });
     } catch (_) {
       if (!mounted ||
@@ -49,6 +72,7 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       }
       _updateState(() {
         _itemsError = S.of(context).unableToLoadItems;
+        _summaryItems = null;
       });
     } finally {
       if (mounted &&
@@ -141,14 +165,17 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       for (final c in data) {
         map.putIfAbsent(c.itemId, () => []).add(c);
       }
-      _updateState(() => _contributions = map);
+      _updateState(() {
+        _contributions = map;
+        _contributionsKnown = true;
+      });
     } catch (_) {
       if (!mounted ||
           requestScope !=
               (_scopeGeneration, widget.session.token, widget.event.id)) {
         return;
       }
-      // silently ignore; UI will just not show avatars
+      _updateState(() => _contributionsKnown = false);
     }
   }
 
