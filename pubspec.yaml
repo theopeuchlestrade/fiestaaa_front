@@ -53,3 +53,8 @@ flutter:
 
   assets:
     - assets/logos/
+
+  fonts:
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope.ttf

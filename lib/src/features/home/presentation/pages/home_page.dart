@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/presentation/widgets/async_content.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'package:fiestaaa_front/src/core/locale_service.dart';
@@ -15,7 +16,6 @@ import 'package:fiestaaa_front/src/core/push_notification_service.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:fiestaaa_front/src/core/theme_service.dart';
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
-import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -33,6 +33,8 @@ class HomePage extends StatefulWidget {
     this.localeService,
     this.themeService,
     this.initialIndex = 0,
+    this.eventsQuery = '',
+    this.eventsView = 'upcoming',
   });
 
   final SessionData session;
@@ -45,6 +47,8 @@ class HomePage extends StatefulWidget {
   final LocaleService? localeService;
   final ThemeService? themeService;
   final int initialIndex;
+  final String eventsQuery;
+  final String eventsView;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -69,10 +73,22 @@ class _HomePageState extends State<HomePage> {
   int _lastHandledNotificationIntentSerial = 0;
   int _badgesGeneration = 0;
   late List<Widget?> _pages;
+  late String _eventsQuery = widget.eventsQuery;
+  late String _eventsView = widget.eventsView;
 
   void _onItemTapped(int index) {
     const locations = ['/events', '/events/new', '/friends', '/profile'];
-    context.go(locations[index]);
+    context.go(
+      index == 0
+          ? Uri(
+              path: '/events',
+              queryParameters: {
+                'view': _eventsView,
+                if (_eventsQuery.isNotEmpty) 'q': _eventsQuery,
+              },
+            ).toString()
+          : locations[index],
+    );
   }
 
   Future<void> _openEvent(EventModel event) async {
@@ -141,6 +157,14 @@ class _HomePageState extends State<HomePage> {
   @override
   void didUpdateWidget(covariant HomePage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _selectedIndex = widget.initialIndex.clamp(0, 3);
+    if (widget.initialIndex == 0 &&
+        (widget.eventsQuery != _eventsQuery ||
+            widget.eventsView != _eventsView)) {
+      _eventsQuery = widget.eventsQuery;
+      _eventsView = widget.eventsView;
+      _pages[0] = _buildPage(0);
+    }
     if (widget.session.token != oldWidget.session.token) {
       _scopeGeneration++;
       _session = widget.session;
@@ -230,15 +254,9 @@ class _HomePageState extends State<HomePage> {
       _shareHandled = false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            Localizations.localeOf(context).languageCode == 'fr'
-                ? 'Réseau indisponible'
-                : 'Network unavailable',
-          ),
+          content: Text(S.of(context).eventNetworkUnavailable),
           action: SnackBarAction(
-            label: Localizations.localeOf(context).languageCode == 'fr'
-                ? 'Réessayer'
-                : 'Retry',
+            label: S.of(context).retry,
             onPressed: _claimShareIfNeeded,
           ),
         ),
@@ -285,39 +303,71 @@ class _HomePageState extends State<HomePage> {
     final l10n = S.of(context);
     _pages[_selectedIndex] ??= _buildPage(_selectedIndex);
 
-    return Scaffold(
-      body: RealtimeStatusBanner(
-        stream: _realtime?.stream,
-        child: IndexedStack(
-          index: _selectedIndex,
-          children: List.generate(
-            _pages.length,
-            (index) => _pages[index] ?? const SizedBox.shrink(),
-          ),
+    final body = RealtimeStatusBanner(
+      stream: _realtime?.stream,
+      child: IndexedStack(
+        index: _selectedIndex,
+        children: List.generate(
+          _pages.length,
+          (index) => _pages[index] ?? const SizedBox.shrink(),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: [
-          BottomNavigationBarItem(
-            icon: _iconWithBadge(Icons.event_note, _pendingEventInvites),
-            label: l10n.fiestaaa,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.add_circle_outline),
-            label: l10n.create,
-          ),
-          BottomNavigationBarItem(
-            icon: _iconWithBadge(Icons.group, _pendingFriendRequests),
-            label: l10n.friends,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.person),
-            label: l10n.profile,
-          ),
-        ],
-      ),
+    );
+    final labels = [l10n.fiestaaa, l10n.create, l10n.friends, l10n.profile];
+    final icons = [
+      Icons.event_note,
+      Icons.add_circle_outline,
+      Icons.group,
+      Icons.person,
+    ];
+    final counts = [_pendingEventInvites, 0, _pendingFriendRequests, 0];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 720;
+        return Scaffold(
+          body: wide
+              ? Row(
+                  children: [
+                    NavigationRail(
+                      selectedIndex: _selectedIndex,
+                      labelType: NavigationRailLabelType.all,
+                      onDestinationSelected: _onItemTapped,
+                      destinations: List.generate(
+                        4,
+                        (i) => NavigationRailDestination(
+                          icon: CountedIcon(
+                            icon: icons[i],
+                            count: counts[i],
+                            label: labels[i],
+                          ),
+                          label: Text(labels[i]),
+                        ),
+                      ),
+                    ),
+                    const VerticalDivider(width: 1),
+                    Expanded(child: body),
+                  ],
+                )
+              : body,
+          bottomNavigationBar: wide
+              ? null
+              : BottomNavigationBar(
+                  currentIndex: _selectedIndex,
+                  onTap: _onItemTapped,
+                  items: List.generate(
+                    4,
+                    (i) => BottomNavigationBarItem(
+                      icon: CountedIcon(
+                        icon: icons[i],
+                        count: counts[i],
+                        label: labels[i],
+                      ),
+                      label: labels[i],
+                    ),
+                  ),
+                ),
+        );
+      },
     );
   }
 
@@ -330,6 +380,15 @@ class _HomePageState extends State<HomePage> {
         onPendingInvitesChanged: (count) =>
             setState(() => _pendingEventInvites = count),
         onOpenTrash: _openTrash,
+        query: _eventsQuery,
+        view: _eventsView,
+        onCreate: () => context.go('/events/new'),
+        onCriteriaChanged: (query, view) => context.go(
+          Uri(
+            path: '/events',
+            queryParameters: {'view': view, if (query.isNotEmpty) 'q': query},
+          ).toString(),
+        ),
       ),
       1 => EventCreatePage(
         session: _session,
@@ -358,35 +417,5 @@ class _HomePageState extends State<HomePage> {
         themeService: widget.themeService,
       ),
     };
-  }
-
-  Widget _iconWithBadge(IconData icon, int count) {
-    if (count <= 0) return Icon(icon);
-    final danger = Theme.of(context).colorScheme.fiestaaaDanger;
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Icon(icon),
-        Positioned(
-          right: -8,
-          top: -6,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: danger,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              count > 99 ? '99+' : '$count',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }

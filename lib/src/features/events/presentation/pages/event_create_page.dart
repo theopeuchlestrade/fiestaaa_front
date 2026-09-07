@@ -1,3 +1,6 @@
+import 'package:fiestaaa_front/src/features/events/presentation/event_form_browser_guard.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/event_form_session.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_form_content.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
@@ -16,17 +19,24 @@ class EventCreatePage extends StatefulWidget {
   const EventCreatePage({
     super.key,
     required this.session,
+    this.eventsApi,
+    this.initialDateTime,
+    this.paymentProvidersApi,
     required this.onEventCreated,
   });
 
   final SessionData session;
+  final EventsApi? eventsApi;
+  final DateTime? initialDateTime;
+  final PaymentProvidersApi? paymentProvidersApi;
   final VoidCallback onEventCreated;
 
   @override
   State<EventCreatePage> createState() => _EventCreatePageState();
 }
 
-class _EventCreatePageState extends State<EventCreatePage> {
+class _EventCreatePageState extends State<EventCreatePage>
+    with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -39,17 +49,21 @@ class _EventCreatePageState extends State<EventCreatePage> {
   AddressSuggestion? _selectedSuggestion;
   bool _searchingAddress = false;
   String? _addressSearchError;
-  final _api = EventsApi();
-  final _paymentProvidersApi = PaymentProvidersApi();
+  late final _api = widget.eventsApi ?? EventsApi();
+  late final _paymentProvidersApi =
+      widget.paymentProvidersApi ?? PaymentProvidersApi();
 
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate = widget.initialDateTime ?? DateTime.now();
   String _timezone = 'Europe/Paris';
-  TimeOfDay _selectedTime = TimeOfDay.now();
+  late TimeOfDay _selectedTime = TimeOfDay.fromDateTime(
+    widget.initialDateTime ?? DateTime.now(),
+  );
   bool _hasEndDateTime = false;
   DateTime? _selectedEndDate;
   TimeOfDay? _selectedEndTime;
   DateTime? _invitationDeadline;
   bool _submitting = false;
+  bool _validating = false;
   bool _loadingProviders = true;
   String? _providersError;
   List<PaymentProviderModel> _providers = [];
@@ -59,15 +73,196 @@ class _EventCreatePageState extends State<EventCreatePage> {
   bool _playlistChanged = false;
   final Set<String> _enabledFeatures = <String>{};
 
+  final _advancedController = ExpansibleController();
+  final _modulesController = ExpansibleController();
+  EventFormSession? _formSession;
+  EventFormBrowserGuard? _browserGuard;
+  bool _allowPop = false;
+  bool _initializingForm = true;
+  bool _choosingDraft = false;
+  List<TextEditingController> get _textControllers => [
+    _nameController,
+    _descriptionController,
+    _addressController,
+    _paymentIdentifierController,
+    _paymentAmountController,
+    _playlistUrlController,
+  ];
+  Map<String, dynamic> _snapshot() => {
+    'name': _nameController.text,
+    'description': _descriptionController.text,
+    'address': _addressController.text,
+    'paymentIdentifier': _paymentIdentifierController.text,
+    'paymentAmount': _paymentAmountController.text,
+    'playlistUrl': _playlistUrlController.text,
+    'date': _selectedDate.toIso8601String(),
+    'timezone': _timezone,
+    'time': '${_selectedTime.hour}:${_selectedTime.minute}',
+    'hasEnd': _hasEndDateTime,
+    'endDate': _selectedEndDate?.toIso8601String(),
+    'endTime': _selectedEndTime == null
+        ? null
+        : '${_selectedEndTime!.hour}:${_selectedEndTime!.minute}',
+    'deadline': _invitationDeadline?.toIso8601String(),
+    'provider': _selectedProviderId,
+    'perPerson': _paymentPerPerson,
+    'playlistProvider': _selectedPlaylistProvider,
+    'features': (_enabledFeatures.toList()..sort()),
+  };
+  void _trackForm() => _formSession?.changed(_snapshot());
+  void _sessionChanged() {
+    if (mounted) super.setState(() {});
+  }
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    if (!_initializingForm) _trackForm();
+  }
+
+  Future<bool> _prepareLeave() async {
+    if (_submitting || _validating) return false;
+    if (_formSession?.dirty != true) return true;
+    if (await _formSession!.flush()) return true;
+    if (!mounted) return false;
+    return confirmLeaveEventForm(context);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) _formSession?.flush();
+  }
+
+  Future<void> _handlePop(bool didPop, Object? result) async {
+    if (didPop || !await _prepareLeave() || !mounted) return;
+    setState(() => _allowPop = true);
+    await WidgetsBinding.instance.endOfFrame;
+    if (mounted) Navigator.of(context).pop(result);
+  }
+
+  Future<void> _initializeDraft() async {
+    final session = _formSession!;
+    bool restored = false;
+    try {
+      final fields = await session.store.read(session.account);
+      if (!mounted) return;
+      if (fields != null) {
+        setState(() => _choosingDraft = true);
+        final l = S.of(context);
+        final resume = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: Text(l.draftFound),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l.draftDelete),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(l.draftResume),
+              ),
+            ],
+          ),
+        );
+        if (!mounted) return;
+        if (resume == true) {
+          TimeOfDay time(String raw) {
+            final parts = raw.split(':').map(int.parse).toList();
+            if (parts.length != 2 ||
+                parts[0] < 0 ||
+                parts[0] > 23 ||
+                parts[1] < 0 ||
+                parts[1] > 59) {
+              throw const FormatException('Invalid time');
+            }
+            return TimeOfDay(hour: parts[0], minute: parts[1]);
+          }
+
+          final start = time(fields['time'] as String);
+          final end = fields['endTime'] == null
+              ? null
+              : time(fields['endTime'] as String);
+          _nameController.text = fields['name'] as String;
+          _descriptionController.text = fields['description'] as String;
+          _addressController.text = fields['address'] as String;
+          _paymentIdentifierController.text =
+              fields['paymentIdentifier'] as String;
+          _paymentAmountController.text = fields['paymentAmount'] as String;
+          _playlistUrlController.text = fields['playlistUrl'] as String;
+          _selectedDate = DateTime.parse(fields['date'] as String);
+          _timezone = fields['timezone'] as String;
+          _selectedTime = start;
+          _selectedEndTime = end;
+          _hasEndDateTime = fields['hasEnd'] as bool;
+          _selectedEndDate = fields['endDate'] == null
+              ? null
+              : DateTime.parse(fields['endDate'] as String);
+          _invitationDeadline = fields['deadline'] == null
+              ? null
+              : DateTime.parse(fields['deadline'] as String);
+          _selectedProviderId = fields['provider'] as int?;
+          _paymentPerPerson = fields['perPerson'] as bool;
+          _selectedPlaylistProvider = fields['playlistProvider'] as String?;
+          _enabledFeatures.addAll((fields['features'] as List).cast<String>());
+          // Coordinates are deliberately revalidated through address search.
+          _selectedSuggestion = null;
+          restored = true;
+        } else {
+          await session.store.delete(session.account);
+        }
+      }
+    } on FormatException {
+      if (mounted) _showSnack(S.of(context).draftInvalid, isError: true);
+      try {
+        await session.store.delete(session.account);
+      } catch (_) {
+        session.failed = true;
+      }
+    } catch (_) {
+      session.failed = true;
+      if (mounted) _showSnack(S.of(context).draftFailed, isError: true);
+    }
+    if (!mounted) return;
+    session.start(_snapshot(), restored: restored);
+    setState(() => _initializingForm = false);
+  }
+
   @override
   void initState() {
     super.initState();
     _addressController.addListener(_onAddressChanged);
     _loadPaymentProviders();
+    WidgetsBinding.instance.addObserver(this);
+    _browserGuard = EventFormBrowserGuard(
+      isDirty: () => _formSession?.dirty == true,
+      flush: () {
+        _formSession?.flush();
+      },
+    );
+    _formSession = EventFormSession(
+      account: widget.session.email,
+      persist: true,
+    )..addListener(_sessionChanged);
+    for (final controller in _textControllers) {
+      controller.addListener(_trackForm);
+    }
+    EventFormExitGuard.onExit = _prepareLeave;
+    _initializeDraft();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _browserGuard?.dispose();
+    if (EventFormExitGuard.onExit == _prepareLeave) {
+      EventFormExitGuard.onExit = null;
+    }
+    _formSession?.dispose();
+    _advancedController.dispose();
+    _modulesController.dispose();
+
     _addressController.removeListener(_onAddressChanged);
     _nameController.dispose();
     _descriptionController.dispose();
@@ -76,8 +271,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
     _paymentAmountController.dispose();
     _playlistUrlController.dispose();
     _addressFocus.dispose();
-    _api.dispose();
-    _paymentProvidersApi.dispose();
+    if (widget.eventsApi == null) _api.dispose();
+    if (widget.paymentProvidersApi == null) _paymentProvidersApi.dispose();
     super.dispose();
   }
 
@@ -154,7 +349,16 @@ class _EventCreatePageState extends State<EventCreatePage> {
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
+      initialDate:
+          DateUtils.dateOnly(_selectedDate).isBefore(
+            DateUtils.dateOnly(
+              DateTime.now().subtract(const Duration(days: 1)),
+            ),
+          )
+          ? DateTime.now()
+          : _selectedDate.isAfter(DateTime.now().add(const Duration(days: 365)))
+          ? DateTime.now().add(const Duration(days: 365))
+          : _selectedDate,
       firstDate: DateTime.now().subtract(const Duration(days: 1)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       locale: Localizations.localeOf(context),
@@ -290,7 +494,24 @@ class _EventCreatePageState extends State<EventCreatePage> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_submitting || _validating) return;
+    setState(() => _validating = true);
+    bool valid;
+    try {
+      valid = await validateExpandedEventForm(
+        _formKey,
+        _advancedController,
+        _modulesController,
+      );
+    } finally {
+      if (mounted) setState(() => _validating = false);
+    }
+    if (!valid || !mounted) return;
+    if (_enabledFeatures.contains(eventFeaturePayment) &&
+        (_loadingProviders || _providerById(_selectedProviderId) == null)) {
+      _showSnack(S.of(context).selectProvider, isError: true);
+      return;
+    }
     if (_selectedSuggestion == null) {
       setState(() {
         _addressSearchError = S.of(context).validateAddressFromSearch;
@@ -372,8 +593,13 @@ class _EventCreatePageState extends State<EventCreatePage> {
     try {
       await _api.createEvent(token: widget.session.token, payload: payload);
       if (!mounted) return;
+      try {
+        await _formSession!.complete();
+      } catch (_) {
+        if (mounted) _showSnack(S.of(context).draftFailed, isError: true);
+      }
+      if (!mounted) return;
       _showSnack(S.of(context).eventCreated);
-      widget.onEventCreated();
       _formKey.currentState?.reset();
       _nameController.clear();
       _descriptionController.clear();
@@ -395,6 +621,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
         _paymentPerPerson = false;
         _enabledFeatures.clear();
       });
+      _formSession!.start(_snapshot());
+      setState(() => _submitting = false);
+      widget.onEventCreated();
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(e.message, isError: true);
@@ -434,6 +663,13 @@ class _EventCreatePageState extends State<EventCreatePage> {
     final scheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          MediaQuery.textScalerOf(context).scale(48) + 40,
+        ),
         content: Text(text),
         backgroundColor: isError ? scheme.error : null,
       ),
@@ -504,7 +740,13 @@ class _EventCreatePageState extends State<EventCreatePage> {
     ];
 
     return DropdownButtonFormField<int?>(
-      initialValue: _selectedProviderId,
+      key: ValueKey((
+        _selectedProviderId,
+        _providers.map((p) => p.id).join(','),
+      )),
+      initialValue: _providerById(_selectedProviderId) == null
+          ? null
+          : _selectedProviderId,
       items: items,
       decoration: InputDecoration(
         labelText: S.of(context).associatedPayment,
@@ -930,6 +1172,15 @@ class _EventCreatePageState extends State<EventCreatePage> {
             ),
           ],
         ),
+      ],
+    );
+  }
+
+  Widget _buildAdvancedSchedule() {
+    final l10n = S.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         const SizedBox(height: 12),
         TimezoneSelector(
           value: _timezone,
@@ -995,83 +1246,53 @@ class _EventCreatePageState extends State<EventCreatePage> {
 
   @override
   Widget build(BuildContext context) {
-    return FiestaaaPageLayout(
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            FiestaaaPageHeader(
-              title: S.of(context).createNewFiestaaa,
-              subtitle: S.of(context).createFiestaaaSubtitle,
-              bottomSpacing: 20,
-            ),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: InputDecoration(
-                          labelText: S.of(context).fiestaaaName,
-                          prefixIcon: const Icon(Icons.celebration),
-                        ),
-                        validator: (value) =>
-                            value == null || value.trim().isEmpty
-                            ? S.of(context).fieldRequired
-                            : null,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _descriptionController,
-                        minLines: 3,
-                        maxLines: 5,
-                        decoration: InputDecoration(
-                          labelText: S.of(context).description,
-                          alignLabelWithHint: true,
-                          prefixIcon: const Icon(Icons.description),
-                        ),
-                        validator: (value) =>
-                            value == null || value.trim().isEmpty
-                            ? S.of(context).fieldRequired
-                            : null,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildAddressField(),
-                      const SizedBox(height: 16),
-                      _buildScheduleSection(),
-                      const SizedBox(height: 16),
-                      _buildInvitationDeadlineField(),
-                      const SizedBox(height: 16),
-                      _buildFeatureModulesSection(),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _submitting ? null : _submit,
-                          child: _submitting
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Text(S.of(context).createTheFiestaaa),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+    final l = S.of(context);
+    if (_initializingForm) {
+      return _choosingDraft
+          ? const SizedBox.shrink()
+          : const Center(child: CircularProgressIndicator());
+    }
+    final content = EventFormContent(
+      formKey: _formKey,
+      title: l.createNewFiestaaa,
+      name: _nameController,
+      description: _descriptionController,
+      address: _buildAddressField(),
+      schedule: _buildScheduleSection(),
+      advanced: Column(
+        children: [
+          _buildAdvancedSchedule(),
+          const SizedBox(height: 16),
+          _buildInvitationDeadlineField(),
+        ],
       ),
+      modules: _buildFeatureModulesSection(),
+      advancedController: _advancedController,
+      modulesController: _modulesController,
+      advancedSummary:
+          '$_timezone${_selectedEndDate == null ? '' : ' · ${DateFormat.yMMMd(l.localeName).format(_selectedEndDate!)}'}${_invitationDeadline == null ? '' : ' · ${DateFormat.yMMMd(l.localeName).format(_invitationDeadline!)}'}',
+      modulesSummary: _enabledFeatures.isEmpty
+          ? l.formModulesHint
+          : _orderedEnabledFeatures(
+              l,
+            ).map((feature) => eventFeatureLabel(feature, l)).join(', '),
+      advancedOpen: false,
+      modulesOpen: false,
+      onSubmit: _submit,
+      submitting: _submitting || _validating,
+      submitLabel: l.createTheFiestaaa,
+      back: false,
+
+      notice: _formSession?.failed == true
+          ? Semantics(liveRegion: true, child: Text(l.draftFailed))
+          : _formSession?.savedDraft == true
+          ? Semantics(liveRegion: true, child: Text(l.draftSaved))
+          : null,
+    );
+    return PopScope<Object?>(
+      canPop: _allowPop || _formSession?.dirty != true,
+      onPopInvokedWithResult: _handlePop,
+      child: content,
     );
   }
 }

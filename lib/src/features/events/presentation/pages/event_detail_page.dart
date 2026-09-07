@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_personal_summary.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
@@ -122,6 +123,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
   List<EventItemModel>? _eventItems;
   Map<int, List<ItemContributionModel>> _contributions = {};
   bool _loadingItems = true;
+  List<EventItemModel>? _summaryItems;
+  bool _contributionsKnown = false;
+  bool _invitationKnown = false;
+  final _invitationKey = GlobalKey();
   String? _itemsError;
   int? _reservingItemId;
   int? _deletingItemId;
@@ -178,6 +183,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
       _polls = null;
       _myInvitation = null;
       _contributions = {};
+      _summaryItems = null;
+      _contributionsKnown = false;
+      _invitationKnown = false;
       _startRealtime();
       _resync();
     }
@@ -242,10 +250,36 @@ class _EventDetailPageState extends State<EventDetailPage> {
               padding: EdgeInsets.zero,
               children: [
                 _buildHeader(),
+                EventPersonalSummary(
+                  event: _currentEvent,
+                  email: widget.session.email,
+                  owner: _isOwner,
+                  accepted: _hasAcceptedInvitation,
+                  waiting: _isWaitingInvitation,
+                  invitationKnown: _invitationKnown,
+                  items: _summaryItems,
+                  contributions: _contributionsKnown
+                      ? _contributions.values.expand((c) => c).toList()
+                      : null,
+                  polls: _pollsError == null ? _polls : null,
+                  onInvitation: () {
+                    final target = _invitationKey.currentContext;
+                    if (target != null) {
+                      Scrollable.ensureVisible(
+                        target,
+                        duration: const Duration(milliseconds: 200),
+                      );
+                    }
+                  },
+                  onItems: _openItemsModal,
+                  onPolls: _openPollsModal,
+                  onRetry: _resync,
+                ),
                 if (_isReadOnly) _buildReadOnlyBanner(),
                 if (!_isOwner)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16),
+                    key: _invitationKey,
                     child: _InvitationStatusCard(
                       invitation: _myInvitation,
                       loading: _loadingMyInvitation,
@@ -268,7 +302,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     value:
                         _currentEvent.formattedInvitationDeadline ??
                         DateFormat.yMMMMd(
-                          'fr_FR',
+                          S.of(context).localeName,
                         ).format(_currentEvent.invitationDeadline!),
                   ),
                 _buildLocationSection(),

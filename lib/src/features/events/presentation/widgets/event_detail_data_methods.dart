@@ -4,13 +4,13 @@ extension _EventDetailDataMethods on _EventDetailPageState {
   String _formatRemaining(Duration duration) {
     if (duration.isNegative) return S.of(context).expired;
     if (duration.inMinutes < 60) {
-      return '${duration.inMinutes} min';
+      return S.of(context).eventMinutesShort(duration.inMinutes);
     }
     if (duration.inHours < 24) {
       final minutes = duration.inMinutes % 60;
-      return '${duration.inHours} h $minutes min';
+      return S.of(context).eventHoursShort(duration.inHours, minutes);
     }
-    return '${duration.inDays} j';
+    return S.of(context).eventDaysShort(duration.inDays);
   }
 
   void _startRealtime() {
@@ -175,6 +175,7 @@ extension _EventDetailDataMethods on _EventDetailPageState {
       }
       _updateState(() {
         _myInvitation = match;
+        _invitationKnown = true;
       });
     } catch (_) {
       if (!mounted ||
@@ -182,6 +183,7 @@ extension _EventDetailDataMethods on _EventDetailPageState {
               (_scopeGeneration, widget.session.token, widget.event.id)) {
         return;
       }
+      _updateState(() => _invitationKnown = false);
       _showRefreshFailure();
     } finally {
       if (mounted &&

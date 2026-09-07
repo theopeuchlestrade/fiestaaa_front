@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/event_form_session.dart';
 import 'dart:async';
 
 import 'package:fiestaaa_front/src/core/locale_service.dart';
@@ -59,17 +61,36 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   void initState() {
     super.initState();
     _router = GoRouter(
-      initialLocation: Uri.base.path.isEmpty ? '/' : Uri.base.path,
+      initialLocation: Uri(
+        path: Uri.base.path.isEmpty ? '/' : Uri.base.path,
+        queryParameters: {
+          if (Uri.base.queryParameters['q'] != null)
+            'q': Uri.base.queryParameters['q']!,
+          if (Uri.base.queryParameters['view'] != null)
+            'view': Uri.base.queryParameters['view']!,
+        },
+      ).toString(),
       routes: [
         GoRoute(path: '/', builder: (context, state) => _rootPage()),
         GoRoute(path: '/auth', builder: (context, state) => _authPage()),
         GoRoute(
           path: '/events',
-          builder: (context, state) => _homePage(initialIndex: 0),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: const ValueKey('home'),
+            child: _homePage(
+              initialIndex: 0,
+              query: state.uri.queryParameters['q'] ?? '',
+              view: state.uri.queryParameters['view'] ?? 'upcoming',
+            ),
+          ),
         ),
         GoRoute(
           path: '/events/new',
-          builder: (context, state) => _homePage(initialIndex: 1),
+          onExit: (context, state) => EventFormExitGuard.leave(),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: const ValueKey('home'),
+            child: _homePage(initialIndex: 1),
+          ),
         ),
         GoRoute(
           path: '/events/:eventId',
@@ -94,15 +115,21 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
         ),
         GoRoute(
           path: '/invitations',
-          builder: (context, state) => _homePage(initialIndex: 0),
+          redirect: (context, state) => '/events?view=invitations',
         ),
         GoRoute(
           path: '/friends',
-          builder: (context, state) => _homePage(initialIndex: 2),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: const ValueKey('home'),
+            child: _homePage(initialIndex: 2),
+          ),
         ),
         GoRoute(
           path: '/profile',
-          builder: (context, state) => _homePage(initialIndex: 3),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: const ValueKey('home'),
+            child: _homePage(initialIndex: 3),
+          ),
         ),
         GoRoute(
           path: '/trash',
@@ -392,6 +419,10 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Fiestaaa',
+      builder: (context, child) {
+        Intl.defaultLocale = Localizations.localeOf(context).toLanguageTag();
+        return child ?? const SizedBox.shrink();
+      },
       debugShowCheckedModeBanner: false,
       theme: buildFiestaaaTheme(),
       darkTheme: buildFiestaaaDarkTheme(),
@@ -428,7 +459,15 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     pendingRegistrationToken: _pendingRegistrationCompletionToken,
   );
 
-  Widget _homePage({int initialIndex = 0}) => HomePage(
+  Widget _homePage({
+    int initialIndex = 0,
+    String query = '',
+    String view = 'upcoming',
+  }) => HomePage(
+    eventsQuery: query,
+    eventsView: ['upcoming', 'invitations', 'owned', 'past'].contains(view)
+        ? view
+        : 'upcoming',
     session: _session!,
     onLogout: _handleLogout,
     onSessionUpdated: _handleAuthenticated,

@@ -61,11 +61,20 @@ class EventsApi {
     required String token,
     int limit = 50,
     String? cursor,
+    String? query,
+    String? view,
+    String? sort,
   }) async {
     final response = await _client.get(
       buildApiUri(
         '/events',
-        queryParameters: {'limit': '$limit', 'cursor': ?cursor},
+        queryParameters: {
+          'limit': '$limit',
+          'cursor': ?cursor,
+          'q': ?query,
+          'view': ?view,
+          'sort': ?sort,
+        },
       ),
       headers: apiAuthHeaders(token),
     );

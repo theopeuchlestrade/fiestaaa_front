@@ -960,5 +960,70 @@
   "sessionExpired": "Your session has expired. Sign in again.",
   "realtimeInterrupted": "Connection interrupted · reconnecting",
   "realtimeDisabled": "Live updates unavailable",
-  "realtimeEventUnavailable": "This fiestaaa was deleted or is no longer accessible."
+  "realtimeEventUnavailable": "This fiestaaa was deleted or is no longer accessible.",
+  "eventsSearch": "Search events",
+  "eventsUpcoming": "Upcoming",
+  "eventsInvitations": "Invitations",
+  "eventsOwned": "Organized by me",
+  "eventsPast": "Past",
+  "eventsEmptyFilter": "No events in this category",
+  "eventsEmptySearch": "No events match your search",
+  "eventsFirstCreate": "Create my first Fiestaaa",
+  "eventsEmptyHelp": "Create an event or find invitations from friends and family here.",
+  "eventsClearSearch": "Clear search",
+  "eventsChangeFilter": "Show upcoming events",
+  "eventsRefreshFailed": "Unable to refresh. Displayed information may be out of date.",
+  "eventsInvitationsFailed": "Invitations could not be refreshed.",
+  "eventsLoadMore": "Load more",
+  "eventsTrash": "Trash",
+  "formAdvanced": "Dates and advanced options",
+  "formModules": "Event modules",
+  "formAdvancedHint": "End, timezone and response deadline",
+  "formModulesHint": "Choose the features your event needs",
+  "draftFound": "Resume your draft?",
+  "draftResume": "Resume draft",
+  "draftDelete": "Delete draft",
+  "draftSaved": "Draft saved on this device",
+  "draftFailed": "Your draft could not be saved. Keep this page open to retain your input.",
+  "draftInvalid": "This draft is unreadable or incompatible. You can create a new event.",
+  "formLeaveTitle": "Leave without saving?",
+  "formLeaveBody": "Your unsaved changes will be lost.",
+  "formStay": "Stay",
+  "formLeave": "Leave without saving",
+  "eventForYou": "For you",
+  "eventAllCaughtUp": "You’re all caught up",
+  "eventSummaryUnavailable": "Information unavailable",
+  "eventYourItems": "Your items to bring",
+  "eventYourPolls": "Polls to answer",
+  "eventYourInvitation": "Respond to invitation",
+  "eventTimezone": "Time zone",
+  "eventTimezoneSearch": "Search time zones",
+  "eventNetworkUnavailable": "Network unavailable",
+  "eventDaysShort": "{count} d",
+  "eventHoursShort": "{hours} h {minutes} min",
+  "eventMinutesShort": "{count} min",
+  "@eventDaysShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@eventHoursShort": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "@eventMinutesShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

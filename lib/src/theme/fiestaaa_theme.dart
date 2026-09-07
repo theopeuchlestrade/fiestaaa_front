@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class FiestaaaPalette {
   static const Color primary = Color(0xFF6B4DF5);
@@ -255,6 +254,10 @@ ThemeData buildFiestaaaDarkTheme() {
 
 ThemeData _buildFiestaaaTheme(Brightness brightness) {
   final isDark = brightness == Brightness.dark;
+  final primaryColor = isDark
+      ? const Color(0xFFB7A7FF)
+      : FiestaaaPalette.primary;
+  final onPrimaryColor = isDark ? FiestaaaPalette.darkSurface : Colors.white;
   final textColor = FiestaaaPalette.textFor(brightness);
   final surfaceColor = FiestaaaPalette.surfaceFor(brightness);
   final surfaceRaised = FiestaaaPalette.surfaceRaisedFor(brightness);
@@ -279,10 +282,10 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
 
   final colorScheme =
       ColorScheme.fromSeed(
-        seedColor: FiestaaaPalette.primary,
+        seedColor: primaryColor,
         brightness: brightness,
       ).copyWith(
-        primary: FiestaaaPalette.primary,
+        primary: primaryColor,
         secondary: FiestaaaPalette.secondary,
         tertiary: FiestaaaPalette.accent,
         surface: surfaceRaised,
@@ -293,7 +296,7 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
         surfaceContainerHighest: surfaceHighest,
         onSurface: textColor,
         onSurfaceVariant: mutedText,
-        onPrimary: Colors.white,
+        onPrimary: onPrimaryColor,
         onSecondary: isDark
             ? FiestaaaPalette.darkSurface
             : FiestaaaPalette.lightText,
@@ -315,7 +318,8 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
         scrim: Colors.black,
       );
 
-  final baseTextTheme = GoogleFonts.manropeTextTheme().apply(
+  final baseTextTheme = ThemeData(brightness: brightness).textTheme.apply(
+    fontFamily: 'Manrope',
     bodyColor: textColor,
     displayColor: textColor,
   );
@@ -342,13 +346,16 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
   );
 
   return ThemeData(
+    fontFamily: 'Manrope',
     colorScheme: colorScheme.copyWith(
-      primary: FiestaaaPalette.primary,
+      primary: primaryColor,
       secondary: FiestaaaPalette.secondary,
       surface: surfaceRaised,
     ),
     scaffoldBackgroundColor: surfaceColor,
     useMaterial3: true,
+    materialTapTargetSize: MaterialTapTargetSize.padded,
+    visualDensity: VisualDensity.standard,
     textTheme: textTheme,
     appBarTheme: AppBarTheme(
       backgroundColor: surfaceRaised.withValues(alpha: isDark ? 0.92 : 0.88),
@@ -366,8 +373,8 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
-      backgroundColor: FiestaaaPalette.primary,
-      contentTextStyle: const TextStyle(color: Colors.white),
+      backgroundColor: primaryColor,
+      contentTextStyle: TextStyle(fontFamily: 'Manrope', color: onPrimaryColor),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -380,25 +387,23 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(
-          color: FiestaaaPalette.primary,
-          width: 1.6,
-        ),
+        borderSide: BorderSide(color: primaryColor, width: 1.6),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide(color: colorScheme.outline),
       ),
-      labelStyle: TextStyle(color: inputLabelColor),
-      prefixIconColor: FiestaaaPalette.primary,
+      labelStyle: TextStyle(fontFamily: 'Manrope', color: inputLabelColor),
+      prefixIconColor: primaryColor,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: FiestaaaPalette.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: primaryColor,
+        foregroundColor: onPrimaryColor,
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         textStyle: const TextStyle(
+          fontFamily: 'Manrope',
           fontWeight: FontWeight.w700,
           letterSpacing: -0.2,
         ),
@@ -407,24 +412,33 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: FiestaaaPalette.primary,
-        side: const BorderSide(color: FiestaaaPalette.primary),
+        foregroundColor: primaryColor,
+        side: BorderSide(color: primaryColor),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        textStyle: const TextStyle(fontWeight: FontWeight.w700),
+        textStyle: const TextStyle(
+          fontFamily: 'Manrope',
+          fontWeight: FontWeight.w700,
+        ),
       ),
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
       backgroundColor: surfaceRaised.withValues(alpha: isDark ? 0.92 : 0.94),
-      selectedItemColor: FiestaaaPalette.primary,
+      selectedItemColor: primaryColor,
       unselectedItemColor: textColor.withValues(alpha: 0.58),
       elevation: 12,
       type: BottomNavigationBarType.fixed,
       showUnselectedLabels: true,
     ),
     chipTheme: ChipThemeData(
+      selectedColor: colorScheme.primaryContainer,
+      checkmarkColor: colorScheme.onPrimaryContainer,
       backgroundColor: surfaceRaised,
-      labelStyle: TextStyle(fontWeight: FontWeight.w600, color: textColor),
+      labelStyle: TextStyle(
+        fontFamily: 'Manrope',
+        fontWeight: FontWeight.w600,
+        color: textColor,
+      ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
     ),
     dividerColor: colorScheme.outlineVariant,
@@ -441,16 +455,26 @@ class FiestaaaPageLayout extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = fiestaaaPagePadding,
+    this.maxWidth = 1200,
   });
 
   final Widget child;
   final EdgeInsets padding;
+  final double maxWidth;
 
   @override
   Widget build(BuildContext context) {
     return FiestaaaBackground(
       padding: padding,
-      child: SafeArea(child: child),
+      child: SafeArea(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: child,
+          ),
+        ),
+      ),
     );
   }
 }

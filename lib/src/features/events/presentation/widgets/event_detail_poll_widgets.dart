@@ -50,7 +50,9 @@ class _PollCard extends StatelessWidget {
       FiestaaaStatusTone.danger,
     );
     final maxVotes = poll.maxVotes == 0 ? 1 : poll.maxVotes;
-    final timeText = DateFormat.Hm('fr_FR').format(poll.expiresAt);
+    final timeText = DateFormat.Hm(
+      Intl.getCurrentLocale(),
+    ).format(poll.expiresAt);
 
     return Container(
       width: double.infinity,

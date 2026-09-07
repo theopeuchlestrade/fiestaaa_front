@@ -51,16 +51,18 @@ extension _EventDetailHeaderMethods on _EventDetailPageState {
   }
 
   String _scheduleValue() {
-    final start =
-        '${_currentEvent.formattedDate} à ${_currentEvent.formattedTime}';
-    if (!_currentEvent.hasEndDateTime) {
-      return start;
-    }
-    final endDate =
-        _currentEvent.formattedEndDate ?? _currentEvent.formattedDate;
+    final l = S.of(context);
+    final startDate = DateFormat.yMMMMd(
+      l.localeName,
+    ).format(_currentEvent.date);
+    final start = '$startDate · ${_currentEvent.formattedTime}';
+    if (!_currentEvent.hasEndDateTime) return start;
+    final endDate = DateFormat.yMMMMd(
+      l.localeName,
+    ).format(_currentEvent.endDate ?? _currentEvent.date);
     final endTime =
         _currentEvent.formattedEndTime ?? _currentEvent.formattedTime;
-    return '$start\n${S.of(context).untilLabel} $endDate à $endTime';
+    return '$start\n${l.untilLabel} $endDate · $endTime';
   }
 
   Widget _buildReadOnlyBanner() {

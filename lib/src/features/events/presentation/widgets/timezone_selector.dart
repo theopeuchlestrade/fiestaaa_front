@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -13,11 +14,11 @@ class TimezoneSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final french = Localizations.localeOf(context).languageCode == 'fr';
+    final l = S.of(context);
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: const Icon(Icons.public),
-      title: Text(french ? 'Fuseau horaire' : 'Time zone'),
+      title: Text(l.eventTimezone),
       subtitle: Text(value),
       trailing: const Icon(Icons.search),
       onTap: () async {
@@ -26,10 +27,10 @@ class TimezoneSelector extends StatelessWidget {
           context: context,
           delegate: _TimezoneSearchDelegate(
             zones,
-            label: french ? 'Rechercher un fuseau' : 'Search time zones',
+            label: l.eventTimezoneSearch,
           ),
         );
-        if (selected != null) onChanged(selected);
+        if (selected != null && selected.isNotEmpty) onChanged(selected);
       },
     );
   }
@@ -44,11 +45,16 @@ class _TimezoneSearchDelegate extends SearchDelegate<String> {
   @override
   List<Widget> buildActions(BuildContext context) => [
     if (query.isNotEmpty)
-      IconButton(onPressed: () => query = '', icon: const Icon(Icons.clear)),
+      IconButton(
+        tooltip: S.of(context).eventsClearSearch,
+        onPressed: () => query = '',
+        icon: const Icon(Icons.clear),
+      ),
   ];
 
   @override
   Widget buildLeading(BuildContext context) => IconButton(
+    tooltip: MaterialLocalizations.of(context).backButtonTooltip,
     onPressed: () => close(context, ''),
     icon: const BackButtonIcon(),
   );

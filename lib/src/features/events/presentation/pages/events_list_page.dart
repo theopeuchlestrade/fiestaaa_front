@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
+import 'package:fiestaaa_front/src/core/presentation/widgets/async_content.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
@@ -7,6 +9,7 @@ import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dar
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 typedef EventSelected = Future<void> Function(EventModel event);
 
@@ -19,33 +22,48 @@ class EventsListPage extends StatefulWidget {
     this.onOpenTrash,
     this.eventsApi,
     this.invitationsApi,
+    this.query = '',
+    this.view = 'upcoming',
+    this.onCriteriaChanged,
+    this.onCreate,
   });
-
   final SessionData session;
   final EventSelected onEventSelected;
   final ValueChanged<int>? onPendingInvitesChanged;
   final VoidCallback? onOpenTrash;
   final EventsApi? eventsApi;
   final InvitationsApi? invitationsApi;
-
+  final String query;
+  final String view;
+  final void Function(String query, String view)? onCriteriaChanged;
+  final VoidCallback? onCreate;
   @override
   State<EventsListPage> createState() => EventsListPageState();
 }
 
 class EventsListPageState extends State<EventsListPage> {
   final _refreshQueue = RefreshQueue();
+  final _scroll = ScrollController();
+  late final _search = TextEditingController(text: widget.query);
+  late String _query = widget.query;
+  late String _view = widget.view;
+  Timer? _debounce;
   int _scopeGeneration = 0;
   int _paginationGeneration = 0;
-
   late final EventsApi _api = widget.eventsApi ?? EventsApi();
   late final InvitationsApi _invitationsApi =
       widget.invitationsApi ?? InvitationsApi();
   List<EventModel>? _events;
   Map<int, InvitationModel> _myInvitations = {};
   bool _loading = true;
+  bool _refreshing = false;
   bool _loadingMore = false;
+  bool _invitationsFailed = false;
+  bool _hasAnyEvents = true;
   String? _nextCursor;
   String? _error;
+  bool _moreFailed = false;
+  String get _sort => _view == 'past' ? 'start_desc' : 'start_asc';
 
   @override
   void initState() {
@@ -62,15 +80,38 @@ class EventsListPageState extends State<EventsListPage> {
       _myInvitations = {};
       _loadEvents();
     }
+    if (widget.query != oldWidget.query || widget.view != oldWidget.view) {
+      _setCriteria(widget.query, widget.view, notify: false);
+    }
+  }
+
+  void _setCriteria(String query, String view, {bool notify = true}) {
+    _debounce?.cancel();
+    query = query.trim();
+    if (_search.text != query) {
+      _search.value = TextEditingValue(
+        text: query,
+        selection: TextSelection.collapsed(offset: query.length),
+      );
+    }
+    if (query == _query && view == _view) return;
+    setState(() {
+      _query = query;
+      _view = view;
+      _scopeGeneration++;
+      _events = null;
+      _nextCursor = null;
+      _loading = true;
+    });
+    if (_scroll.hasClients) _scroll.jumpTo(0);
+    if (notify) widget.onCriteriaChanged?.call(query, view);
+    _loadEvents();
   }
 
   Future<void> reload() => _loadEvents();
-
   void removeEvent(int eventId) {
-    final events = _events;
-    if (events == null) return;
     setState(() {
-      _events = events.where((event) => event.id != eventId).toList();
+      _events = _events?.where((e) => e.id != eventId).toList();
       _myInvitations.remove(eventId);
     });
   }
@@ -90,638 +131,387 @@ class EventsListPageState extends State<EventsListPage> {
     });
   }
 
-  Future<void> _loadEvents() =>
-      _refreshQueue.run('_loadEvents', () => _loadEventsOnce());
-
+  Future<void> _loadEvents() => _refreshQueue.run('events', _loadEventsOnce);
   Future<void> _loadEventsOnce() async {
     if (!mounted) return;
-    final requestScope = (_scopeGeneration, widget.session.token);
+    final scope = (_scopeGeneration, widget.session.token);
+    final query = _query, view = _view, sort = _sort;
+    bool current() =>
+        mounted && scope == (_scopeGeneration, widget.session.token);
+    final target = _events?.length ?? 0;
     _paginationGeneration++;
-    _loadingMore = false;
     setState(() {
       _loading = _events == null;
+      _refreshing = true;
+      _loadingMore = false;
       _error = null;
+      _moreFailed = false;
     });
     try {
-      final token = widget.session.token;
-      final page = await _api.fetchEventsPage(token: token);
-      List<InvitationModel> invitations = [];
-      try {
-        invitations = await _invitationsApi.fetchMyInvitations(token);
-      } catch (_) {
-        if (!mounted ||
-            requestScope != (_scopeGeneration, widget.session.token)) {
-          return;
+      final rebuilt = <int, EventModel>{};
+      final seenCursors = <String>{};
+      String? cursor;
+      do {
+        final page = await _api.fetchEventsPage(
+          token: widget.session.token,
+          query: query,
+          view: view,
+          sort: sort,
+          cursor: cursor,
+        );
+        if (!current()) return;
+        for (final event in page.items) {
+          rebuilt[event.id] = event;
         }
-        invitations = const [];
-      }
-      if (!mounted ||
-          requestScope != (_scopeGeneration, widget.session.token)) {
-        return;
-      }
-      setState(() {
-        _events = page.items;
-        _nextCursor = page.nextCursor;
-        _myInvitations = {
-          for (final invitation in invitations) invitation.eventId: invitation,
-        };
-        _notifyPendingInvites();
-      });
-    } catch (e) {
-      if (!mounted ||
-          requestScope != (_scopeGeneration, widget.session.token)) {
-        return;
+        cursor = page.nextCursor;
+        if (cursor != null && !seenCursors.add(cursor)) {
+          throw StateError('Repeated cursor');
+        }
+      } while (cursor != null && rebuilt.length < target);
+      var hasAny = true;
+      if (rebuilt.isEmpty && query.isEmpty) {
+        final any = await _api.fetchEventsPage(
+          token: widget.session.token,
+          view: 'all',
+          sort: 'start_asc',
+          limit: 1,
+        );
+        if (!current()) return;
+        hasAny = any.items.isNotEmpty;
       }
       setState(() {
-        _error = S.of(context).unableToLoadFiestaaa;
+        _events = rebuilt.values.toList();
+        _nextCursor = cursor;
+        _hasAnyEvents = hasAny;
+        _loading = false;
       });
+      try {
+        final invitations = await _invitationsApi.fetchMyInvitations(
+          widget.session.token,
+        );
+        if (!current()) return;
+        setState(() {
+          _myInvitations = {for (final i in invitations) i.eventId: i};
+          _invitationsFailed = false;
+          _notifyPendingInvites();
+        });
+      } catch (_) {
+        if (current()) setState(() => _invitationsFailed = true);
+      }
+    } catch (_) {
+      if (current()) setState(() => _error = S.of(context).eventsRefreshFailed);
     } finally {
-      if (mounted && requestScope == (_scopeGeneration, widget.session.token)) {
+      if (current()) {
         setState(() {
           _loading = false;
+          _refreshing = false;
         });
       }
     }
   }
 
   Future<void> _loadMore() async {
-    final requestScope = (_scopeGeneration, _paginationGeneration);
+    final scope = (_scopeGeneration, _paginationGeneration);
     final cursor = _nextCursor;
-    if (cursor == null || _loadingMore) return;
-    setState(() => _loadingMore = true);
+    if (cursor == null || _loadingMore || _refreshing) return;
+    setState(() {
+      _loadingMore = true;
+      _moreFailed = false;
+    });
     try {
       final page = await _api.fetchEventsPage(
         token: widget.session.token,
         cursor: cursor,
+        query: _query,
+        view: _view,
+        sort: _sort,
       );
-      if (!mounted ||
-          requestScope != (_scopeGeneration, _paginationGeneration)) {
+      if (!mounted || scope != (_scopeGeneration, _paginationGeneration)) {
         return;
       }
-      final known = _events?.map((event) => event.id).toSet() ?? <int>{};
+      final known = _events?.map((e) => e.id).toSet() ?? <int>{};
       setState(() {
-        _events = [
-          ...?_events,
-          ...page.items.where((event) => known.add(event.id)),
-        ];
+        _events = [...?_events, ...page.items.where((e) => known.add(e.id))];
         _nextCursor = page.nextCursor;
       });
     } catch (_) {
-      if (!mounted ||
-          requestScope != (_scopeGeneration, _paginationGeneration)) {
-        return;
+      if (mounted && scope == (_scopeGeneration, _paginationGeneration)) {
+        setState(() => _moreFailed = true);
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).unableToLoadFiestaaa)),
-      );
     } finally {
-      if (mounted &&
-          requestScope == (_scopeGeneration, _paginationGeneration)) {
+      if (mounted && scope == (_scopeGeneration, _paginationGeneration)) {
         setState(() => _loadingMore = false);
       }
     }
   }
 
-  void _notifyPendingInvites() {
-    if (widget.onPendingInvitesChanged == null) return;
-    final pending = _myInvitations.values
-        .where((inv) => inv.status == 'Waiting')
-        .length;
-    widget.onPendingInvitesChanged!(pending);
-  }
-
+  void _notifyPendingInvites() => widget.onPendingInvitesChanged?.call(
+    _myInvitations.values.where((i) => i.status == 'Waiting').length,
+  );
   @override
   void dispose() {
+    _debounce?.cancel();
+    _search.dispose();
+    _scroll.dispose();
     _refreshQueue.dispose();
-    _api.dispose();
-    _invitationsApi.dispose();
+    if (widget.eventsApi == null) _api.dispose();
+    if (widget.invitationsApi == null) _invitationsApi.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = S.of(context);
+    final pending = _myInvitations.values
+        .where((i) => i.status == 'Waiting')
+        .length;
+    final filters = {
+      'upcoming': l.eventsUpcoming,
+      'invitations': l.eventsInvitations,
+      'owned': l.eventsOwned,
+      'past': l.eventsPast,
+    };
     Widget content;
     if (_loading) {
       content = const Center(child: CircularProgressIndicator());
-    } else if (_error != null) {
-      final theme = Theme.of(context);
-      content = Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.wifi_off, color: theme.fiestaaaMutedText, size: 40),
-            const SizedBox(height: 12),
-            Text(_error!, textAlign: TextAlign.center),
-            TextButton(onPressed: reload, child: Text(S.of(context).retry)),
-          ],
-        ),
+    } else if (_events == null && _error != null) {
+      content = AsyncNotice(
+        message: l.unableToLoadFiestaaa,
+        actionLabel: l.retry,
+        onAction: reload,
+      );
+    } else if (_events?.isEmpty ?? true) {
+      final searching = _query.isNotEmpty;
+      content = AsyncNotice(
+        icon: Icons.celebration_outlined,
+        message: searching
+            ? l.eventsEmptySearch
+            : !_hasAnyEvents
+            ? '${l.noFiestaaaYet}\n${l.eventsEmptyHelp}'
+            : l.eventsEmptyFilter,
+        actionLabel: searching
+            ? l.eventsClearSearch
+            : !_hasAnyEvents
+            ? l.eventsFirstCreate
+            : l.eventsChangeFilter,
+        onAction: searching
+            ? () => _setCriteria('', _view)
+            : !_hasAnyEvents
+            ? () => widget.onCreate?.call()
+            : () => _setCriteria('', 'upcoming'),
       );
     } else {
-      final events = _events ?? [];
-      if (events.isEmpty) {
-        final theme = Theme.of(context);
-        content = Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.celebration, color: theme.fiestaaaMutedText, size: 40),
-              const SizedBox(height: 12),
-              Text(S.of(context).noFiestaaaYet),
-            ],
-          ),
-        );
-      } else {
-        content = _EventsGrid(
-          events: events,
-          onEventSelected: widget.onEventSelected,
-          sessionEmail: widget.session.email,
-          invitations: _myInvitations,
-          onRefresh: _loadEvents,
-          onLoadMore: _nextCursor == null ? null : _loadMore,
-          loadingMore: _loadingMore,
-        );
-      }
-    }
-
-    return FiestaaaBackground(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: SafeArea(
-        child: Column(
-          children: [
-            if (widget.onOpenTrash != null)
-              Align(
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  tooltip: Localizations.localeOf(context).languageCode == 'fr'
-                      ? 'Corbeille'
-                      : 'Trash',
-                  onPressed: widget.onOpenTrash,
-                  icon: const Icon(Icons.delete_outline),
-                ),
-              ),
-            Expanded(child: content),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _EventsGrid extends StatelessWidget {
-  const _EventsGrid({
-    required this.events,
-    required this.onEventSelected,
-    required this.sessionEmail,
-    required this.invitations,
-    required this.onRefresh,
-    required this.onLoadMore,
-    required this.loadingMore,
-  });
-
-  final List<EventModel> events;
-  final EventSelected onEventSelected;
-  final String sessionEmail;
-  final Map<int, InvitationModel> invitations;
-  final Future<void> Function() onRefresh;
-  final Future<void> Function()? onLoadMore;
-  final bool loadingMore;
-
-  @override
-  Widget build(BuildContext context) {
-    final pendingInvites = invitations.values
-        .where((inv) => inv.status == 'Waiting')
-        .length;
-    final sortedEvents = [...events]
-      ..sort((a, b) {
-        final waitingA = invitations[a.id]?.status == 'Waiting';
-        final waitingB = invitations[b.id]?.status == 'Waiting';
-        if (waitingA == waitingB) return 0;
-        return waitingA ? -1 : 1; // waiting first
-      });
-
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      displacement: 32,
-      edgeOffset: 12,
-      child: LayoutBuilder(
+      content = LayoutBuilder(
         builder: (context, constraints) {
-          final isTablet = constraints.maxWidth > 720;
-          final crossAxisCount = constraints.maxWidth > 1080
+          final largeText = MediaQuery.textScalerOf(context).scale(16) > 24;
+          final columns = largeText
+              ? 1
+              : constraints.maxWidth > 1080
               ? 3
-              : constraints.maxWidth > 720
+              : constraints.maxWidth >= 720
               ? 2
               : 1;
-          final childAspectRatio = isTablet ? 1.9 : 1.3;
-          return CustomScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            slivers: [
-              if (pendingInvites > 0)
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: Card(
-                      color: Theme.of(context).colorScheme
-                          .fiestaaaStatus(FiestaaaStatusTone.warning)
-                          .background,
-                      child: ListTile(
-                        leading: Icon(
-                          Icons.mark_email_unread,
-                          color: Theme.of(context).colorScheme
-                              .fiestaaaStatus(FiestaaaStatusTone.warning)
-                              .foreground,
-                        ),
-                        title: Text(
-                          S.of(context).invitationsWaitingCount(pendingInvites),
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: Theme.of(context).colorScheme
-                                    .fiestaaaStatus(FiestaaaStatusTone.warning)
-                                    .foreground,
-                              ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 24,
-                ),
-                sliver: SliverToBoxAdapter(
+          final events = _events!;
+          return RefreshIndicator(
+            onRefresh: reload,
+            child: ListView.builder(
+              controller: _scroll,
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              itemCount:
+                  (events.length / columns).ceil() +
+                  (_nextCursor == null ? 0 : 1),
+              itemBuilder: (context, row) {
+                final start = row * columns;
+                if (start >= events.length) {
+                  return Center(
+                    child: _loadingMore
+                        ? const CircularProgressIndicator()
+                        : TextButton.icon(
+                            onPressed: _refreshing ? null : _loadMore,
+                            icon: Icon(
+                              _moreFailed ? Icons.refresh : Icons.expand_more,
+                            ),
+                            label: Text(
+                              _moreFailed ? l.retry : l.eventsLoadMore,
+                            ),
+                          ),
+                  );
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: FiestaaaPalette.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.auto_awesome,
-                              color: FiestaaaPalette.primary.withValues(
-                                alpha: 0.8,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              S.of(context).yourFiestaaa,
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
-                                    fontWeight: FontWeight.w700,
+                      for (var col = 0; col < columns; col++) ...[
+                        if (col > 0) const SizedBox(width: 16),
+                        Expanded(
+                          child: start + col < events.length
+                              ? _EventCard(
+                                  event: events[start + col],
+                                  invitation:
+                                      _myInvitations[events[start + col].id],
+                                  email: widget.session.email,
+                                  onTap: () => widget.onEventSelected(
+                                    events[start + col],
                                   ),
-                            ),
-                          ],
+                                )
+                              : const SizedBox.shrink(),
                         ),
-                      ),
+                      ],
                     ],
                   ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 4,
-                ),
-                sliver: SliverGrid(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossAxisCount,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: childAspectRatio,
-                  ),
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final event = sortedEvents[index];
-                    return _EventBubble(
-                      event: event,
-                      sessionEmail: sessionEmail,
-                      invitation: invitations[event.id],
-                      onTap: () {
-                        onEventSelected(event);
-                      },
-                    );
-                  }, childCount: sortedEvents.length),
-                ),
-              ),
-              if (onLoadMore != null)
-                SliverToBoxAdapter(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 24),
-                      child: loadingMore
-                          ? const CircularProgressIndicator()
-                          : OutlinedButton.icon(
-                              onPressed: onLoadMore,
-                              icon: const Icon(Icons.expand_more),
-                              label: Text(
-                                Localizations.localeOf(context).languageCode ==
-                                        'fr'
-                                    ? 'Charger plus'
-                                    : 'Load more',
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-            ],
+                );
+              },
+            ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _EventBubble extends StatelessWidget {
-  const _EventBubble({
-    required this.event,
-    required this.sessionEmail,
-    required this.onTap,
-    this.invitation,
-  });
-
-  final EventModel event;
-  final InvitationModel? invitation;
-  final String sessionEmail;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final badge = _badgeData(context);
-    final borderRadius = BorderRadius.circular(28);
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: borderRadius,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: FiestaaaPalette.cardGradientFor(
-            Theme.of(context).brightness,
-          ),
-          borderRadius: borderRadius,
-          boxShadow: [
-            BoxShadow(
-              color: FiestaaaPalette.primary.withValues(alpha: 0.14),
-              blurRadius: 18,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: borderRadius,
-          child: Stack(
-            children: [
-              Positioned(
-                top: -30,
-                right: -18,
-                child: _DecorativeWave(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  size: 120,
-                ),
-              ),
-              Positioned(
-                bottom: -22,
-                left: -10,
-                child: _DecorativeWave(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  size: 140,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            event.name,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (badge != null)
-                          Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: badge.background,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: badge.border),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    badge.icon,
-                                    size: 16,
-                                    color: badge.color,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Flexible(
-                                    child: Text(
-                                      badge.label,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                            color: badge.color,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.event, size: 18, color: Colors.white),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            '${event.formattedDate} • ${event.formattedTime}',
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.92),
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.place, size: 18, color: Colors.white),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            event.address,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.9),
-                                ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: Text(
-                        event.description,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
-                        ),
+      );
+    }
+    return FiestaaaPageLayout(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _search,
+                    maxLength: 200,
+                    decoration: InputDecoration(
+                      counterText: '',
+                      labelText: l.eventsSearch,
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: IconButton(
+                        tooltip: l.eventsClearSearch,
+                        onPressed: () => _setCriteria('', _view),
+                        icon: const Icon(Icons.clear),
                       ),
                     ),
-                  ],
+                    onChanged: (value) {
+                      _debounce?.cancel();
+                      _debounce = Timer(
+                        const Duration(milliseconds: 300),
+                        () => _setCriteria(value, _view),
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+                if (widget.onOpenTrash != null)
+                  IconButton(
+                    tooltip: l.eventsTrash,
+                    onPressed: widget.onOpenTrash,
+                    icon: const Icon(Icons.delete_outline),
+                  ),
+              ],
+            ),
           ),
-        ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                for (final entry in filters.entries)
+                  ChoiceChip(
+                    label: Text(entry.value),
+                    selected: _view == entry.key,
+                    onSelected: (_) => _setCriteria(_search.text, entry.key),
+                  ),
+              ],
+            ),
+          ),
+          if (pending > 0)
+            ListTile(
+              leading: const Icon(Icons.mark_email_unread_outlined),
+              title: Text(l.invitationsWaitingCount(pending)),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _setCriteria('', 'invitations'),
+            ),
+          if (_refreshing && !_loading) const LinearProgressIndicator(),
+          if (_events != null && _error != null)
+            AsyncNotice(
+              compact: true,
+              message: _error!,
+              actionLabel: l.retry,
+              onAction: reload,
+            ),
+          if (_invitationsFailed)
+            AsyncNotice(
+              compact: true,
+              message: l.eventsInvitationsFailed,
+              actionLabel: l.retry,
+              onAction: reload,
+            ),
+          Expanded(child: content),
+        ],
       ),
     );
   }
-
-  _EventBadgeData? _badgeData(BuildContext context) {
-    if (event.isFinished) {
-      final finished = Theme.of(
-        context,
-      ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.warning);
-      return _EventBadgeData(
-        label: S.of(context).finishedEvent,
-        color: finished.foreground,
-        background: finished.background,
-        border: finished.border,
-        icon: Icons.lock_clock_outlined,
-      );
-    }
-
-    final isOwner =
-        sessionEmail.toLowerCase() == event.ownerEmail.toLowerCase();
-    if (isOwner) {
-      return _EventBadgeData(
-        label: S.of(context).organizer,
-        color: FiestaaaPalette.primary,
-        background: FiestaaaPalette.primary.withValues(alpha: 0.16),
-        border: FiestaaaPalette.primary.withValues(alpha: 0.32),
-        icon: Icons.emoji_events,
-      );
-    }
-
-    if (invitation == null) {
-      return null;
-    }
-
-    switch (invitation!.status) {
-      case 'Accepted':
-        final accepted = Theme.of(
-          context,
-        ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.success);
-        return _EventBadgeData(
-          label: S.of(context).participationConfirmed,
-          color: accepted.foreground,
-          background: accepted.background,
-          border: accepted.border,
-          icon: Icons.check_circle,
-        );
-      case 'Waiting':
-        final waiting = Theme.of(
-          context,
-        ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.warning);
-        return _EventBadgeData(
-          label: S.of(context).responseExpected,
-          color: waiting.foreground,
-          background: waiting.background,
-          border: waiting.border,
-          icon: Icons.hourglass_top,
-        );
-      case 'Declined':
-        final declined = Theme.of(
-          context,
-        ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.neutral);
-        return _EventBadgeData(
-          label: S.of(context).refused,
-          color: declined.foreground,
-          background: declined.background,
-          border: declined.border,
-          icon: Icons.remove_circle_outline,
-        );
-      default:
-        return null;
-    }
-  }
 }
 
-class _EventBadgeData {
-  const _EventBadgeData({
-    required this.label,
-    required this.color,
-    required this.background,
-    required this.border,
-    required this.icon,
+class _EventCard extends StatelessWidget {
+  const _EventCard({
+    required this.event,
+    required this.invitation,
+    required this.email,
+    required this.onTap,
   });
-
-  final String label;
-  final Color color;
-  final Color background;
-  final Color border;
-  final IconData icon;
-}
-
-class _DecorativeWave extends StatelessWidget {
-  const _DecorativeWave({required this.color, required this.size});
-
-  final Color color;
-  final double size;
-
+  final EventModel event;
+  final InvitationModel? invitation;
+  final String email;
+  final VoidCallback onTap;
   @override
   Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: -0.6,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(size),
+    final l = S.of(context), theme = Theme.of(context);
+    final owner = email.toLowerCase() == event.ownerEmail.toLowerCase();
+    final label = event.isFinished
+        ? l.finishedEvent
+        : owner
+        ? l.organizer
+        : invitation?.status == 'Waiting'
+        ? l.responseExpected
+        : invitation?.status == 'Accepted'
+        ? l.participationConfirmed
+        : null;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: theme.colorScheme.primary, width: 3),
+            ),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${DateFormat.yMMMd(locale).format(event.date)} · ${event.formattedTime}',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(event.name, style: theme.textTheme.titleLarge),
+              const SizedBox(height: 8),
+              Text(
+                event.shortAddressSummary.primary,
+                style: theme.textTheme.bodyMedium,
+              ),
+              if (label != null) ...[
+                const SizedBox(height: 12),
+                Chip(label: Text(label)),
+              ],
+            ],
+          ),
         ),
       ),
     );
