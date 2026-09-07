@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/core/api_response.dart' as response;
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
@@ -160,7 +161,7 @@ void main() {
                   await expectLater(
                     find.byKey(const ValueKey('screen')),
                     matchesGoldenFile(
-                      'goldens/${screen}_${width.toInt()}_${dark ? 'dark' : 'light'}_$locale.png',
+                      'goldens/${Platform.operatingSystem}/${screen}_${width.toInt()}_${dark ? 'dark' : 'light'}_$locale.png',
                     ),
                   );
                 }

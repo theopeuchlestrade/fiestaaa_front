@@ -48,7 +48,10 @@ Automated checks cover list recovery, search generations, pagination, local draf
 isolation/serialization, draft restore/discard, address revalidation, failed and
 successful creation, edit-exit confirmation, and personal summaries. The visual
 matrix covers 360/720/1024/1440 pixels, 100%/200% text, both themes and French/English.
-Six golden images cover the three screens. Selected cases check tap-target labels
+Six golden images per platform cover the three screens. Linux and macOS
+references are kept separate because their font rasterization differs; pixel
+comparisons remain exact. Generate Linux references with the pinned Flutter CI
+image and macOS references with the matching local SDK. Selected cases check tap-target labels
 and minimum Android tap-target sizes.
 
 Run frontend analysis/tests with the CI defines and maintain the 22% coverage
