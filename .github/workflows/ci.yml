@@ -62,6 +62,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
 
+      - name: Verify generated public pages
+        run: |
+          node tool/generate_public_pages.mjs
+          git diff --exit-code -- web/privacy web/terms web/support web/delete-account
+
       - name: Verify backend OpenAPI snapshot
         run: npm run contract:backend
 

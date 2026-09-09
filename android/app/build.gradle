@@ -21,6 +21,10 @@ def hasReleaseSigning =
                 keystoreProperties['keyPassword']
 
 
+if (project.hasProperty('fiestaaaRequireReleaseSigning') && !hasReleaseSigning) {
+    throw new GradleException("Official release signing is required")
+}
+
 android {
     namespace = "com.fiestaaa.fiestaaa"
     compileSdk = 37

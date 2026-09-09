@@ -1,3 +1,7 @@
+import 'package:fiestaaa_front/src/features/beta_pages.dart';
+import 'package:fiestaaa_front/src/features/beta_api.dart';
+import 'package:go_router/go_router.dart';
+import '../../../auth/data/apple_sign_in.dart';
 import 'package:fiestaaa_front/src/core/locale_service.dart';
 import 'package:fiestaaa_front/src/core/theme_service.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
@@ -191,7 +195,28 @@ class _ProfilePageState extends State<ProfilePage> {
     });
 
     try {
-      await _api.deleteAccount(token: widget.session.token);
+      try {
+        await _api.deleteAccount(token: widget.session.token);
+      } on ApiException catch (error) {
+        if (error.code != 'apple_reauthentication_required') rethrow;
+        final credential = await requestAppleCredential();
+        final beta = BetaApi();
+        try {
+          await beta.call(
+            '/me/apple-reauthorize',
+            method: 'POST',
+            token: widget.session.token,
+            body: {
+              'idToken': credential.identityToken,
+              'authorizationCode': credential.authorizationCode,
+              if (appleUsesAndroidCallback) 'android': true,
+            },
+          );
+        } finally {
+          beta.close();
+        }
+        await _api.deleteAccount(token: widget.session.token);
+      }
       if (!mounted) return;
       _showSnack(l10n.accountDeleted);
       widget.onLogout();
@@ -392,6 +417,18 @@ class _ProfilePageState extends State<ProfilePage> {
             FiestaaaPageHeader(
               title: l10n.myProfile,
               subtitle: l10n.manageAccountAndInvitations,
+            ),
+            const BetaLinks(),
+            TextButton.icon(
+              onPressed: () => context.push('/safety'),
+              icon: const Icon(Icons.shield_outlined),
+              label: Text(
+                betaText(
+                  context,
+                  'Sécurité et signalements',
+                  'Safety and reports',
+                ),
+              ),
             ),
             FutureBuilder<ProfileInfo>(
               future: _future,

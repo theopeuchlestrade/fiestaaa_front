@@ -1,3 +1,4 @@
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:fiestaaa_front/firebase_options.dart';
@@ -25,6 +26,7 @@ Future<T> _timedStartup<T>(String label, Future<T> Function() action) async {
 Future<void> _bootstrap() async {
   final startupWatch = Stopwatch()..start();
   WidgetsFlutterBinding.ensureInitialized();
+  usePathUrlStrategy();
   tz.initializeTimeZones();
   var firebaseReady = false;
   try {

@@ -1,0 +1,64 @@
+{
+  "privacy": {
+    "fr": [
+      "Confidentialité",
+      "Fiestaaa est éditée par Théo Peuchlestrade. Contact : feedback@fiestaaa.app. Cette bêta est destinée aux adultes invités en France.",
+      "Nous traitons votre email, identifiant, profil et contributions pour fournir votre compte et organiser vos événements privés. Les organisateurs et participants voient les informations nécessaires aux fonctions partagées ; ne publiez pas de données sensibles dans les descriptions. Les mots de passe sont hachés, les adresses email et plusieurs données personnelles sont chiffrées au repos.",
+      "Le service utilise OVH pour son hébergement, Resend pour les emails, Google Firebase pour les notifications et Apple/Google si vous choisissez leur connexion. Sentry peut recevoir les diagnostics techniques lorsque la collecte est activée. Les fournisseurs de connexion traitent aussi les données selon leurs propres politiques. Les permissions caméra, photos et notifications restent facultatives ; leur refus limite uniquement les fonctions concernées.",
+      "Le compte et les contributions sont traités pour exécuter le service demandé. La sécurité et le traitement des abus reposent sur notre intérêt légitime. Vous pouvez demander accès, rectification, portabilité, effacement, limitation ou opposition en écrivant à feedback@fiestaaa.app. Vous pouvez déposer une réclamation auprès de la CNIL.",
+      "Les comptes sont conservés jusqu’à suppression. Les événements terminés sont normalement placés en corbeille après 7 jours et purgés après 30 jours supplémentaires. Les liens de récupération expirent après 30 minutes. Les sauvegardes peuvent conserver des copies après suppression : elles ne servent qu’à la restauration et les suppressions doivent être réappliquées avant toute remise en service.",
+      "La suppression se demande dans Profil ou depuis /delete-account. Elle supprime également les événements dont vous êtes propriétaire. La révocation Apple peut être réessayée après la suppression locale si Apple est indisponible."
+    ],
+    "en": [
+      "Privacy",
+      "Fiestaaa is published by Théo Peuchlestrade. Contact: feedback@fiestaaa.app. This beta is for invited adults in France.",
+      "We process your email, handle, profile and contributions to provide your account and private events. Organizers and participants see information needed for shared features; do not put sensitive data in descriptions. Passwords are hashed; emails and several personal fields are encrypted at rest.",
+      "The service uses OVH hosting, Resend email delivery, Google Firebase notifications and Apple/Google when you choose their sign-in. Sentry may receive technical diagnostics when enabled. Sign-in providers also process data under their own policies. Camera, photos and notification permissions are optional; declining only limits the related features.",
+      "Account and contribution processing provides the service you request. Security and abuse handling rely on legitimate interests. Request access, correction, portability, deletion, restriction or objection at feedback@fiestaaa.app. You may complain to the French data protection authority, CNIL.",
+      "Accounts remain until deletion. Finished events normally enter trash after 7 days and are purged after a further 30 days. Recovery links expire after 30 minutes. Backups may retain copies after deletion: they are used only for restoration, and deletions must be reapplied before service resumes.",
+      "Request deletion in Profile or at /delete-account. Events you own are also deleted. Apple revocation may be retried after local deletion when Apple is unavailable."
+    ]
+  },
+  "terms": {
+    "fr": [
+      "Conditions de la bêta",
+      "Fiestaaa — Théo Peuchlestrade — feedback@fiestaaa.app. Accès réservé aux personnes majeures invitées en France. Le service aide à organiser des événements privés ; il ne garantit ni leur déroulement ni les accords entre participants.",
+      "Respectez les autres participants. Les contenus illicites, menaces, harcèlement, haine et spam sont interdits. Partagez uniquement les contenus et coordonnées que vous êtes autorisé à utiliser. Ne diffusez pas les liens privés d’autrui.",
+      "Vous pouvez signaler un utilisateur ou un événement et bloquer les contacts directs. Le blocage ne vous retire pas automatiquement des événements communs et ne supprime pas les contributions existantes. Les contenus peuvent être filtrés ou masqués, et les comptes suspendus. Pour contester une décision : feedback@fiestaaa.app.",
+      "La bêta peut présenter des erreurs et évoluer. Le suivi des dépenses n’effectue pas de transfert d’argent. Consultez la politique de confidentialité avant de créer un compte. Vous pouvez quitter le service et demander sa suppression à tout moment."
+    ],
+    "en": [
+      "Beta terms",
+      "Fiestaaa — Théo Peuchlestrade — feedback@fiestaaa.app. Access is for invited adults in France. The service helps organize private events; it does not guarantee events or agreements between participants.",
+      "Respect other participants. Illegal content, threats, harassment, hate and spam are prohibited. Share only content and contact details you are entitled to use. Do not distribute other people’s private links.",
+      "You can report a user or event and block direct contact. Blocking does not automatically remove you from shared events or delete existing contributions. Content may be filtered or hidden and accounts suspended. Appeal decisions at feedback@fiestaaa.app.",
+      "The beta may contain errors and change. Expense tracking does not transfer money. Read the privacy policy before creating an account. You can leave the service and request deletion at any time."
+    ]
+  },
+  "support": {
+    "fr": [
+      "Aide et retours",
+      "Contact : feedback@fiestaaa.app. Décrivez le problème, les étapes pour le reproduire, votre téléphone et la version de Fiestaaa. N’envoyez jamais votre mot de passe, un lien de récupération ou un jeton de connexion.",
+      "Pour les abus, utilisez Signaler dans l’application ou contactez cette même adresse. En cas de danger immédiat, contactez les services d’urgence."
+    ],
+    "en": [
+      "Help and feedback",
+      "Contact: feedback@fiestaaa.app. Describe the issue, steps to reproduce, your phone and Fiestaaa version. Never send your password, recovery link or authentication token.",
+      "For abuse, use Report in the app or contact the same address. In immediate danger, contact emergency services."
+    ]
+  },
+  "delete-account": {
+    "fr": [
+      "Supprimer votre compte Fiestaaa",
+      "Dans l’application ou le site, connectez-vous puis ouvrez Profil → Supprimer mon compte. Avec Apple, une nouvelle connexion Apple peut être demandée pour révoquer l’autorisation.",
+      "Vous pouvez aussi demander la suppression à feedback@fiestaaa.app depuis l’adresse associée à votre compte, avec l’objet « Suppression de compte Fiestaaa ». Nous vérifierons votre identité sans demander votre mot de passe. Vous n’avez pas besoin de réinstaller l’application.",
+      "Le compte, l’avatar et les événements dont vous êtes propriétaire sont supprimés. Cette action affecte les autres participants à ces événements. Des copies de sauvegarde peuvent subsister pendant leur durée de conservation ; consultez la politique de confidentialité."
+    ],
+    "en": [
+      "Delete your Fiestaaa account",
+      "In the app or website, sign in and open Profile → Delete my account. Apple users may be asked to sign in with Apple again to revoke authorization.",
+      "You can also request deletion at feedback@fiestaaa.app from your account email, with the subject “Fiestaaa account deletion”. We will verify your identity without asking for your password. You do not need to reinstall the app.",
+      "Your account, avatar and events you own are deleted. This affects other participants in those events. Backup copies may remain during their retention period; see the privacy policy."
+    ]
+  }
+}

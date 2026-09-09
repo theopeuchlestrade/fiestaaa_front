@@ -42,7 +42,7 @@
   "logout": "Se déconnecter",
   "deleteMyAccount": "Supprimer mon compte",
   "deleteAccountTitle": "Supprimer mon compte",
-  "deleteAccountWarning": "Cette action est irréversible. Toutes vos données seront définitivement supprimées.",
+  "deleteAccountWarning": "Cette action est irréversible. Votre compte, votre avatar et les événements dont vous êtes propriétaire seront supprimés. Des copies peuvent subsister dans les sauvegardes : consultez la politique de confidentialité.",
   "cancel": "Annuler",
   "delete": "Supprimer",
   "accountDeleted": "Compte supprimé",
@@ -207,7 +207,7 @@
   "newToFiestaaa": "Nouveau sur Fiestaaa ? Enregistrez-vous",
   "alreadyRegistered": "Déjà inscrit ? Connectez-vous",
   "termsAcceptance": "En continuant, vous acceptez nos conditions\nd'utilisation et notre politique de confidentialité",
-  "alphaVersionBanner": "Version Alpha de test — vos retours sont précieux !",
+  "alphaVersionBanner": "Bêta privée — vos retours sont précieux !",
   "reportBugsTo": "Signalez les bugs à {email}",
   "@reportBugsTo": {
     "placeholders": {

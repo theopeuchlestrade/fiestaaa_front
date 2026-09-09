@@ -13,8 +13,8 @@ void removeQueryParameters(List<String> keys) {
     return;
   }
 
-  final sanitized = current.replace(
-    queryParameters: query.isEmpty ? null : query,
-  );
+  final sanitized = query.isEmpty
+      ? current.replace(query: '')
+      : current.replace(queryParameters: query);
   web.window.history.replaceState(null, '', sanitized.toString());
 }

@@ -87,3 +87,6 @@ lib/l10n/app_localizations*.dart
 
 # Generated untranslated report (flutter gen-l10n)
 untranslated.txt
+
+# Generated from verified production signing identities.
+/web/.well-known/

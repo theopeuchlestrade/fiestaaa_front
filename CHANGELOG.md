@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added bilingual public information, password recovery, account deletion with Apple reauthentication, reporting and blocking.
+- Added native invitation and recovery links, beta identification and support version details.
+- Prepared Android and iOS associations and mandatory distribution signing.
+
 ## [0.4.0] - 2026-09-07
 
 ### Added
