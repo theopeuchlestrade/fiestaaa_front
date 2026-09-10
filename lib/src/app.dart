@@ -1,3 +1,4 @@
+import 'features/beta_pages.dart';
 import 'package:intl/intl.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/event_form_session.dart';
 import 'dart:async';
@@ -56,10 +57,16 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   StreamSubscription<void>? _unauthorizedSub;
   bool _handlingUnauthorized = false;
   late final GoRouter _router;
+  String? _resetToken;
+  String? _lastIncomingVerification;
 
   @override
   void initState() {
     super.initState();
+    _resetToken = Uri.base.queryParameters['token'];
+    if (kIsWeb && _resetToken != null) {
+      removeSensitiveQueryParameters(['token']);
+    }
     _router = GoRouter(
       initialLocation: Uri(
         path: Uri.base.path.isEmpty ? '/' : Uri.base.path,
@@ -71,6 +78,25 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
         },
       ).toString(),
       routes: [
+        for (final page in ['privacy', 'terms', 'support', 'delete-account'])
+          GoRoute(
+            path: '/$page',
+            builder: (context, state) => LegalPage(page: page),
+          ),
+        GoRoute(
+          path: '/reset-password',
+          builder: (context, state) => PasswordResetPage(
+            token: state.uri.queryParameters['token'] ?? _resetToken,
+          ),
+        ),
+        GoRoute(path: '/link', builder: (context, state) => _rootPage()),
+        GoRoute(
+          path: '/safety',
+          builder: (context, state) => SafetyPage(
+            token: _session!.token,
+            eventId: int.tryParse(state.uri.queryParameters['eventId'] ?? ''),
+          ),
+        ),
         GoRoute(path: '/', builder: (context, state) => _rootPage()),
         GoRoute(path: '/auth', builder: (context, state) => _authPage()),
         GoRoute(
@@ -137,6 +163,51 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
         ),
       ],
       redirect: (context, state) {
+        if (state.matchedLocation == '/reset-password') {
+          final incoming = state.uri.queryParameters['token'];
+          if (incoming != null) {
+            _resetToken = incoming;
+            return '/reset-password';
+          }
+          return null;
+        }
+        if (!_loadingSession) _resetToken = null;
+        if ([
+          '/privacy',
+          '/terms',
+          '/support',
+          '/delete-account',
+          '/reset-password',
+        ].contains(state.matchedLocation)) {
+          return null;
+        }
+        if (state.matchedLocation == '/link') {
+          final share = state.uri.queryParameters['shareToken'];
+          final verification = state.uri.queryParameters['verifyEmailToken'];
+          if (share != null && share.isNotEmpty) {
+            _pendingShareToken = share;
+            PendingTokenStorage.write(_shareTokenKey, share);
+          }
+          if (verification != null &&
+              verification.isNotEmpty &&
+              verification != _lastIncomingVerification) {
+            _lastIncomingVerification = verification;
+            _pendingEmailVerificationToken = verification;
+            PendingTokenStorage.write(_verificationTokenKey, verification);
+            if (!_loadingSession) {
+              Future.microtask(() async {
+                await _consumeEmailVerificationToken();
+                if (mounted) {
+                  setState(() {});
+                  _router.refresh();
+                }
+              });
+            }
+          }
+          return _loadingSession
+              ? '/'
+              : (_session == null ? '/auth' : '/events');
+        }
         if (_loadingSession) return state.matchedLocation == '/' ? null : '/';
         final authenticated = _session != null;
         if (!authenticated && state.matchedLocation != '/auth') return '/auth';
@@ -196,11 +267,17 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     PushNotificationService.instance.setLocaleTag(
       _localeService.locale?.toLanguageTag(),
     );
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {});
+      _router.refresh();
+    }
   }
 
   void _onThemeChanged() {
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {});
+      _router.refresh();
+    }
   }
 
   Future<void> _restoreSession() async {
@@ -304,6 +381,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       }
       PendingTokenStorage.remove(_verificationTokenKey);
     } on ApiTransportException {
+      _lastIncomingVerification = null;
       _authFlashCode = 'network_error';
       _authFlashIsError = true;
       return;

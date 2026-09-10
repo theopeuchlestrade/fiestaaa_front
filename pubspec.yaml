@@ -1,7 +1,7 @@
 name: fiestaaa_front
 description: "Flutter frontend for Fiestaaa."
 publish_to: 'none'
-version: 0.4.0
+version: 0.5.0
 homepage: https://fiestaaa.app
 repository: https://github.com/theopeuchlestrade/fiestaaa_front
 issue_tracker: https://github.com/theopeuchlestrade/fiestaaa_front/issues
@@ -11,6 +11,8 @@ environment:
 
 dependencies:
   flutter:
+    sdk: flutter
+  flutter_web_plugins:
     sdk: flutter
   flutter_svg: ^2.3.0
   flutter_localizations:
@@ -53,6 +55,7 @@ flutter:
 
   assets:
     - assets/logos/
+    - assets/legal/
 
   fonts:
     - family: Manrope

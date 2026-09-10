@@ -26,7 +26,7 @@
   "logout": "Log out",
   "deleteMyAccount": "Delete my account",
   "deleteAccountTitle": "Delete my account",
-  "deleteAccountWarning": "This action is irreversible. All your data will be permanently deleted.",
+  "deleteAccountWarning": "This action is irreversible. Your account, avatar and events you own will be deleted. Backup copies may remain: see the privacy policy.",
   "cancel": "Cancel",
   "delete": "Delete",
   "accountDeleted": "Account deleted",
@@ -197,7 +197,7 @@
   "newToFiestaaa": "New to Fiestaaa? Register",
   "alreadyRegistered": "Already registered? Log in",
   "termsAcceptance": "By continuing, you accept our terms\nof service and privacy policy",
-  "alphaVersionBanner": "Alpha test version — your feedback is valuable!",
+  "alphaVersionBanner": "Private beta — your feedback is valuable!",
   "reportBugsTo": "Report bugs to {email}",
   "@reportBugsTo": {
     "placeholders": {

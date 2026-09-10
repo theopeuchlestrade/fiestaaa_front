@@ -68,7 +68,12 @@ extension _EventDetailNavigationMethods on _EventDetailPageState {
     final base = Uri.parse(appBaseUrl);
     final params = Map<String, String>.from(base.queryParameters);
     params['shareToken'] = token;
-    return base.replace(queryParameters: params).toString();
+    return base
+        .replace(
+          path: base.host == 'fiestaaa.app' ? '/link' : base.path,
+          queryParameters: params,
+        )
+        .toString();
   }
 
   Future<void> _openMap(double latitude, double longitude) async {

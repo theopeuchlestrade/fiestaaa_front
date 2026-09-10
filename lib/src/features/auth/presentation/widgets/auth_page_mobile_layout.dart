@@ -294,6 +294,7 @@ extension _AuthPageMobileLayout on _AuthPageState {
                         ),
                         const SizedBox(height: 16),
                         _buildSocialButtons(context),
+                        const BetaLinks(recovery: true),
                         const SizedBox(height: 16),
                         // Switch Mode Button
                         TextButton(

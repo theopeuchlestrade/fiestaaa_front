@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_personal_summary.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
@@ -313,6 +314,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 ),
                 const SizedBox(height: 20),
                 _buildFeatureActionsSection(),
+                TextButton.icon(
+                  onPressed: () =>
+                      context.push('/safety?eventId=${_currentEvent.id}'),
+                  icon: const Icon(Icons.flag_outlined),
+                  label: Text(
+                    betaText(
+                      context,
+                      'Signaler cet événement',
+                      'Report this event',
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

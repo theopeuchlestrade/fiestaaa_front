@@ -1,3 +1,5 @@
+import '../../data/apple_sign_in.dart';
+import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -147,7 +149,8 @@ Bug report
     if (kIsWeb) {
       return appleServiceId.isNotEmpty && appleRedirectUri.isNotEmpty;
     }
-    return defaultTargetPlatform == TargetPlatform.iOS ||
+    return (appleUsesAndroidCallback && appleServiceId.isNotEmpty) ||
+        defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS;
   }
 
@@ -411,18 +414,7 @@ Bug report
     });
 
     try {
-      final credential = await SignInWithApple.getAppleIDCredential(
-        scopes: const [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-        webAuthenticationOptions: kIsWeb
-            ? WebAuthenticationOptions(
-                clientId: appleServiceId,
-                redirectUri: Uri.parse(appleRedirectUri),
-              )
-            : null,
-      );
+      final credential = await requestAppleCredential();
       final idToken = credential.identityToken;
       if (idToken == null || idToken.isEmpty) {
         if (!mounted) return;
@@ -436,6 +428,8 @@ Bug report
 
       final session = await _api.loginWithProvider(
         provider: 'apple',
+        authorizationCode: credential.authorizationCode,
+        android: appleUsesAndroidCallback,
         idToken: idToken,
         email: credential.email,
         displayName: fullName.trim().isEmpty ? null : fullName.trim(),

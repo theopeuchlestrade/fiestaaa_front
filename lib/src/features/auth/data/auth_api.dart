@@ -79,6 +79,8 @@ class AuthApi {
     required String provider,
     String? idToken,
     String? accessToken,
+    String? authorizationCode,
+    bool android = false,
     String? email,
     String? displayName,
   }) async {
@@ -100,6 +102,8 @@ class AuthApi {
       body: {
         'idToken': ?normalizedIdToken,
         'accessToken': ?normalizedAccessToken,
+        'authorizationCode': ?authorizationCode,
+        if (android) 'android': true,
         if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
         if (displayName != null && displayName.trim().isNotEmpty)
           'name': displayName.trim(),
