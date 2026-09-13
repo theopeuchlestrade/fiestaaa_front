@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Detect silent realtime connection loss with bounded ping/pong checks and retry stalled connection requests.
+- Keep event loading and failure screens navigable, with localized error and retry controls.
+
 ### Added
 
 - Added bilingual public information, password recovery, account deletion with Apple reauthentication, reporting and blocking.

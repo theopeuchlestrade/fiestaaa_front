@@ -89,6 +89,8 @@ class RealtimeClient {
   StreamSubscription? _subscription;
   Timer? _reconnectTimer;
   Timer? _readyTimer;
+  Timer? _heartbeatTimer;
+  Timer? _pongTimer;
   final _controller = StreamController<Map<String, dynamic>>.broadcast(
     sync: true,
   );
@@ -168,15 +170,17 @@ class RealtimeClient {
   }
 
   Future<String> _fetchTicket(int? targetEventId) async {
-    final response = await _httpClient.get(
-      buildApiUri(
-        '/ws-ticket',
-        queryParameters: {
-          if (targetEventId != null) 'event_id': '$targetEventId',
-        },
-      ),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await _httpClient
+        .get(
+          buildApiUri(
+            '/ws-ticket',
+            queryParameters: {
+              if (targetEventId != null) 'event_id': '$targetEventId',
+            },
+          ),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 10));
     if (response.statusCode != 200) {
       throw StateError('Ticket request failed: ${response.statusCode}');
     }
@@ -199,6 +203,10 @@ class RealtimeClient {
     _channel = null;
     _readyTimer?.cancel();
     _readyTimer = null;
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
+    _pongTimer?.cancel();
+    _pongTimer = null;
     unawaited(subscription?.cancel());
     // Waiting for a peer's close handshake must not block recovery/disposal.
     if (channel != null) {
@@ -228,8 +236,35 @@ class RealtimeClient {
     await _openChannel(generation);
   }
 
+  // TCP can remain open after Wi-Fi disappears. Probe application-level
+  // liveness using the server's existing ping/pong messages.
+  void _scheduleHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = Timer(const Duration(seconds: 5), () {
+      if (_disposed ||
+          connectionState.value != RealtimeConnectionState.connected) {
+        return;
+      }
+      _pongTimer?.cancel();
+      _pongTimer = Timer(const Duration(seconds: 10), _reconnectSoon);
+      try {
+        _channel?.sink.add('ping');
+      } catch (_) {
+        _reconnectSoon();
+      }
+    });
+  }
+
   void _handleData(dynamic data) {
     if (data is! String) return;
+    if (data == 'pong') {
+      if (connectionState.value == RealtimeConnectionState.connected) {
+        _pongTimer?.cancel();
+        _pongTimer = null;
+        _scheduleHeartbeat();
+      }
+      return;
+    }
     Map<String, dynamic> message;
     try {
       final decoded = jsonDecode(data);
@@ -242,6 +277,7 @@ class RealtimeClient {
       _readyTimer?.cancel();
       _reconnectBackoff.reset();
       _setState(RealtimeConnectionState.connected);
+      _scheduleHeartbeat();
     } else if (message['type'] == 'warning' &&
         message['payload'] is Map &&
         message['payload']['message'] == 'realtime_disabled') {

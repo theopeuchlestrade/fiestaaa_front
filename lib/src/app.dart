@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/features/events/presentation/pages/event_route_page.dart';
 import 'features/beta_pages.dart';
 import 'package:intl/intl.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/event_form_session.dart';
@@ -12,9 +13,6 @@ import 'package:fiestaaa_front/src/features/auth/data/session_storage.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/auth/presentation/pages/auth_page.dart';
 import 'package:fiestaaa_front/src/features/home/presentation/pages/home_page.dart';
-import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
-import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
-import 'package:fiestaaa_front/src/features/events/presentation/pages/event_detail_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_trash_page.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/src/core/push_notification_service.dart';
@@ -124,7 +122,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
               parseEventRouteId(state.pathParameters['eventId']) == null
               ? '/events'
               : null,
-          builder: (context, state) => _DirectEventPage(
+          builder: (context, state) => EventRoutePage(
             session: _session!,
             eventId: parseEventRouteId(state.pathParameters['eventId'])!,
           ),
@@ -559,71 +557,6 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     },
     localeService: _localeService,
     themeService: _themeService,
-  );
-}
-
-class _DirectEventPage extends StatefulWidget {
-  const _DirectEventPage({required this.session, required this.eventId});
-
-  final SessionData session;
-  final int eventId;
-
-  @override
-  State<_DirectEventPage> createState() => _DirectEventPageState();
-}
-
-class _DirectEventPageState extends State<_DirectEventPage> {
-  final EventsApi _api = EventsApi();
-  late Future<EventModel> _event;
-
-  @override
-  void initState() {
-    super.initState();
-    _event = _api.fetchEventById(
-      token: widget.session.token,
-      eventId: widget.eventId,
-    );
-  }
-
-  @override
-  void dispose() {
-    _api.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => FutureBuilder<EventModel>(
-    future: _event,
-    builder: (context, snapshot) {
-      if (snapshot.hasError) {
-        return Scaffold(
-          body: Center(
-            child: FilledButton(
-              onPressed: () => setState(() {
-                _event = _api.fetchEventById(
-                  token: widget.session.token,
-                  eventId: widget.eventId,
-                );
-              }),
-              child: const Text('Retry'),
-            ),
-          ),
-        );
-      }
-      if (!snapshot.hasData) {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      }
-      return EventDetailPage(
-        event: snapshot.data!,
-        session: widget.session,
-        onEventRemoved: (_) => context.go('/events'),
-        onInvitationStatusChanged: (_, status) {
-          if (status == 'Declined' || status == 'Expired') {
-            context.go('/events');
-          }
-        },
-      );
-    },
   );
 }
 
