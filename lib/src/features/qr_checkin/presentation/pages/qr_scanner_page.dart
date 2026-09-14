@@ -186,6 +186,23 @@ class _QRScannerPageState extends State<QRScannerPage> {
           MobileScanner(
             controller: _scannerController,
             onDetect: _handleBarcode,
+            errorBuilder: (context, error) => Center(
+              child: SizedBox(
+                width: 260,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    error.errorCode == MobileScannerErrorCode.permissionDenied
+                        ? S.of(context).cameraPermissionDeniedHelp
+                        : S.of(context).cameraUnavailableHelp,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
           ),
           Positioned.fill(
             child: IgnorePointer(
