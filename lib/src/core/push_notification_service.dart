@@ -388,6 +388,10 @@ class PushNotificationService {
       return;
     }
 
+    // iOS already presents the remote notification through Firebase's
+    // foreground presentation options. A local copy would display it twice.
+    if (defaultTargetPlatform == TargetPlatform.iOS) return;
+
     const androidDetails = AndroidNotificationDetails(
       _androidChannelId,
       _androidChannelName,
