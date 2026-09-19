@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Open the event targeted by a notification and retain its destination during sign-in.
+
 - Avoid displaying foreground push notifications twice on iOS.
 
 - Localize QR camera errors and explain how to restore camera access after permission denial.

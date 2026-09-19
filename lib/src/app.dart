@@ -49,6 +49,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   String? _pendingRegistrationCompletionToken;
   String? _authFlashCode;
   bool _authFlashIsError = false;
+  String? _pendingNotificationRoute;
   PushNotificationIntent? _pendingNotificationIntent;
   int _notificationIntentSerial = 0;
   StreamSubscription<PushNotificationIntent>? _notificationIntentSub;
@@ -209,6 +210,11 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
         if (_loadingSession) return state.matchedLocation == '/' ? null : '/';
         final authenticated = _session != null;
         if (!authenticated && state.matchedLocation != '/auth') return '/auth';
+        if (authenticated && _pendingNotificationRoute != null) {
+          final destination = _pendingNotificationRoute!;
+          _pendingNotificationRoute = null;
+          if (state.matchedLocation != destination) return destination;
+        }
         if (authenticated && state.matchedLocation == '/auth') return '/events';
         if (authenticated && state.matchedLocation == '/') return '/events';
         return null;
@@ -412,11 +418,15 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       _authFlashIsError = false;
     });
     _router.refresh();
-    _router.go('/events');
+    final destination = _pendingNotificationRoute ?? '/events';
+    _pendingNotificationRoute = null;
+    _router.go(destination);
   }
 
   void _handlePushNotificationIntent(PushNotificationIntent intent) {
-    if (!intent.opensFriendRequests) return;
+    final destination = intent.route;
+    if (destination == null) return;
+    _pendingNotificationRoute = destination;
     if (!mounted) {
       _pendingNotificationIntent = intent;
       _notificationIntentSerial++;
@@ -426,7 +436,10 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       _pendingNotificationIntent = intent;
       _notificationIntentSerial++;
     });
-    if (_session != null) _router.go('/friends');
+    if (_session != null && !_loadingSession) {
+      _pendingNotificationRoute = null;
+      _router.go(destination);
+    }
   }
 
   Future<void> _handleLogout() async {

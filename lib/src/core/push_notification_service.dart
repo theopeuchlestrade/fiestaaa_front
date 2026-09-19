@@ -29,6 +29,12 @@ class PushNotificationIntent {
   bool get opensFriendRequests =>
       type == 'friend_request' || type == 'friend_response';
 
+  String? get route => opensFriendRequests
+      ? '/friends'
+      : eventId != null && eventId! > 0
+      ? '/events/$eventId'
+      : null;
+
   static PushNotificationIntent? fromMessage(RemoteMessage message) {
     final type = message.data['type']?.trim();
     if (type == null || type.isEmpty) return null;
