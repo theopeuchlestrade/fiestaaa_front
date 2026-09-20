@@ -215,3 +215,14 @@ We welcome contributions! Please see:
 ### Companion Repository
 
 - 🔗 [Fiestaaa Backend](https://github.com/theopeuchlestrade/fiestaaa_back) — Rust API and server
+
+### iOS-only web domain associations
+
+Web images normally require both `IOS_TEAM_ID` and the actual Play app-signing
+certificate in `ANDROID_APP_SIGNING_SHA256`. To prepare iOS Universal Links while
+Play setup is pending, explicitly build with
+`FIESTAAA_REQUIRE_APP_ASSOCIATIONS=true` and
+`FIESTAAA_APP_ASSOCIATION_PLATFORMS=ios`, supplying the Apple team ID.
+This includes the AASA and omits (or removes a stale) Android `assetlinks.json`.
+It does not validate Android App Links. The default `all` mode continues to require
+both platforms' identifiers. These public identifiers are not signing private keys.
