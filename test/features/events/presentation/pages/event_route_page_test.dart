@@ -12,6 +12,57 @@ import 'package:fiestaaa_front/src/features/events/presentation/pages/event_rout
 final session = SessionData(token: 'test', email: 'guest@example.invalid');
 
 void main() {
+  testWidgets(
+    'switching event routes loads the destination and ignores stale responses',
+    (tester) async {
+      final requests = <String>[];
+      final first = Completer<http.Response>();
+      final second = Completer<http.Response>();
+      final api = EventsApi(
+        client: MockClient((request) {
+          requests.add(request.url.path);
+          return request.url.path.endsWith('/1') ? first.future : second.future;
+        }),
+      );
+      final router = GoRouter(
+        initialLocation: '/events/1',
+        routes: [
+          GoRoute(
+            path: '/events/:eventId',
+            builder: (_, state) => EventRoutePage(
+              session: session,
+              eventId: int.parse(state.pathParameters['eventId']!),
+              api: api,
+            ),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        MaterialApp.router(
+          routerConfig: router,
+          locale: const Locale('fr'),
+          localizationsDelegates: S.localizationsDelegates,
+          supportedLocales: S.supportedLocales,
+        ),
+      );
+      await tester.pump();
+      router.go('/events/2');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(requests, ['/events/1', '/events/2']);
+      first.complete(http.Response('{}', 503));
+      await tester.pump();
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('Réessayer'), findsNothing);
+      second.complete(http.Response('{}', 503));
+      await tester.pumpAndSettle();
+      expect(find.text('Réessayer'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      router.dispose();
+      api.dispose();
+    },
+  );
+
   testWidgets('failed direct entry offers localized retry and a way home', (
     tester,
   ) async {

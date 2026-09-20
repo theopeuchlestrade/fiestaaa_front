@@ -35,6 +35,15 @@ class _EventRoutePageState extends State<EventRoutePage> {
     _load();
   }
 
+  @override
+  void didUpdateWidget(covariant EventRoutePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.eventId != widget.eventId ||
+        oldWidget.session.token != widget.session.token) {
+      _load();
+    }
+  }
+
   Future<void> _load() async {
     final generation = ++_loadGeneration;
     setState(() {
