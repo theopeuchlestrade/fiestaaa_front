@@ -11,6 +11,7 @@ String localizedApiError(S l10n, Object error, {required String fallback}) {
   }
 
   return switch (error.code) {
+    'token_used' => l10n.invitationLinkAlreadyUsed,
     'handle_taken' => l10n.identifierTaken,
     'invalid_handle' => l10n.pleaseEnterIdentifier,
     _ => fallback,

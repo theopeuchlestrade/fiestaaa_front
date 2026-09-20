@@ -29,6 +29,12 @@ class PushNotificationIntent {
   bool get opensFriendRequests =>
       type == 'friend_request' || type == 'friend_response';
 
+  String? get route => opensFriendRequests
+      ? '/friends'
+      : eventId != null && eventId! > 0
+      ? '/events/$eventId'
+      : null;
+
   static PushNotificationIntent? fromMessage(RemoteMessage message) {
     final type = message.data['type']?.trim();
     if (type == null || type.isEmpty) return null;
@@ -387,6 +393,10 @@ class PushNotificationService {
       );
       return;
     }
+
+    // iOS already presents the remote notification through Firebase's
+    // foreground presentation options. A local copy would display it twice.
+    if (defaultTargetPlatform == TargetPlatform.iOS) return;
 
     const androidDetails = AndroidNotificationDetails(
       _androidChannelId,

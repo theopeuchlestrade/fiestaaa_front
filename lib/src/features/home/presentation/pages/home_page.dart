@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/async_content.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
@@ -248,7 +249,14 @@ class _HomePageState extends State<HomePage> {
     } on ApiException catch (e) {
       _shareHandled = true;
       widget.onShareTokenConsumed?.call();
-      _showSnack(e.message);
+      if (!mounted) return;
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).shareLinkInvalid,
+        ),
+      );
     } on ApiTransportException {
       if (!mounted) return;
       _shareHandled = false;

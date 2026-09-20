@@ -5,6 +5,22 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('event notifications route to their event and reject invalid IDs', () {
+    expect(
+      const PushNotificationIntent(type: 'invite_received', eventId: 12).route,
+      '/events/12',
+    );
+    expect(
+      const PushNotificationIntent(type: 'invite_received', eventId: -1).route,
+      isNull,
+    );
+    expect(const PushNotificationIntent(type: 'invite_received').route, isNull);
+    expect(
+      const PushNotificationIntent(type: 'friend_request', eventId: 12).route,
+      '/friends',
+    );
+  });
+
   test(
     'init blocks push notifications when Firebase Messaging is unsupported',
     () async {
