@@ -1043,5 +1043,6 @@
     }
   },
   "cameraPermissionDeniedHelp": "Accès à la caméra refusé. Autorisez la caméra pour Fiestaaa dans les réglages de votre appareil, puis rouvrez le lecteur QR.",
-  "cameraUnavailableHelp": "La caméra est indisponible. Revenez à l’événement, puis rouvrez le lecteur QR."
+  "cameraUnavailableHelp": "La caméra est indisponible. Revenez à l’événement, puis rouvrez le lecteur QR.",
+  "invitationLinkAlreadyUsed": "Ce lien d’invitation a déjà été utilisé."
 }

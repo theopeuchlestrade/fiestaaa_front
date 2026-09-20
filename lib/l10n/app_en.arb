@@ -1027,5 +1027,6 @@
     }
   },
   "cameraPermissionDeniedHelp": "Camera access denied. Allow camera access for Fiestaaa in your device settings, then reopen the QR scanner.",
-  "cameraUnavailableHelp": "The camera is unavailable. Return to the event, then reopen the QR scanner."
+  "cameraUnavailableHelp": "The camera is unavailable. Return to the event, then reopen the QR scanner.",
+  "invitationLinkAlreadyUsed": "This invitation link has already been used."
 }

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Show a localized explanation when an invitation link has already been used, instead of the raw API error.
+
 - Open the event targeted by a notification and retain its destination during sign-in.
 
 - Avoid displaying foreground push notifications twice on iOS.
