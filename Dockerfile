@@ -118,7 +118,7 @@ sed -i "s#flutter_bootstrap.js#${bootstrap_js}#g" build/web/index.html
 BASH
 
 # Pinned Nginx runtime image for deterministic production serving (1.31.1-alpine)
-FROM nginx:1.31.4-alpine@sha256:db35bfc6b2951e7f8a72db5db120288c127ffaeeb4a6d4b95a26fead017d5913 AS runtime
+FROM nginx:1.31.6-alpine@sha256:adad2ae9204d0fd7a34f40299bc838c3782be1293b10005eac4315ff5a1abf4e AS runtime
 LABEL org.opencontainers.image.source="https://github.com/theopeuchlestrade/fiestaaa_front"
 COPY --from=build /app/build/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/build/web /usr/share/nginx/html
