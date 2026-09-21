@@ -20,6 +20,7 @@ ARG FIREBASE_WEB_APP_ID
 ARG IOS_TEAM_ID=""
 ARG ANDROID_APP_SIGNING_SHA256=""
 ARG FIESTAAA_REQUIRE_APP_ASSOCIATIONS="false"
+ARG FIESTAAA_APP_ASSOCIATION_PLATFORMS="all"
 # Optional
 ARG FIREBASE_WEB_MEASUREMENT_ID=""
 ARG FIESTAAA_SENTRY_DSN=""
@@ -35,7 +36,7 @@ RUN flutter pub get --enforce-lockfile
 COPY . .
 
 RUN if [ "$FIESTAAA_REQUIRE_APP_ASSOCIATIONS" = "true" ] || [ -n "$IOS_TEAM_ID$ANDROID_APP_SIGNING_SHA256" ]; then \
-      IOS_TEAM_ID="$IOS_TEAM_ID" ANDROID_APP_SIGNING_SHA256="$ANDROID_APP_SIGNING_SHA256" dart run tool/generate_app_associations.dart; \
+      IOS_TEAM_ID="$IOS_TEAM_ID" ANDROID_APP_SIGNING_SHA256="$ANDROID_APP_SIGNING_SHA256" FIESTAAA_APP_ASSOCIATION_PLATFORMS="$FIESTAAA_APP_ASSOCIATION_PLATFORMS" dart run tool/generate_app_associations.dart; \
     fi
 
 # Keep the web server policy aligned with the public origins compiled into the
