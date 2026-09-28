@@ -10,12 +10,14 @@ class QRScannerPage extends StatefulWidget {
   final int eventId;
   final String eventName;
   final String token;
+  final QRCheckinApi? api;
 
   const QRScannerPage({
     super.key,
     required this.eventId,
     required this.eventName,
     required this.token,
+    this.api,
   });
 
   @override
@@ -23,7 +25,7 @@ class QRScannerPage extends StatefulWidget {
 }
 
 class _QRScannerPageState extends State<QRScannerPage> {
-  final QRCheckinApi _api = QRCheckinApi();
+  late final QRCheckinApi _api = widget.api ?? QRCheckinApi();
   final MobileScannerController _scannerController = MobileScannerController(
     autoStart: false,
   );
@@ -162,7 +164,9 @@ class _QRScannerPageState extends State<QRScannerPage> {
                       ? Colors.amber.shade300
                       : theme.colorScheme.onSurface,
                 ),
-                onPressed: () => _scannerController.toggleTorch(),
+                onPressed: state.isRunning
+                    ? () => _scannerController.toggleTorch()
+                    : null,
               );
             },
           ),
@@ -175,7 +179,9 @@ class _QRScannerPageState extends State<QRScannerPage> {
                   isFront ? Icons.camera_front : Icons.camera_rear,
                   color: theme.colorScheme.onSurface,
                 ),
-                onPressed: () => _scannerController.switchCamera(),
+                onPressed: state.isRunning
+                    ? () => _scannerController.switchCamera()
+                    : null,
               );
             },
           ),
@@ -186,23 +192,8 @@ class _QRScannerPageState extends State<QRScannerPage> {
           MobileScanner(
             controller: _scannerController,
             onDetect: _handleBarcode,
-            errorBuilder: (context, error) => Center(
-              child: SizedBox(
-                width: 260,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    error.errorCode == MobileScannerErrorCode.permissionDenied
-                        ? S.of(context).cameraPermissionDeniedHelp
-                        : S.of(context).cameraUnavailableHelp,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyLarge?.copyWith(color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
+            // Display errors above all preview decorations below.
+            errorBuilder: (context, error) => const SizedBox.shrink(),
           ),
           Positioned.fill(
             child: IgnorePointer(
@@ -279,6 +270,35 @@ class _QRScannerPageState extends State<QRScannerPage> {
                 color: theme.colorScheme.primary,
               ),
             ),
+          Positioned.fill(
+            child: ValueListenableBuilder(
+              valueListenable: _scannerController,
+              builder: (context, state, _) {
+                final error = state.error;
+                if (error == null) return const SizedBox.shrink();
+                return ColoredBox(
+                  color: theme.colorScheme.surface,
+                  child: SafeArea(
+                    child: Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(32),
+                        child: Text(
+                          error.errorCode ==
+                                  MobileScannerErrorCode.permissionDenied
+                              ? S.of(context).cameraPermissionDeniedHelp
+                              : S.of(context).cameraUnavailableHelp,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
