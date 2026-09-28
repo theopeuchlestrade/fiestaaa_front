@@ -40,6 +40,7 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
   String? _addressSearchError;
 
   DateTime? _departAt;
+  bool _departureExpired = false;
   int _seatsTotal = 4;
 
   @override
@@ -199,6 +200,13 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
       selectedTime.minute,
     );
 
+    if (!result.isAfter(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.of(context).carpoolDepartureMustBeFuture)),
+      );
+      return;
+    }
+
     // Final check: Is the full DateTime after the event?
     if (result.isAfter(widget.eventDate)) {
       if (!mounted) return;
@@ -213,12 +221,18 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
 
     setState(() {
       _departAt = result;
+      _departureExpired = false;
     });
   }
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
       if (_departAt == null) return;
+      // Revalidate on submission: a selected minute can expire while editing.
+      if (!_departAt!.isAfter(DateTime.now())) {
+        setState(() => _departureExpired = true);
+        return;
+      }
 
       final payload = widget.existingCarpool != null
           ? CarpoolPatchPayload(
@@ -359,6 +373,8 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
                 prefixIcon: const Icon(Icons.access_time),
                 errorText: _departAt == null
                     ? l10n.carpoolDateTimeRequired
+                    : _departureExpired
+                    ? l10n.carpoolDepartureMustBeFuture
                     : null,
               ),
               child: Text(

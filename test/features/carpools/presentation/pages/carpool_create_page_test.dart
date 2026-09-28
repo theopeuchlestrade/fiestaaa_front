@@ -3,6 +3,7 @@ import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/carpools/presentation/pages/carpool_create_page.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:fiestaaa_front/src/features/carpools/domain/carpool_model.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -22,6 +23,43 @@ Widget _buildApp(Widget child) {
 }
 
 void main() {
+  testWidgets('keeps form open when departure expires before saving', (
+    tester,
+  ) async {
+    final now = DateTime.now();
+    await tester.pumpWidget(
+      _buildApp(
+        CarpoolCreatePage(
+          eventId: 1,
+          eventDate: now.add(const Duration(days: 1)),
+          session: SessionData(token: 'token', email: 'driver@example.com'),
+          existingCarpool: CarpoolModel(
+            carpoolId: 1,
+            eventId: 1,
+            driverId: 1,
+            origin: 'Paris',
+            departAt: now.subtract(const Duration(minutes: 1)),
+            seatsTotal: 2,
+            seatsTaken: 0,
+            createdAt: now,
+            updatedAt: now,
+            passengers: const [],
+          ),
+        ),
+      ),
+    );
+    final save = find.byType(ElevatedButton);
+    await tester.ensureVisible(save);
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+    expect(find.byType(CarpoolCreatePage), findsOneWidget);
+    expect(
+      find.text('Choisissez une heure de départ dans le futur.'),
+      findsOneWidget,
+    );
+    expect(find.text('Paris'), findsOneWidget);
+  });
+
   testWidgets('uses the shared modal header with a close icon', (tester) async {
     await tester.pumpWidget(
       _buildApp(
