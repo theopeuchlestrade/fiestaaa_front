@@ -60,6 +60,48 @@ void main() {
     expect(find.text('Paris'), findsOneWidget);
   });
 
+  for (final hour in [9, 11]) {
+    testWidgets('keeps selected departure visible at hour $hour', (
+      tester,
+    ) async {
+      final tomorrow = DateTime.now().add(const Duration(days: 1));
+      final event = DateTime(
+        tomorrow.year,
+        tomorrow.month,
+        tomorrow.day,
+        10,
+        3,
+      );
+      await tester.pumpWidget(
+        _buildApp(
+          CarpoolCreatePage(
+            eventId: 1,
+            eventDate: event,
+            session: SessionData(token: 'token', email: 'driver@example.com'),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Sélectionner une date et heure'));
+      await tester.pumpAndSettle();
+      Navigator.of(tester.element(find.byType(DatePickerDialog))).pop(event);
+      await tester.pumpAndSettle();
+      Navigator.of(
+        tester.element(find.byType(TimePickerDialog)),
+      ).pop(TimeOfDay(hour: hour, minute: 0));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('${hour.toString().padLeft(2, '0')}:00'),
+        findsOneWidget,
+      );
+      final l10n = S.of(tester.element(find.byType(CarpoolCreatePage)));
+      expect(
+        find.text(l10n.carpoolCannotBeAfterEvent),
+        hour > 10 ? findsOneWidget : findsNothing,
+      );
+      expect(find.text(l10n.carpoolDateTimeRequired), findsNothing);
+    });
+  }
+
   testWidgets('uses the shared modal header with a close icon', (tester) async {
     await tester.pumpWidget(
       _buildApp(

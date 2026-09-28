@@ -40,7 +40,7 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
   String? _addressSearchError;
 
   DateTime? _departAt;
-  bool _departureExpired = false;
+  String? _departureError;
   int _seatsTotal = 4;
 
   @override
@@ -200,39 +200,30 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
       selectedTime.minute,
     );
 
-    if (!result.isAfter(DateTime.now())) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).carpoolDepartureMustBeFuture)),
-      );
-      return;
-    }
-
-    // Final check: Is the full DateTime after the event?
-    if (result.isAfter(widget.eventDate)) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(S.of(context).carpoolCannotBeAfterEvent),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-      return;
-    }
-
     setState(() {
       _departAt = result;
-      _departureExpired = false;
+      _departureError = _validateDeparture(result);
     });
+  }
+
+  String? _validateDeparture(DateTime departure) {
+    final l10n = S.of(context);
+    if (!departure.isAfter(DateTime.now())) {
+      return l10n.carpoolDepartureMustBeFuture;
+    }
+    if (departure.isAfter(widget.eventDate)) {
+      return l10n.carpoolCannotBeAfterEvent;
+    }
+    return null;
   }
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
       if (_departAt == null) return;
       // Revalidate on submission: a selected minute can expire while editing.
-      if (!_departAt!.isAfter(DateTime.now())) {
-        setState(() => _departureExpired = true);
-        return;
-      }
+      final departureError = _validateDeparture(_departAt!);
+      setState(() => _departureError = departureError);
+      if (departureError != null) return;
 
       final payload = widget.existingCarpool != null
           ? CarpoolPatchPayload(
@@ -373,9 +364,7 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
                 prefixIcon: const Icon(Icons.access_time),
                 errorText: _departAt == null
                     ? l10n.carpoolDateTimeRequired
-                    : _departureExpired
-                    ? l10n.carpoolDepartureMustBeFuture
-                    : null,
+                    : _departureError,
               ),
               child: Text(
                 _departAt != null
