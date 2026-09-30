@@ -182,6 +182,48 @@ void main() {
     expect(count, 1);
     expect(find.textContaining('Invitations could not'), findsOneWidget);
   });
+  testWidgets(
+    'preserves typed spaces when normalized criteria echo from parent',
+    (tester) async {
+      final api = _EventsApi();
+      var query = '';
+      await tester.pumpWidget(
+        _app(
+          StatefulBuilder(
+            builder: (context, setParentState) {
+              return EventsListPage(
+                query: query,
+                session: SessionData(token: 'token', email: 'me@example.com'),
+                eventsApi: api,
+                invitationsApi: _InvitationsApi(),
+                onEventSelected: (_) async {},
+                onCriteriaChanged: (value, _) =>
+                    setParentState(() => query = value),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final field = find.byType(TextField);
+      await tester.enterText(field, 'Test ');
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+      final controller = tester.widget<TextField>(field).controller!;
+      expect(controller.text, 'Test ');
+      expect(controller.selection.baseOffset, 5);
+      expect(api.queries.last, 'Test');
+      await tester.enterText(field, 'Test iPhone ');
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+      expect(controller.text, 'Test iPhone ');
+      expect(api.queries.last, 'Test iPhone');
+      await tester.tap(find.byIcon(Icons.clear));
+      await tester.pumpAndSettle();
+      expect(controller.text, '');
+    },
+  );
+
   testWidgets('debounces searches and ignores obsolete responses', (
     tester,
   ) async {
