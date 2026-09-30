@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Return to the events list from directly opened events and wait for invitation acceptance before connecting to participant realtime updates.
+
 - Allow explicit iOS-only web associations while retaining Play certificate requirements for both-platform builds.
 
 - Reload direct event screens when a notification changes the destination event.
