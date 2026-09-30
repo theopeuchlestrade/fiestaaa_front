@@ -9,9 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Preserve navigation targets when tapping Android foreground notifications or reopening the app from a local notification.
-
-- Open the Requests tab when tapping a friendship notification, including when the Friends page is already cached.
+- Preserve spaces and cursor position while typing multi-word event searches.
 
 - Allow explicit iOS-only web associations while retaining Play certificate requirements for both-platform builds.
 
@@ -20,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show a localized explanation when an invitation link has already been used, instead of the raw API error.
 
 - Open the event targeted by a notification and retain its destination during sign-in.
+
+- Open the Requests tab when tapping a friendship notification, including when the Friends page is already cached.
+
+- Preserve navigation targets when tapping Android foreground notifications or reopening the app from a local notification.
 
 - Avoid displaying foreground push notifications twice on iOS.
 
