@@ -45,7 +45,7 @@ class EventsListPageState extends State<EventsListPage> {
   final _refreshQueue = RefreshQueue();
   final _scroll = ScrollController();
   late final _search = TextEditingController(text: widget.query);
-  late String _query = widget.query;
+  late String _query = widget.query.trim();
   late String _view = widget.view;
   Timer? _debounce;
   int _scopeGeneration = 0;
@@ -87,13 +87,15 @@ class EventsListPageState extends State<EventsListPage> {
 
   void _setCriteria(String query, String view, {bool notify = true}) {
     _debounce?.cancel();
-    query = query.trim();
-    if (_search.text != query) {
+    // Preserve raw input when the parent echoes normalized search criteria.
+    if (_search.text != query &&
+        (notify || _search.text.trim() != query.trim())) {
       _search.value = TextEditingValue(
         text: query,
         selection: TextSelection.collapsed(offset: query.length),
       );
     }
+    query = query.trim();
     if (query == _query && view == _view) return;
     setState(() {
       _query = query;

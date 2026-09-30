@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Reject expired carpool departure times before submission with a clear localized message, preserving the form.
+- Preserve spaces and cursor position while typing multi-word event searches.
 
 - Allow explicit iOS-only web associations while retaining Play certificate requirements for both-platform builds.
 
@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Avoid displaying foreground push notifications twice on iOS.
 
 - Localize QR camera errors and explain how to restore camera access after permission denial.
+
+- Reject expired carpool departure times before submission with a clear localized message, preserving the form.
 
 - Detect silent realtime connection loss with bounded ping/pong checks and retry stalled connection requests.
 - Keep event loading and failure screens navigable, with localized error and retry controls.
