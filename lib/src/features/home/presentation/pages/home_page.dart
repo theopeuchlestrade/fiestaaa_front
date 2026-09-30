@@ -298,6 +298,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _selectedIndex = 2;
       _friendsRequestsOpenSerial++;
+      _pages[2] = _buildPage(2);
     });
     _loadPendingBadges();
   }

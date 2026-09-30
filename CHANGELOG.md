@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Open the Requests tab when tapping a friendship notification, including when the Friends page is already cached.
+
 - Allow explicit iOS-only web associations while retaining Play certificate requirements for both-platform builds.
 
 - Reload direct event screens when a notification changes the destination event.
