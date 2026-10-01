@@ -117,8 +117,11 @@ cp build/web/flutter_bootstrap.js "build/web/${bootstrap_js}"
 sed -i "s#flutter_bootstrap.js#${bootstrap_js}#g" build/web/index.html
 BASH
 
-# Pinned Nginx runtime image for deterministic production serving (1.31.1-alpine)
-FROM nginx:1.31.4-alpine@sha256:db35bfc6b2951e7f8a72db5db120288c127ffaeeb4a6d4b95a26fead017d5913 AS runtime
+# Pinned Nginx runtime image for production serving (1.31.6-alpine)
+FROM nginx:1.31.6-alpine@sha256:adad2ae9204d0fd7a34f40299bc838c3782be1293b10005eac4315ff5a1abf4e AS runtime
+# The base still includes two fixable HIGH vulnerabilities. Pin corrected
+# Alpine package versions; do not broaden the image scan's exception policy.
+RUN apk add --no-cache libexpat=2.8.5-r0 pcre2=10.49-r0
 LABEL org.opencontainers.image.source="https://github.com/theopeuchlestrade/fiestaaa_front"
 COPY --from=build /app/build/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/build/web /usr/share/nginx/html
