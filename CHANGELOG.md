@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Open the event targeted by a notification and retain its destination during sign-in.
 
+- Open the Requests tab when tapping a friendship notification, including when the Friends page is already cached.
+
+- Preserve navigation targets when tapping Android foreground notifications or reopening the app from a local notification.
+
 - Avoid displaying foreground push notifications twice on iOS.
 
 - Show readable camera permission errors above QR scanner decorations and disable unavailable camera controls.

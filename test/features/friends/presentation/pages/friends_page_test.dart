@@ -7,9 +7,12 @@ import 'package:fiestaaa_front/src/features/friends/domain/friend_model.dart';
 import 'package:fiestaaa_front/src/features/friends/presentation/pages/friends_page.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
+import 'package:fiestaaa_front/src/core/push_notification_service.dart';
+import 'package:fiestaaa_front/src/features/home/presentation/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class _FriendsApi extends FriendsApi {
   @override
@@ -75,11 +78,58 @@ Widget _app(Widget child) => MaterialApp(
 );
 
 void main() {
+  setUp(() {
+    PackageInfo.setMockInitialValues(
+      appName: 'Fiestaaa',
+      packageName: 'com.fiestaaa.fiestaaa',
+      version: '0.5.0',
+      buildNumber: '5016',
+      buildSignature: '',
+    );
+  });
   final session = SessionData(
     token: 'token',
     email: 'me@example.com',
     handle: 'me',
   );
+
+  testWidgets('notification updates the cached friends page request serial', (
+    tester,
+  ) async {
+    Widget home(int serial) => _app(
+      HomePage(
+        session: session,
+        onLogout: () async {},
+        initialIndex: 2,
+        notificationIntent: const PushNotificationIntent(
+          type: 'friend_request',
+        ),
+        notificationIntentSerial: serial,
+      ),
+    );
+    await tester.pumpWidget(home(0));
+    await tester.pump();
+    expect(
+      tester.widget<FriendsPage>(find.byType(FriendsPage)).requestsOpenSerial,
+      0,
+    );
+    await tester.pumpWidget(home(1));
+    await tester.pump();
+    expect(
+      tester.widget<FriendsPage>(find.byType(FriendsPage)).requestsOpenSerial,
+      1,
+    );
+    await tester.pump();
+    expect(tester.widget<TabBar>(find.byType(TabBar)).controller!.index, 1);
+    await tester.pumpWidget(home(2));
+    await tester.pump();
+    expect(
+      tester.widget<FriendsPage>(find.byType(FriendsPage)).requestsOpenSerial,
+      2,
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
 
   testWidgets('renders directory, requests and add tabs', (tester) async {
     await tester.pumpWidget(
