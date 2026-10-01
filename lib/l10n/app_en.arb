@@ -778,6 +778,7 @@
   "carpoolDepartureLocationRequired": "Please enter a departure location",
   "carpoolDepartureDateTime": "Departure date & time",
   "carpoolSelectDateTime": "Select date & time",
+  "carpoolDepartureMustBeFuture": "Choose a departure time in the future.",
   "carpoolDateTimeRequired": "Please select a departure date & time",
   "carpoolAvailableSeatsCount": "Number of available seats: {count}",
   "@carpoolAvailableSeatsCount": {
