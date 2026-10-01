@@ -16,6 +16,8 @@ extension _EventDetailDataMethods on _EventDetailPageState {
   void _startRealtime() {
     _realtimeSub?.cancel();
     _realtime?.dispose();
+    _realtime = null;
+    if (!_isOwner && !_hasAcceptedInvitation) return;
     _realtime =
         widget.realtimeClientFactory?.call(
           widget.session.token,
@@ -173,10 +175,15 @@ extension _EventDetailDataMethods on _EventDetailPageState {
           break;
         }
       }
+      final wasAccepted = _hasAcceptedInvitation;
       _updateState(() {
         _myInvitation = match;
         _invitationKnown = true;
       });
+      if (wasAccepted != _hasAcceptedInvitation ||
+          (_hasAcceptedInvitation && _realtime == null)) {
+        _updateState(_startRealtime);
+      }
     } catch (_) {
       if (!mounted ||
           requestScope !=

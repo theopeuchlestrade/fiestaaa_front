@@ -30,7 +30,15 @@ extension _EventDetailHeaderMethods on _EventDetailPageState {
       children: [
         Row(
           children: [
-            const BackButton(),
+            BackButton(
+              onPressed: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  context.go('/events');
+                }
+              },
+            ),
             Expanded(
               child: Align(
                 alignment: Alignment.centerRight,
