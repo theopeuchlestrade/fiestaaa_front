@@ -2,34 +2,52 @@
   "privacy": {
     "fr": [
       "Confidentialité",
-      "Fiestaaa est éditée par Théo Peuchlestrade. Contact : feedback@fiestaaa.app. Cette bêta est destinée aux adultes invités en France.",
-      "Nous traitons votre email, identifiant, profil et contributions pour fournir votre compte et organiser vos événements privés. Les organisateurs et participants voient les informations nécessaires aux fonctions partagées ; ne publiez pas de données sensibles dans les descriptions. Les mots de passe sont hachés, les adresses email et plusieurs données personnelles sont chiffrées au repos.",
+      "Fiestaaa est un projet personnel sans activité commerciale, édité par Théo Peuchlestrade, responsable du traitement. Contact : feedback@fiestaaa.app. Cette bêta est destinée aux adultes invités en France. Hébergeur : OVH SAS, 2 rue Kellermann, 59100 Roubaix, France.",
+      "Nous traitons votre email, identifiant, profil, avatar, invitations et contributions pour fournir votre compte et organiser vos événements privés : lieux, listes, sondages, dépenses et covoiturages. Les organisateurs et participants voient les informations nécessaires aux fonctions partagées. Les mots de passe sont hachés ; les emails et plusieurs données personnelles sont chiffrés au repos. Ne publiez pas de données sensibles dans les descriptions.",
       "Le service utilise OVH pour son hébergement, Resend pour les emails, Google Firebase pour les notifications et Apple/Google si vous choisissez leur connexion. Sentry peut recevoir les diagnostics techniques lorsque la collecte est activée. Les fournisseurs de connexion traitent aussi les données selon leurs propres politiques. Les permissions caméra, photos et notifications restent facultatives ; leur refus limite uniquement les fonctions concernées.",
       "Le compte et les contributions sont traités pour exécuter le service demandé. La sécurité et le traitement des abus reposent sur notre intérêt légitime. Vous pouvez demander accès, rectification, portabilité, effacement, limitation ou opposition en écrivant à feedback@fiestaaa.app. Vous pouvez déposer une réclamation auprès de la CNIL.",
       "Les comptes sont conservés jusqu’à suppression. Les événements terminés sont normalement placés en corbeille après 7 jours et purgés après 30 jours supplémentaires. Les liens de récupération expirent après 30 minutes. Les sauvegardes peuvent conserver des copies après suppression : elles ne servent qu’à la restauration et les suppressions doivent être réappliquées avant toute remise en service.",
-      "La suppression se demande dans Profil ou depuis /delete-account. Elle supprime également les événements dont vous êtes propriétaire. La révocation Apple peut être réessayée après la suppression locale si Apple est indisponible."
+      "La suppression se demande dans Profil ou depuis /delete-account. Elle supprime également les événements dont vous êtes propriétaire. La révocation Apple peut être réessayée après la suppression locale si Apple est indisponible.",
+      "L’application et les données actives sont hébergées sur le VPS OVH à Gravelines, en France. Les sauvegardes externes sont chiffrées et stockées à Paris. Les autres fournisseurs ne sont pas tous limités à la France ou à l’Union européenne.",
+      "Resend assure les emails transactionnels. L’envoi est configuré en Irlande, mais Resend indique stocker le contenu et les journaux aux États-Unis, pendant 30 jours dans notre offre, avec des sauvegardes de sept jours. Resend prévoit des clauses contractuelles types pour les transferts. Informations : https://resend.com/security/gdpr.",
+      "Firebase reçoit notamment les identifiants d’installation et jetons nécessaires aux notifications. Nous n’avons pas établi de localisation exclusivement européenne pour ce service. Retirer un jeton de Fiestaaa ne prouve pas l’effacement de l’installation chez Google. La connexion Apple ou Google relève aussi des règles du fournisseur choisi. Informations : https://firebase.google.com/support/privacy.",
+      "Notre organisation Sentry utilise sa région européenne pour les diagnostics. L’offre Developer prévoit 30 jours pour les événements ; ce délai ne couvre pas l’historique d’audit de l’organisation. Les journaux Loki sont configurés pour 14 jours, les métriques Prometheus pour 15 jours ; les journaux locaux des conteneurs sont limités en taille plutôt que par une durée fixe.",
+      "Lorsque vous lancez une recherche d’adresse, les termes sont transmis par notre serveur au service Nominatim d’OpenStreetMap. N’y saisissez ni nom personnel ni information confidentielle. La fondation indique traiter des données de requête au Royaume-Uni et aux Pays-Bas. Ouvrir un itinéraire transmet également le lieu au fournisseur de cartes que vous choisissez. Informations : https://osmfoundation.org/wiki/Privacy_Policy.",
+      "Les signalements et dossiers ordinaires de support, d’exercice de droits et de modération sont réservés à l’éditeur et supprimés 90 jours après clôture. Si un litige ou une obligation justifie une conservation supplémentaire, les éléments strictement nécessaires sont isolés et leur conservation réexaminée. Supprimer un compte ne supprime pas immédiatement les commentaires d’un signalement : ses références au compte sont retirées.",
+      "Les sauvegardes externes gardent la dernière copie vérifiée de chacune des sept dates UTC les plus récentes ayant une sauvegarde réussie. Les pannes peuvent prolonger la conservation d’anciennes copies. Les sauvegardes automatiques du VPS et les archives techniques de récupération ont une conservation distincte. Les copies ne sont pas modifiées individuellement après une suppression ; les suppressions et décisions de modération doivent être réappliquées avant une remise en service après restauration.",
+      "La suppression retire aussi vos invitations, votes, amitiés et participations. Les trajets dont vous êtes conducteur ainsi que les dépenses dont vous êtes payeur ou créateur sont supprimés. Dans les événements conservés, vos apports et contributions aux besoins disparaissent ; les besoins partagés restent. Les jetons Apple chiffrés nécessaires à la révocation restent dans la file de traitement jusqu’à son aboutissement.",
+      "La session web utilise un cookie nécessaire à la connexion. L’application conserve sur l’appareil la langue, le thème et des brouillons liés au compte. Ces données locales ont une durée distincte des données du serveur ; les copies déjà présentes dans les caches d’un appareil ne peuvent pas être effacées à distance."
     ],
     "en": [
       "Privacy",
-      "Fiestaaa is published by Théo Peuchlestrade. Contact: feedback@fiestaaa.app. This beta is for invited adults in France.",
-      "We process your email, handle, profile and contributions to provide your account and private events. Organizers and participants see information needed for shared features; do not put sensitive data in descriptions. Passwords are hashed; emails and several personal fields are encrypted at rest.",
+      "Fiestaaa is a personal noncommercial project published by Théo Peuchlestrade, the data controller. Contact: feedback@fiestaaa.app. This beta is for invited adults in France. Hosting provider: OVH SAS, 2 rue Kellermann, 59100 Roubaix, France.",
+      "We process your email, handle, profile, avatar, invitations and contributions to provide your account and private events: locations, lists, polls, expenses and carpools. Organizers and participants see information needed for shared features. Passwords are hashed; emails and several personal fields are encrypted at rest. Do not put sensitive data in descriptions.",
       "The service uses OVH hosting, Resend email delivery, Google Firebase notifications and Apple/Google when you choose their sign-in. Sentry may receive technical diagnostics when enabled. Sign-in providers also process data under their own policies. Camera, photos and notification permissions are optional; declining only limits the related features.",
       "Account and contribution processing provides the service you request. Security and abuse handling rely on legitimate interests. Request access, correction, portability, deletion, restriction or objection at feedback@fiestaaa.app. You may complain to the French data protection authority, CNIL.",
       "Accounts remain until deletion. Finished events normally enter trash after 7 days and are purged after a further 30 days. Recovery links expire after 30 minutes. Backups may retain copies after deletion: they are used only for restoration, and deletions must be reapplied before service resumes.",
-      "Request deletion in Profile or at /delete-account. Events you own are also deleted. Apple revocation may be retried after local deletion when Apple is unavailable."
+      "Request deletion in Profile or at /delete-account. Events you own are also deleted. Apple revocation may be retried after local deletion when Apple is unavailable.",
+      "The application and live data are hosted on the OVH VPS in Gravelines, France. Encrypted offsite backups are stored in Paris. Other providers are not all restricted to France or the European Union.",
+      "Resend provides transactional email. Sending is configured in Ireland, but Resend states that message content and logs are stored in the United States for 30 days on our plan, with seven-day backups. Resend provides standard contractual clauses for transfers. Details: https://resend.com/security/gdpr.",
+      "Firebase receives installation identifiers and tokens needed for notifications. An EU-only location has not been established for this service. Removing a Fiestaaa token does not prove Google installation deletion. Apple or Google sign-in also follows the selected provider’s rules. Details: https://firebase.google.com/support/privacy.",
+      "Our Sentry organization uses its European region for diagnostics. Developer retains events for 30 days; this does not cover organization audit history. Loki logs are configured for 14 days and Prometheus metrics for 15 days; local container logs are size-limited rather than subject to a fixed time limit.",
+      "When you run an address search, our server sends the search terms to OpenStreetMap’s Nominatim service. Do not enter personal names or confidential information. The foundation describes processing request data in the United Kingdom and the Netherlands. Opening directions also sends the location to your selected map provider. Details: https://osmfoundation.org/wiki/Privacy_Policy.",
+      "Reports and ordinary support, rights-request and moderation case records are restricted to the publisher and deleted 90 days after closure. Where a dispute or obligation justifies longer retention, only necessary evidence is isolated and its retention reviewed. Deleting an account does not immediately erase report comments: references to the account are removed.",
+      "Offsite backups keep the newest verified copy on each of the seven most recent UTC dates with a successful backup. Failures may retain older copies longer. Automatic VPS backups and technical recovery archives have separate retention. Individual copies are not changed after deletion; deletion and moderation decisions must be reapplied before resuming service after restoration.",
+      "Deletion also removes your invitations, votes, friendships and participation. Carpools you drive and expenses you pay or create are deleted. In retained events, your personal brings and contributions to shared needs disappear; shared needs remain. Encrypted Apple tokens needed for revocation remain queued until revocation succeeds.",
+      "The web session uses a necessary sign-in cookie. The app stores language, theme and account-scoped drafts on your device. Local data has a separate lifetime from server data; copies already in device caches cannot be erased remotely."
     ]
   },
   "terms": {
     "fr": [
       "Conditions de la bêta",
-      "Fiestaaa — Théo Peuchlestrade — feedback@fiestaaa.app. Accès réservé aux personnes majeures invitées en France. Le service aide à organiser des événements privés ; il ne garantit ni leur déroulement ni les accords entre participants.",
+      "Fiestaaa — Théo Peuchlestrade — feedback@fiestaaa.app. Accès réservé aux personnes majeures invitées en France. Le service aide à organiser des événements privés ; il ne garantit ni leur déroulement ni les accords entre participants. Projet personnel sans activité commerciale. Hébergement : OVH SAS, 2 rue Kellermann, 59100 Roubaix, France.",
       "Respectez les autres participants. Les contenus illicites, menaces, harcèlement, haine et spam sont interdits. Partagez uniquement les contenus et coordonnées que vous êtes autorisé à utiliser. Ne diffusez pas les liens privés d’autrui.",
       "Vous pouvez signaler un utilisateur ou un événement et bloquer les contacts directs. Le blocage ne vous retire pas automatiquement des événements communs et ne supprime pas les contributions existantes. Les contenus peuvent être filtrés ou masqués, et les comptes suspendus. Pour contester une décision : feedback@fiestaaa.app.",
       "La bêta peut présenter des erreurs et évoluer. Le suivi des dépenses n’effectue pas de transfert d’argent. Consultez la politique de confidentialité avant de créer un compte. Vous pouvez quitter le service et demander sa suppression à tout moment."
     ],
     "en": [
       "Beta terms",
-      "Fiestaaa — Théo Peuchlestrade — feedback@fiestaaa.app. Access is for invited adults in France. The service helps organize private events; it does not guarantee events or agreements between participants.",
+      "Fiestaaa — Théo Peuchlestrade — feedback@fiestaaa.app. Access is for invited adults in France. The service helps organize private events; it does not guarantee events or agreements between participants. Personal noncommercial project. Hosting: OVH SAS, 2 rue Kellermann, 59100 Roubaix, France.",
       "Respect other participants. Illegal content, threats, harassment, hate and spam are prohibited. Share only content and contact details you are entitled to use. Do not distribute other people’s private links.",
       "You can report a user or event and block direct contact. Blocking does not automatically remove you from shared events or delete existing contributions. Content may be filtered or hidden and accounts suspended. Appeal decisions at feedback@fiestaaa.app.",
       "The beta may contain errors and change. Expense tracking does not transfer money. Read the privacy policy before creating an account. You can leave the service and request deletion at any time."
@@ -39,12 +57,14 @@
     "fr": [
       "Aide et retours",
       "Contact : feedback@fiestaaa.app. Décrivez le problème, les étapes pour le reproduire, votre téléphone et la version de Fiestaaa. N’envoyez jamais votre mot de passe, un lien de récupération ou un jeton de connexion.",
-      "Pour les abus, utilisez Signaler dans l’application ou contactez cette même adresse. En cas de danger immédiat, contactez les services d’urgence."
+      "Pour les abus, utilisez Signaler dans l’application ou contactez cette même adresse. En cas de danger immédiat, contactez les services d’urgence.",
+      "Théo Peuchlestrade assure le suivi de cette adresse et des signalements. La relève est quotidienne ; une première réponse est visée sous 7 jours. Ce délai de première réponse ne remplace pas les délais applicables au traitement de vos droits. Les dossiers ordinaires sont supprimés 90 jours après clôture, hors éléments nécessaires à un litige ou une obligation."
     ],
     "en": [
       "Help and feedback",
       "Contact: feedback@fiestaaa.app. Describe the issue, steps to reproduce, your phone and Fiestaaa version. Never send your password, recovery link or authentication token.",
-      "For abuse, use Report in the app or contact the same address. In immediate danger, contact emergency services."
+      "For abuse, use Report in the app or contact the same address. In immediate danger, contact emergency services.",
+      "Théo Peuchlestrade monitors this address and reports daily, aiming for an initial response within seven days. This initial-response target does not replace applicable deadlines for rights requests. Ordinary case records are deleted 90 days after closure, except evidence needed for a dispute or obligation."
     ]
   },
   "delete-account": {
@@ -52,13 +72,15 @@
       "Supprimer votre compte Fiestaaa",
       "Dans l’application ou le site, connectez-vous puis ouvrez Profil → Supprimer mon compte. Avec Apple, une nouvelle connexion Apple peut être demandée pour révoquer l’autorisation.",
       "Vous pouvez aussi demander la suppression à feedback@fiestaaa.app depuis l’adresse associée à votre compte, avec l’objet « Suppression de compte Fiestaaa ». Nous vérifierons votre identité sans demander votre mot de passe. Vous n’avez pas besoin de réinstaller l’application.",
-      "Le compte, l’avatar et les événements dont vous êtes propriétaire sont supprimés. Cette action affecte les autres participants à ces événements. Des copies de sauvegarde peuvent subsister pendant leur durée de conservation ; consultez la politique de confidentialité."
+      "Le compte, l’avatar et les événements dont vous êtes propriétaire sont supprimés. Cette action affecte les autres participants à ces événements. Des copies de sauvegarde peuvent subsister pendant leur durée de conservation ; consultez la politique de confidentialité.",
+      "Les trajets dont vous êtes conducteur et les dépenses dont vous êtes payeur ou créateur sont également supprimés, ce qui peut modifier les comptes entre participants. Les signalements peuvent rester pour leur traitement, sans référence à votre compte. Les copies de sauvegarde et jetons Apple en attente de révocation ont les limites décrites dans la confidentialité."
     ],
     "en": [
       "Delete your Fiestaaa account",
       "In the app or website, sign in and open Profile → Delete my account. Apple users may be asked to sign in with Apple again to revoke authorization.",
       "You can also request deletion at feedback@fiestaaa.app from your account email, with the subject “Fiestaaa account deletion”. We will verify your identity without asking for your password. You do not need to reinstall the app.",
-      "Your account, avatar and events you own are deleted. This affects other participants in those events. Backup copies may remain during their retention period; see the privacy policy."
+      "Your account, avatar and events you own are deleted. This affects other participants in those events. Backup copies may remain during their retention period; see the privacy policy.",
+      "Carpools you drive and expenses you pay or create are also deleted, which may change participants’ balances. Reports may remain for handling without a reference to your account. Backup copies and Apple tokens awaiting revocation have the limits described in the privacy notice."
     ]
   }
 }
