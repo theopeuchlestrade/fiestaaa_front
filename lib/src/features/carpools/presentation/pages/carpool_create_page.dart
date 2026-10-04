@@ -1,3 +1,5 @@
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/widgets/address_search_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
@@ -82,6 +84,7 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
   }
 
   Future<void> _searchAddress() async {
+    if (_searchingAddress) return;
     final query = _originController.text.trim();
     final l10n = S.of(context);
 
@@ -115,7 +118,11 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
       if (!mounted) return;
       setState(() {
         _addressSuggestions = [];
-        _addressSearchError = e.message;
+        _addressSearchError = localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).searchNotPossible,
+        );
       });
     } catch (_) {
       if (!mounted) return;
@@ -282,6 +289,7 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
           },
           onFieldSubmitted: (_) => _searchAddress(),
         ),
+        const AddressSearchNotice(),
         if (_addressSearchError != null) ...[
           const SizedBox(height: 6),
           Text(

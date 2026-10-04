@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Show address-search provider attribution and privacy guidance, with translated capacity and provider errors.
+
+- Complete bilingual beta privacy, hosting, support and deletion notices with verified provider settings and owner-confirmed case handling.
+
 ### Fixed
 
 - Preserve spaces and cursor position while typing multi-word event searches.
