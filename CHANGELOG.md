@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Show address-search provider attribution and privacy guidance, with translated capacity and provider errors.
+
+- Complete bilingual beta privacy, hosting, support and deletion notices with verified provider settings and owner-confirmed case handling.
+
 ### Fixed
+
+- Preserve spaces and cursor position while typing multi-word event searches.
+
+- Allow explicit iOS-only web associations while retaining Play certificate requirements for both-platform builds.
+
+- Return to the events list from directly opened events and wait for invitation acceptance before connecting to participant realtime updates.
 
 - Reload direct event screens when a notification changes the destination event.
 
@@ -15,9 +27,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Open the event targeted by a notification and retain its destination during sign-in.
 
+- Open the Requests tab when tapping a friendship notification, including when the Friends page is already cached.
+
+- Preserve navigation targets when tapping Android foreground notifications or reopening the app from a local notification.
+
 - Avoid displaying foreground push notifications twice on iOS.
 
+- Show readable camera permission errors above QR scanner decorations and disable unavailable camera controls.
+
 - Localize QR camera errors and explain how to restore camera access after permission denial.
+
+- Reject expired carpool departure times before submission with a clear localized message, preserving the form.
 
 - Detect silent realtime connection loss with bounded ping/pong checks and retry stalled connection requests.
 - Keep event loading and failure screens navigable, with localized error and retry controls.

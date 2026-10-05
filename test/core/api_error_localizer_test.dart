@@ -20,6 +20,26 @@ void main() {
     );
   });
 
+  test('address errors are localized in both supported languages', () async {
+    for (final locale in ['fr', 'en']) {
+      final l10n = await S.delegate.load(Locale(locale));
+      for (final entry in {
+        'geocoding_busy': l10n.addressSearchBusy,
+        'query_too_long': l10n.addressSearchTooLong,
+        'geocoding_unreachable': l10n.searchNotPossible,
+      }.entries) {
+        expect(
+          localizedApiError(
+            l10n,
+            ApiException('raw server error', code: entry.key),
+            fallback: l10n.actionFailed,
+          ),
+          entry.value,
+        );
+      }
+    }
+  });
+
   test('unknown API messages are replaced by a localized fallback', () async {
     final l10n = await S.delegate.load(const Locale('en'));
     final error = ApiException('Erreur interne non traduite');

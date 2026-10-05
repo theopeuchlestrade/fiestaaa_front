@@ -1,3 +1,5 @@
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/widgets/address_search_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
@@ -40,6 +42,7 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
   String? _addressSearchError;
 
   DateTime? _departAt;
+  String? _departureError;
   int _seatsTotal = 4;
 
   @override
@@ -81,6 +84,7 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
   }
 
   Future<void> _searchAddress() async {
+    if (_searchingAddress) return;
     final query = _originController.text.trim();
     final l10n = S.of(context);
 
@@ -114,7 +118,11 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
       if (!mounted) return;
       setState(() {
         _addressSuggestions = [];
-        _addressSearchError = e.message;
+        _addressSearchError = localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).searchNotPossible,
+        );
       });
     } catch (_) {
       if (!mounted) return;
@@ -199,26 +207,30 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
       selectedTime.minute,
     );
 
-    // Final check: Is the full DateTime after the event?
-    if (result.isAfter(widget.eventDate)) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(S.of(context).carpoolCannotBeAfterEvent),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-      return;
-    }
-
     setState(() {
       _departAt = result;
+      _departureError = _validateDeparture(result);
     });
+  }
+
+  String? _validateDeparture(DateTime departure) {
+    final l10n = S.of(context);
+    if (!departure.isAfter(DateTime.now())) {
+      return l10n.carpoolDepartureMustBeFuture;
+    }
+    if (departure.isAfter(widget.eventDate)) {
+      return l10n.carpoolCannotBeAfterEvent;
+    }
+    return null;
   }
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
       if (_departAt == null) return;
+      // Revalidate on submission: a selected minute can expire while editing.
+      final departureError = _validateDeparture(_departAt!);
+      setState(() => _departureError = departureError);
+      if (departureError != null) return;
 
       final payload = widget.existingCarpool != null
           ? CarpoolPatchPayload(
@@ -277,6 +289,7 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
           },
           onFieldSubmitted: (_) => _searchAddress(),
         ),
+        const AddressSearchNotice(),
         if (_addressSearchError != null) ...[
           const SizedBox(height: 6),
           Text(
@@ -359,7 +372,7 @@ class _CarpoolCreatePageState extends State<CarpoolCreatePage> {
                 prefixIcon: const Icon(Icons.access_time),
                 errorText: _departAt == null
                     ? l10n.carpoolDateTimeRequired
-                    : null,
+                    : _departureError,
               ),
               child: Text(
                 _departAt != null
