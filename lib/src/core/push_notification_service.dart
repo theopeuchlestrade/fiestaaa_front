@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -29,6 +30,12 @@ class PushNotificationIntent {
   bool get opensFriendRequests =>
       type == 'friend_request' || type == 'friend_response';
 
+  String? get route => opensFriendRequests
+      ? '/friends'
+      : eventId != null && eventId! > 0
+      ? '/events/$eventId'
+      : null;
+
   static PushNotificationIntent? fromMessage(RemoteMessage message) {
     final type = message.data['type']?.trim();
     if (type == null || type.isEmpty) return null;
@@ -37,6 +44,29 @@ class PushNotificationIntent {
       requestId: _parseInt(message.data['request_id']),
       eventId: _parseInt(message.data['event_id']),
     );
+  }
+
+  String toPayload() => jsonEncode({
+    'type': type,
+    if (requestId != null) 'request_id': requestId,
+    if (eventId != null) 'event_id': eventId,
+  });
+
+  static PushNotificationIntent? fromPayload(String? payload) {
+    if (payload == null || payload.isEmpty) return null;
+    try {
+      final data = jsonDecode(payload);
+      if (data is! Map<String, dynamic> || data['type'] is! String) return null;
+      final type = (data['type'] as String).trim();
+      if (type.isEmpty) return null;
+      return PushNotificationIntent(
+        type: type,
+        requestId: _parseInt(data['request_id']),
+        eventId: _parseInt(data['event_id']),
+      );
+    } on FormatException {
+      return null;
+    }
   }
 
   static int? _parseInt(Object? value) {
@@ -273,6 +303,15 @@ class PushNotificationService {
     _intentController.add(intent);
   }
 
+  @visibleForTesting
+  void handleLocalNotificationResponse(NotificationResponse response) {
+    final intent = PushNotificationIntent.fromPayload(response.payload);
+    if (intent == null || intent.route == null || _intentController.isClosed) {
+      return;
+    }
+    _intentController.add(intent);
+  }
+
   Future<void> _requestPermissions() async {
     try {
       final settings = await _messaging.requestPermission(
@@ -355,7 +394,15 @@ class PushNotificationService {
       android: androidSettings,
       iOS: iosSettings,
     );
-    await _localNotifications.initialize(settings: initSettings);
+    await _localNotifications.initialize(
+      settings: initSettings,
+      onDidReceiveNotificationResponse: handleLocalNotificationResponse,
+    );
+    final launch = await _localNotifications.getNotificationAppLaunchDetails();
+    if (launch?.didNotificationLaunchApp == true &&
+        launch?.notificationResponse != null) {
+      handleLocalNotificationResponse(launch!.notificationResponse!);
+    }
 
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       final androidPlugin = _localNotifications
@@ -388,6 +435,10 @@ class PushNotificationService {
       return;
     }
 
+    // iOS already presents the remote notification through Firebase's
+    // foreground presentation options. A local copy would display it twice.
+    if (defaultTargetPlatform == TargetPlatform.iOS) return;
+
     const androidDetails = AndroidNotificationDetails(
       _androidChannelId,
       _androidChannelName,
@@ -411,6 +462,7 @@ class PushNotificationService {
       title: notif.title,
       body: notif.body,
       notificationDetails: details,
+      payload: PushNotificationIntent.fromMessage(message)?.toPayload(),
     );
   }
 }

@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 class _Channel implements WebSocketChannel {
   final incoming = StreamController<dynamic>();
   bool closed = false;
+  final sent = <dynamic>[];
   @override
   Stream<dynamic> get stream => incoming.stream;
   @override
@@ -19,14 +20,17 @@ class _Channel implements WebSocketChannel {
   late final WebSocketSink sink = _Sink(() {
     closed = true;
     unawaited(incoming.close());
-  });
+  }, sent.add);
   void emit(Map<String, dynamic> value) => incoming.add(jsonEncode(value));
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _Sink implements WebSocketSink {
-  _Sink(this.onClose);
+  _Sink(this.onClose, this.onAdd);
+  final void Function(dynamic) onAdd;
+  @override
+  void add(dynamic data) => onAdd(data);
   final void Function() onClose;
   @override
   Future<void> close([int? code, String? reason]) async {
@@ -38,6 +42,64 @@ class _Sink implements WebSocketSink {
 }
 
 void main() {
+  testWidgets(
+    'silent network loss interrupts and recovers without socket errors',
+    (tester) async {
+      final channels = <_Channel>[];
+      final client = RealtimeClient(
+        token: 'token',
+        httpClient: MockClient(
+          (_) async => http.Response('{"ticket":"test"}', 200),
+        ),
+        reconnectBackoff: RealtimeReconnectBackoff(jitterRatio: 0),
+        channelFactory: (_) {
+          final channel = _Channel();
+          channels.add(channel);
+          return channel;
+        },
+      );
+      client.connect();
+      await tester.pump();
+      channels.single.emit({'type': 'realtime.ready'});
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 5));
+      expect(channels.single.sent, ['ping']);
+      channels.single.incoming.add('pong');
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 5));
+      expect(client.connectionState.value, RealtimeConnectionState.connected);
+      await tester.pump(const Duration(seconds: 10));
+      expect(client.connectionState.value, RealtimeConnectionState.interrupted);
+      expect(channels.first.closed, isTrue);
+      await tester.pump(const Duration(seconds: 2));
+      channels.last.emit({'type': 'realtime.ready'});
+      await tester.pump();
+      expect(client.connectionState.value, RealtimeConnectionState.connected);
+      unawaited(client.dispose());
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 40));
+      expect(channels.length, 2);
+    },
+  );
+
+  testWidgets('a hanging ticket request cannot hide a network interruption', (
+    tester,
+  ) async {
+    final response = Completer<http.Response>();
+    final client = RealtimeClient(
+      token: 'token',
+      httpClient: MockClient((_) => response.future),
+    );
+    client.connect();
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 10));
+    expect(client.connectionState.value, RealtimeConnectionState.interrupted);
+    unawaited(client.dispose());
+    await tester.pump();
+    response.complete(http.Response('{"ticket":"late"}', 200));
+    await tester.pump();
+  });
+
   group('RealtimeReconnectBackoff', () {
     test('backs off exponentially up to the reconnect cap', () {
       final backoff = RealtimeReconnectBackoff(jitterRatio: 0);

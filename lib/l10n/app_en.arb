@@ -778,6 +778,7 @@
   "carpoolDepartureLocationRequired": "Please enter a departure location",
   "carpoolDepartureDateTime": "Departure date & time",
   "carpoolSelectDateTime": "Select date & time",
+  "carpoolDepartureMustBeFuture": "Choose a departure time in the future.",
   "carpoolDateTimeRequired": "Please select a departure date & time",
   "carpoolAvailableSeatsCount": "Number of available seats: {count}",
   "@carpoolAvailableSeatsCount": {
@@ -1025,5 +1026,12 @@
         "type": "int"
       }
     }
-  }
+  },
+  "cameraPermissionDeniedHelp": "Camera access denied. Allow camera access for Fiestaaa in your device settings, then reopen the QR scanner.",
+  "cameraUnavailableHelp": "The camera is unavailable. Return to the event, then reopen the QR scanner.",
+  "invitationLinkAlreadyUsed": "This invitation link has already been used.",
+  "addressSearchPrivacy": "Search uses OpenStreetMap: do not enter personal or confidential information.",
+  "addressSearchAttribution": "© OpenStreetMap contributors · ODbL",
+  "addressSearchBusy": "Address search is busy. Try again in a few seconds.",
+  "addressSearchTooLong": "Address too long. Shorten your search."
 }

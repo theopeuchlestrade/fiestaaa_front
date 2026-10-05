@@ -1,3 +1,5 @@
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/widgets/address_search_notice.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/event_form_browser_guard.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/event_form_session.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_form_content.dart';
@@ -437,6 +439,7 @@ class _EventCreatePageState extends State<EventCreatePage>
   }
 
   Future<void> _searchAddress() async {
+    if (_searchingAddress) return;
     final query = _addressController.text.trim();
     if (query.length < 3) {
       setState(() {
@@ -468,7 +471,11 @@ class _EventCreatePageState extends State<EventCreatePage>
       if (!mounted) return;
       setState(() {
         _addressSuggestions = [];
-        _addressSearchError = e.message;
+        _addressSearchError = localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).searchNotPossible,
+        );
       });
     } catch (_) {
       if (!mounted) return;
@@ -1094,6 +1101,7 @@ class _EventCreatePageState extends State<EventCreatePage>
               : null,
           onFieldSubmitted: (_) => _searchAddress(),
         ),
+        const AddressSearchNotice(),
         if (_addressSearchError != null) ...[
           const SizedBox(height: 6),
           Text(

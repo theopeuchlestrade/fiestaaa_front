@@ -11,6 +11,12 @@ String localizedApiError(S l10n, Object error, {required String fallback}) {
   }
 
   return switch (error.code) {
+    'geocoding_busy' => l10n.addressSearchBusy,
+    'query_too_long' => l10n.addressSearchTooLong,
+    'geocoding_unreachable' ||
+    'geocoding_error' ||
+    'geocoding_parse_error' => l10n.searchNotPossible,
+    'token_used' => l10n.invitationLinkAlreadyUsed,
     'handle_taken' => l10n.identifierTaken,
     'invalid_handle' => l10n.pleaseEnterIdentifier,
     _ => fallback,
