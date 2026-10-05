@@ -1,6 +1,11 @@
 version: 2
 updates:
   - package-ecosystem: "pub"
+    # Google Fonts 9 requires Dart 3.13. Remove this bound when Flutter
+    # and its CI/Docker toolchains are upgraded together; keep 8.x updates.
+    ignore:
+      - dependency-name: "google_fonts"
+        versions: [">=9.0.0"]
     directory: "/"
     schedule:
       interval: "weekly"
