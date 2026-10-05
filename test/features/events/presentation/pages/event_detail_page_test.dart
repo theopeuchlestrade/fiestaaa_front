@@ -12,6 +12,8 @@ import 'package:fiestaaa_front/src/features/events/presentation/pages/event_deta
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -117,7 +119,94 @@ EventDetailPage _page(
   onEventRemoved: onRemoved,
 );
 
+class _GuestInvitations extends InvitationsApi {
+  String status = 'Waiting';
+  @override
+  Future<List<InvitationModel>> fetchMyInvitations(String token) async => [
+    InvitationModel(
+      eventId: 1,
+      email: 'guest@example.com',
+      status: status,
+      dateInvi: DateTime(2026),
+    ),
+  ];
+  @override
+  void dispose() {}
+}
+
 void main() {
+  testWidgets('direct event back returns to the event list', (tester) async {
+    final clients = <_Realtime>[];
+    final router = GoRouter(
+      initialLocation: '/events/1',
+      routes: [
+        GoRoute(
+          path: '/events',
+          builder: (_, _) => const Scaffold(body: Text('Events list')),
+        ),
+        GoRoute(
+          path: '/events/1',
+          builder: (_, _) => _page(_Api(), 1, clients),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        routerConfig: router,
+        locale: const Locale('en'),
+        localizationsDelegates: S.localizationsDelegates,
+        supportedLocales: S.supportedLocales,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.text('Events list'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    router.dispose();
+  });
+
+  testWidgets(
+    'pending guest connects to event realtime only after acceptance',
+    (tester) async {
+      final clients = <_Realtime>[];
+      final invitations = _GuestInvitations();
+      await tester.pumpWidget(
+        _app(
+          EventDetailPage(
+            event: _event(1, 'Event 1'),
+            session: SessionData(token: 'token', email: 'guest@example.com'),
+            eventsApi: _Api(),
+            invitationsApi: invitations,
+            paymentProvidersApi: PaymentProvidersApi(
+              client: MockClient((_) async => http.Response('[]', 200)),
+            ),
+            realtimeClientFactory: (_, _) {
+              final client = _Realtime();
+              clients.add(client);
+              return client;
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(clients, isEmpty);
+      invitations.status = 'Accepted';
+      await tester
+          .widget<RefreshIndicator>(find.byType(RefreshIndicator))
+          .onRefresh();
+      await tester.pumpAndSettle();
+      expect(clients, hasLength(1));
+      invitations.status = 'Waiting';
+      await tester
+          .widget<RefreshIndicator>(find.byType(RefreshIndicator))
+          .onRefresh();
+      await tester.pumpAndSettle();
+      expect(clients.single.messages.isClosed, isTrue);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
   for (final status in [403, 404]) {
     testWidgets(
       'resync leaves the detail with an explanation on HTTP $status',
