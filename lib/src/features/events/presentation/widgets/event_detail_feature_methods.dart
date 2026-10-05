@@ -58,50 +58,14 @@ extension _EventDetailFeatureMethods on _EventDetailPageState {
     );
   }
 
-  String? _paymentProviderFaviconDomain(PaymentProviderModel? provider) {
-    if (provider == null) return null;
-
-    final templatedUrl = provider.urlTemplate.replaceAll(
-      '{identifier}',
-      'sample',
-    );
-    final uri = Uri.tryParse(templatedUrl);
-    if (uri != null && uri.host.isNotEmpty) {
-      return uri.host;
-    }
-
-    final normalized = provider.name.toLowerCase();
-    if (normalized.contains('lydia')) return 'lydia-app.com';
-    if (normalized.contains('leetchi')) return 'leetchi.com';
-    if (normalized.contains('lyf')) return 'lyf.eu';
-    return null;
-  }
-
   Widget _buildPaymentProviderLogo(
     PaymentProviderModel? provider, {
     double size = 22,
   }) {
-    final accent = Theme.of(context).colorScheme.primary;
-    final providerName = provider?.name ?? '?';
-    final fallback = _buildProviderInitialLogo(
-      providerName,
-      color: accent,
+    return _buildProviderInitialLogo(
+      provider?.name ?? '?',
+      color: Theme.of(context).colorScheme.primary,
       size: size,
-    );
-
-    final domain = _paymentProviderFaviconDomain(provider);
-    if (domain == null) return fallback;
-
-    final logoUrl = 'https://www.google.com/s2/favicons?domain=$domain&sz=64';
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(size * 0.28),
-      child: Image.network(
-        logoUrl,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => fallback,
-      ),
     );
   }
 
