@@ -6,6 +6,10 @@ updates:
     ignore:
       - dependency-name: "google_fonts"
         versions: [">=9.0.0"]
+      # flutter_localizations pins intl exactly at this SDK version.
+      # Remove alongside the coordinated Flutter/Dart upgrade.
+      - dependency-name: "intl"
+        versions: [">=0.20.3"]
     directory: "/"
     schedule:
       interval: "weekly"
