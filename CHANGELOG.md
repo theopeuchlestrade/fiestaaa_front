@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Replace bundled music provider logos with a standard music-note icon while preserving provider names and external playlist links.
+
 - Display crowdfunding provider initials locally without automatically requesting Google favicon images.
 
 - Show address-search provider attribution and privacy guidance, with translated capacity and provider errors.

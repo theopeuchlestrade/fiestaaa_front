@@ -10,28 +10,6 @@ extension _EventDetailFeatureMethods on _EventDetailPageState {
     };
   }
 
-  Widget _buildPlaylistProviderLogo(String? provider, {double size = 22}) {
-    final assetPath = switch (provider) {
-      'spotify' => 'assets/logos/spotify.svg',
-      'apple_music' => 'assets/logos/apple_music.svg',
-      'deezer' => 'assets/logos/deezer.svg',
-      _ => null,
-    };
-
-    if (assetPath == null) {
-      return Icon(Icons.music_note, size: size, color: FiestaaaPalette.primary);
-    }
-
-    return SvgPicture.asset(
-      assetPath,
-      width: provider == 'deezer' ? size * 1.2 : size,
-      height: provider == 'deezer' ? size * 1.2 : size,
-      fit: BoxFit.contain,
-      placeholderBuilder: (_) =>
-          Icon(Icons.music_note, size: size, color: FiestaaaPalette.primary),
-    );
-  }
-
   Widget _buildProviderInitialLogo(
     String label, {
     required Color color,
@@ -339,9 +317,6 @@ extension _EventDetailFeatureMethods on _EventDetailPageState {
 
     return _buildFeaturePanel(
       icon: Icons.music_note,
-      leading: isEmpty
-          ? null
-          : _buildPlaylistProviderLogo(playlistProvider, size: 24),
       title: isEmpty ? l10n.noPlaylist : providerName,
       subtitle: isEmpty
           ? canEdit

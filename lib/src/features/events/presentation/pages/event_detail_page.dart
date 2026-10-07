@@ -30,7 +30,6 @@ import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:fiestaaa_front/src/core/external_uri_guard.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
