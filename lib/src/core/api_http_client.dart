@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'platform_http_client_stub.dart'
+    if (dart.library.io) 'platform_http_client_native.dart'
     if (dart.library.js_interop) 'platform_http_client_web.dart';
 
 class ApiHttpClient extends http.BaseClient {

@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
@@ -155,7 +156,7 @@ class _AvatarCircle extends StatelessWidget {
     if (url == null || url!.isEmpty) return placeholder();
     return CircleAvatar(
       backgroundColor: theme.fiestaaaAvatarSurface,
-      backgroundImage: NetworkImage(url!),
+      backgroundImage: platformNetworkImage(url!),
       onBackgroundImageError: (error, stackTrace) {},
       child: null,
     );

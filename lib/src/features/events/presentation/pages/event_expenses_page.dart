@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'dart:async';
@@ -1090,7 +1091,7 @@ class _UserAvatar extends StatelessWidget {
     return CircleAvatar(
       radius: radius,
       backgroundColor: FiestaaaPalette.primary.withValues(alpha: 0.16),
-      backgroundImage: hasImage ? NetworkImage(avatarUrl!) : null,
+      backgroundImage: hasImage ? platformNetworkImage(avatarUrl!) : null,
       onBackgroundImageError: hasImage ? (error, stackTrace) {} : null,
       child: hasImage
           ? null

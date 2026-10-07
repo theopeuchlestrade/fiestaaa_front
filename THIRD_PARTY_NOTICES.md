@@ -11,6 +11,12 @@ licensed by their respective authors. See `pubspec.lock`, `package-lock.json`
 when present, and upstream package metadata for exact dependency license
 information.
 
+Native mobile networking uses the Dart project's `cupertino_http` and `ok_http`
+packages (BSD-3-Clause), with Android OkHttp (Apache-2.0). The exact official
+`ok_http` revision is pinned in `pubspec.yaml`/`pubspec.lock` for compatibility
+with the existing JNI dependency. Upstream notices are included through the
+Flutter dependency license bundle.
+
 ## Service and Platform Marks
 
 Google, Apple, Firebase, Sentry, Flutter, Dart, GitHub, Docker, Nginx, and

@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'dart:async';
@@ -2518,8 +2519,8 @@ class _AvatarCircle extends StatelessWidget {
       width: size,
       height: size,
       child: ClipOval(
-        child: Image.network(
-          url!,
+        child: Image(
+          image: platformNetworkImage(url!),
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) => placeholder(),
         ),

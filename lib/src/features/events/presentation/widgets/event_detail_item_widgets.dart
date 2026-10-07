@@ -275,7 +275,7 @@ class _EventItemTile extends StatelessWidget {
                         backgroundColor: avatarBackground,
                         backgroundImage: c.avatarUrl == null
                             ? null
-                            : NetworkImage(c.avatarUrl!),
+                            : platformNetworkImage(c.avatarUrl!),
                         child: c.avatarUrl == null
                             ? Text(
                                 _displayInitial(context, c.handle),
@@ -404,7 +404,7 @@ class _EventItemTile extends StatelessWidget {
                           backgroundColor: avatarBackground,
                           backgroundImage: item.createdByAvatarUrl == null
                               ? null
-                              : NetworkImage(item.createdByAvatarUrl!),
+                              : platformNetworkImage(item.createdByAvatarUrl!),
                           child: item.createdByAvatarUrl == null
                               ? Text(
                                   creatorInitial,
@@ -542,7 +542,9 @@ class _EventItemTile extends StatelessWidget {
                                           backgroundColor: avatarBackground,
                                           backgroundImage: c.avatarUrl == null
                                               ? null
-                                              : NetworkImage(c.avatarUrl!),
+                                              : platformNetworkImage(
+                                                  c.avatarUrl!,
+                                                ),
                                           child: c.avatarUrl == null
                                               ? Text(
                                                   _displayInitial(
