@@ -501,7 +501,9 @@ extension _EventDetailPollMethods on _EventDetailPageState {
                                             theme.fiestaaaAvatarSurface,
                                         backgroundImage: voter.avatarUrl == null
                                             ? null
-                                            : NetworkImage(voter.avatarUrl!),
+                                            : platformNetworkImage(
+                                                voter.avatarUrl!,
+                                              ),
                                         child: voter.avatarUrl == null
                                             ? Text(
                                                 _displayInitial(

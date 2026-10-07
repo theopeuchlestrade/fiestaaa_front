@@ -299,7 +299,7 @@ class _PollOptionTile extends StatelessWidget {
                           backgroundColor: avatarBackground,
                           backgroundImage: firstVoter.avatarUrl == null
                               ? null
-                              : NetworkImage(firstVoter.avatarUrl!),
+                              : platformNetworkImage(firstVoter.avatarUrl!),
                           child: firstVoter.avatarUrl == null
                               ? Text(
                                   _displayInitial(context, firstVoter.handle),

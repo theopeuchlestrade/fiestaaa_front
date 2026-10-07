@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/data/qr_checkin_api.dart';
@@ -614,7 +615,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
                 children: [
                   if (_lastScanResult!.userAvatarUrl != null)
                     CircleAvatar(
-                      backgroundImage: NetworkImage(
+                      backgroundImage: platformNetworkImage(
                         _lastScanResult!.userAvatarUrl!,
                       ),
                       radius: 28,

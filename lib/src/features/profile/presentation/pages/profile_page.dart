@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/features/beta_api.dart';
 import 'package:go_router/go_router.dart';
@@ -483,7 +484,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 foregroundColor: FiestaaaPalette.primary,
                                 backgroundImage: profile.avatarUrl == null
                                     ? null
-                                    : NetworkImage(profile.avatarUrl!),
+                                    : platformNetworkImage(profile.avatarUrl!),
                                 child: profile.avatarUrl == null
                                     ? Text(
                                         profile.email

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Use native iOS and Android networking for API requests, profile photos and realtime connections, preserving browser networking on web.
+
 - Replace bundled music provider logos with a standard music-note icon while preserving provider names and external playlist links.
 
 - Display crowdfunding provider initials locally without automatically requesting Google favicon images.

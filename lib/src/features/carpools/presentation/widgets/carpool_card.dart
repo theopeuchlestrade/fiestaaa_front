@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
@@ -507,7 +508,9 @@ class _DriverAvatar extends StatelessWidget {
         CircleAvatar(
           radius: 24,
           backgroundColor: FiestaaaPalette.primary.withValues(alpha: 0.15),
-          backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+          backgroundImage: avatarUrl != null
+              ? platformNetworkImage(avatarUrl!)
+              : null,
           child: avatarUrl == null
               ? Text(
                   (handle?.isNotEmpty == true) ? handle![0].toUpperCase() : '?',
@@ -761,7 +764,7 @@ class _PassengerChip extends StatelessWidget {
             radius: 12,
             backgroundColor: FiestaaaPalette.secondary.withValues(alpha: 0.2),
             backgroundImage: avatarUrl != null
-                ? NetworkImage(avatarUrl!)
+                ? platformNetworkImage(avatarUrl!)
                 : null,
             child: avatarUrl == null
                 ? Text(

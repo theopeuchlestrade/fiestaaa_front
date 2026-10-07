@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
+import 'package:fiestaaa_front/src/core/platform_web_socket.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -75,7 +76,7 @@ class RealtimeClient {
   }) : _httpClient = httpClient ?? createApiHttpClient(),
        _ownsHttpClient = httpClient == null,
        _reconnectBackoff = reconnectBackoff ?? RealtimeReconnectBackoff(),
-       _channelFactory = channelFactory ?? WebSocketChannel.connect;
+       _channelFactory = channelFactory ?? createPlatformWebSocket;
 
   final String token;
   int? eventId;
