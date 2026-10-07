@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Keep the Android native connection pool alive across disposable API and image clients, preventing TLS shutdown errors from hiding successfully downloaded profile photos.
+
 - Preserve spaces and cursor position while typing multi-word event searches.
 
 - Allow explicit iOS-only web associations while retaining Play certificate requirements for both-platform builds.
