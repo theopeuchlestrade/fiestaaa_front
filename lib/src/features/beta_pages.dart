@@ -1,3 +1,5 @@
+import '../theme/fiestaaa_theme.dart';
+import '../core/presentation/widgets/route_back_button.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -39,20 +41,23 @@ class BetaLinks extends StatelessWidget {
 }
 
 class LegalPage extends StatefulWidget {
-  const LegalPage({super.key, required this.page});
+  const LegalPage({super.key, required this.page, this.pages});
   final String page;
+  final Future<Map<String, dynamic>>? pages;
   @override
   State<LegalPage> createState() => _LegalPageState();
 }
 
 class _LegalPageState extends State<LegalPage> {
-  late final Future<Map<String, dynamic>> _pages = rootBundle
-      .loadString('assets/legal/pages.json')
-      .then((s) => jsonDecode(s) as Map<String, dynamic>);
+  late final Future<Map<String, dynamic>> _pages =
+      widget.pages ??
+      rootBundle
+          .loadString('assets/legal/pages.json')
+          .then((s) => jsonDecode(s) as Map<String, dynamic>);
   late final Future<PackageInfo> _version = PackageInfo.fromPlatform();
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Fiestaaa • Bêta / Beta')),
+    appBar: AppBar(leading: const RouteBackButton(fallback: '/events')),
     body: FutureBuilder<Map<String, dynamic>>(
       future: _pages,
       builder: (context, snapshot) {
@@ -68,9 +73,9 @@ class _LegalPageState extends State<LegalPage> {
         final paragraphs =
             (snapshot.data![widget.page] as Map<String, dynamic>)[locale]
                 as List<dynamic>;
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
+        return FiestaaaBackground(
+          child: FiestaaaPageLayout(
+            maxWidth: 760,
             child: ListView(
               padding: const EdgeInsets.all(24),
               children: [
@@ -210,9 +215,9 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
           betaText(context, 'Récupérer mon compte', 'Recover my account'),
         ),
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
+      body: FiestaaaBackground(
+        child: FiestaaaPageLayout(
+          maxWidth: 760,
           child: ListView(
             shrinkWrap: true,
             padding: const EdgeInsets.all(24),
@@ -301,8 +306,15 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
 }
 
 class SafetyPage extends StatefulWidget {
-  const SafetyPage({super.key, required this.token, this.eventId, this.api});
+  const SafetyPage({
+    super.key,
+    required this.token,
+    this.eventId,
+    this.api,
+    this.initialHandle,
+  });
   final String token;
+  final String? initialHandle;
   final int? eventId;
   final BetaApi? api;
   @override
@@ -311,7 +323,7 @@ class SafetyPage extends StatefulWidget {
 
 class _SafetyPageState extends State<SafetyPage> {
   late final _api = widget.api ?? BetaApi();
-  final _handle = TextEditingController();
+  late final _handle = TextEditingController(text: widget.initialHandle);
   final _comment = TextEditingController();
   String _reason = 'harassment';
   String? _message;
@@ -404,9 +416,9 @@ class _SafetyPageState extends State<SafetyPage> {
         betaText(context, 'Sécurité et signalements', 'Safety and reports'),
       ),
     ),
-    body: Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720),
+    body: FiestaaaBackground(
+      child: FiestaaaPageLayout(
+        maxWidth: 760,
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
@@ -447,6 +459,11 @@ class _SafetyPageState extends State<SafetyPage> {
                 ),
               ),
             DropdownButtonFormField<String>(
+              isExpanded: true,
+              itemHeight: null,
+              decoration: InputDecoration(
+                labelText: betaText(context, 'Motif', 'Reason'),
+              ),
               initialValue: _reason,
               items: [
                 for (final r in [

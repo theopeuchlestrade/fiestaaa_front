@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/presentation/widgets/route_back_button.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'dart:async';
@@ -17,6 +18,8 @@ import 'package:flutter/material.dart';
 class EventInvitationsPage extends StatefulWidget {
   const EventInvitationsPage({
     super.key,
+    this.friendsApi,
+    this.invitationsApi,
     required this.session,
     required this.eventId,
     required this.eventName,
@@ -27,6 +30,8 @@ class EventInvitationsPage extends StatefulWidget {
   });
 
   final SessionData session;
+  final InvitationsApi? invitationsApi;
+  final FriendsApi? friendsApi;
   final int eventId;
   final String eventName;
   final String ownerEmail;
@@ -42,8 +47,8 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   final _refreshQueue = RefreshQueue();
   int _scopeGeneration = 0;
 
-  final _api = InvitationsApi();
-  final _friendsApi = FriendsApi();
+  late final _api = widget.invitationsApi ?? InvitationsApi();
+  late final _friendsApi = widget.friendsApi ?? FriendsApi();
   List<InvitationModel> _invitations = [];
   bool _loading = true;
   String? _error;
@@ -441,13 +446,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: FiestaaaPageHeader(title: S.of(context).invitations),
+                child: FiestaaaPageHeader(title: S.of(context).participants),
               ),
-              IconButton(
-                onPressed: () => Navigator.of(context).maybePop(),
-                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-                icon: const Icon(Icons.close),
-              ),
+              RouteBackButton(fallback: '/events/${widget.eventId}'),
             ],
           ),
           if (widget.eventReadOnly) ...[

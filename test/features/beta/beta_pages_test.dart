@@ -48,7 +48,11 @@ void main() {
     await tester.tap(find.text('Block direct contact'));
     await tester.pumpAndSettle();
     expect(blocked, isTrue);
-    await tester.ensureVisible(find.text('Unblock'));
+    await tester.scrollUntilVisible(
+      find.text('Unblock'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Unblock'));
     await tester.pumpAndSettle();
     expect(blocked, isFalse);

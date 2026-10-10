@@ -55,108 +55,26 @@ extension _EventDetailSummarySections on _EventDetailPageState {
       ),
     ];
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns =
+            constraints.maxWidth >= 800 &&
+                MediaQuery.textScalerOf(context).scale(16) <= 24
+            ? 2
+            : 1;
+        final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
           children: [
-            Center(
-              child: Container(
-                width: 120,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primary.withValues(alpha: 0.65),
-                  borderRadius: BorderRadius.circular(999),
-                ),
+            for (final action in actions)
+              SizedBox(
+                width: width,
+                child: _EventDetailFeatureActionButton(data: action),
               ),
-            ),
-            const SizedBox(height: 14),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isCompact = constraints.maxWidth < 700;
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: actions.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: isCompact ? 2 : 4,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    childAspectRatio: isCompact ? 2.8 : 3.8,
-                  ),
-                  itemBuilder: (context, index) =>
-                      _EventDetailFeatureActionButton(data: actions[index]),
-                );
-              },
-            ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLocationSection() {
-    if (!_currentEvent.hasCoordinates) {
-      return _DetailTile(
-        icon: Icons.place,
-        label: S.of(context).address,
-        value: _formatEventAddress(context, _currentEvent),
-      );
-    }
-
-    final latitude = _currentEvent.latitude ?? 0;
-    final longitude = _currentEvent.longitude ?? 0;
-
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => _openMap(latitude, longitude),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.place, color: FiestaaaPalette.primary),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      S.of(context).address,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: Theme.of(context).fiestaaaMutedText,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _formatEventAddress(context, _currentEvent),
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      S.of(context).openInMapsApp,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: FiestaaaPalette.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Icon(
-                Icons.open_in_new,
-                color: Theme.of(context).fiestaaaMutedText,
-              ),
-            ],
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 

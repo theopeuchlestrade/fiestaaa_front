@@ -88,10 +88,10 @@ extension _EventDetailListSections on _EventDetailPageState {
   }
 
   Widget _buildPollsContent() {
-    if (_loadingPolls) {
+    if (_loadingPolls && _polls == null) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (_pollsError != null) {
+    if (_pollsError != null && _polls == null) {
       return Column(
         children: [
           Text(_pollsError!),
@@ -199,246 +199,73 @@ extension _EventDetailListSections on _EventDetailPageState {
   }
 
   Widget _buildItemsBlock({bool showTitle = true, bool collapsible = true}) {
+    final l = S.of(context);
     final items = _eventItems ?? const <EventItemModel>[];
     final ownerEmail = _currentEvent.ownerEmail.toLowerCase();
-    bool isBringItem(EventItemModel item) {
-      if (item.kind == EventItemKind.bring) return true;
-      final createdBy = item.createdByEmail?.toLowerCase();
-      if (createdBy == null) return false;
-      return createdBy != ownerEmail;
-    }
-
-    final currentUserEmail = widget.session.email.toLowerCase();
-    final bringItems = _sortBringItems(
-      items.where(isBringItem).toList(),
-      currentUserEmail,
-    );
-    final needItems = _sortNeedItems(
-      items.where((item) => !isBringItem(item)).toList(),
-    );
-
+    bool isBringItem(EventItemModel item) =>
+        item.kind == EventItemKind.bring ||
+        (item.createdByEmail != null &&
+            item.createdByEmail!.toLowerCase() != ownerEmail);
+    final needs = _itemsKind == EventItemKind.need;
+    final selected = needs
+        ? _sortNeedItems(items.where((item) => !isBringItem(item)).toList())
+        : _sortBringItems(
+            items.where(isBringItem).toList(),
+            widget.session.email.toLowerCase(),
+          );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (showTitle)
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  S.of(context).availableItems,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-              if (collapsible)
-                IconButton(
-                  onPressed: () =>
-                      _updateState(() => _itemsExpanded = !_itemsExpanded),
-                  icon: Icon(
-                    _itemsExpanded ? Icons.expand_less : Icons.expand_more,
-                  ),
-                ),
-            ],
-          )
-        else
-          const SizedBox.shrink(),
+        if (showTitle) FiestaaaPageHeader(title: l.availableItems),
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          children: [
+            ChoiceChip(
+              label: Text(l.needSectionTitle),
+              selected: needs,
+              onSelected: (_) =>
+                  _updateState(() => _itemsKind = EventItemKind.need),
+            ),
+            ChoiceChip(
+              label: Text(l.bringSectionTitle),
+              selected: !needs,
+              onSelected: (_) =>
+                  _updateState(() => _itemsKind = EventItemKind.bring),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         _buildItemsScopeAndSortControls(),
-        const SizedBox(height: 6),
-        if (!_isOwner && _isWaitingInvitation)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              S.of(context).acceptInvitationToContribute,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme
-                    .fiestaaaStatus(FiestaaaStatusTone.warning)
-                    .foreground,
-              ),
-            ),
-          ),
-        if (!_isOwner && _isExpiredInvitation)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              S.of(context).invitationExpiredNoContributions,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.fiestaaaNeutral,
-              ),
-            ),
-          ),
-        const SizedBox(height: 12),
-        if (collapsible)
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 200),
-            crossFadeState: _itemsExpanded
-                ? CrossFadeState.showFirst
-                : CrossFadeState.showSecond,
-            firstChild: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_loadingItems)
-                  const Center(child: CircularProgressIndicator())
-                else if (_itemsError != null)
-                  Column(
-                    children: [
-                      Text(_itemsError!),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: _loadItems,
-                        child: Text(S.of(context).retry),
-                      ),
-                    ],
-                  )
-                else
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isWide = constraints.maxWidth >= 760;
-                      final bringSection = _EventItemsSection(
-                        title: S.of(context).bringSectionTitle,
-                        subtitle: S.of(context).chooseWhatYouBring,
-                        items: bringItems,
-                        addLabel: S.of(context).add,
-                        onAdd: _canContributeItems
-                            ? () =>
-                                  _openAddItemDialog(kind: EventItemKind.bring)
-                            : null,
-                        isAdding: _creatingCustomItem,
-                        emptyLabel: S.of(context).noBringItemsYet,
-                        reservingItemId: _reservingItemId,
-                        deletingItemId: _deletingItemId,
-                        onReserve: _openQuantityDialog,
-                        onDelete: _deleteEventItem,
-                        isOwner: _isOwner,
-                        currentUserEmail: widget.session.email,
-                        canReserveItems: _canContributeItems,
-                        contributions: _contributions,
-                      );
-                      final needSection = _EventItemsSection(
-                        title: S.of(context).needSectionTitle,
-                        subtitle: S.of(context).needItemsSubtitle,
-                        items: needItems,
-                        addLabel: S.of(context).add,
-                        onAdd: _isOwner
-                            ? () => _openAddItemDialog(kind: EventItemKind.need)
-                            : null,
-                        isAdding: _creatingCustomItem,
-                        emptyLabel: S.of(context).noNeedItemsYet,
-                        reservingItemId: _reservingItemId,
-                        deletingItemId: _deletingItemId,
-                        onReserve: _openQuantityDialog,
-                        onDelete: _deleteEventItem,
-                        isOwner: _isOwner,
-                        currentUserEmail: widget.session.email,
-                        canReserveItems: _canContributeItems,
-                        contributions: _contributions,
-                      );
-
-                      if (isWide) {
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(child: bringSection),
-                            const SizedBox(width: 16),
-                            Expanded(child: needSection),
-                          ],
-                        );
-                      }
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          bringSection,
-                          const SizedBox(height: 20),
-                          needSection,
-                        ],
-                      );
-                    },
-                  ),
-              ],
-            ),
-            secondChild: const SizedBox.shrink(),
-          )
-        else
+        const SizedBox(height: 16),
+        if (_itemsError != null)
           Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (_loadingItems)
-                const Center(child: CircularProgressIndicator())
-              else if (_itemsError != null)
-                Column(
-                  children: [
-                    Text(_itemsError!),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: _loadItems,
-                      child: Text(S.of(context).retry),
-                    ),
-                  ],
-                )
-              else
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isWide = constraints.maxWidth >= 760;
-                    final bringSection = _EventItemsSection(
-                      title: S.of(context).bringSectionTitle,
-                      subtitle: S.of(context).chooseWhatYouBring,
-                      items: bringItems,
-                      addLabel: S.of(context).add,
-                      onAdd: _canContributeItems
-                          ? () => _openAddItemDialog(kind: EventItemKind.bring)
-                          : null,
-                      isAdding: _creatingCustomItem,
-                      emptyLabel: S.of(context).noBringItemsYet,
-                      reservingItemId: _reservingItemId,
-                      deletingItemId: _deletingItemId,
-                      onReserve: _openQuantityDialog,
-                      onDelete: _deleteEventItem,
-                      isOwner: _isOwner,
-                      currentUserEmail: widget.session.email,
-                      canReserveItems: _canContributeItems,
-                      contributions: _contributions,
-                    );
-                    final needSection = _EventItemsSection(
-                      title: S.of(context).needSectionTitle,
-                      subtitle: S.of(context).needItemsSubtitle,
-                      items: needItems,
-                      addLabel: S.of(context).add,
-                      onAdd: _isOwner
-                          ? () => _openAddItemDialog(kind: EventItemKind.need)
-                          : null,
-                      isAdding: _creatingCustomItem,
-                      emptyLabel: S.of(context).noNeedItemsYet,
-                      reservingItemId: _reservingItemId,
-                      deletingItemId: _deletingItemId,
-                      onReserve: _openQuantityDialog,
-                      onDelete: _deleteEventItem,
-                      isOwner: _isOwner,
-                      currentUserEmail: widget.session.email,
-                      canReserveItems: _canContributeItems,
-                      contributions: _contributions,
-                    );
-
-                    if (isWide) {
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: bringSection),
-                          const SizedBox(width: 16),
-                          Expanded(child: needSection),
-                        ],
-                      );
-                    }
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        bringSection,
-                        const SizedBox(height: 20),
-                        needSection,
-                      ],
-                    );
-                  },
-                ),
+              Text(_itemsError!),
+              TextButton(onPressed: _loadItems, child: Text(l.retry)),
             ],
+          ),
+        if (_loadingItems && _eventItems == null)
+          const Center(child: CircularProgressIndicator())
+        else
+          _EventItemsSection(
+            title: needs ? l.needSectionTitle : l.bringSectionTitle,
+            subtitle: needs ? l.needItemsSubtitle : l.chooseWhatYouBring,
+            items: selected,
+            addLabel: l.add,
+            onAdd: !_isReadOnly && (needs ? _isOwner : _canContributeItems)
+                ? () => _openAddItemDialog(kind: _itemsKind)
+                : null,
+            isAdding: _creatingCustomItem,
+            emptyLabel: needs ? l.noNeedItemsYet : l.noBringItemsYet,
+            reservingItemId: _reservingItemId,
+            deletingItemId: _deletingItemId,
+            onReserve: _openQuantityDialog,
+            onDelete: _deleteEventItem,
+            isOwner: _isOwner,
+            currentUserEmail: widget.session.email,
+            canReserveItems: _canContributeItems,
+            contributions: _contributions,
           ),
       ],
     );

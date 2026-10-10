@@ -24,7 +24,7 @@ class _EventDetailFeatureActionButton extends StatelessWidget {
       onPressed: data.onPressed,
       style: OutlinedButton.styleFrom(
         alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
         side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.4)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -32,13 +32,7 @@ class _EventDetailFeatureActionButton extends StatelessWidget {
         children: [
           Icon(data.icon, size: 18),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              data.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
+          Expanded(child: Text(data.label)),
         ],
       ),
     );

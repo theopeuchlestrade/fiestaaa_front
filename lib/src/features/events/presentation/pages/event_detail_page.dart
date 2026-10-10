@@ -82,6 +82,8 @@ String _formatEventAddress(BuildContext context, EventModel event) {
   };
 }
 
+enum EventModule { items, polls, expenses, carpools, participants }
+
 class EventDetailPage extends StatefulWidget {
   const EventDetailPage({
     super.key,
@@ -90,12 +92,14 @@ class EventDetailPage extends StatefulWidget {
     this.onEventUpdated,
     this.onEventRemoved,
     this.onInvitationStatusChanged,
+    this.module,
     this.eventsApi,
     this.invitationsApi,
     this.paymentProvidersApi,
     this.realtimeClientFactory,
   });
 
+  final EventModule? module;
   final EventsApi? eventsApi;
   final InvitationsApi? invitationsApi;
   final PaymentProvidersApi? paymentProvidersApi;
@@ -147,7 +151,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   int? _deletingPollId;
   bool _creatingPoll = false;
   bool _pollsExpanded = true;
-  bool _itemsExpanded = true;
+  EventItemKind _itemsKind = EventItemKind.need;
   EventItemsScope _itemsScope = EventItemsScope.all;
   EventItemsSort _itemsSort = EventItemsSort.smart;
 
@@ -210,7 +214,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   bool get _hasAcceptedInvitation => _myInvitation?.status == 'Accepted';
   bool get _isWaitingInvitation => _myInvitation?.status == 'Waiting';
-  bool get _isExpiredInvitation => _myInvitation?.status == 'Expired';
   bool get _isReadOnly => _currentEvent.isReadOnly;
   bool get _canContributeItems =>
       !_isReadOnly && (_isOwner || _hasAcceptedInvitation);
@@ -239,8 +242,130 @@ class _EventDetailPageState extends State<EventDetailPage> {
     return _hasAcceptedInvitation || _isWaitingInvitation;
   }
 
+  Widget _modulePage(EventModule module) {
+    final l = S.of(context);
+    final feature = switch (module) {
+      EventModule.items => eventFeatureItems,
+      EventModule.polls => eventFeaturePolls,
+      EventModule.expenses => eventFeatureExpenses,
+      EventModule.carpools => eventFeatureCarpools,
+      EventModule.participants => null,
+    };
+    final title = switch (module) {
+      EventModule.items => l.availableItems,
+      EventModule.polls => l.ephemeralPolls,
+      EventModule.expenses => l.sharedExpenses,
+      EventModule.carpools => l.carpools,
+      EventModule.participants => l.participants,
+    };
+    void back() {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/events/${_currentEvent.id}');
+      }
+    }
+
+    // Do not mount restricted modules before membership is known.
+    final allowed = _isOwner || _hasAcceptedInvitation;
+    if (!allowed || (feature != null && !_isFeatureEnabled(feature))) {
+      return Scaffold(
+        appBar: AppBar(leading: BackButton(onPressed: back)),
+        body: FiestaaaPageLayout(
+          child: ListView(
+            children: [
+              FiestaaaPageHeader(title: title),
+              if (!_isOwner && !_invitationKnown && _loadingMyInvitation)
+                const Center(child: CircularProgressIndicator())
+              else ...[
+                Text(
+                  betaText(
+                    context,
+                    feature != null && !_isFeatureEnabled(feature)
+                        ? 'Ce module est désactivé.'
+                        : 'Accepte l’invitation pour accéder à ce module.',
+                    feature != null && !_isFeatureEnabled(feature)
+                        ? 'This module is disabled.'
+                        : 'Accept the invitation to access this module.',
+                  ),
+                ),
+                if (!_invitationKnown && !_isOwner)
+                  TextButton(
+                    onPressed: _loadMyInvitation,
+                    child: Text(l.retry),
+                  ),
+                TextButton(onPressed: back, child: Text(_currentEvent.name)),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+    if (module == EventModule.carpools) {
+      return EventCarpoolsPage(
+        eventId: _currentEvent.id,
+        eventName: _currentEvent.name,
+        eventDate: _currentEvent.startDateTime,
+        session: widget.session,
+        isOwner: _isOwner,
+        hasAcceptedInvitation: _hasAcceptedInvitation,
+        eventReadOnly: _isReadOnly,
+        realtimeStream: _realtime?.stream,
+      );
+    }
+    if (module == EventModule.expenses) {
+      return EventExpensesPage(
+        eventId: _currentEvent.id,
+        eventName: _currentEvent.name,
+        ownerEmail: _currentEvent.ownerEmail,
+        session: widget.session,
+        isOwner: _isOwner,
+        hasAcceptedInvitation: _hasAcceptedInvitation,
+        isReadOnly: _isReadOnly,
+        realtimeStream: _realtime?.stream,
+      );
+    }
+    if (module == EventModule.participants) {
+      return EventInvitationsPage(
+        session: widget.session,
+        eventId: _currentEvent.id,
+        eventName: _currentEvent.name,
+        ownerEmail: _currentEvent.ownerEmail,
+        eventReadOnly: _isReadOnly,
+        realtimeStream: _realtime?.stream,
+      );
+    }
+    return Scaffold(
+      body: RealtimeStatusBanner(
+        stream: _realtime?.stream,
+        child: FiestaaaPageLayout(
+          child: RefreshIndicator(
+            onRefresh: _resync,
+            child: ListView(
+              children: [
+                Row(
+                  children: [
+                    BackButton(onPressed: back),
+                    Expanded(child: Text(_currentEvent.name)),
+                  ],
+                ),
+                FiestaaaPageHeader(title: title),
+                if (_isReadOnly) _buildReadOnlyBanner(),
+                if (module == EventModule.items)
+                  _buildItemsBlock(showTitle: false, collapsible: false)
+                else
+                  _buildPollsBlock(showTitle: false, collapsible: false),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (widget.module != null) return _modulePage(widget.module!);
     return Scaffold(
       body: RealtimeStatusBanner(
         stream: _realtime?.stream,
@@ -256,8 +381,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   email: widget.session.email,
                   owner: _isOwner,
                   accepted: _hasAcceptedInvitation,
-                  waiting: _isWaitingInvitation,
-                  invitationKnown: _invitationKnown,
+                  waiting: false,
+                  invitationKnown: true,
                   items: _summaryItems,
                   contributions: _contributionsKnown
                       ? _contributions.values.expand((c) => c).toList()
@@ -277,7 +402,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   onRetry: _resync,
                 ),
                 if (_isReadOnly) _buildReadOnlyBanner(),
-                if (!_isOwner)
+                if (!_isOwner && (_isWaitingInvitation || !_invitationKnown))
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     key: _invitationKey,
@@ -289,28 +414,54 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       deadline: _currentEvent.invitationDeadline,
                     ),
                   ),
-                _DetailTile(
-                  icon: Icons.event,
-                  label: S.of(context).dateAndTime,
-                  value: _scheduleValue(),
-                ),
-                if (_currentEvent.invitationDeadline != null &&
-                    !_isOwner &&
-                    _isWaitingInvitation)
-                  _DetailTile(
-                    icon: Icons.hourglass_bottom,
-                    label: S.of(context).responseBefore,
-                    value:
-                        _currentEvent.formattedInvitationDeadline ??
-                        DateFormat.yMMMMd(
-                          S.of(context).localeName,
-                        ).format(_currentEvent.invitationDeadline!),
+                Card(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _DetailTile(
+                        icon: Icons.event,
+                        label: S.of(context).dateAndTime,
+                        value: _scheduleValue(),
+                      ),
+                      if (_currentEvent.invitationDeadline != null &&
+                          !_isOwner &&
+                          _isWaitingInvitation)
+                        _DetailTile(
+                          icon: Icons.hourglass_bottom,
+                          label: S.of(context).responseBefore,
+                          value:
+                              _currentEvent.formattedInvitationDeadline ??
+                              DateFormat.yMMMMd(
+                                S.of(context).localeName,
+                              ).format(_currentEvent.invitationDeadline!),
+                        ),
+                      ListTile(
+                        leading: Icon(
+                          Icons.place_outlined,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        title: Text(S.of(context).address),
+                        subtitle: Text(
+                          _formatEventAddress(context, _currentEvent),
+                        ),
+                        trailing: _currentEvent.hasCoordinates
+                            ? const Icon(Icons.open_in_new)
+                            : null,
+                        onTap: _currentEvent.hasCoordinates
+                            ? () => _openMap(
+                                _currentEvent.latitude!,
+                                _currentEvent.longitude!,
+                              )
+                            : null,
+                      ),
+                      if (_currentEvent.description.trim().isNotEmpty)
+                        _DetailTile(
+                          icon: Icons.description_outlined,
+                          label: S.of(context).description,
+                          value: _currentEvent.description,
+                        ),
+                    ],
                   ),
-                _buildLocationSection(),
-                _DetailTile(
-                  icon: Icons.description,
-                  label: S.of(context).description,
-                  value: _currentEvent.description,
                 ),
                 const SizedBox(height: 20),
                 _buildFeatureActionsSection(),

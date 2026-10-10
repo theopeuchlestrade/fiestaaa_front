@@ -183,6 +183,9 @@ extension _EventDetailDataMethods on _EventDetailPageState {
       if (wasAccepted != _hasAcceptedInvitation ||
           (_hasAcceptedInvitation && _realtime == null)) {
         _updateState(_startRealtime);
+        if (_hasAcceptedInvitation) {
+          await Future.wait([_loadItems(), _loadPolls()]);
+        }
       }
     } catch (_) {
       if (!mounted ||

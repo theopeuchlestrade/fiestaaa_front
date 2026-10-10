@@ -57,43 +57,6 @@ class EventPersonalSummary extends StatelessWidget {
       );
     }
     if (owner || accepted) {
-      if (event.enabledFeatures.contains(eventFeatureItems)) {
-        if (items == null || contributions == null) {
-          rows.add(unavailable(l.eventYourItems));
-        } else {
-          final mine = contributions!.where(
-            (c) =>
-                c.email.toLowerCase() == email.toLowerCase() && c.quantity > 0,
-          );
-          final quantities = <int, int>{};
-          for (final c in mine) {
-            quantities.update(
-              c.itemId,
-              (n) => n + c.quantity,
-              ifAbsent: () => c.quantity,
-            );
-          }
-          final names = {for (final item in items!) item.itemId: item};
-          if (quantities.isNotEmpty) {
-            rows.add(
-              ListTile(
-                title: Text(l.eventYourItems),
-                subtitle: Text(
-                  quantities.entries
-                      .map(
-                        (e) =>
-                            '${e.value} ${names[e.key]?.unitLabel ?? ''} · ${names[e.key]?.name ?? l.availableItems}',
-                      )
-                      .join('\n'),
-                ),
-                leading: const Icon(Icons.shopping_bag_outlined),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: onItems,
-              ),
-            );
-          }
-        }
-      }
       if (event.enabledFeatures.contains(eventFeaturePolls)) {
         if (polls == null) {
           rows.add(unavailable(l.eventYourPolls));
@@ -105,7 +68,7 @@ class EventPersonalSummary extends StatelessWidget {
             rows.add(
               ListTile(
                 title: Text(l.eventYourPolls),
-                subtitle: Text(pending.map((p) => p.question).join('\n')),
+
                 leading: const Icon(Icons.poll_outlined),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: onPolls,
@@ -115,7 +78,7 @@ class EventPersonalSummary extends StatelessWidget {
         }
       }
     }
-    if (rows.isEmpty && !owner && !accepted) return const SizedBox.shrink();
+    if (rows.isEmpty) return const SizedBox.shrink();
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -130,11 +93,6 @@ class EventPersonalSummary extends StatelessWidget {
               ),
             ),
             ...rows,
-            if (rows.isEmpty)
-              ListTile(
-                leading: const Icon(Icons.check_circle_outline),
-                title: Text(l.eventAllCaughtUp),
-              ),
           ],
         ),
       ),

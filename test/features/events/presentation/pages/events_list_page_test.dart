@@ -109,7 +109,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('First event'), findsOneWidget);
-    expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+    expect(find.byType(PopupMenuButton<String>), findsOneWidget);
 
     await tester.tap(find.text('Load more'));
     await tester.pumpAndSettle();

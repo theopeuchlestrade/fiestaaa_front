@@ -7,7 +7,8 @@ extension _EventDetailItemMethods on _EventDetailPageState {
   );
 
   Future<void> _loadItemsOnce({bool showLoading = true}) async {
-    if (!mounted) return;
+    if (!_isFeatureEnabled(eventFeatureItems)) return;
+    if (!mounted || (!_isOwner && !_hasAcceptedInvitation)) return;
     final requestScope = (
       _scopeGeneration,
       widget.session.token,
@@ -91,7 +92,8 @@ extension _EventDetailItemMethods on _EventDetailPageState {
   );
 
   Future<void> _loadPollsOnce({bool showLoading = true}) async {
-    if (!mounted) return;
+    if (!_isFeatureEnabled(eventFeaturePolls)) return;
+    if (!mounted || (!_isOwner && !_hasAcceptedInvitation)) return;
     final requestScope = (
       _scopeGeneration,
       widget.session.token,

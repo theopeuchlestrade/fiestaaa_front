@@ -100,7 +100,7 @@ void main() {
       HomePage(
         session: session,
         onLogout: () async {},
-        initialIndex: 2,
+        destination: HomeDestination.friends,
         notificationIntent: const PushNotificationIntent(
           type: 'friend_request',
         ),
@@ -131,7 +131,9 @@ void main() {
     await tester.pump();
   });
 
-  testWidgets('renders directory, requests and add tabs', (tester) async {
+  testWidgets('renders friends and requests with a dedicated add action', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(
         FriendsPage(
@@ -150,7 +152,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('bob'), findsWidgets);
 
-    await tester.tap(find.byType(Tab).at(2));
+    await tester.tap(find.widgetWithText(FilledButton, 'Add friend'));
     await tester.pumpAndSettle();
     expect(find.byType(TextField), findsWidgets);
   });

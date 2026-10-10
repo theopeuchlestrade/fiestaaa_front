@@ -1,3 +1,4 @@
+import 'features/events/presentation/pages/event_create_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_route_page.dart';
 import 'features/beta_pages.dart';
 import 'package:intl/intl.dart';
@@ -30,7 +31,10 @@ int? parseEventRouteId(String? raw) {
 }
 
 class FiestaaaApp extends StatefulWidget {
-  const FiestaaaApp({super.key});
+  const FiestaaaApp({super.key, this.initialLocation, this.authApi});
+
+  final String? initialLocation;
+  final AuthApi? authApi;
 
   @override
   State<FiestaaaApp> createState() => _FiestaaaAppState();
@@ -39,7 +43,7 @@ class FiestaaaApp extends StatefulWidget {
 class _FiestaaaAppState extends State<FiestaaaApp> {
   static const _shareTokenKey = 'fiestaaa_pending_share_token';
   static const _verificationTokenKey = 'fiestaaa_pending_verification_token';
-  final _authApi = AuthApi();
+  late final _authApi = widget.authApi ?? AuthApi();
   final _localeService = LocaleService();
   late final ThemeService _themeService = ThemeService();
   SessionData? _session;
@@ -50,6 +54,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   String? _authFlashCode;
   bool _authFlashIsError = false;
   String? _pendingNotificationRoute;
+  String? _pendingDestination;
   PushNotificationIntent? _pendingNotificationIntent;
   int _notificationIntentSerial = 0;
   StreamSubscription<PushNotificationIntent>? _notificationIntentSub;
@@ -67,15 +72,17 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       removeSensitiveQueryParameters(['token']);
     }
     _router = GoRouter(
-      initialLocation: Uri(
-        path: Uri.base.path.isEmpty ? '/' : Uri.base.path,
-        queryParameters: {
-          if (Uri.base.queryParameters['q'] != null)
-            'q': Uri.base.queryParameters['q']!,
-          if (Uri.base.queryParameters['view'] != null)
-            'view': Uri.base.queryParameters['view']!,
-        },
-      ).toString(),
+      initialLocation:
+          widget.initialLocation ??
+          Uri(
+            path: Uri.base.path.isEmpty ? '/' : Uri.base.path,
+            queryParameters: {
+              if (Uri.base.queryParameters['q'] != null)
+                'q': Uri.base.queryParameters['q']!,
+              if (Uri.base.queryParameters['view'] != null)
+                'view': Uri.base.queryParameters['view']!,
+            },
+          ).toString(),
       routes: [
         for (final page in ['privacy', 'terms', 'support', 'delete-account'])
           GoRoute(
@@ -93,6 +100,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
           path: '/safety',
           builder: (context, state) => SafetyPage(
             token: _session!.token,
+            initialHandle: state.uri.queryParameters['handle'],
             eventId: int.tryParse(state.uri.queryParameters['eventId'] ?? ''),
           ),
         ),
@@ -103,7 +111,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
           pageBuilder: (context, state) => NoTransitionPage(
             key: const ValueKey('home'),
             child: _homePage(
-              initialIndex: 0,
+              destination: HomeDestination.events,
               query: state.uri.queryParameters['q'] ?? '',
               view: state.uri.queryParameters['view'] ?? 'upcoming',
             ),
@@ -113,8 +121,16 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
           path: '/events/new',
           onExit: (context, state) => EventFormExitGuard.leave(),
           pageBuilder: (context, state) => NoTransitionPage(
-            key: const ValueKey('home'),
-            child: _homePage(initialIndex: 1),
+            key: const ValueKey('create-event'),
+            child: Scaffold(
+              appBar: AppBar(
+                leading: BackButton(onPressed: () => context.go('/events')),
+              ),
+              body: EventCreatePage(
+                session: _session!,
+                onEventCreated: () => context.go('/events'),
+              ),
+            ),
           ),
         ),
         GoRoute(
@@ -128,16 +144,19 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
             eventId: parseEventRouteId(state.pathParameters['eventId'])!,
           ),
         ),
-        GoRoute(
-          path: '/events/:eventId/carpools',
-          redirect: (context, state) =>
-              '/events/${state.pathParameters['eventId']}',
-        ),
-        GoRoute(
-          path: '/events/:eventId/expenses',
-          redirect: (context, state) =>
-              '/events/${state.pathParameters['eventId']}',
-        ),
+        for (final module in EventModule.values)
+          GoRoute(
+            path: '/events/:eventId/${module.name}',
+            redirect: (context, state) =>
+                parseEventRouteId(state.pathParameters['eventId']) == null
+                ? '/events'
+                : null,
+            builder: (context, state) => EventRoutePage(
+              session: _session!,
+              eventId: parseEventRouteId(state.pathParameters['eventId'])!,
+              module: module,
+            ),
+          ),
         GoRoute(
           path: '/invitations',
           redirect: (context, state) => '/events?view=invitations',
@@ -146,14 +165,14 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
           path: '/friends',
           pageBuilder: (context, state) => NoTransitionPage(
             key: const ValueKey('home'),
-            child: _homePage(initialIndex: 2),
+            child: _homePage(destination: HomeDestination.friends),
           ),
         ),
         GoRoute(
           path: '/profile',
           pageBuilder: (context, state) => NoTransitionPage(
             key: const ValueKey('home'),
-            child: _homePage(initialIndex: 3),
+            child: _homePage(destination: HomeDestination.profile),
           ),
         ),
         GoRoute(
@@ -207,13 +226,29 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
               ? '/'
               : (_session == null ? '/auth' : '/events');
         }
-        if (_loadingSession) return state.matchedLocation == '/' ? null : '/';
+        if (_loadingSession) {
+          if (state.matchedLocation != '/' &&
+              state.matchedLocation != '/auth') {
+            _pendingDestination = state.uri.toString();
+          }
+          return state.matchedLocation == '/' ? null : '/';
+        }
         final authenticated = _session != null;
-        if (!authenticated && state.matchedLocation != '/auth') return '/auth';
+        if (!authenticated && state.matchedLocation != '/auth') {
+          if (state.matchedLocation != '/') {
+            _pendingDestination = state.uri.toString();
+          }
+          return '/auth';
+        }
         if (authenticated && _pendingNotificationRoute != null) {
           final destination = _pendingNotificationRoute!;
           _pendingNotificationRoute = null;
           if (state.matchedLocation != destination) return destination;
+        }
+        if (authenticated && _pendingDestination != null) {
+          final destination = _pendingDestination!;
+          _pendingDestination = null;
+          return destination;
         }
         if (authenticated && state.matchedLocation == '/auth') return '/events';
         if (authenticated && state.matchedLocation == '/') return '/events';
@@ -417,9 +452,11 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       _authFlashCode = null;
       _authFlashIsError = false;
     });
-    _router.refresh();
-    final destination = _pendingNotificationRoute ?? '/events';
+    final destination =
+        _pendingNotificationRoute ?? _pendingDestination ?? '/events';
     _pendingNotificationRoute = null;
+    _pendingDestination = null;
+    _router.refresh();
     _router.go(destination);
   }
 
@@ -443,6 +480,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   }
 
   Future<void> _handleLogout() async {
+    _pendingDestination = null;
     final token = _session?.token;
     await PushNotificationService.instance.clearSession();
     try {
@@ -549,7 +587,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   );
 
   Widget _homePage({
-    int initialIndex = 0,
+    HomeDestination destination = HomeDestination.events,
     String query = '',
     String view = 'upcoming',
   }) => HomePage(
@@ -563,7 +601,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     initialShareToken: _pendingShareToken,
     notificationIntent: _pendingNotificationIntent,
     notificationIntentSerial: _notificationIntentSerial,
-    initialIndex: initialIndex,
+    destination: destination,
     onShareTokenConsumed: () {
       PendingTokenStorage.remove(_shareTokenKey);
       setState(() => _pendingShareToken = null);

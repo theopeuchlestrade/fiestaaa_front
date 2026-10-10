@@ -38,9 +38,10 @@ and event content at 1200. Cards use content-driven rows and one column when tex
 is enlarged beyond 150%. Manrope and its OFL license are bundled for offline use.
 
 The personal summary respects enabled modules and participation permissions and
-is hidden for finished events. It shows pending responses, personal contributions
-and active unanswered polls. Unknown data offers a retry. The item summary is
-independent of the module's selected filter.
+is hidden for finished events. It only links to active unanswered polls; invitation responses are shown once
+in their dedicated card. Empty personal actions disappear. Contributions and poll
+questions belong to their module pages. Needs and personal brings use separate
+views, and restricted modules are not mounted before membership is known.
 
 ## Validation and release
 
@@ -48,7 +49,7 @@ Automated checks cover list recovery, search generations, pagination, local draf
 isolation/serialization, draft restore/discard, address revalidation, failed and
 successful creation, edit-exit confirmation, and personal summaries. The visual
 matrix covers 360/720/1024/1440 pixels, 100%/200% text, both themes and French/English.
-Six golden images per platform cover the three screens. Linux and macOS
+Twelve golden images per platform cover six reference screens. Linux and macOS
 references are kept separate because their font rasterization differs; pixel
 comparisons remain exact. Use the Flutter version pinned in CI on each platform. Linux references were
 reviewed from the test-image artifacts produced by the existing GitHub CI runner;
@@ -64,9 +65,8 @@ service. Compare the local contracts with:
 node tool/check_backend_contract.mjs --source ../fiestaaa_back/openapi.json
 ```
 
-Release the compatible backend before the new frontend. Remote contract CI only
-accepts the new snapshot once the backend contract lands on its configured
-reference. Production deployment is separate from these local changes. Before
+This harmonization changes no backend API or migration. The backend specification
+PR only adopts tooling and describes existing permissions. Production deployment is separate from these local changes. Before
 production, verify create/search/open/respond in the validation environment,
 browser back/reload, and VoiceOver/TalkBack on real devices. Observe existing
 error reporting and API metrics, and retain the previous frontend for rollback.

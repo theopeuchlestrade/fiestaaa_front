@@ -1,3 +1,21 @@
+import 'dart:convert';
+import 'package:fiestaaa_front/src/features/beta_pages.dart';
+import 'package:fiestaaa_front/src/features/beta_api.dart';
+import 'package:fiestaaa_front/src/features/friends/presentation/pages/friends_page.dart';
+import 'package:fiestaaa_front/src/features/friends/data/friends_api.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/pages/event_expenses_page.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/pages/event_invitations_page.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/pages/event_edit_page.dart';
+import 'package:fiestaaa_front/src/features/events/domain/event_expense_model.dart';
+import 'package:fiestaaa_front/src/features/carpools/presentation/pages/event_carpools_page.dart';
+import 'package:fiestaaa_front/src/features/carpools/data/carpools_api.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:fiestaaa_front/src/core/theme_service.dart';
+import 'package:fiestaaa_front/src/core/locale_service.dart';
+import 'package:fiestaaa_front/src/features/auth/presentation/pages/auth_page.dart';
+import 'package:fiestaaa_front/src/features/profile/presentation/pages/profile_page.dart';
+import 'package:fiestaaa_front/src/features/profile/data/profile_api.dart';
+import 'package:fiestaaa_front/src/features/profile/domain/profile_info.dart';
 import 'dart:io' show Platform;
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/core/api_response.dart' as response;
@@ -38,7 +56,22 @@ class _Api extends EventsApi {
     int eventId, {
     String? token,
     String? scope,
-  }) async => [];
+  }) async => [
+    EventItemModel(
+      eventId: 1,
+      itemId: 1,
+      typeId: 1,
+      typeName: 'Drinks',
+      name: 'Soft drinks',
+      maxQuantity: 6,
+      reservedQuantity: 2,
+      unitLabel: 'bottles',
+      kind: EventItemKind.need,
+      createdByEmail: 'owner@example.com',
+      createdByHandle: 'demo',
+      createdByAvatarUrl: null,
+    ),
+  ];
   @override
   Future<List<ItemContributionModel>> fetchEventItemContributions({
     required String token,
@@ -49,6 +82,32 @@ class _Api extends EventsApi {
     required String token,
     required int eventId,
   }) async => [];
+  @override
+  Future<List<EventExpenseModel>> fetchEventExpenses({
+    required String token,
+    required int eventId,
+  }) async => [];
+  @override
+  Future<EventExpensesSummaryModel> fetchEventExpensesSummary({
+    required String token,
+    required int eventId,
+  }) async => EventExpensesSummaryModel(
+    currency: 'EUR',
+    totalExpensesCents: 0,
+    balances: [],
+    settlements: [],
+  );
+  @override
+  void dispose() {}
+}
+
+class _ProfileApi extends ProfileApi {
+  @override
+  Future<ProfileInfo> fetchProfile(String token) async => ProfileInfo(
+    email: 'demo@example.invalid',
+    handle: 'demo',
+    expiration: DateTime(2099),
+  );
   @override
   void dispose() {}
 }
@@ -61,8 +120,12 @@ class _Realtime extends RealtimeClient {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  late Map<String, dynamic> legalPages;
   setUpAll(() async {
     tz.initializeTimeZones();
+    legalPages =
+        jsonDecode(await rootBundle.loadString('assets/legal/pages.json'))
+            as Map<String, dynamic>;
     await (FontLoader(
       'Manrope',
     )..addFont(rootBundle.load('assets/fonts/Manrope.ttf'))).load();
@@ -70,7 +133,29 @@ void main() {
       'MaterialIcons',
     )..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
   });
-  for (final screen in ['list', 'form', 'detail']) {
+  const referenceScreens = [
+    'list',
+    'form',
+    'detail',
+    'needs',
+    'profile',
+    'auth',
+  ];
+  for (final screen in [
+    ...referenceScreens,
+    'edit',
+    'polls',
+    'expenses',
+    'carpools',
+    'participants',
+    'friends',
+    'recovery',
+    'safety',
+    'privacy',
+    'terms',
+    'support',
+    'delete-account',
+  ]) {
     for (final width in [360.0, 720.0, 1024.0, 1440.0]) {
       for (final scale in [1.0, 2.0]) {
         for (final dark in [false, true]) {
@@ -83,7 +168,17 @@ void main() {
                 tester.view.devicePixelRatio = 1;
                 addTearDown(tester.view.resetPhysicalSize);
                 addTearDown(tester.view.resetDevicePixelRatio);
+                PackageInfo.setMockInitialValues(
+                  appName: 'Fiestaaa',
+                  packageName: 'com.fiestaaa.fiestaaa',
+                  version: '0.5.0',
+                  buildNumber: '5027',
+                  buildSignature: 'test',
+                );
                 final api = _Api();
+                final friendsApi = FriendsApi(
+                  client: MockClient((_) async => http.Response('[]', 200)),
+                );
                 final invitations = InvitationsApi(
                   client: MockClient((_) async => http.Response('[]', 200)),
                 );
@@ -101,6 +196,7 @@ void main() {
                     invitationsApi: invitations,
                     onEventSelected: (_) async {},
                     onOpenTrash: () {},
+                    onCreate: () {},
                   ),
                   'form' => EventCreatePage(
                     initialDateTime: DateTime(2099, 7, 1, 20),
@@ -109,7 +205,74 @@ void main() {
                     paymentProvidersApi: providers,
                     onEventCreated: () {},
                   ),
+                  'auth' => AuthPage(onAuthenticated: (_) async {}),
+                  'edit' => EventEditPage(
+                    session: session,
+                    initialEvent: fixtures.event(),
+                    eventsApi: api,
+                    paymentProvidersApi: providers,
+                  ),
+                  'expenses' => EventExpensesPage(
+                    eventId: 1,
+                    eventName: 'Dinner',
+                    ownerEmail: session.email,
+                    session: session,
+                    isOwner: true,
+                    hasAcceptedInvitation: false,
+                    isReadOnly: false,
+                    eventsApi: api,
+                    invitationsApi: invitations,
+                  ),
+                  'participants' => EventInvitationsPage(
+                    session: session,
+                    eventId: 1,
+                    eventName: 'Dinner',
+                    ownerEmail: session.email,
+                    eventReadOnly: false,
+                    invitationsApi: invitations,
+                    friendsApi: friendsApi,
+                  ),
+                  'carpools' => EventCarpoolsPage(
+                    eventId: 1,
+                    eventName: 'Dinner',
+                    eventDate: DateTime(2099),
+                    session: session,
+                    isOwner: true,
+                    hasAcceptedInvitation: false,
+                    eventReadOnly: false,
+                    realtimeStream: const Stream<Map<String, dynamic>>.empty(),
+                    api: CarpoolsApi(
+                      client: MockClient((_) async => http.Response('[]', 200)),
+                    ),
+                  ),
+                  'friends' => FriendsPage(
+                    session: session,
+                    friendsApi: friendsApi,
+                    eventsApi: api,
+                    invitationsApi: invitations,
+                  ),
+                  'recovery' => const PasswordResetPage(),
+                  'safety' => SafetyPage(
+                    token: 'test',
+                    api: BetaApi(
+                      client: MockClient((_) async => http.Response('[]', 200)),
+                    ),
+                  ),
+                  'privacy' || 'terms' || 'support' || 'delete-account' =>
+                    LegalPage(page: screen, pages: Future.value(legalPages)),
+                  'profile' => ProfilePage(
+                    session: session,
+                    onLogout: () {},
+                    api: _ProfileApi(),
+                    themeService: ThemeService(),
+                    localeService: LocaleService(),
+                  ),
                   _ => EventDetailPage(
+                    module: screen == 'needs'
+                        ? EventModule.items
+                        : screen == 'polls'
+                        ? EventModule.polls
+                        : null,
                     session: session,
                     event: fixtures.event(),
                     eventsApi: api,
@@ -143,6 +306,7 @@ void main() {
                 await tester.pumpAndSettle();
                 expect(tester.takeException(), isNull);
                 final golden =
+                    referenceScreens.contains(screen) &&
                     scale == 1 &&
                     ((width == 360 && !dark && locale == 'en') ||
                         (width == 1440 && dark && locale == 'fr'));
@@ -156,6 +320,10 @@ void main() {
                   await expectLater(
                     tester,
                     meetsGuideline(androidTapTargetGuideline),
+                  );
+                  await expectLater(
+                    tester,
+                    meetsGuideline(textContrastGuideline),
                   );
                   semantics.dispose();
                   await expectLater(

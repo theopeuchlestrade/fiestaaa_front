@@ -1,3 +1,5 @@
+import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
+import 'package:fiestaaa_front/src/core/presentation/widgets/route_back_button.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
@@ -30,7 +32,7 @@ class _EventTrashPageState extends State<EventTrashPage> {
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      _loading = _events == null;
       _errorCode = null;
     });
     try {
@@ -75,48 +77,56 @@ class _EventTrashPageState extends State<EventTrashPage> {
   Widget build(BuildContext context) {
     final title = _isFrench ? 'Corbeille' : 'Trash';
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorCode != null
-          ? Center(
-              child: FilledButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh),
-                label: Text(_isFrench ? 'Réessayer' : 'Retry'),
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                itemCount: _events?.length ?? 0,
-                itemBuilder: (context, index) {
-                  final event = _events![index];
-                  final purgeAt = event.purgeAt;
-                  final purgeLabel = purgeAt == null
-                      ? null
-                      : DateFormat.yMMMd(
-                          Localizations.localeOf(context).toLanguageTag(),
-                        ).format(purgeAt.toLocal());
-                  return ListTile(
-                    leading: const Icon(Icons.event),
+      appBar: AppBar(leading: const RouteBackButton(fallback: '/events')),
+      body: FiestaaaPageLayout(
+        child: RefreshIndicator(
+          onRefresh: _load,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              FiestaaaPageHeader(title: title),
+              if (_loading) const Center(child: CircularProgressIndicator()),
+              if (_errorCode != null)
+                Column(
+                  children: [
+                    Text(
+                      _isFrench
+                          ? 'Impossible de charger la corbeille.'
+                          : 'Unable to load trash.',
+                    ),
+                    TextButton.icon(
+                      onPressed: _load,
+                      icon: const Icon(Icons.refresh),
+                      label: Text(_isFrench ? 'Réessayer' : 'Retry'),
+                    ),
+                  ],
+                ),
+              if (!_loading &&
+                  _errorCode == null &&
+                  (_events?.isEmpty ?? false))
+                Text(_isFrench ? 'La corbeille est vide.' : 'Trash is empty.'),
+              for (final event in _events ?? <EventModel>[])
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.event_outlined),
                     title: Text(event.name),
-                    subtitle: purgeLabel == null
+                    subtitle: event.purgeAt == null
                         ? null
                         : Text(
                             _isFrench
-                                ? 'Suppression définitive le $purgeLabel'
-                                : 'Permanently deleted on $purgeLabel',
+                                ? 'Suppression définitive le ${DateFormat.yMMMd(Localizations.localeOf(context).toLanguageTag()).format(event.purgeAt!.toLocal())}'
+                                : 'Permanently deleted on ${DateFormat.yMMMd(Localizations.localeOf(context).toLanguageTag()).format(event.purgeAt!.toLocal())}',
                           ),
                     trailing: TextButton(
                       onPressed: () => _restore(event),
                       child: Text(_isFrench ? 'Restaurer' : 'Restore'),
                     ),
-                  );
-                },
-              ),
-            ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

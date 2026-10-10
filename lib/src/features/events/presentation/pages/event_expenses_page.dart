@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/presentation/widgets/route_back_button.dart';
 import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
@@ -17,6 +18,8 @@ import 'package:intl/intl.dart';
 class EventExpensesPage extends StatefulWidget {
   const EventExpensesPage({
     super.key,
+    this.invitationsApi,
+    this.eventsApi,
     required this.eventId,
     required this.eventName,
     required this.ownerEmail,
@@ -28,6 +31,8 @@ class EventExpensesPage extends StatefulWidget {
     this.compactModal = false,
   });
 
+  final EventsApi? eventsApi;
+  final InvitationsApi? invitationsApi;
   final int eventId;
   final String eventName;
   final String ownerEmail;
@@ -46,13 +51,14 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
   final _refreshQueue = RefreshQueue();
   int _scopeGeneration = 0;
 
-  final _eventsApi = EventsApi();
-  final _invitationsApi = InvitationsApi();
+  late final _eventsApi = widget.eventsApi ?? EventsApi();
+  late final _invitationsApi = widget.invitationsApi ?? InvitationsApi();
 
   List<EventExpenseModel> _expenses = const [];
   EventExpensesSummaryModel? _summary;
   List<InvitationModel> _invitations = const [];
   bool _loading = true;
+  bool _hasLoaded = false;
   String? _error;
   int? _deletingExpenseId;
   StreamSubscription<Map<String, dynamic>>? _realtimeSub;
@@ -96,6 +102,7 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
         oldWidget.session.token != widget.session.token) {
       _scopeGeneration++;
       _expenses = const [];
+      _hasLoaded = false;
       _summary = null;
       _invitations = const [];
       _loadData();
@@ -136,7 +143,7 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
     );
     if (showLoading) {
       setState(() {
-        _loading = true;
+        _loading = !_hasLoaded;
         _error = null;
       });
     }
@@ -163,6 +170,7 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
       }
       setState(() {
         _expenses = results[0] as List<EventExpenseModel>;
+        _hasLoaded = true;
         _summary = results[1] as EventExpensesSummaryModel;
         _invitations = results[2] as List<InvitationModel>;
         _error = null;
@@ -615,9 +623,10 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                 child: CircularProgressIndicator(),
               ),
             )
-          else if (_error != null)
+          else if (_error != null && !_hasLoaded)
             _buildErrorState(l10n)
           else ...[
+            if (_error != null) _buildErrorState(l10n),
             _buildSummaryCard(l10n),
             const SizedBox(height: 16),
             _buildExpensesList(l10n),
@@ -634,69 +643,21 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
     return Scaffold(body: FiestaaaPageLayout(child: realtimeContent));
   }
 
-  Widget _buildHeroSection(S l10n) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: isDark
-            ? FiestaaaPalette.darkCardGradient
-            : FiestaaaPalette.lightCardGradient,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: scheme.shadow.withValues(alpha: isDark ? 0.24 : 0.12),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildHeroSection(S l10n) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.sharedExpenses,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.sharedExpensesHelper,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.86),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (widget.compactModal)
-                IconButton(
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.14),
-                    foregroundColor: Colors.white,
-                  ),
-                  icon: const Icon(Icons.close),
-                ),
-            ],
-          ),
+          RouteBackButton(fallback: '/events/${widget.eventId}'),
+          Expanded(child: Text(widget.eventName)),
         ],
       ),
-    );
-  }
+      FiestaaaPageHeader(
+        title: l10n.sharedExpenses,
+        subtitle: l10n.sharedExpensesHelper,
+      ),
+    ],
+  );
 
   Widget _buildErrorState(S l10n) {
     final theme = Theme.of(context);

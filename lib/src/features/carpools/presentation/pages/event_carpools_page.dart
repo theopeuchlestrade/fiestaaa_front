@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:fiestaaa_front/src/core/presentation/widgets/route_back_button.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'package:flutter/material.dart';
@@ -7,13 +9,13 @@ import 'package:fiestaaa_front/src/features/carpools/data/carpools_api.dart';
 import 'package:fiestaaa_front/src/features/carpools/domain/carpool_model.dart';
 import 'package:fiestaaa_front/src/features/carpools/presentation/widgets/carpool_card.dart';
 import 'package:fiestaaa_front/src/features/carpools/presentation/pages/carpool_create_page.dart';
-import 'package:fiestaaa_front/src/core/presentation/widgets/quasi_fullscreen_modal.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
 
 class EventCarpoolsPage extends StatefulWidget {
   const EventCarpoolsPage({
     super.key,
+    this.api,
     required this.eventId,
     required this.eventName,
     required this.eventDate,
@@ -22,8 +24,10 @@ class EventCarpoolsPage extends StatefulWidget {
     required this.hasAcceptedInvitation,
     required this.eventReadOnly,
     this.compactModal = false,
+    this.realtimeStream,
   });
 
+  final CarpoolsApi? api;
   final int eventId;
   final String eventName;
   final DateTime eventDate;
@@ -32,6 +36,7 @@ class EventCarpoolsPage extends StatefulWidget {
   final bool hasAcceptedInvitation;
   final bool eventReadOnly;
   final bool compactModal;
+  final Stream<Map<String, dynamic>>? realtimeStream;
 
   @override
   State<EventCarpoolsPage> createState() => _EventCarpoolsPageState();
@@ -41,7 +46,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
   final _refreshQueue = RefreshQueue();
   int _scopeGeneration = 0;
 
-  final _carpoolsApi = CarpoolsApi();
+  late final _carpoolsApi = widget.api ?? CarpoolsApi();
   List<CarpoolModel>? _carpools;
   bool _loading = true;
   String? _error;
@@ -49,6 +54,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
   int? _leavingCarpoolId;
   int? _editingCarpoolId;
   RealtimeClient? _realtime;
+  StreamSubscription<Map<String, dynamic>>? _realtimeSub;
   String? _sortBy; // New: Current sort option
 
   bool get _canInteract =>
@@ -64,6 +70,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
   @override
   void didUpdateWidget(covariant EventCarpoolsPage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.realtimeStream != widget.realtimeStream) _setupRealtime();
     if (oldWidget.eventId != widget.eventId ||
         oldWidget.session.token != widget.session.token) {
       _scopeGeneration++;
@@ -77,27 +84,29 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
   @override
   void dispose() {
     _refreshQueue.dispose();
+    _realtimeSub?.cancel();
     _realtime?.dispose();
     _carpoolsApi.dispose();
     super.dispose();
   }
 
   void _setupRealtime() {
-    _realtime = RealtimeClient(
-      token: widget.session.token,
-      eventId: widget.eventId,
-    );
-    _realtime!.connect();
-    _realtime!.stream.listen((event) {
-      if (!mounted) return;
-      if ([
-        'realtime.ready',
-        'carpool_created',
-        'carpool_updated',
-        'carpool_deleted',
-        'carpool_joined',
-        'carpool_left',
-      ].contains(event['type'])) {
+    _realtimeSub?.cancel();
+    _realtime?.dispose();
+    _realtime = null;
+    if (widget.realtimeStream == null) {
+      _realtime = RealtimeClient(
+        token: widget.session.token,
+        eventId: widget.eventId,
+      )..connect();
+    }
+    _realtimeSub = (widget.realtimeStream ?? _realtime?.stream)?.listen((
+      message,
+    ) {
+      final type = message['type'] as String?;
+      final eventId = message['event_id'];
+      if (eventId is int && eventId != widget.eventId) return;
+      if (type == 'event.carpools.changed' || type == 'realtime.ready') {
         _loadCarpools();
       }
     });
@@ -151,19 +160,22 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
       return;
     }
     setState(() => _editingCarpoolId = existing?.carpoolId);
-    final result = await showQuasiFullscreenModal<Object>(
-      context: context,
-      heightFactor: 0.9,
-      fitContent: true,
-      builder: (context) => FiestaaaPageLayout(
-        child: CarpoolCreatePage(
-          existingCarpool: existing,
-          eventId: widget.eventId,
-          eventDate: widget.eventDate,
-          session: widget.session,
+    final result = await Navigator.of(context).push<Object>(
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          body: FiestaaaPageLayout(
+            maxWidth: 760,
+            child: CarpoolCreatePage(
+              existingCarpool: existing,
+              eventId: widget.eventId,
+              eventDate: widget.eventDate,
+              session: widget.session,
+            ),
+          ),
         ),
       ),
     );
+    if (!mounted) return;
     setState(() => _editingCarpoolId = null);
     if (result == null) return;
 
@@ -390,11 +402,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
               ),
               const SizedBox(width: 8),
               _buildSortMenu(l10n),
-              IconButton(
-                onPressed: () => Navigator.of(context).maybePop(),
-                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-                icon: const Icon(Icons.close),
-              ),
+              RouteBackButton(fallback: '/events/${widget.eventId}'),
             ],
           ),
           if (!_canInteract) ...[
@@ -405,6 +413,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
             _buildCreateSection(l10n, canCreateCarpool),
             const SizedBox(height: 24),
           ],
+          if (_error != null && _carpools != null) _buildErrorSection(l10n),
           if (_loading)
             const Center(
               child: Padding(
@@ -412,7 +421,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
                 child: CircularProgressIndicator(),
               ),
             )
-          else if (_error != null)
+          else if (_error != null && _carpools == null)
             _buildErrorSection(l10n)
           else if (_carpools == null || _carpools!.isEmpty)
             _buildEmptyState(l10n)
@@ -423,7 +432,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
     );
 
     final realtimeContent = RealtimeStatusBanner(
-      stream: _realtime?.stream,
+      stream: widget.realtimeStream ?? _realtime?.stream,
       child: content,
     );
     if (widget.compactModal) return realtimeContent;

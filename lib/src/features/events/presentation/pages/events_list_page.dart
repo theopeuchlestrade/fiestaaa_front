@@ -264,9 +264,6 @@ class EventsListPageState extends State<EventsListPage> {
   @override
   Widget build(BuildContext context) {
     final l = S.of(context);
-    final pending = _myInvitations.values
-        .where((i) => i.status == 'Waiting')
-        .length;
     final filters = {
       'upcoming': l.eventsUpcoming,
       'invitations': l.eventsInvitations,
@@ -375,6 +372,34 @@ class EventsListPageState extends State<EventsListPage> {
       child: Column(
         children: [
           Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  l.fiestaaa,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                if (widget.onCreate != null)
+                  FilledButton.icon(
+                    onPressed: widget.onCreate,
+                    icon: const Icon(Icons.add),
+                    label: Text(l.create),
+                  ),
+                if (widget.onOpenTrash != null)
+                  PopupMenuButton<String>(
+                    tooltip: l.eventsTrash,
+                    onSelected: (_) => widget.onOpenTrash!(),
+                    itemBuilder: (_) => [
+                      PopupMenuItem(value: 'trash', child: Text(l.eventsTrash)),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+          Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
               children: [
@@ -401,12 +426,6 @@ class EventsListPageState extends State<EventsListPage> {
                     },
                   ),
                 ),
-                if (widget.onOpenTrash != null)
-                  IconButton(
-                    tooltip: l.eventsTrash,
-                    onPressed: widget.onOpenTrash,
-                    icon: const Icon(Icons.delete_outline),
-                  ),
               ],
             ),
           ),
@@ -425,13 +444,6 @@ class EventsListPageState extends State<EventsListPage> {
               ],
             ),
           ),
-          if (pending > 0)
-            ListTile(
-              leading: const Icon(Icons.mark_email_unread_outlined),
-              title: Text(l.invitationsWaitingCount(pending)),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => _setCriteria('', 'invitations'),
-            ),
           if (_refreshing && !_loading) const LinearProgressIndicator(),
           if (_events != null && _error != null)
             AsyncNotice(

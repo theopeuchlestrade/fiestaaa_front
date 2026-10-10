@@ -1,3 +1,5 @@
+import 'package:go_router/go_router.dart';
+import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
@@ -17,9 +19,9 @@ import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-enum _FriendsTab { friends, requests, add }
+enum _FriendsTab { friends, requests }
 
-enum _FriendMenuAction { inviteToFiestaaa, remove }
+enum _FriendMenuAction { inviteToFiestaaa, remove, block, report }
 
 class FriendsPageInviteFlow {
   const FriendsPageInviteFlow({required this.eventId, required this.eventName});
@@ -66,6 +68,50 @@ class _FriendsPageState extends State<FriendsPage>
   final _inviteController = TextEditingController();
   final _friendsFilterController = TextEditingController();
   late final TabController _tabController;
+  final _addRefresh = ValueNotifier<int>(0);
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    if (mounted) _addRefresh.value++;
+  }
+
+  Future<void> _openAddFriend() => showDialog<void>(
+    context: context,
+    builder: (context) => Dialog(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760, maxHeight: 650),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  tooltip: S.of(context).close,
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+              Expanded(
+                child: ValueListenableBuilder<int>(
+                  valueListenable: _addRefresh,
+                  builder: (_, _, _) => _AddFriendTab(
+                    controller: _inviteController,
+                    searching: _searching,
+                    suggestions: _suggestions,
+                    sending: _sending,
+                    onRefresh: _refreshAll,
+                    onSend: _sendRequest,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
   Timer? _debounce;
   StreamSubscription<Map<String, dynamic>>? _realtimeSub;
 
@@ -122,6 +168,7 @@ class _FriendsPageState extends State<FriendsPage>
     _inviteController.dispose();
     _friendsFilterController.dispose();
     _tabController.dispose();
+    _addRefresh.dispose();
     _api.dispose();
     _eventsApi.dispose();
     _invitationsApi.dispose();
@@ -1044,162 +1091,59 @@ class _FriendsPageState extends State<FriendsPage>
     final visibleFriends = _filteredFriends;
     final friendEntries = _buildFriendEntries(visibleFriends);
 
-    return RealtimeStatusBanner(
-      stream: widget.realtimeStream,
-      child: FiestaaaPageLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            FiestaaaPageHeader(
-              title: S.of(context).myFriends,
-              subtitle: S.of(context).addContactsManageRequests,
-              bottomSpacing: 12,
-            ),
-            _FriendsOverviewCard(
-              friendCount: _friends.length,
-              incomingCount: incoming.length,
-              outgoingCount: outgoing.length,
-            ),
-            const SizedBox(height: 16),
-            _FriendsTabs(
-              controller: _tabController,
-              pendingIncomingCount: incoming.length,
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _FriendsDirectoryTab(
-                    filterController: _friendsFilterController,
-                    query: _friendsFilterController.text.trim(),
-                    totalFriendsCount: _friends.length,
-                    filteredFriendsCount: visibleFriends.length,
-                    loading: _loading,
-                    error: _error,
-                    entries: friendEntries,
-                    onRefresh: _refreshAll,
-                    onClearFilter: () => _friendsFilterController.clear(),
-                    onInviteToEvent: _openInviteSheetForFriend,
-                    onRemove: _removeFriend,
-                  ),
-                  _RequestsTab(
-                    loading: _loadingRequests,
-                    error: _requestError,
-                    incoming: incoming,
-                    outgoing: outgoing,
-                    userEmail: widget.session.email,
-                    onRefresh: _refreshAll,
-                    onAccept: (req) => _respondRequest(req, 'Accepted'),
-                    onDecline: (req) => _respondRequest(req, 'Declined'),
-                  ),
-                  _AddFriendTab(
-                    controller: _inviteController,
-                    searching: _searching,
-                    suggestions: _suggestions,
-                    sending: _sending,
-                    onRefresh: _refreshAll,
-                    onSend: _sendRequest,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FriendsOverviewCard extends StatelessWidget {
-  const _FriendsOverviewCard({
-    required this.friendCount,
-    required this.incomingCount,
-    required this.outgoingCount,
-  });
-
-  final int friendCount;
-  final int incomingCount;
-  final int outgoingCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final primarySoft = theme.colorScheme.primary.withValues(
-      alpha: isDark ? 0.22 : 0.09,
-    );
-    final secondarySoft = theme.colorScheme.secondary.withValues(
-      alpha: isDark ? 0.22 : 0.12,
-    );
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.surface.withValues(alpha: isDark ? 0.96 : 0.98),
-            theme.colorScheme.primary.withValues(alpha: isDark ? 0.16 : 0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: theme.dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.18)
-                : Colors.black.withValues(alpha: 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 12),
+    return FiestaaaPageLayout(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FiestaaaPageHeader(
+            title: S.of(context).myFriends,
+            subtitle: S.of(context).addContactsManageRequests,
+            bottomSpacing: 12,
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final itemWidth = constraints.maxWidth > 560
-                ? (constraints.maxWidth - 24) / 3
-                : (constraints.maxWidth - 12) / 2;
-            return Wrap(
-              spacing: 12,
-              runSpacing: 12,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: FilledButton.icon(
+              onPressed: _openAddFriend,
+              icon: const Icon(Icons.person_add_alt_1),
+              label: Text(S.of(context).addFriend),
+            ),
+          ),
+          _FriendsTabs(
+            controller: _tabController,
+            pendingIncomingCount: incoming.length,
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
               children: [
-                SizedBox(
-                  width: itemWidth,
-                  child: _MetricCard(
-                    icon: Icons.group_outlined,
-                    value: '$friendCount',
-                    label: S.of(context).friendsTab,
-                    accentColor: theme.colorScheme.primary,
-                    backgroundColor: primarySoft,
-                  ),
+                _FriendsDirectoryTab(
+                  filterController: _friendsFilterController,
+                  query: _friendsFilterController.text.trim(),
+                  totalFriendsCount: _friends.length,
+                  filteredFriendsCount: visibleFriends.length,
+                  loading: _loading,
+                  error: _error,
+                  entries: friendEntries,
+                  onRefresh: _refreshAll,
+                  onClearFilter: () => _friendsFilterController.clear(),
+                  onInviteToEvent: _openInviteSheetForFriend,
+                  onRemove: _removeFriend,
                 ),
-                SizedBox(
-                  width: itemWidth,
-                  child: _MetricCard(
-                    icon: Icons.mark_email_unread_outlined,
-                    value: '$incomingCount',
-                    label: S.of(context).received,
-                    accentColor: theme.colorScheme.primary,
-                    backgroundColor: primarySoft,
-                  ),
-                ),
-                SizedBox(
-                  width: itemWidth,
-                  child: _MetricCard(
-                    icon: Icons.outbox_outlined,
-                    value: '$outgoingCount',
-                    label: S.of(context).sent,
-                    accentColor: theme.colorScheme.secondary,
-                    backgroundColor: secondarySoft,
-                  ),
+                _RequestsTab(
+                  loading: _loadingRequests,
+                  error: _requestError,
+                  incoming: incoming,
+                  outgoing: outgoing,
+                  userEmail: widget.session.email,
+                  onRefresh: _refreshAll,
+                  onAccept: (req) => _respondRequest(req, 'Accepted'),
+                  onDecline: (req) => _respondRequest(req, 'Declined'),
                 ),
               ],
-            );
-          },
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1224,7 +1168,6 @@ class _FriendsTabs extends StatelessWidget {
         final requestText = isCompact
             ? S.of(context).requestsShort
             : S.of(context).friendRequests;
-        final addText = isCompact ? S.of(context).add : S.of(context).addFriend;
         final labelStyle = theme.textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w800,
           fontSize: isCompact ? 12 : null,
@@ -1291,7 +1234,6 @@ class _FriendsTabs extends StatelessWidget {
             tabs: [
               Tab(child: tabText(S.of(context).friendsTab)),
               Tab(child: requestLabel()),
-              Tab(child: tabText(addText)),
             ],
           ),
         );
@@ -2162,9 +2104,26 @@ class _FriendTile extends StatelessWidget {
                   case _FriendMenuAction.remove:
                     onRemove?.call(friend);
                     break;
+                  case _FriendMenuAction.block:
+                  case _FriendMenuAction.report:
+                    context.push(
+                      Uri(
+                        path: '/safety',
+                        queryParameters: {'handle': friend.handle},
+                      ).toString(),
+                    );
+                    break;
                 }
               },
               itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: _FriendMenuAction.block,
+                  child: Text(betaText(context, 'Bloquer', 'Block')),
+                ),
+                PopupMenuItem(
+                  value: _FriendMenuAction.report,
+                  child: Text(betaText(context, 'Signaler', 'Report')),
+                ),
                 if (onInviteToEvent != null)
                   PopupMenuItem<_FriendMenuAction>(
                     value: _FriendMenuAction.inviteToFiestaaa,
@@ -2227,61 +2186,6 @@ class _EventInviteSendResult {
   final int successCount;
   final String? firstError;
   final bool deadlineExpired;
-}
-
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.accentColor,
-    required this.backgroundColor,
-  });
-
-  final IconData icon;
-  final String value;
-  final String label;
-  final Color accentColor;
-  final Color backgroundColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: accentColor, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 2),
-                Text(label, style: Theme.of(context).textTheme.bodySmall),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _InfoPill extends StatelessWidget {
