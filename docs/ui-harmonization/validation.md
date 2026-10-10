@@ -83,3 +83,33 @@ The owner confirmed Pixel QA 9004 light/French and dark/English presentation on 
 The owner confirmed Pixel QA 9004 at the maximum available device font setting on profile, list, overview and needs: readable content and reachable primary actions without clipping or overflow. The exact native scale multiplier was not measured; automated layout tests separately cover 200%.
 
 The owner confirmed TalkBack on Pixel QA 9004 navigation, overview and needs: meaningful control names, logical reading order and audible 3/6 progress; no essential silent control reported on this selected flow.
+
+The owner confirmed the corrected iPhone receiver on QA 9004: editing the carpool notes on Pixel promptly updated the iPhone without manual refresh. Both native platforms have now received existing carpool mutation events successfully.
+
+VoiceOver testing on iPhone QA 9004 was deferred at the owner’s request. Automated semantic checks and Pixel TalkBack results do not establish VoiceOver validation.
+
+The owner confirmed iPhone QA 9004 dark/English presentation on list, overview, needs and expenses, and enlarged text on profile and needs: readable content and reachable actions without reported clipping. The exact native text multiplier was not measured. VoiceOver remains deferred.
+
+The owner confirmed iPhone QA 9004 offline recovery: retained needs, interruption banner, usable return navigation and recovery after Wi-Fi restoration. Both native platforms passed this selected offline flow.
+
+The owner confirmed pending-invitation access on Pixel QA 9004: event information and response actions were visible, while all reserved modules remained inaccessible. The initial credential attempt failed; copying the validated synthetic credentials succeeded.
+
+The owner confirmed Support, Privacy and Terms on both phones with QA 9004: one title, readable content and working back navigation; Support displays 0.5.0 (9004).
+
+## Home design revision
+
+At the owner's request, end-to-end phone validation stopped and design review resumed. The home now omits the repeated Fiestaaas heading, aligns search/filter controls with the cards, and places one creation action at bottom-end on compact layouts or beside search on wide layouts. List padding reserves space for the compact action; first-use content does not duplicate it. Clear-search appears only for nonempty input.
+
+Local validation: 32 home layout cases passed (four widths, both themes/languages, 100%/200% text), including selected contrast/semantic/tap-target checks; seven list behavior tests passed; analysis and strict OpenSpec passed. Two actual macOS home references were regenerated and visually reviewed. Linux home references and remote verification must be refreshed if this proposal is retained. This revision has not been installed on phones or deployed.
+
+The owner accepted the revised home design. Other page/navigation refinements are recorded as unimplemented proposals in design-review-proposals.md; end-to-end phone tests remain stopped.
+
+## Approved page and navigation revision
+
+The owner approved the remaining design proposals and requested a final HTML visual deliverable. Shared module headers now carry event context, back and enabled/permitted sibling destinations. Sibling selection replaces the module route; a targeted test verifies returning to the original event. Event module accesses use quiet destination rows; overview and item/poll scroll storage are keyed by event.
+
+Needs no longer repeat their selected-view heading. Polls separate open/closed groups and use one translated expiration message; instantaneous vote behavior is retained. Expenses distinguish the current account balance from expandable complete splits and participant details. Carpools prioritize origin/departure, remove duplicate proposal headings and preserve join/leave/manage actions. Friends use search above both sections and filter requests without changing the pending badge total. Profile identity editing is explicit; preferences/help use named rows; account management is separate and closes before logout after deletion. Recovery confirmation links to the existing /auth route. Legal text and QR/camera functional exceptions remain unchanged.
+
+The standalone preview.html embeds 36 actual French widget renders across 18 screens (360px light / 1440px dark), with mobile/desktop/compare controls, enlargement and links between related pages. Filled synthetic poll/expense/friend/participant/carpool data now exercise populated layouts. Layout checks caught and corrected poll overflow, friend/map/notes tap sizes and avatar/address contrast.
+
+Local validation: 758 regression tests passed, including 576 layout cases and the existing selected full-screen accessibility checks. Final analysis and strict OpenSpec passed. The last small changes disable selection of the current module and discard canceled handle input; targeted module navigation was rerun. Remote Linux references must be refreshed against the exact committed revision. End-to-end validation remains stopped at the owner's request; no new phone installation, production change or store delivery occurred. VoiceOver remains deferred.

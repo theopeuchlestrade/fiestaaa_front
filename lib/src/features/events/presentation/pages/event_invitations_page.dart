@@ -1,5 +1,5 @@
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
-import 'package:fiestaaa_front/src/core/presentation/widgets/route_back_button.dart';
+import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'dart:async';
@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 class EventInvitationsPage extends StatefulWidget {
   const EventInvitationsPage({
     super.key,
+    this.moduleLocations = const {},
     this.friendsApi,
     this.invitationsApi,
     required this.session,
@@ -30,6 +31,7 @@ class EventInvitationsPage extends StatefulWidget {
     this.compactModal = false,
   });
 
+  final Map<String, String> moduleLocations;
   final SessionData session;
   final InvitationsApi? invitationsApi;
   final FriendsApi? friendsApi;
@@ -470,14 +472,11 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
         shrinkWrap: widget.compactModal,
         padding: EdgeInsets.zero,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: FiestaaaPageHeader(title: S.of(context).participants),
-              ),
-              RouteBackButton(fallback: '/events/${widget.eventId}'),
-            ],
+          EventModuleHeader(
+            title: S.of(context).participants,
+            eventName: widget.eventName,
+            eventId: widget.eventId,
+            locations: widget.moduleLocations,
           ),
           if (widget.eventReadOnly) ...[
             Container(

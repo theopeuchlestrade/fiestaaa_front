@@ -13,19 +13,19 @@ extension _EventDetailSummarySections on _EventDetailPageState {
       if (_isFeatureEnabled(eventFeaturePolls))
         _EventDetailFeatureActionData(
           icon: Icons.poll_outlined,
-          label: l10n.ephemeralPolls,
+          label: l10n.pollsModule,
           onPressed: _openPollsModal,
         ),
       if (_isFeatureEnabled(eventFeatureItems))
         _EventDetailFeatureActionData(
           icon: Icons.inventory_2_outlined,
-          label: l10n.availableItems,
+          label: l10n.itemsModule,
           onPressed: _openItemsModal,
         ),
       if (_isFeatureEnabled(eventFeatureExpenses))
         _EventDetailFeatureActionData(
           icon: Icons.receipt_long_outlined,
-          label: l10n.sharedExpenses,
+          label: l10n.expensesModule,
           onPressed: _openExpenses,
         ),
       if (_canShowPlaylistFeature)

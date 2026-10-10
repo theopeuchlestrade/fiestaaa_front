@@ -1,6 +1,6 @@
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'dart:async';
-import 'package:fiestaaa_front/src/core/presentation/widgets/route_back_button.dart';
+import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +16,7 @@ import 'package:fiestaaa_front/src/core/realtime_client.dart';
 class EventCarpoolsPage extends StatefulWidget {
   const EventCarpoolsPage({
     super.key,
+    this.moduleLocations = const {},
     this.api,
     required this.eventId,
     required this.eventName,
@@ -28,6 +29,7 @@ class EventCarpoolsPage extends StatefulWidget {
     this.realtimeStream,
   });
 
+  final Map<String, String> moduleLocations;
   final CarpoolsApi? api;
   final int eventId;
   final String eventName;
@@ -442,19 +444,12 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
         shrinkWrap: widget.compactModal,
         padding: EdgeInsets.zero,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: FiestaaaPageHeader(
-                  title: l10n.carpools,
-                  subtitle: l10n.carpoolsSubtitle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              _buildSortMenu(l10n),
-              RouteBackButton(fallback: '/events/${widget.eventId}'),
-            ],
+          EventModuleHeader(
+            title: l10n.carpools,
+            eventName: widget.eventName,
+            eventId: widget.eventId,
+            locations: widget.moduleLocations,
+            trailing: _buildSortMenu(l10n),
           ),
           if (!_canInteract) ...[
             _buildWarningBanner(l10n),
@@ -523,65 +518,22 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
     );
   }
 
-  Widget _buildCreateSection(S l10n, bool canCreate) {
-    final userIsInAnyCarpool = _userIsInAnyCarpool;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.directions_car, color: FiestaaaPalette.primary),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    l10n.proposeCarpool,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              userIsInAnyCarpool
-                  ? l10n.alreadyInCarpoolForEvent
-                  : l10n.proposeACarpoolDescription,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).fiestaaaMutedText,
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: canCreate ? () => _openCarpoolCreatePage() : null,
-                icon: _editingCarpoolId == -1
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.add),
-                label: Text(
-                  userIsInAnyCarpool
-                      ? l10n.alreadyInCarpool
-                      : l10n.proposeCarpool,
-                ),
-              ),
-            ),
-          ],
-        ),
+  Widget _buildCreateSection(S l10n, bool canCreate) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      FilledButton.icon(
+        onPressed: canCreate && _editingCarpoolId == null
+            ? () => _openCarpoolCreatePage()
+            : null,
+        icon: const Icon(Icons.add),
+        label: Text(l10n.proposeCarpool),
       ),
-    );
-  }
+      if (_userIsInAnyCarpool) ...[
+        const SizedBox(height: 8),
+        Text(l10n.alreadyInCarpoolForEvent),
+      ],
+    ],
+  );
 
   Widget _buildErrorSection(S l10n) {
     final danger = Theme.of(context).colorScheme.fiestaaaDanger;

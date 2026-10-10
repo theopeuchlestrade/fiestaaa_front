@@ -290,6 +290,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Birthday');
+    await tester
+        .pump(); // The conditional clear action appears on the next frame.
     await tester.tap(find.byTooltip('Clear search'));
     await tester.pump(const Duration(milliseconds: 400));
     expect(

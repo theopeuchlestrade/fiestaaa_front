@@ -43,16 +43,12 @@ class _PollCard extends StatelessWidget {
     final borderColor = theme.dividerColor;
     final textColor = theme.colorScheme.onSurface;
     final fadedText = textColor.withValues(alpha: 0.6);
-    final subtleText = textColor.withValues(alpha: 0.5);
     final surfaceButton = theme.fiestaaaMutedSurface;
     final accentGreen = theme.colorScheme.fiestaaaSuccess;
     final dangerStyle = theme.colorScheme.fiestaaaStatus(
       FiestaaaStatusTone.danger,
     );
     final maxVotes = poll.maxVotes == 0 ? 1 : poll.maxVotes;
-    final timeText = DateFormat.Hm(
-      Intl.getCurrentLocale(),
-    ).format(poll.expiresAt);
 
     return Container(
       width: double.infinity,
@@ -100,7 +96,7 @@ class _PollCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      'Expiré',
+                      S.of(context).expired,
                       style: TextStyle(
                         color: dangerStyle.foreground,
                         fontWeight: FontWeight.w700,
@@ -146,24 +142,12 @@ class _PollCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            Row(
-              children: [
-                Text(
-                  timeText,
-                  style: TextStyle(
-                    color: subtleText,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  remainingLabel,
-                  style: TextStyle(
-                    color: poll.isExpired ? dangerStyle.foreground : fadedText,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+            Text(
+              remainingLabel,
+              style: TextStyle(
+                color: poll.isExpired ? dangerStyle.foreground : fadedText,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 10),
             Row(

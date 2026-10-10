@@ -132,8 +132,8 @@ extension _EventDetailListSections on _EventDetailPageState {
         ),
       );
     }
-    return Column(
-      children: polls
+    Widget cards(List<PollModel> group) => Column(
+      children: group
           .map(
             (poll) => _PollCard(
               poll: poll,
@@ -157,6 +157,25 @@ extension _EventDetailListSections on _EventDetailPageState {
             ),
           )
           .toList(),
+    );
+    final active = polls.where((poll) => !poll.isExpired).toList();
+    final closed = polls.where((poll) => poll.isExpired).toList();
+    final l = S.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (active.isNotEmpty) ...[
+          Text(l.openPolls, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 12),
+          cards(active),
+        ],
+        if (closed.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text(l.closedPolls, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 12),
+          cards(closed),
+        ],
+      ],
     );
   }
 
@@ -268,6 +287,7 @@ extension _EventDetailListSections on _EventDetailPageState {
         else
           _EventItemsSection(
             title: needs ? l.needSectionTitle : l.bringSectionTitle,
+            showTitle: false,
             subtitle: needs ? l.needItemsSubtitle : l.chooseWhatYouBring,
             items: selected,
             addLabel: l.add,

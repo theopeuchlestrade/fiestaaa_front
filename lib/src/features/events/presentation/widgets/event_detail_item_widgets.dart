@@ -12,6 +12,7 @@ class _NewEventItemData {
 class _EventItemsSection extends StatelessWidget {
   const _EventItemsSection({
     required this.title,
+    this.showTitle = true,
     required this.subtitle,
     required this.items,
     required this.addLabel,
@@ -29,6 +30,7 @@ class _EventItemsSection extends StatelessWidget {
   });
 
   final String title;
+  final bool showTitle;
   final String subtitle;
   final List<EventItemModel> items;
   final String addLabel;
@@ -56,14 +58,15 @@ class _EventItemsSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(
-              child: Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
+            if (showTitle)
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-            ),
             if (onAdd != null) ...[
               const SizedBox(width: 8),
               TextButton.icon(

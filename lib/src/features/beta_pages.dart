@@ -13,31 +13,63 @@ String betaText(BuildContext context, String fr, String en) =>
     Localizations.localeOf(context).languageCode == 'fr' ? fr : en;
 
 class BetaLinks extends StatelessWidget {
-  const BetaLinks({super.key, this.recovery = false});
+  const BetaLinks({super.key, this.recovery = false, this.list = false});
   final bool recovery;
+  final bool list;
   @override
-  Widget build(BuildContext context) => Wrap(
-    alignment: WrapAlignment.center,
-    children: [
-      if (recovery)
-        TextButton(
-          onPressed: () => context.push('/reset-password'),
-          child: Text(
-            betaText(context, 'Mot de passe oublié ?', 'Forgot password?'),
+  Widget build(BuildContext context) {
+    if (list) {
+      return Column(
+        children: [
+          for (final item in [
+            ('support', 'Assistance', 'Support', Icons.help_outline),
+            (
+              'privacy',
+              'Confidentialité',
+              'Privacy',
+              Icons.privacy_tip_outlined,
+            ),
+            ('terms', 'Conditions', 'Terms', Icons.description_outlined),
+            (
+              'delete-account',
+              'Suppression de compte',
+              'Account deletion',
+              Icons.person_remove_outlined,
+            ),
+          ])
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(item.$4),
+              title: Text(betaText(context, item.$2, item.$3)),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/${item.$1}'),
+            ),
+        ],
+      );
+    }
+    return Wrap(
+      alignment: WrapAlignment.center,
+      children: [
+        if (recovery)
+          TextButton(
+            onPressed: () => context.push('/reset-password'),
+            child: Text(
+              betaText(context, 'Mot de passe oublié ?', 'Forgot password?'),
+            ),
           ),
-        ),
-      for (final item in [
-        ('privacy', 'Confidentialité', 'Privacy'),
-        ('terms', 'Conditions', 'Terms'),
-        ('support', 'Assistance', 'Support'),
-        ('delete-account', 'Suppression de compte', 'Account deletion'),
-      ])
-        TextButton(
-          onPressed: () => context.push('/${item.$1}'),
-          child: Text(betaText(context, item.$2, item.$3)),
-        ),
-    ],
-  );
+        for (final item in [
+          ('privacy', 'Confidentialité', 'Privacy'),
+          ('terms', 'Conditions', 'Terms'),
+          ('support', 'Assistance', 'Support'),
+          ('delete-account', 'Suppression de compte', 'Account deletion'),
+        ])
+          TextButton(
+            onPressed: () => context.push('/${item.$1}'),
+            child: Text(betaText(context, item.$2, item.$3)),
+          ),
+      ],
+    );
+  }
 }
 
 class LegalPage extends StatefulWidget {
@@ -222,7 +254,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
             shrinkWrap: true,
             padding: const EdgeInsets.all(24),
             children: [
-              if (_done)
+              if (_done) ...[
                 Text(
                   betaText(
                     context,
@@ -233,8 +265,19 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                         ? 'Password changed. Sign in again on your devices.'
                         : 'If this account uses a password, an email will be sent. For Apple or Google, use your sign-in provider.',
                   ),
-                )
-              else ...[
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => context.go('/auth'),
+                  child: Text(
+                    betaText(
+                      context,
+                      'Revenir à la connexion',
+                      'Return to sign in',
+                    ),
+                  ),
+                ),
+              ] else ...[
                 if (!reset)
                   TextField(
                     controller: _email,

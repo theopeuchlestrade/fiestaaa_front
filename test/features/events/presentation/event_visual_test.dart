@@ -81,24 +81,89 @@ class _Api extends EventsApi {
   Future<List<PollModel>> fetchEventPolls({
     required String token,
     required int eventId,
-  }) async => [];
+  }) async => [_ReviewPoll()];
   @override
   Future<List<EventExpenseModel>> fetchEventExpenses({
     required String token,
     required int eventId,
-  }) async => [];
+  }) async => [
+    EventExpenseModel(
+      id: 1,
+      eventId: 1,
+      paidByUserId: 1,
+      paidByHandle: 'demo',
+      paidByAvatarUrl: null,
+      title: 'Courses pour la soirée',
+      amountCents: 2400,
+      note: 'Données fictives',
+      expenseDate: DateTime(2099, 7, 1),
+      createdAt: DateTime(2099, 7, 1),
+      participants: [
+        EventExpenseParticipantModel(
+          userId: 1,
+          handle: 'demo',
+          avatarUrl: null,
+        ),
+        EventExpenseParticipantModel(
+          userId: 2,
+          handle: 'invité',
+          avatarUrl: null,
+        ),
+      ],
+    ),
+  ];
   @override
   Future<EventExpensesSummaryModel> fetchEventExpensesSummary({
     required String token,
     required int eventId,
   }) async => EventExpensesSummaryModel(
     currency: 'EUR',
-    totalExpensesCents: 0,
-    balances: [],
-    settlements: [],
+    totalExpensesCents: 2400,
+    balances: [
+      EventExpenseBalanceModel(
+        userId: 1,
+        handle: 'demo',
+        avatarUrl: null,
+        paidCents: 2400,
+        owedCents: 1200,
+        balanceCents: 1200,
+      ),
+    ],
+    settlements: [
+      EventExpenseSettlementModel(
+        fromUserId: 2,
+        fromHandle: 'invité',
+        toUserId: 1,
+        toHandle: 'demo',
+        amountCents: 1200,
+      ),
+    ],
   );
   @override
   void dispose() {}
+}
+
+class _ReviewPoll extends PollModel {
+  _ReviewPoll()
+    : super(
+        id: 1,
+        eventId: 1,
+        question: 'On mange quoi ?',
+        allowMultiple: false,
+        expiresAt: DateTime(2099),
+        createdAt: DateTime(2099),
+        createdByEmail: 'owner@example.com',
+        options: [
+          PollOptionModel(id: 1, label: 'Pizza', voteCount: 1, voters: []),
+          PollOptionModel(id: 2, label: 'Salade', voteCount: 0, voters: []),
+          PollOptionModel(id: 3, label: 'Tacos', voteCount: 0, voters: []),
+        ],
+        myVotes: [1],
+        totalVotes: 1,
+        hasExpired: false,
+      );
+  @override
+  Duration get timeRemaining => const Duration(hours: 2);
 }
 
 class _ProfileApi extends ProfileApi {
@@ -177,10 +242,55 @@ void main() {
                 );
                 final api = _Api();
                 final friendsApi = FriendsApi(
-                  client: MockClient((_) async => http.Response('[]', 200)),
+                  client: MockClient(
+                    (request) async => http.Response(
+                      jsonEncode(
+                        request.url.path.endsWith('/me/friends')
+                            ? [
+                                {
+                                  'email': 'guest@example.invalid',
+                                  'handle': 'invité',
+                                  'since': '2099-01-01T00:00:00Z',
+                                },
+                              ]
+                            : [],
+                      ),
+                      200,
+                    ),
+                  ),
                 );
                 final invitations = InvitationsApi(
-                  client: MockClient((_) async => http.Response('[]', 200)),
+                  client: MockClient(
+                    (_) async => http.Response(
+                      jsonEncode([
+                        {
+                          'event_id': 1,
+                          'email': 'owner@example.com',
+                          'user_id': 1,
+                          'handle': 'demo',
+                          'status': 'Accepted',
+                          'date_invi': '2099-01-01T00:00:00Z',
+                        },
+                        {
+                          'event_id': 1,
+                          'email': 'guest@example.invalid',
+                          'user_id': 2,
+                          'handle': 'invité',
+                          'status': 'Accepted',
+                          'date_invi': '2099-01-01T00:00:00Z',
+                        },
+                        {
+                          'event_id': 1,
+                          'email': 'pending@example.invalid',
+                          'user_id': 3,
+                          'handle': 'enattente',
+                          'status': 'Waiting',
+                          'date_invi': '2099-01-01T00:00:00Z',
+                        },
+                      ]),
+                      200,
+                    ),
+                  ),
                 );
                 final providers = PaymentProvidersApi(
                   client: MockClient((_) async => http.Response('[]', 200)),
@@ -213,6 +323,13 @@ void main() {
                     paymentProvidersApi: providers,
                   ),
                   'expenses' => EventExpensesPage(
+                    moduleLocations: const {
+                      'Besoins & apports': '/events/1/items',
+                      'Sondages': '/events/1/polls',
+                      'Dépenses': '/events/1/expenses',
+                      'Covoiturage': '/events/1/carpools',
+                      'Participants': '/events/1/participants',
+                    },
                     eventId: 1,
                     eventName: 'Dinner',
                     ownerEmail: session.email,
@@ -224,6 +341,13 @@ void main() {
                     invitationsApi: invitations,
                   ),
                   'participants' => EventInvitationsPage(
+                    moduleLocations: const {
+                      'Besoins & apports': '/events/1/items',
+                      'Sondages': '/events/1/polls',
+                      'Dépenses': '/events/1/expenses',
+                      'Covoiturage': '/events/1/carpools',
+                      'Participants': '/events/1/participants',
+                    },
                     session: session,
                     eventId: 1,
                     eventName: 'Dinner',
@@ -233,6 +357,13 @@ void main() {
                     friendsApi: friendsApi,
                   ),
                   'carpools' => EventCarpoolsPage(
+                    moduleLocations: const {
+                      'Besoins & apports': '/events/1/items',
+                      'Sondages': '/events/1/polls',
+                      'Dépenses': '/events/1/expenses',
+                      'Covoiturage': '/events/1/carpools',
+                      'Participants': '/events/1/participants',
+                    },
                     eventId: 1,
                     eventName: 'Dinner',
                     eventDate: DateTime(2099),
@@ -242,7 +373,36 @@ void main() {
                     eventReadOnly: false,
                     realtimeStream: const Stream<Map<String, dynamic>>.empty(),
                     api: CarpoolsApi(
-                      client: MockClient((_) async => http.Response('[]', 200)),
+                      client: MockClient(
+                        (_) async => http.Response(
+                          jsonEncode([
+                            {
+                              'carpool_id': 1,
+                              'event_id': 1,
+                              'driver_id': 1,
+                              'driver_handle': 'demo',
+                              'origin': 'Paris — Gare de Lyon',
+                              'depart_at': '2099-07-01T18:00:00Z',
+                              'seats_total': 3,
+                              'seats_taken': 1,
+                              'notes': 'Rendez-vous devant la gare.',
+                              'created_at': '2099-01-01T00:00:00Z',
+                              'updated_at': '2099-01-01T00:00:00Z',
+                              'passengers': [
+                                {
+                                  'user_id': 2,
+                                  'handle': 'invité',
+                                  'joined_at': '2099-01-01T00:00:00Z',
+                                },
+                              ],
+                            },
+                          ]),
+                          200,
+                          headers: {
+                            'content-type': 'application/json; charset=utf-8',
+                          },
+                        ),
+                      ),
                     ),
                   ),
                   'friends' => FriendsPage(
@@ -305,6 +465,20 @@ void main() {
                 );
                 await tester.pumpAndSettle();
                 expect(tester.takeException(), isNull);
+                if (screen == 'carpools') {
+                  expect(find.text('Paris — Gare de Lyon'), findsOneWidget);
+                }
+                if (const bool.fromEnvironment('UI_REVIEW_EXPORT') &&
+                    scale == 1 &&
+                    locale == 'fr' &&
+                    ((width == 360 && !dark) || (width == 1440 && dark))) {
+                  await expectLater(
+                    find.byKey(const ValueKey('screen')),
+                    matchesGoldenFile(
+                      '../../../../docs/ui-harmonization/renders/${screen}_${width.toInt()}_${dark ? 'dark' : 'light'}_fr.png',
+                    ),
+                  );
+                }
                 final accessibility =
                     scale == 1 &&
                     ((width == 360 && !dark && locale == 'en') ||

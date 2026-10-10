@@ -1,3 +1,5 @@
+import 'package:fiestaaa_front/src/core/presentation/widgets/route_back_button.dart';
+import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header.dart';
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/async_content.dart';
 import 'package:fiestaaa_front/src/core/platform_network_image.dart';
@@ -244,6 +246,22 @@ class _EventDetailPageState extends State<EventDetailPage> {
     return _hasAcceptedInvitation || _isWaitingInvitation;
   }
 
+  Map<String, String> _moduleLocations() {
+    final l = S.of(context);
+    if (!_isOwner && !_hasAcceptedInvitation) return {};
+    return {
+      if (_isFeatureEnabled(eventFeatureItems))
+        l.itemsModule: '/events/${_currentEvent.id}/items',
+      if (_isFeatureEnabled(eventFeaturePolls))
+        l.pollsModule: '/events/${_currentEvent.id}/polls',
+      if (_isFeatureEnabled(eventFeatureExpenses))
+        l.expensesModule: '/events/${_currentEvent.id}/expenses',
+      if (_isFeatureEnabled(eventFeatureCarpools))
+        l.carpools: '/events/${_currentEvent.id}/carpools',
+      l.participants: '/events/${_currentEvent.id}/participants',
+    };
+  }
+
   Widget _modulePage(EventModule module) {
     final l = S.of(context);
     final feature = switch (module) {
@@ -254,9 +272,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
       EventModule.participants => null,
     };
     final title = switch (module) {
-      EventModule.items => l.availableItems,
-      EventModule.polls => l.ephemeralPolls,
-      EventModule.expenses => l.sharedExpenses,
+      EventModule.items => l.itemsModule,
+      EventModule.polls => l.pollsModule,
+      EventModule.expenses => l.expensesModule,
       EventModule.carpools => l.carpools,
       EventModule.participants => l.participants,
     };
@@ -305,6 +323,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
     if (module == EventModule.carpools) {
       return EventCarpoolsPage(
+        moduleLocations: _moduleLocations(),
         eventId: _currentEvent.id,
         eventName: _currentEvent.name,
         eventDate: _currentEvent.startDateTime,
@@ -317,6 +336,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
     if (module == EventModule.expenses) {
       return EventExpensesPage(
+        moduleLocations: _moduleLocations(),
         eventId: _currentEvent.id,
         eventName: _currentEvent.name,
         ownerEmail: _currentEvent.ownerEmail,
@@ -329,6 +349,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
     if (module == EventModule.participants) {
       return EventInvitationsPage(
+        moduleLocations: _moduleLocations(),
         session: widget.session,
         eventId: _currentEvent.id,
         eventName: _currentEvent.name,
@@ -344,19 +365,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
           child: RefreshIndicator(
             onRefresh: _resync,
             child: ListView(
+              key: PageStorageKey('event-${_currentEvent.id}-${module.name}'),
               children: [
-                Row(
-                  children: [
-                    BackButton(onPressed: back),
-                    Expanded(
-                      child: Text(
-                        _currentEvent.name,
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                    ),
-                  ],
+                EventModuleHeader(
+                  title: title,
+                  eventName: _currentEvent.name,
+                  eventId: _currentEvent.id,
+                  locations: _moduleLocations(),
                 ),
-                FiestaaaPageHeader(title: title),
                 if (_isReadOnly) _buildReadOnlyBanner(),
                 if (module == EventModule.items)
                   _buildItemsBlock(showTitle: false, collapsible: false)
@@ -380,6 +396,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           child: RefreshIndicator(
             onRefresh: _resync,
             child: ListView(
+              key: PageStorageKey('event-${_currentEvent.id}-overview'),
               padding: EdgeInsets.zero,
               children: [
                 _buildHeader(),

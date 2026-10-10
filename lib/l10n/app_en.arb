@@ -1035,5 +1035,17 @@
   "addressSearchPrivacy": "Search uses OpenStreetMap: do not enter personal or confidential information.",
   "addressSearchAttribution": "© OpenStreetMap contributors · ODbL",
   "addressSearchBusy": "Address search is busy. Try again in a few seconds.",
-  "addressSearchTooLong": "Address too long. Shorten your search."
+  "addressSearchTooLong": "Address too long. Shorten your search.",
+  "openPolls": "Open polls",
+  "closedPolls": "Closed polls",
+  "editProfile": "Edit profile",
+  "manageAccount": "Account management",
+  "myExpenseBalance": "My balance",
+  "expenseSplitDetails": "Split and settlements",
+  "eventActions": "Event actions",
+  "itemsModule": "Needs & brings",
+  "pollsModule": "Polls",
+  "expensesModule": "Expenses",
+  "organizerNeeds": "Organizer needs",
+  "personalBrings": "Personal brings"
 }

@@ -262,7 +262,13 @@ class EventsListPageState extends State<EventsListPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) =>
+        _buildList(context, constraints.maxWidth),
+  );
+
+  Widget _buildList(BuildContext context, double width) {
+    final compact = width < 720;
     final l = S.of(context);
     final filters = {
       'upcoming': l.eventsUpcoming,
@@ -278,6 +284,33 @@ class EventsListPageState extends State<EventsListPage> {
         message: l.unableToLoadFiestaaa,
         actionLabel: l.retry,
         onAction: reload,
+      );
+    } else if (!_hasAnyEvents && _query.isEmpty && widget.onCreate != null) {
+      // Creation stays in one consistent location, including the first-use state.
+      content = Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ExcludeSemantics(
+                child: Icon(
+                  Icons.celebration_outlined,
+                  size: 40,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                l.noFiestaaaYet,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(l.eventsEmptyHelp, textAlign: TextAlign.center),
+            ],
+          ),
+        ),
       );
     } else if (_events?.isEmpty ?? true) {
       final searching = _query.isNotEmpty;
@@ -316,7 +349,12 @@ class EventsListPageState extends State<EventsListPage> {
             child: ListView.builder(
               controller: _scroll,
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                compact && widget.onCreate != null ? 96 : 16,
+              ),
               itemCount:
                   (events.length / columns).ceil() +
                   (_nextCursor == null ? 0 : 1),
@@ -369,97 +407,121 @@ class EventsListPageState extends State<EventsListPage> {
     }
     return FiestaaaPageLayout(
       padding: EdgeInsets.zero,
-      child: Column(
+      child: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Wrap(
-              spacing: 16,
-              runSpacing: 12,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(
-                  l.fiestaaas,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                if (widget.onCreate != null)
-                  FilledButton.icon(
-                    onPressed: widget.onCreate,
-                    icon: const Icon(Icons.add),
-                    label: Text(l.create),
-                  ),
-                if (widget.onOpenTrash != null)
-                  PopupMenuButton<String>(
-                    tooltip: l.eventsTrash,
-                    onSelected: (_) => widget.onOpenTrash!(),
-                    itemBuilder: (_) => [
-                      PopupMenuItem(value: 'trash', child: Text(l.eventsTrash)),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _search,
-                    maxLength: 200,
-                    decoration: InputDecoration(
-                      counterText: '',
-                      labelText: l.eventsSearch,
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: IconButton(
-                        tooltip: l.eventsClearSearch,
-                        onPressed: () => _setCriteria('', _view),
-                        icon: const Icon(Icons.clear),
+          Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _search,
+                        maxLength: 200,
+                        decoration: InputDecoration(
+                          counterText: '',
+                          labelText: l.eventsSearch,
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                            valueListenable: _search,
+                            builder: (context, value, _) => value.text.isEmpty
+                                ? const SizedBox.shrink()
+                                : IconButton(
+                                    tooltip: l.eventsClearSearch,
+                                    onPressed: () => _setCriteria('', _view),
+                                    icon: const Icon(Icons.clear),
+                                  ),
+                          ),
+                        ),
+                        onChanged: (value) {
+                          _debounce?.cancel();
+                          _debounce = Timer(
+                            const Duration(milliseconds: 300),
+                            () => _setCriteria(value, _view),
+                          );
+                        },
                       ),
                     ),
-                    onChanged: (value) {
-                      _debounce?.cancel();
-                      _debounce = Timer(
-                        const Duration(milliseconds: 300),
-                        () => _setCriteria(value, _view),
-                      );
-                    },
+                    if (!compact && widget.onCreate != null) ...[
+                      const SizedBox(width: 16),
+                      FilledButton.icon(
+                        onPressed: widget.onCreate,
+                        icon: const Icon(Icons.add),
+                        label: Text(l.create),
+                      ),
+                    ],
+                    if (widget.onOpenTrash != null) ...[
+                      const SizedBox(width: 4),
+                      PopupMenuButton<String>(
+                        tooltip: l.eventsTrash,
+                        onSelected: (_) => widget.onOpenTrash!(),
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'trash',
+                            child: Text(l.eventsTrash),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      for (final entry in filters.entries)
+                        ChoiceChip(
+                          label: Text(entry.value),
+                          selected: _view == entry.key,
+                          onSelected: (_) =>
+                              _setCriteria(_search.text, entry.key),
+                        ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+              if (_refreshing && !_loading) const LinearProgressIndicator(),
+              if (_events != null && _error != null)
+                AsyncNotice(
+                  compact: true,
+                  message: _error!,
+                  actionLabel: l.retry,
+                  onAction: reload,
+                ),
+              if (_invitationsFailed)
+                AsyncNotice(
+                  compact: true,
+                  message: l.eventsInvitationsFailed,
+                  actionLabel: l.retry,
+                  onAction: reload,
+                ),
+              Expanded(child: content),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                for (final entry in filters.entries)
-                  ChoiceChip(
-                    label: Text(entry.value),
-                    selected: _view == entry.key,
-                    onSelected: (_) => _setCriteria(_search.text, entry.key),
-                  ),
-              ],
+          if (compact && widget.onCreate != null)
+            PositionedDirectional(
+              end: 16,
+              bottom: 16,
+              child: FloatingActionButton.extended(
+                heroTag: 'create-event',
+                elevation: 0,
+                focusElevation: 0,
+                hoverElevation: 0,
+                highlightElevation: 0,
+                onPressed: widget.onCreate,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                icon: const Icon(Icons.add),
+                label: Text(l.create),
+              ),
             ),
-          ),
-          if (_refreshing && !_loading) const LinearProgressIndicator(),
-          if (_events != null && _error != null)
-            AsyncNotice(
-              compact: true,
-              message: _error!,
-              actionLabel: l.retry,
-              onAction: reload,
-            ),
-          if (_invitationsFailed)
-            AsyncNotice(
-              compact: true,
-              message: l.eventsInvitationsFailed,
-              actionLabel: l.retry,
-              onAction: reload,
-            ),
-          Expanded(child: content),
         ],
       ),
     );

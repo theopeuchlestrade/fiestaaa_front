@@ -1,5 +1,5 @@
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
-import 'package:fiestaaa_front/src/core/presentation/widgets/route_back_button.dart';
+import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header.dart';
 import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
@@ -19,6 +19,7 @@ import 'package:intl/intl.dart';
 class EventExpensesPage extends StatefulWidget {
   const EventExpensesPage({
     super.key,
+    this.moduleLocations = const {},
     this.invitationsApi,
     this.eventsApi,
     required this.eventId,
@@ -32,6 +33,7 @@ class EventExpensesPage extends StatefulWidget {
     this.compactModal = false,
   });
 
+  final Map<String, String> moduleLocations;
   final EventsApi? eventsApi;
   final InvitationsApi? invitationsApi;
   final int eventId;
@@ -664,20 +666,11 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
     return Scaffold(body: FiestaaaPageLayout(child: realtimeContent));
   }
 
-  Widget _buildHeroSection(S l10n) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        children: [
-          RouteBackButton(fallback: '/events/${widget.eventId}'),
-          Expanded(child: Text(widget.eventName)),
-        ],
-      ),
-      FiestaaaPageHeader(
-        title: l10n.sharedExpenses,
-        subtitle: l10n.sharedExpensesHelper,
-      ),
-    ],
+  Widget _buildHeroSection(S l10n) => EventModuleHeader(
+    title: l10n.expensesModule,
+    eventName: widget.eventName,
+    eventId: widget.eventId,
+    locations: widget.moduleLocations,
   );
 
   Widget _buildErrorState(S l10n) {
@@ -744,6 +737,8 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
     final scheme = theme.colorScheme;
     final positiveColor = scheme.fiestaaaSuccess;
     final negativeColor = scheme.fiestaaaDanger;
+    final userId = _currentUserId;
+    final ownBalance = userId == null ? null : _balanceByUserId(userId);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -778,86 +773,109 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 18),
-            Text(
-              l10n.expenseParticipants,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
+            if (ownBalance != null) ...[
+              const SizedBox(height: 16),
+              Text(l10n.myExpenseBalance, style: theme.textTheme.labelLarge),
+              const SizedBox(height: 4),
+              Text(
+                ownBalance.balanceCents >= 0
+                    ? l10n.expenseReceives(ownBalance.formattedBalance)
+                    : l10n.expenseOwes(
+                        ownBalance.formatCents(-ownBalance.balanceCents),
+                      ),
+                style: theme.textTheme.titleLarge,
               ),
-            ),
-            const SizedBox(height: 12),
-            ...summary.balances.map(
-              (balance) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _BalanceTile(
-                  label: _displayName(
-                    userId: balance.userId,
-                    handle: balance.handle,
-                    email: _memberByUserId(balance.userId)?.email,
+            ],
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: Text(l10n.expenseSplitDetails),
+              children: [
+                const SizedBox(height: 18),
+                Text(
+                  l10n.expenseParticipants,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
                   ),
-                  avatarUrl: _avatarUrlForUserId(
-                    balance.userId,
-                    fallbackAvatarUrl: balance.avatarUrl,
+                ),
+                const SizedBox(height: 12),
+                ...summary.balances.map(
+                  (balance) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _BalanceTile(
+                      label: _displayName(
+                        userId: balance.userId,
+                        handle: balance.handle,
+                        email: _memberByUserId(balance.userId)?.email,
+                      ),
+                      avatarUrl: _avatarUrlForUserId(
+                        balance.userId,
+                        fallbackAvatarUrl: balance.avatarUrl,
+                      ),
+                      paidLabel: l10n.expensePaid(balance.formattedPaid),
+                      owedLabel: l10n.expenseOwed(balance.formattedOwed),
+                      balanceLabel: balance.balanceCents >= 0
+                          ? l10n.expenseReceives(balance.formattedBalance)
+                          : l10n.expenseOwes(
+                              NumberFormat.currency(
+                                locale: Intl.getCurrentLocale(),
+                                symbol: '€',
+                              ).format((-balance.balanceCents) / 100),
+                            ),
+                      balanceColor: balance.balanceCents >= 0
+                          ? positiveColor
+                          : negativeColor,
+                    ),
                   ),
-                  paidLabel: l10n.expensePaid(balance.formattedPaid),
-                  owedLabel: l10n.expenseOwed(balance.formattedOwed),
-                  balanceLabel: balance.balanceCents >= 0
-                      ? l10n.expenseReceives(balance.formattedBalance)
-                      : l10n.expenseOwes(
-                          NumberFormat.currency(
-                            locale: Intl.getCurrentLocale(),
-                            symbol: '€',
-                          ).format((-balance.balanceCents) / 100),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.settlementSuggestions,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (summary.settlements.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerHighest.withValues(
+                        alpha: 0.55,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: scheme.outlineVariant),
+                    ),
+                    child: Text(
+                      l10n.noSettlementNeeded,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  )
+                else
+                  ...summary.settlements.map(
+                    (settlement) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _SettlementTile(
+                        fromLabel: _displayNameForUserId(
+                          settlement.fromUserId,
+                          handle: settlement.fromHandle,
                         ),
-                  balanceColor: balance.balanceCents >= 0
-                      ? positiveColor
-                      : negativeColor,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.settlementSuggestions,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (summary.settlements.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHighest.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: scheme.outlineVariant),
-                ),
-                child: Text(
-                  l10n.noSettlementNeeded,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              )
-            else
-              ...summary.settlements.map(
-                (settlement) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _SettlementTile(
-                    fromLabel: _displayNameForUserId(
-                      settlement.fromUserId,
-                      handle: settlement.fromHandle,
+                        fromAvatarUrl: _avatarUrlForUserId(
+                          settlement.fromUserId,
+                        ),
+                        toLabel: _displayNameForUserId(
+                          settlement.toUserId,
+                          handle: settlement.toHandle,
+                        ),
+                        toAvatarUrl: _avatarUrlForUserId(settlement.toUserId),
+                        amountLabel: settlement.formattedAmount,
+                      ),
                     ),
-                    fromAvatarUrl: _avatarUrlForUserId(settlement.fromUserId),
-                    toLabel: _displayNameForUserId(
-                      settlement.toUserId,
-                      handle: settlement.toHandle,
-                    ),
-                    toAvatarUrl: _avatarUrlForUserId(settlement.toUserId),
-                    amountLabel: settlement.formattedAmount,
                   ),
-                ),
-              ),
+              ],
+            ),
           ],
         ),
       ),
@@ -1012,42 +1030,50 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                     ),
                   ],
                 ),
-                if ((expense.note?.trim().isNotEmpty ?? false)) ...[
-                  const SizedBox(height: 14),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: scheme.surfaceContainerHighest.withValues(
-                        alpha: 0.45,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      expense.note!,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: expense.participants
-                      .map(
-                        (participant) => _ParticipantBadge(
-                          label: _displayName(
-                            userId: participant.userId,
-                            handle: participant.handle,
-                            email: _memberByUserId(participant.userId)?.email,
+                ExpansionTile(
+                  tilePadding: EdgeInsets.zero,
+                  title: Text(l10n.expenseParticipants),
+                  children: [
+                    if ((expense.note?.trim().isNotEmpty ?? false)) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: scheme.surfaceContainerHighest.withValues(
+                            alpha: 0.45,
                           ),
-                          avatarUrl: _avatarUrlForUserId(
-                            participant.userId,
-                            fallbackAvatarUrl: participant.avatarUrl,
-                          ),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                      )
-                      .toList(),
+                        child: Text(
+                          expense.note!,
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: expense.participants
+                          .map(
+                            (participant) => _ParticipantBadge(
+                              label: _displayName(
+                                userId: participant.userId,
+                                handle: participant.handle,
+                                email: _memberByUserId(
+                                  participant.userId,
+                                )?.email,
+                              ),
+                              avatarUrl: _avatarUrlForUserId(
+                                participant.userId,
+                                fallbackAvatarUrl: participant.avatarUrl,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1075,7 +1101,7 @@ class _UserAvatar extends StatelessWidget {
     final hasImage = avatarUrl != null && avatarUrl!.isNotEmpty;
     return CircleAvatar(
       radius: radius,
-      backgroundColor: FiestaaaPalette.primary.withValues(alpha: 0.16),
+      backgroundColor: scheme.primaryContainer,
       backgroundImage: hasImage ? platformNetworkImage(avatarUrl!) : null,
       onBackgroundImageError: hasImage ? (error, stackTrace) {} : null,
       child: hasImage
@@ -1083,7 +1109,7 @@ class _UserAvatar extends StatelessWidget {
           : Text(
               initial,
               style: TextStyle(
-                color: scheme.primary,
+                color: scheme.onPrimaryContainer,
                 fontWeight: FontWeight.w800,
               ),
             ),

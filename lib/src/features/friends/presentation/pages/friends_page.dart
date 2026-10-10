@@ -1082,11 +1082,25 @@ class _FriendsPageState extends State<FriendsPage>
       );
     }
 
+    final requestQuery = _friendsFilterController.text.trim().toLowerCase();
+    bool matchesRequest(FriendRequestModel request) {
+      final incoming = request.isIncoming(widget.session.email);
+      final handle = incoming ? request.senderHandle : request.receiverHandle;
+      final email = incoming ? request.senderEmail : request.receiverEmail;
+      return requestQuery.isEmpty ||
+          handle.toLowerCase().contains(requestQuery) ||
+          email.toLowerCase().contains(requestQuery);
+    }
+
     final incoming = _sortedRequests(
-      _requests.where((r) => r.isIncoming(widget.session.email)),
+      _requests.where(
+        (r) => r.isIncoming(widget.session.email) && matchesRequest(r),
+      ),
     );
     final outgoing = _sortedRequests(
-      _requests.where((r) => !r.isIncoming(widget.session.email)),
+      _requests.where(
+        (r) => !r.isIncoming(widget.session.email) && matchesRequest(r),
+      ),
     );
     final visibleFriends = _filteredFriends;
     final friendEntries = _buildFriendEntries(visibleFriends);
@@ -1095,22 +1109,36 @@ class _FriendsPageState extends State<FriendsPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          FiestaaaPageHeader(
-            title: S.of(context).myFriends,
-            subtitle: S.of(context).addContactsManageRequests,
-            bottomSpacing: 12,
+          TextField(
+            controller: _friendsFilterController,
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              labelText: S.of(context).searchFriends,
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _friendsFilterController.text.isEmpty
+                  ? null
+                  : IconButton(
+                      onPressed: () => _friendsFilterController.clear(),
+                      tooltip: S.of(context).close,
+                      icon: const Icon(Icons.clear),
+                    ),
+            ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+          const SizedBox(height: 12),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
             child: FilledButton.icon(
               onPressed: _openAddFriend,
               icon: const Icon(Icons.person_add_alt_1),
               label: Text(S.of(context).addFriend),
             ),
           ),
+          const SizedBox(height: 12),
           _FriendsTabs(
             controller: _tabController,
-            pendingIncomingCount: incoming.length,
+            pendingIncomingCount: _requests
+                .where((r) => r.isIncoming(widget.session.email))
+                .length,
           ),
           const SizedBox(height: 12),
           Expanded(
@@ -1281,56 +1309,6 @@ class _FriendsDirectoryTab extends StatelessWidget {
           parent: AlwaysScrollableScrollPhysics(),
         ),
         slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4, bottom: 16),
-              child: _SectionPanel(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _SectionHeader(
-                      icon: Icons.search_rounded,
-                      title: S.of(context).searchFriends,
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: filterController,
-                      textInputAction: TextInputAction.search,
-                      decoration: InputDecoration(
-                        hintText: S.of(context).filterFriends,
-                        prefixIcon: const Icon(Icons.search_rounded),
-                        suffixIcon: hasQuery
-                            ? IconButton(
-                                onPressed: onClearFilter,
-                                icon: const Icon(Icons.close),
-                                tooltip: S.of(context).close,
-                              )
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _InfoPill(
-                          icon: Icons.group_outlined,
-                          value: '$totalFriendsCount',
-                          label: S.of(context).friendsTab,
-                        ),
-                        if (hasQuery)
-                          _InfoPill(
-                            icon: Icons.filter_alt_outlined,
-                            value: '$filteredFriendsCount',
-                            label: S.of(context).search,
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
           if (error != null && entries.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
@@ -2096,8 +2074,7 @@ class _FriendTile extends StatelessWidget {
     final selectionMode = onToggleSelection != null;
 
     final tile = ListTile(
-      dense: true,
-      visualDensity: VisualDensity.compact,
+      visualDensity: VisualDensity.standard,
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       leading: _AvatarCircle(
         url: friend.avatarUrl,
