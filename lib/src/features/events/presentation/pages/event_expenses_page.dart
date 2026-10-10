@@ -951,8 +951,6 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                               children: [
                                 Text(
                                   expense.title,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w800,
                                   ),
@@ -960,8 +958,6 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                                 const SizedBox(height: 6),
                                 Text(
                                   l10n.paidBy(paidByLabel),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: scheme.onSurfaceVariant,
                                   ),
@@ -971,8 +967,9 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                                   DateFormat.yMMMMd(l10n.localeName)
                                       .add_Hm()
                                       .format(expense.expenseDate.toLocal()),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: scheme.onSurfaceVariant,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: scheme.onSurface,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],

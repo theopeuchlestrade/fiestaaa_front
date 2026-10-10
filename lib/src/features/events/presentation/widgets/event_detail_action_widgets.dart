@@ -26,7 +26,13 @@ class _EventDetailFeatureActionButton extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: ListTile(
         leading: Icon(data.icon, color: colorScheme.primary),
-        title: Text(data.label),
+        title: Text(
+          data.label,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         trailing: const Icon(Icons.chevron_right),
         onTap: data.onPressed,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
