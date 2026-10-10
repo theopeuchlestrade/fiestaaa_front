@@ -429,6 +429,9 @@ class _SafetyPageState extends State<SafetyPage> {
                   'Bloquer coupe les demandes d’amitié et invitations directes. Les événements communs restent accessibles ; vous pouvez les quitter ou les signaler.',
                   'Blocking stops friend requests and direct invitations. Shared events remain accessible; you can leave or report them.',
                 ),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
               TextField(
                 controller: _handle,

@@ -305,22 +305,24 @@ void main() {
                 );
                 await tester.pumpAndSettle();
                 expect(tester.takeException(), isNull);
-                final golden =
-                    referenceScreens.contains(screen) &&
+                final accessibility =
                     scale == 1 &&
                     ((width == 360 && !dark && locale == 'en') ||
                         (width == 1440 && dark && locale == 'fr'));
-                if (golden) {
+                final golden =
+                    accessibility && referenceScreens.contains(screen);
+                if (accessibility) {
                   Object? comparisonFailure;
                   StackTrace? comparisonStack;
                   // Produce comparison artifacts even if a later accessibility check fails.
                   try {
-                    await expectLater(
-                      find.byKey(const ValueKey('screen')),
-                      matchesGoldenFile(
-                        'goldens/${Platform.operatingSystem}/${screen}_${width.toInt()}_${dark ? 'dark' : 'light'}_$locale.png',
-                      ),
-                    );
+                    if (golden)
+                      await expectLater(
+                        find.byKey(const ValueKey('screen')),
+                        matchesGoldenFile(
+                          'goldens/${Platform.operatingSystem}/${screen}_${width.toInt()}_${dark ? 'dark' : 'light'}_$locale.png',
+                        ),
+                      );
                   } catch (error, stack) {
                     comparisonFailure = error;
                     comparisonStack = stack;

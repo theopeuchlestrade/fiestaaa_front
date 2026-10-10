@@ -1002,7 +1002,10 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Icon(Icons.delete_outline),
+                                : Icon(
+                                    Icons.delete_outline,
+                                    semanticLabel: S.of(context).delete,
+                                  ),
                           ),
                         ],
                       ],
