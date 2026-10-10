@@ -62,7 +62,11 @@ extension _EventDetailItemMethods on _EventDetailPageState {
         return;
       }
       _updateState(() {
-        _itemsError = e.message;
+        _itemsError = localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).unableToLoadItems,
+        );
         _summaryItems = null;
       });
     } catch (_) {
@@ -123,7 +127,11 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       _updateState(
         () => _pollsError = e.statusCode == 403
             ? S.of(context).acceptInvitationBeforeVoting
-            : e.message,
+            : localizedApiError(
+                S.of(context),
+                e,
+                fallback: S.of(context).unableToLoadPolls,
+              ),
       );
     } catch (_) {
       if (!mounted ||
@@ -367,7 +375,14 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       await _loadItems(showLoading: false);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).addItemFailed, isError: true);
@@ -411,7 +426,14 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       await _loadItems(showLoading: false);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).deleteItemFailed, isError: true);
@@ -438,7 +460,14 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       await _loadItems(showLoading: false);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).networkError, isError: true);

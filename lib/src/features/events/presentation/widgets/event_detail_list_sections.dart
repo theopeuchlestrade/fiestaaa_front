@@ -72,6 +72,13 @@ extension _EventDetailListSections on _EventDetailPageState {
           ),
         ),
         const SizedBox(height: 12),
+        if (_pollsError != null && _polls != null)
+          AsyncNotice(
+            compact: true,
+            message: _pollsError!,
+            actionLabel: S.of(context).retry,
+            onAction: _loadPolls,
+          ),
         if (collapsible)
           AnimatedCrossFade(
             duration: const Duration(milliseconds: 200),
@@ -185,6 +192,9 @@ extension _EventDetailListSections on _EventDetailPageState {
   Widget _buildItemsScopeAndSortControls() {
     final l10n = S.of(context);
     return EventItemsFilterControls(
+      scopes: _itemsKind == EventItemKind.need
+          ? EventItemsScope.values
+          : const [EventItemsScope.all, EventItemsScope.mine],
       selectedScope: _itemsScope,
       selectedSort: _itemsSort,
       scopeLabelBuilder: (scope) => _itemsScopeLabel(l10n, scope),
@@ -230,8 +240,16 @@ extension _EventDetailListSections on _EventDetailPageState {
             ChoiceChip(
               label: Text(l.bringSectionTitle),
               selected: !needs,
-              onSelected: (_) =>
-                  _updateState(() => _itemsKind = EventItemKind.bring),
+              onSelected: (_) {
+                final reset =
+                    _itemsScope == EventItemsScope.toCover ||
+                    _itemsScope == EventItemsScope.completed;
+                _updateState(() {
+                  _itemsKind = EventItemKind.bring;
+                  if (reset) _itemsScope = EventItemsScope.all;
+                });
+                if (reset) _loadItems();
+              },
             ),
           ],
         ),

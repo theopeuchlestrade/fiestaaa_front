@@ -12,8 +12,10 @@ class EventItemsFilterControls extends StatelessWidget {
     required this.onScopeChanged,
     required this.onSortChanged,
     required this.sortTooltip,
+    this.scopes = EventItemsScope.values,
   });
 
+  final List<EventItemsScope> scopes;
   final EventItemsScope selectedScope;
   final EventItemsSort selectedSort;
   final String Function(EventItemsScope scope) scopeLabelBuilder;
@@ -29,7 +31,7 @@ class EventItemsFilterControls extends StatelessWidget {
     final scopeChips = Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: EventItemsScope.values
+      children: scopes
           .map(
             (scope) => ChoiceChip(
               key: Key('items_scope_${scope.name}'),

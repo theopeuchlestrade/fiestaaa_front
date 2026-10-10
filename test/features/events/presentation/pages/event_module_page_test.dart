@@ -155,6 +155,24 @@ void main() {
       expect(find.text('Add'), findsOneWidget);
     },
   );
+  testWidgets('switching to personal brings resets need-only filters', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_app(_Api()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('items_scope_toCover')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ChoiceChip, 'What we bring'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('items_scope_toCover')), findsNothing);
+    expect(
+      tester
+          .widget<ChoiceChip>(find.byKey(const Key('items_scope_all')))
+          .selected,
+      isTrue,
+    );
+    expect(find.text('Personal bring'), findsOneWidget);
+  });
   testWidgets('failed refresh retains loaded module content', (tester) async {
     final api = _Api();
     await tester.pumpWidget(_app(api));

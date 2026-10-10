@@ -497,9 +497,16 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
             ),
             const SizedBox(height: 24),
           ],
+          if (_error != null && _invitations.isNotEmpty)
+            Column(
+              children: [
+                Text(_error!),
+                TextButton(onPressed: _fetch, child: Text(S.of(context).retry)),
+              ],
+            ),
           if (_loading)
             const Center(child: CircularProgressIndicator())
-          else if (_error != null)
+          else if (_error != null && _invitations.isEmpty)
             Column(
               children: [
                 Text(_error!),

@@ -1,3 +1,5 @@
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
+import 'package:fiestaaa_front/src/core/presentation/widgets/async_content.dart';
 import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_personal_summary.dart';
@@ -346,7 +348,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 Row(
                   children: [
                     BackButton(onPressed: back),
-                    Expanded(child: Text(_currentEvent.name)),
+                    Expanded(
+                      child: Text(
+                        _currentEvent.name,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ),
                   ],
                 ),
                 FiestaaaPageHeader(title: title),

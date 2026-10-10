@@ -1331,12 +1331,27 @@ class _FriendsDirectoryTab extends StatelessWidget {
               ),
             ),
           ),
+          if (error != null && entries.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Column(
+                  children: [
+                    Text(error!),
+                    TextButton(
+                      onPressed: onRefresh,
+                      child: Text(S.of(context).retry),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           if (loading)
             const SliverFillRemaining(
               hasScrollBody: false,
               child: Center(child: CircularProgressIndicator()),
             )
-          else if (error != null)
+          else if (error != null && entries.isEmpty)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.only(top: 24, bottom: 32),
@@ -1395,6 +1410,7 @@ class _FriendsDirectoryTab extends StatelessWidget {
                       friend: entry.friend!,
                       onInviteToEvent: onInviteToEvent,
                       onRemove: onRemove,
+                      onSafetyChanged: () => unawaited(onRefresh()),
                     ),
                   );
                 }, childCount: entries.length),
@@ -1541,7 +1557,7 @@ class _EventInviteSelectionView extends StatelessWidget {
                       padding: EdgeInsets.only(top: 48),
                       child: Center(child: CircularProgressIndicator()),
                     )
-                  else if (error != null)
+                  else if (error != null && friends.isEmpty)
                     _StatePanel(
                       icon: Icons.error_outline,
                       message: error!,
@@ -1684,12 +1700,25 @@ class _RequestsTab extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          if (error != null && (incoming.isNotEmpty || outgoing.isNotEmpty))
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Column(
+                children: [
+                  Text(error!),
+                  TextButton(
+                    onPressed: onRefresh,
+                    child: Text(S.of(context).retry),
+                  ),
+                ],
+              ),
+            ),
           if (loading)
             const Padding(
               padding: EdgeInsets.only(top: 48),
               child: Center(child: CircularProgressIndicator()),
             )
-          else if (error != null)
+          else if (error != null && incoming.isEmpty && outgoing.isEmpty)
             _StatePanel(
               icon: Icons.error_outline,
               message: error!,
@@ -2047,6 +2076,7 @@ class _FriendTile extends StatelessWidget {
     required this.friend,
     this.onInviteToEvent,
     this.onRemove,
+    this.onSafetyChanged,
     this.selected = false,
     this.onToggleSelection,
   });
@@ -2054,6 +2084,7 @@ class _FriendTile extends StatelessWidget {
   final FriendModel friend;
   final ValueChanged<FriendModel>? onInviteToEvent;
   final ValueChanged<FriendModel>? onRemove;
+  final VoidCallback? onSafetyChanged;
   final bool selected;
   final ValueChanged<FriendModel>? onToggleSelection;
 
@@ -2096,7 +2127,7 @@ class _FriendTile extends StatelessWidget {
                   : theme.fiestaaaMutedText,
             )
           : PopupMenuButton<_FriendMenuAction>(
-              onSelected: (action) {
+              onSelected: (action) async {
                 switch (action) {
                   case _FriendMenuAction.inviteToFiestaaa:
                     onInviteToEvent?.call(friend);
@@ -2106,12 +2137,13 @@ class _FriendTile extends StatelessWidget {
                     break;
                   case _FriendMenuAction.block:
                   case _FriendMenuAction.report:
-                    context.push(
+                    await context.push(
                       Uri(
                         path: '/safety',
                         queryParameters: {'handle': friend.handle},
                       ).toString(),
                     );
+                    if (context.mounted) onSafetyChanged?.call();
                     break;
                 }
               },

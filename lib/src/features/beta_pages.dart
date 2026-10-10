@@ -29,7 +29,7 @@ class BetaLinks extends StatelessWidget {
       for (final item in [
         ('privacy', 'Confidentialité', 'Privacy'),
         ('terms', 'Conditions', 'Terms'),
-        ('support', 'Aide', 'Help'),
+        ('support', 'Assistance', 'Support'),
         ('delete-account', 'Suppression de compte', 'Account deletion'),
       ])
         TextButton(

@@ -404,7 +404,10 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
       ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(textStyle: textTheme.labelLarge),
+      style: TextButton.styleFrom(
+        foregroundColor: isDark ? primaryColor : const Color(0xFF5936CD),
+        textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+      ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(

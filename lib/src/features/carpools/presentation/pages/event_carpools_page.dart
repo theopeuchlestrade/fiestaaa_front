@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'dart:async';
 import 'package:fiestaaa_front/src/core/presentation/widgets/route_back_button.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
@@ -144,7 +145,13 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
               (_scopeGeneration, widget.session.token, widget.eventId)) {
         return;
       }
-      setState(() => _error = e.toString());
+      setState(
+        () => _error = localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+      );
     } finally {
       if (mounted &&
           requestScope ==
@@ -212,7 +219,14 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
       await _loadCarpools();
     } catch (e) {
       if (!mounted) return;
-      _showSnack(e.toString(), isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } finally {
       if (mounted) {
         setState(() => _editingCarpoolId = null);
@@ -236,7 +250,14 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
       await _loadCarpools();
     } catch (e) {
       if (!mounted) return;
-      _showSnack(e.toString(), isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } finally {
       if (mounted) {
         setState(() => _editingCarpoolId = null);
@@ -280,7 +301,14 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
       await _loadCarpools();
     } catch (e) {
       if (!mounted) return;
-      _showSnack(e.toString(), isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     }
   }
 
@@ -300,7 +328,14 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
       await _loadCarpools();
     } catch (e) {
       if (!mounted) return;
-      _showSnack(e.toString(), isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } finally {
       if (mounted) {
         setState(() => _joiningCarpoolId = null);
@@ -341,7 +376,14 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
       await _loadCarpools();
     } catch (e) {
       if (!mounted) return;
-      _showSnack(e.toString(), isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } finally {
       if (mounted) {
         setState(() => _leavingCarpoolId = null);

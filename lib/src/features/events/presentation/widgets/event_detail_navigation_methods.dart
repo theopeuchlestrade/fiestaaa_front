@@ -53,7 +53,14 @@ extension _EventDetailNavigationMethods on _EventDetailPageState {
       if (!mounted) return;
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).unableToGenerateLink, isError: true);

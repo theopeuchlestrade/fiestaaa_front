@@ -311,27 +311,44 @@ void main() {
                     ((width == 360 && !dark && locale == 'en') ||
                         (width == 1440 && dark && locale == 'fr'));
                 if (golden) {
+                  Object? comparisonFailure;
+                  StackTrace? comparisonStack;
+                  // Produce comparison artifacts even if a later accessibility check fails.
+                  try {
+                    await expectLater(
+                      find.byKey(const ValueKey('screen')),
+                      matchesGoldenFile(
+                        'goldens/${Platform.operatingSystem}/${screen}_${width.toInt()}_${dark ? 'dark' : 'light'}_$locale.png',
+                      ),
+                    );
+                  } catch (error, stack) {
+                    comparisonFailure = error;
+                    comparisonStack = stack;
+                  }
                   final semantics = tester.ensureSemantics();
                   await tester.pump();
-                  await expectLater(
-                    tester,
-                    meetsGuideline(labeledTapTargetGuideline),
-                  );
-                  await expectLater(
-                    tester,
-                    meetsGuideline(androidTapTargetGuideline),
-                  );
-                  await expectLater(
-                    tester,
-                    meetsGuideline(textContrastGuideline),
-                  );
-                  semantics.dispose();
-                  await expectLater(
-                    find.byKey(const ValueKey('screen')),
-                    matchesGoldenFile(
-                      'goldens/${Platform.operatingSystem}/${screen}_${width.toInt()}_${dark ? 'dark' : 'light'}_$locale.png',
-                    ),
-                  );
+                  try {
+                    await expectLater(
+                      tester,
+                      meetsGuideline(labeledTapTargetGuideline),
+                    );
+                    await expectLater(
+                      tester,
+                      meetsGuideline(androidTapTargetGuideline),
+                    );
+                    await expectLater(
+                      tester,
+                      meetsGuideline(textContrastGuideline),
+                    );
+                  } finally {
+                    semantics.dispose();
+                  }
+                  if (comparisonFailure != null) {
+                    Error.throwWithStackTrace(
+                      comparisonFailure,
+                      comparisonStack!,
+                    );
+                  }
                 }
                 await tester.pumpWidget(const SizedBox.shrink());
                 await tester.pumpAndSettle();

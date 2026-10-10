@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/route_back_button.dart';
 import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
@@ -181,7 +182,13 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
               (_scopeGeneration, widget.session.token, widget.eventId)) {
         return;
       }
-      setState(() => _error = e.message);
+      setState(
+        () => _error = localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).sharedExpensesLoadFailed,
+        ),
+      );
     } catch (_) {
       if (!mounted ||
           requestScope !=
@@ -496,7 +503,14 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                               navigator.pop(true);
                             } on ApiException catch (e) {
                               if (!mounted) return;
-                              _showSnack(e.message, isError: true);
+                              _showSnack(
+                                localizedApiError(
+                                  l10n,
+                                  e,
+                                  fallback: l10n.expenseCreateFailed,
+                                ),
+                                isError: true,
+                              );
                             } catch (_) {
                               if (!mounted) return;
                               _showSnack(
@@ -560,7 +574,14 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
       _showSnack(S.of(context).expenseDeleted);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).expenseDeleteFailed, isError: true);

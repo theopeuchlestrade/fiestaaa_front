@@ -27,7 +27,14 @@ extension _EventDetailPollMethods on _EventDetailPageState {
       _updatePollInState(updated);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).voteNotRecorded, isError: true);
@@ -85,7 +92,14 @@ extension _EventDetailPollMethods on _EventDetailPageState {
       _showSnack(S.of(context).pollCreated);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).createPollFailed, isError: true);
@@ -135,7 +149,14 @@ extension _EventDetailPollMethods on _EventDetailPageState {
       _showSnack(S.of(context).pollDeleted);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).deletePollFailed, isError: true);
