@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/route_back_button.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
@@ -181,7 +182,13 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
               (_scopeGeneration, widget.session.token, widget.eventId)) {
         return;
       }
-      setState(() => _error = e.message);
+      setState(
+        () => _error = localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).unableToLoadInvitations,
+        ),
+      );
     } catch (_) {
       if (!mounted ||
           requestScope !=
@@ -232,7 +239,14 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
         await _fetch();
         return;
       }
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).creationFailed, isError: true);
@@ -258,7 +272,14 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       _showSnack(S.of(context).invitationDeleted);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).deleteInvitationError, isError: true);
@@ -344,7 +365,14 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       _showSnack(S.of(context).friendRequestSentSuccess);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).unableToSendRequest, isError: true);

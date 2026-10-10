@@ -70,6 +70,7 @@
   "appleLoginSuccess": "Apple login successful!",
   "googleLoginCancelled": "Google login cancelled.",
   "networkError": "Network error, please try again.",
+  "invalidCredentials": "Incorrect email, username or password.",
   "addressCopied": "Address copied",
   "bugTemplateCopied": "Bug template copied",
 

@@ -168,7 +168,9 @@ class _HomePageState extends State<HomePage> {
             widget.eventsView != _eventsView)) {
       _eventsQuery = widget.eventsQuery;
       _eventsView = widget.eventsView;
-      _pages[0] = _buildPage(0);
+      _pages[HomeDestination.events.index] = _buildPage(
+        HomeDestination.events.index,
+      );
     }
     if (widget.session.token != oldWidget.session.token) {
       _scopeGeneration++;

@@ -86,6 +86,7 @@
   "appleLoginSuccess": "Connexion Apple réussie !",
   "googleLoginCancelled": "Connexion Google annulée.",
   "networkError": "Erreur réseau, merci de réessayer.",
+  "invalidCredentials": "Email, identifiant ou mot de passe incorrect.",
   "addressCopied": "Adresse copiée",
   "bugTemplateCopied": "Template de bug copié",
 

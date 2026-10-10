@@ -40,6 +40,31 @@ void main() {
     }
   });
 
+  test(
+    'credentials and verification errors are localized in FR and EN',
+    () async {
+      for (final locale in ['fr', 'en']) {
+        final l10n = await S.delegate.load(Locale(locale));
+        expect(
+          localizedApiError(
+            l10n,
+            ApiException('invalid_credentials'),
+            fallback: l10n.actionFailed,
+          ),
+          l10n.invalidCredentials,
+        );
+        expect(
+          localizedApiError(
+            l10n,
+            ApiException('raw', code: 'email_not_verified'),
+            fallback: l10n.actionFailed,
+          ),
+          l10n.loginRequiresVerifiedEmail,
+        );
+      }
+    },
+  );
+
   test('unknown API messages are replaced by a localized fallback', () async {
     final l10n = await S.delegate.load(const Locale('en'));
     final error = ApiException('Erreur interne non traduite');

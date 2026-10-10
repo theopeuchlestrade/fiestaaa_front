@@ -431,8 +431,10 @@ class _SafetyPageState extends State<SafetyPage> {
                 ),
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
+              const SizedBox(height: 16),
               TextField(
                 controller: _handle,
                 decoration: InputDecoration(

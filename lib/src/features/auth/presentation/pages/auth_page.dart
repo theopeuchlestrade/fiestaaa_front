@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import '../../data/apple_sign_in.dart';
 import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'dart:async';
@@ -197,7 +198,11 @@ Bug report
       'email_not_verified' => l10n.loginRequiresVerifiedEmail,
       'handle_taken' => l10n.identifierTaken,
       'expired_token' || 'invalid_token' => l10n.emailVerificationFailed,
-      _ => message,
+      _ => localizedApiError(
+        l10n,
+        ApiException(message, code: code),
+        fallback: l10n.actionFailed,
+      ),
     };
   }
 
@@ -437,7 +442,7 @@ Bug report
       if (e.code == AuthorizationErrorCode.canceled) {
         return;
       }
-      _showSnack(e.message, isError: true);
+      _showSnack(S.of(context).appleLoginFailed, isError: true);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(_mapApiMessage(e.message, code: e.code), isError: true);
