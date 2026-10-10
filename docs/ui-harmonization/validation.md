@@ -15,9 +15,9 @@
 
 - Final local regression suite: 755 passed; 46.51% line coverage (6369/13694).
 
-## In progress
-- Frontend CI, including Android/iOS compilation and exact Linux visual comparison.
-- Final browser fixes and corresponding Linux reference refresh.
+## Current status
+
+All frontend CI jobs passed at application commit 70c256ec1c54f5027eb524d9596b7b8664d8bafd (run 38060020259), including Linux visual/accessibility checks, Android/iOS compilation, web smoke tests, OpenSpec and backend contracts. Native testing is in progress; the confirmed device results below identify exact QA builds and tested flows.
 
 ## Required before a beta delivery
 
@@ -25,7 +25,7 @@
 - Local browser keyboard/focus, real history/back/reload and authenticated return across modules.
 - Native iPhone and Pixel installation, Google/Apple/email, notification request destination, QR/camera permissions, avatar, modules, draft/exit, offline recovery and realtime updates against an isolated validation backend.
 - VoiceOver and TalkBack checks; confirm no clipped essential action with device text enlargement.
-- No compilation result is phone validation. The user confirmed both devices will be available; no new device validation has been performed yet.
+- No compilation result is phone validation. Selected device flows have now been confirmed by the owner, as recorded below; remaining flows and iPhone receiver/accessibility checks still require validation.
 - Create the beta candidate as a separate delivery after these checks. No release tag, store upload, deployment or publication is authorized by this preparation.
 
 ## Dependency limitation
@@ -58,7 +58,7 @@ Final local validation after expanded accessibility checks: 755 tests passed, in
 
 The owner confirmed sign-in and event display on iPhone (guest) and Pixel (creator), using separate QA build 9002. Android local HTTP was enabled only for the Mac LAN address in the disposable QA source. Store apps remain installed. Native contribution/realtime validation is in progress. Node 22.23.3 is installed through NVM; strict OpenSpec passes for both repositories.
 
-Local regression after final error localization: 756 tests passed. Credential errors are localized in French and English, provider authorization failures use translated copy, and invitations/create/edit no longer expose raw server strings. The safety explanation has separate spacing from the input and stronger typography after Linux detected a contrast failure. Final remote validation remains required.
+Local regression after final error localization: 756 tests passed. Credential errors are localized in French and English, provider authorization failures use translated copy, and invitations/create/edit no longer expose raw server strings. The safety explanation has separate spacing from the input and stronger typography after Linux detected a contrast failure. Remote validation subsequently passed at 6b882c9; see the current status for the later carpool fix.
 
 The owner confirmed native needs/contribution and realtime behavior on QA build 9002: the iPhone guest contributed one unit, and both devices displayed 3/6 without refreshing the Pixel creator view. This validates this flow on the isolated API, not store distribution or provider authentication.
 
@@ -67,3 +67,19 @@ The owner confirmed native poll voting and realtime behavior on QA build 9002: t
 The owner confirmed the native expense summary (24 EUR, 12 EUR per participant) and return navigation to the event on both phones using QA build 9002.
 
 Native carpool testing exposed a delayed refresh: joining succeeded and the creator eventually saw the update, but the page ignored the existing server events (`carpool_created`, `carpool_updated`, `carpool_deleted`, `carpool_joined`, `carpool_left`). The frontend now refreshes on these events without changing the backend contract. A regression test failed before the fix and also checks unrelated events and other event IDs are ignored. Native retesting remains required.
+
+Native carpool retest passed after the fix: the owner confirmed that leaving and rejoining from iPhone QA 9002 promptly updated available seats on Pixel QA 9004 in both directions without a manual refresh. The iPhone receiver still requires the same corrected build and verification.
+
+The owner confirmed native participant lists, pending invitation display, creator-only invitation actions and back navigation on Pixel QA 9004 and iPhone QA 9002.
+
+The owner confirmed the Pixel QA 9004 edit exit guard: Stay preserves unsaved input and Leave discards it without mutating the event. Persistent drafts apply to creation; editing intentionally uses confirmation instead.
+
+The owner confirmed Pixel QA 9004 creation draft persistence: after entering “Test brouillon”, leaving and reopening creation offered the draft and restored its name. No event was created.
+
+The owner confirmed Pixel QA 9004 offline recovery: the interruption banner appeared while loaded needs remained visible, back navigation stayed usable, and restoring Wi-Fi cleared the banner and restored module use.
+
+The owner confirmed Pixel QA 9004 light/French and dark/English presentation on the event list, overview, needs and expenses: readable text, accessible actions and translated labels. This is a selected native screen check, not the entire visual matrix.
+
+The owner confirmed Pixel QA 9004 at the maximum available device font setting on profile, list, overview and needs: readable content and reachable primary actions without clipping or overflow. The exact native scale multiplier was not measured; automated layout tests separately cover 200%.
+
+The owner confirmed TalkBack on Pixel QA 9004 navigation, overview and needs: meaningful control names, logical reading order and audible 3/6 progress; no essential silent control reported on this selected flow.
