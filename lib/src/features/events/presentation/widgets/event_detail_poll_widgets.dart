@@ -206,7 +206,10 @@ class _PollCard extends StatelessWidget {
                               valueColor: AlwaysStoppedAnimation(Colors.white),
                             ),
                           )
-                        : const Icon(Icons.delete_outline),
+                        : Icon(
+                            Icons.delete_outline,
+                            semanticLabel: S.of(context).delete,
+                          ),
                   ),
                 ],
               ],

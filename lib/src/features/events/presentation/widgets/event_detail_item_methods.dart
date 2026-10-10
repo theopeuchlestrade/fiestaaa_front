@@ -229,6 +229,9 @@ extension _EventDetailItemMethods on _EventDetailPageState {
                           ),
                           IconButton(
                             onPressed: () => Navigator.of(context).pop(),
+                            tooltip: MaterialLocalizations.of(
+                              context,
+                            ).closeButtonTooltip,
                             icon: const Icon(Icons.close),
                           ),
                         ],

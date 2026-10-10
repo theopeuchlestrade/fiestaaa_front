@@ -328,6 +328,13 @@ void main() {
                   final semantics = tester.ensureSemantics();
                   await tester.pump();
                   try {
+                    if (screen == 'needs') {
+                      // A progress role must not absorb the surrounding controls.
+                      final progress = tester.getSemantics(
+                        find.byType(LinearProgressIndicator),
+                      );
+                      expect(progress.getSemanticsData().label, isEmpty);
+                    }
                     await expectLater(
                       tester,
                       meetsGuideline(labeledTapTargetGuideline),

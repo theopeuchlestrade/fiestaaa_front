@@ -212,6 +212,9 @@ extension _EventDetailPollMethods on _EventDetailPageState {
                         ),
                         IconButton(
                           onPressed: () => Navigator.of(context).pop(),
+                          tooltip: MaterialLocalizations.of(
+                            context,
+                          ).closeButtonTooltip,
                           icon: const Icon(Icons.close),
                         ),
                       ],
@@ -251,6 +254,7 @@ extension _EventDetailPollMethods on _EventDetailPageState {
                             ),
                             if (optionControllers.length > 2)
                               IconButton(
+                                tooltip: S.of(context).remove,
                                 onPressed: () {
                                   setModalState(() {
                                     optionControllers.removeAt(index);

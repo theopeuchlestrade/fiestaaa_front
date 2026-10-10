@@ -578,12 +578,15 @@ class _EventItemTile extends StatelessWidget {
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: LinearProgressIndicator(
-                minHeight: 10,
-                value: ratio.clamp(0, 1),
-                backgroundColor: barBackground,
-                valueColor: AlwaysStoppedAnimation(
-                  ratio <= 0 ? barEmpty : accentGreen,
+              child: Semantics(
+                container: true,
+                child: LinearProgressIndicator(
+                  minHeight: 10,
+                  value: ratio.clamp(0, 1),
+                  backgroundColor: barBackground,
+                  valueColor: AlwaysStoppedAnimation(
+                    ratio <= 0 ? barEmpty : accentGreen,
+                  ),
                 ),
               ),
             ),

@@ -7,4 +7,4 @@
 - [x] Simplify event overview and separate needs from personal contributions
 - [x] Harmonize modules, friends, profile, authentication, safety and public pages
 - [ ] Validate functional flows and visual references across the required matrix
-- [ ] Prepare coordinated PRs and document pending phone checks for the beta candidate
+- [x] Prepare coordinated PRs and document pending phone checks for the beta candidate
