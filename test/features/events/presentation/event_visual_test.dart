@@ -316,13 +316,14 @@ void main() {
                   StackTrace? comparisonStack;
                   // Produce comparison artifacts even if a later accessibility check fails.
                   try {
-                    if (golden)
+                    if (golden) {
                       await expectLater(
                         find.byKey(const ValueKey('screen')),
                         matchesGoldenFile(
                           'goldens/${Platform.operatingSystem}/${screen}_${width.toInt()}_${dark ? 'dark' : 'light'}_$locale.png',
                         ),
                       );
+                    }
                   } catch (error, stack) {
                     comparisonFailure = error;
                     comparisonStack = stack;
