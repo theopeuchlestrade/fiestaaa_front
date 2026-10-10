@@ -1,15 +1,6 @@
 part of '../pages/event_detail_page.dart';
 
 extension _EventDetailFeatureMethods on _EventDetailPageState {
-  String _playlistProviderName(String? provider) {
-    return switch (provider) {
-      'spotify' => 'Spotify',
-      'apple_music' => 'Apple Music',
-      'deezer' => 'Deezer',
-      _ => S.of(context).selectProvider,
-    };
-  }
-
   Widget _buildProviderInitialLogo(
     String label, {
     required Color color,
@@ -258,102 +249,7 @@ extension _EventDetailFeatureMethods on _EventDetailPageState {
     );
   }
 
-  Future<void> _openDynamicPageModal({
-    required Widget Function(BuildContext context) pageBuilder,
-  }) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Theme.of(context).fiestaaaScrim,
-      builder: (_) => AnimatedPadding(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.9,
-          ),
-          child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            child: Material(
-              color: Theme.of(context).colorScheme.surface,
-              child: FiestaaaPageLayout(child: pageBuilder(context)),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Future<void> _openPlaylistFromMenu() async {
-    await _openFeatureModal(
-      title: S.of(context).sharedPlaylist,
-      headerActionsBuilder: _isOwner && !_isReadOnly
-          ? (context) => [
-              IconButton(
-                onPressed: _openEditEvent,
-                tooltip: S.of(context).editFiestaaa,
-                icon: const Icon(Icons.edit_outlined),
-              ),
-            ]
-          : null,
-      contentBuilder: (context) => _buildPlaylistSection(),
-      fitContent: true,
-    );
-  }
-
-  Widget _buildPlaylistSection() {
-    final l10n = S.of(context);
-    final url = _playlistUrl ?? '';
-    final playlistProvider = _playlistProvider;
-    final isEmpty = url.isEmpty;
-    final canEdit = _isOwner && !_isReadOnly;
-    final providerName = _playlistProviderName(playlistProvider);
-
-    return _buildFeaturePanel(
-      icon: Icons.music_note,
-      title: isEmpty ? l10n.noPlaylist : providerName,
-      subtitle: isEmpty
-          ? canEdit
-                ? l10n.playlistEmptyOwner
-                : l10n.playlistEmptyParticipant
-          : null,
-      accentColor: Theme.of(context).colorScheme.fiestaaaSuccess,
-      children: [
-        if (!isEmpty) ...[
-          Text(
-            url,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _openPlaylist,
-              icon: const Icon(Icons.open_in_new),
-              label: Text(l10n.openPlaylist),
-            ),
-          ),
-        ] else if (canEdit) ...[
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _openEditEvent,
-              icon: const Icon(Icons.add_link),
-              label: Text(l10n.add),
-            ),
-          ),
-        ],
-      ],
-    );
+    await _openPlaylist();
   }
 }

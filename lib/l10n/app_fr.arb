@@ -86,6 +86,7 @@
   "appleLoginSuccess": "Connexion Apple réussie !",
   "googleLoginCancelled": "Connexion Google annulée.",
   "networkError": "Erreur réseau, merci de réessayer.",
+  "invalidCredentials": "Email, identifiant ou mot de passe incorrect.",
   "addressCopied": "Adresse copiée",
   "bugTemplateCopied": "Template de bug copié",
 
@@ -238,6 +239,7 @@
 
 
   "fiestaaa": "Fiestaaa",
+  "fiestaaas": "Fiestaaas",
   "create": "Créer",
   "profile": "Profil",
   "shareLinkInvalid": "Lien de partage invalide ou expiré.",
@@ -1049,5 +1051,17 @@
   "addressSearchPrivacy": "Recherche via OpenStreetMap : ne saisissez aucune information personnelle ou confidentielle.",
   "addressSearchAttribution": "© Contributeurs OpenStreetMap · ODbL",
   "addressSearchBusy": "La recherche est occupée. Réessayez dans quelques secondes.",
-  "addressSearchTooLong": "Adresse trop longue. Raccourcissez votre recherche."
+  "addressSearchTooLong": "Adresse trop longue. Raccourcissez votre recherche.",
+  "openPolls": "Sondages ouverts",
+  "closedPolls": "Sondages terminés",
+  "editProfile": "Modifier mon profil",
+  "manageAccount": "Gestion du compte",
+  "myExpenseBalance": "Mon solde",
+  "expenseSplitDetails": "Répartition et remboursements",
+  "eventActions": "Actions de la fiestaaa",
+  "itemsModule": "Besoins & apports",
+  "pollsModule": "Sondages",
+  "expensesModule": "Dépenses",
+  "organizerNeeds": "Besoins de l’organisateur",
+  "personalBrings": "Apports personnels"
 }

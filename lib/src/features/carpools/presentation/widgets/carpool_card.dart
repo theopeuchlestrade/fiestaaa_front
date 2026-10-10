@@ -50,6 +50,23 @@ class CarpoolCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Location and time info
+            _InfoRow(
+              icon: Icons.location_on_outlined,
+              iconColor: FiestaaaPalette.primary,
+              text: carpool.origin,
+              onTap: () => _openMap(context, carpool),
+              actionIcon: Icons.map_outlined,
+            ),
+            const SizedBox(height: 8),
+            _InfoRow(
+              icon: Icons.schedule_outlined,
+              iconColor: FiestaaaPalette.secondary,
+              text: _formatDepartureTime(context, carpool.departAt),
+              secondaryText: _formatRelativeTime(context, carpool.departAt),
+            ),
+
+            const SizedBox(height: 16),
             // Header: Driver info + Seats indicator
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,25 +111,8 @@ class CarpoolCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Location and time info
-            _InfoRow(
-              icon: Icons.location_on_outlined,
-              iconColor: FiestaaaPalette.primary,
-              text: carpool.origin,
-              onTap: () => _openMap(context, carpool),
-              actionIcon: Icons.map_outlined,
-            ),
-            const SizedBox(height: 8),
-            _InfoRow(
-              icon: Icons.schedule_outlined,
-              iconColor: FiestaaaPalette.secondary,
-              text: _formatDepartureTime(context, carpool.departAt),
-              secondaryText: _formatRelativeTime(context, carpool.departAt),
-            ),
-
             // Notes section
             if (carpool.notes != null && carpool.notes!.trim().isNotEmpty) ...[
-              const SizedBox(height: 12),
               const SizedBox(height: 12),
               LayoutBuilder(
                 builder: (context, constraints) {
@@ -126,6 +126,7 @@ class CarpoolCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       width: double.infinity,
+                      constraints: const BoxConstraints(minHeight: 48),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primary.withValues(
@@ -609,14 +610,7 @@ class _InfoRow extends StatelessWidget {
     final content = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: iconColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, size: 16, color: iconColor),
-        ),
+        Icon(icon, size: 20, color: theme.colorScheme.onSurface),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -624,14 +618,11 @@ class _InfoRow extends StatelessWidget {
             children: [
               Text(
                 text,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w700,
                   decoration: onTap != null ? TextDecoration.underline : null,
-                  decorationColor: theme.colorScheme.primary.withValues(
-                    alpha: 0.5,
-                  ),
+                  decorationColor: theme.colorScheme.onSurface,
                 ),
               ),
               if (secondaryText != null)
@@ -650,7 +641,7 @@ class _InfoRow extends StatelessWidget {
           Icon(
             actionIcon ?? Icons.open_in_new,
             size: 16,
-            color: theme.colorScheme.primary,
+            color: theme.colorScheme.onSurface,
           ),
         ],
       ],
@@ -660,9 +651,12 @@ class _InfoRow extends StatelessWidget {
       return InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-          child: content,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            child: content,
+          ),
         ),
       );
     }

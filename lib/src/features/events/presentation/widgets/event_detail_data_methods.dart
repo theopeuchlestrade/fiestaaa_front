@@ -183,6 +183,9 @@ extension _EventDetailDataMethods on _EventDetailPageState {
       if (wasAccepted != _hasAcceptedInvitation ||
           (_hasAcceptedInvitation && _realtime == null)) {
         _updateState(_startRealtime);
+        if (_hasAcceptedInvitation) {
+          await Future.wait([_loadItems(), _loadPolls()]);
+        }
       }
     } catch (_) {
       if (!mounted ||
@@ -220,7 +223,11 @@ extension _EventDetailDataMethods on _EventDetailPageState {
     } on ApiException catch (e) {
       if (!mounted) return;
       _updateState(() {
-        _paymentProvidersError = e.message;
+        _paymentProvidersError = localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        );
         _loadingPaymentProviders = false;
       });
     } catch (_) {
@@ -268,7 +275,14 @@ extension _EventDetailDataMethods on _EventDetailPageState {
         await _loadMyInvitation();
         return;
       }
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).actionFailed, isError: true);

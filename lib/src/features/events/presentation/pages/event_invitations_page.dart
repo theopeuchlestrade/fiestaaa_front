@@ -1,3 +1,5 @@
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
+import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'dart:async';
@@ -17,6 +19,9 @@ import 'package:flutter/material.dart';
 class EventInvitationsPage extends StatefulWidget {
   const EventInvitationsPage({
     super.key,
+    this.moduleLocations = const {},
+    this.friendsApi,
+    this.invitationsApi,
     required this.session,
     required this.eventId,
     required this.eventName,
@@ -26,7 +31,10 @@ class EventInvitationsPage extends StatefulWidget {
     this.compactModal = false,
   });
 
+  final Map<String, String> moduleLocations;
   final SessionData session;
+  final InvitationsApi? invitationsApi;
+  final FriendsApi? friendsApi;
   final int eventId;
   final String eventName;
   final String ownerEmail;
@@ -42,8 +50,8 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   final _refreshQueue = RefreshQueue();
   int _scopeGeneration = 0;
 
-  final _api = InvitationsApi();
-  final _friendsApi = FriendsApi();
+  late final _api = widget.invitationsApi ?? InvitationsApi();
+  late final _friendsApi = widget.friendsApi ?? FriendsApi();
   List<InvitationModel> _invitations = [];
   bool _loading = true;
   String? _error;
@@ -176,7 +184,13 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
               (_scopeGeneration, widget.session.token, widget.eventId)) {
         return;
       }
-      setState(() => _error = e.message);
+      setState(
+        () => _error = localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).unableToLoadInvitations,
+        ),
+      );
     } catch (_) {
       if (!mounted ||
           requestScope !=
@@ -227,7 +241,14 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
         await _fetch();
         return;
       }
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).creationFailed, isError: true);
@@ -253,7 +274,14 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       _showSnack(S.of(context).invitationDeleted);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).deleteInvitationError, isError: true);
@@ -339,7 +367,14 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       _showSnack(S.of(context).friendRequestSentSuccess);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).unableToSendRequest, isError: true);
@@ -437,18 +472,11 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
         shrinkWrap: widget.compactModal,
         padding: EdgeInsets.zero,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: FiestaaaPageHeader(title: S.of(context).invitations),
-              ),
-              IconButton(
-                onPressed: () => Navigator.of(context).maybePop(),
-                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-                icon: const Icon(Icons.close),
-              ),
-            ],
+          EventModuleHeader(
+            title: S.of(context).participants,
+            eventName: widget.eventName,
+            eventId: widget.eventId,
+            locations: widget.moduleLocations,
           ),
           if (widget.eventReadOnly) ...[
             Container(
@@ -496,9 +524,16 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
             ),
             const SizedBox(height: 24),
           ],
+          if (_error != null && _invitations.isNotEmpty)
+            Column(
+              children: [
+                Text(_error!),
+                TextButton(onPressed: _fetch, child: Text(S.of(context).retry)),
+              ],
+            ),
           if (_loading)
             const Center(child: CircularProgressIndicator())
-          else if (_error != null)
+          else if (_error != null && _invitations.isEmpty)
             Column(
               children: [
                 Text(_error!),

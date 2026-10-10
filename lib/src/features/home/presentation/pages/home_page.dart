@@ -7,7 +7,6 @@ import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
-import 'package:fiestaaa_front/src/features/events/presentation/pages/event_create_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/events_list_page.dart';
 import 'package:fiestaaa_front/src/features/friends/data/friends_api.dart';
 import 'package:fiestaaa_front/src/features/friends/presentation/pages/friends_page.dart';
@@ -21,6 +20,15 @@ import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+enum HomeDestination {
+  events('/events'),
+  friends('/friends'),
+  profile('/profile');
+
+  const HomeDestination(this.location);
+  final String location;
+}
+
 class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
@@ -33,7 +41,7 @@ class HomePage extends StatefulWidget {
     this.onSessionUpdated,
     this.localeService,
     this.themeService,
-    this.initialIndex = 0,
+    this.destination = HomeDestination.events,
     this.eventsQuery = '',
     this.eventsView = 'upcoming',
   });
@@ -47,7 +55,7 @@ class HomePage extends StatefulWidget {
   final Future<void> Function(SessionData session)? onSessionUpdated;
   final LocaleService? localeService;
   final ThemeService? themeService;
-  final int initialIndex;
+  final HomeDestination destination;
   final String eventsQuery;
   final String eventsView;
 
@@ -78,9 +86,9 @@ class _HomePageState extends State<HomePage> {
   late String _eventsView = widget.eventsView;
 
   void _onItemTapped(int index) {
-    const locations = ['/events', '/events/new', '/friends', '/profile'];
+    final destination = HomeDestination.values[index];
     context.go(
-      index == 0
+      destination == HomeDestination.events
           ? Uri(
               path: '/events',
               queryParameters: {
@@ -88,7 +96,7 @@ class _HomePageState extends State<HomePage> {
                 if (_eventsQuery.isNotEmpty) 'q': _eventsQuery,
               },
             ).toString()
-          : locations[index],
+          : destination.location,
     );
   }
 
@@ -101,10 +109,6 @@ class _HomePageState extends State<HomePage> {
   Future<void> _openTrash() async {
     await context.push('/trash');
     _eventsKey.currentState?.reload();
-  }
-
-  void _handleEventCreated() {
-    context.go('/events');
   }
 
   void _startRealtime() {
@@ -141,8 +145,8 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _session = widget.session;
-    _selectedIndex = widget.initialIndex.clamp(0, 3).toInt();
-    _pages = List<Widget?>.filled(4, null);
+    _selectedIndex = widget.destination.index;
+    _pages = List<Widget?>.filled(HomeDestination.values.length, null);
     _loadPendingBadges();
     _startRealtime();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -158,18 +162,20 @@ class _HomePageState extends State<HomePage> {
   @override
   void didUpdateWidget(covariant HomePage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _selectedIndex = widget.initialIndex.clamp(0, 3);
-    if (widget.initialIndex == 0 &&
+    _selectedIndex = widget.destination.index;
+    if (widget.destination == HomeDestination.events &&
         (widget.eventsQuery != _eventsQuery ||
             widget.eventsView != _eventsView)) {
       _eventsQuery = widget.eventsQuery;
       _eventsView = widget.eventsView;
-      _pages[0] = _buildPage(0);
+      _pages[HomeDestination.events.index] = _buildPage(
+        HomeDestination.events.index,
+      );
     }
     if (widget.session.token != oldWidget.session.token) {
       _scopeGeneration++;
       _session = widget.session;
-      _pages = List<Widget?>.filled(4, null);
+      _pages = List<Widget?>.filled(HomeDestination.values.length, null);
       _loadPendingBadges();
       _startRealtime();
     }
@@ -296,9 +302,11 @@ class _HomePageState extends State<HomePage> {
     if (intent == null || !intent.opensFriendRequests) return;
 
     setState(() {
-      _selectedIndex = 2;
+      _selectedIndex = HomeDestination.friends.index;
       _friendsRequestsOpenSerial++;
-      _pages[2] = _buildPage(2);
+      _pages[HomeDestination.friends.index] = _buildPage(
+        HomeDestination.friends.index,
+      );
     });
     _loadPendingBadges();
   }
@@ -322,14 +330,9 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
-    final labels = [l10n.fiestaaa, l10n.create, l10n.friends, l10n.profile];
-    final icons = [
-      Icons.event_note,
-      Icons.add_circle_outline,
-      Icons.group,
-      Icons.person,
-    ];
-    final counts = [_pendingEventInvites, 0, _pendingFriendRequests, 0];
+    final labels = [l10n.fiestaaas, l10n.friends, l10n.profile];
+    final icons = [Icons.event_note, Icons.group, Icons.person];
+    final counts = [_pendingEventInvites, _pendingFriendRequests, 0];
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 720;
@@ -342,12 +345,12 @@ class _HomePageState extends State<HomePage> {
                       labelType: NavigationRailLabelType.all,
                       onDestinationSelected: _onItemTapped,
                       destinations: List.generate(
-                        4,
+                        HomeDestination.values.length,
                         (i) => NavigationRailDestination(
                           icon: CountedIcon(
                             icon: icons[i],
                             count: counts[i],
-                            label: labels[i],
+                            label: counts[i] > 0 ? l10n.pending : '',
                           ),
                           label: Text(labels[i]),
                         ),
@@ -364,12 +367,12 @@ class _HomePageState extends State<HomePage> {
                   currentIndex: _selectedIndex,
                   onTap: _onItemTapped,
                   items: List.generate(
-                    4,
+                    HomeDestination.values.length,
                     (i) => BottomNavigationBarItem(
                       icon: CountedIcon(
                         icon: icons[i],
                         count: counts[i],
-                        label: labels[i],
+                        label: counts[i] > 0 ? l10n.pending : '',
                       ),
                       label: labels[i],
                     ),
@@ -381,8 +384,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildPage(int index) {
-    return switch (index) {
-      0 => EventsListPage(
+    return switch (HomeDestination.values[index]) {
+      HomeDestination.events => EventsListPage(
         key: _eventsKey,
         session: _session,
         onEventSelected: _openEvent,
@@ -399,24 +402,20 @@ class _HomePageState extends State<HomePage> {
           ).toString(),
         ),
       ),
-      1 => EventCreatePage(
-        session: _session,
-        onEventCreated: _handleEventCreated,
-      ),
-      2 => FriendsPage(
+      HomeDestination.friends => FriendsPage(
         session: _session,
         onPendingRequestsChanged: (count) =>
             setState(() => _pendingFriendRequests = count),
         realtimeStream: _realtime?.stream,
         requestsOpenSerial: _friendsRequestsOpenSerial,
       ),
-      _ => ProfilePage(
+      HomeDestination.profile => ProfilePage(
         session: _session,
         onLogout: widget.onLogout,
         onSessionUpdated: (session) async {
           setState(() {
             _session = session;
-            _pages = List<Widget?>.filled(4, null);
+            _pages = List<Widget?>.filled(HomeDestination.values.length, null);
           });
           if (widget.onSessionUpdated != null) {
             await widget.onSessionUpdated!(session);

@@ -36,51 +36,16 @@ Future<void> _pumpAuthPage(WidgetTester tester, Size size) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('mobile layout remains stacked on narrow screens', (
-    WidgetTester tester,
-  ) async {
-    await _pumpAuthPage(tester, const Size(390, 844));
-
-    expect(find.byKey(const ValueKey('auth-mobile-card')), findsOneWidget);
-    expect(find.byKey(const ValueKey('auth-desktop-card')), findsNothing);
-    expect(
-      tester.getSize(find.byKey(const ValueKey('auth-mobile-card'))).width,
-      closeTo(350, 0.1),
-    );
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('tablet widths keep the stacked layout without stretching', (
-    WidgetTester tester,
-  ) async {
-    await _pumpAuthPage(tester, const Size(820, 900));
-
-    expect(find.byKey(const ValueKey('auth-mobile-card')), findsOneWidget);
-    expect(find.byKey(const ValueKey('auth-desktop-card')), findsNothing);
-    expect(
-      tester.getSize(find.byKey(const ValueKey('auth-mobile-card'))).width,
-      closeTo(560, 0.1),
-    );
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('desktop layout fills the available viewport height', (
-    WidgetTester tester,
-  ) async {
-    await _pumpAuthPage(tester, const Size(1440, 900));
-
-    expect(find.byKey(const ValueKey('auth-desktop-card')), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('auth-desktop-branding-panel')),
-      findsOneWidget,
-    );
-    expect(find.byKey(const ValueKey('auth-mobile-card')), findsNothing);
-
-    final cardSize = tester.getSize(
-      find.byKey(const ValueKey('auth-desktop-card')),
-    );
-    expect(cardSize.width, closeTo(1376, 0.1));
-    expect(cardSize.height, closeTo(852, 0.1));
-    expect(tester.takeException(), isNull);
-  });
+  for (final width in [360.0, 720.0, 1024.0, 1440.0]) {
+    testWidgets('shared auth form fits $width', (tester) async {
+      await _pumpAuthPage(tester, Size(width, 1000));
+      expect(find.byKey(const ValueKey('auth-card')), findsOneWidget);
+      expect(
+        tester.getSize(find.byKey(const ValueKey('auth-card'))).width,
+        lessThanOrEqualTo(760),
+      );
+      expect(find.byType(TextFormField), findsNWidgets(2));
+      expect(tester.takeException(), isNull);
+    });
+  }
 }

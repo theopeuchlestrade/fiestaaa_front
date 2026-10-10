@@ -14,7 +14,6 @@ import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
-import 'package:intl/intl.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({
@@ -24,8 +23,10 @@ class ProfilePage extends StatefulWidget {
     this.onSessionUpdated,
     this.localeService,
     this.themeService,
+    this.api,
   });
 
+  final ProfileApi? api;
   final SessionData session;
   final VoidCallback onLogout;
   final Future<void> Function(SessionData session)? onSessionUpdated;
@@ -37,9 +38,10 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  bool _editingProfile = false;
   static const double _maxAvatarSizeMb = 8;
 
-  final _api = ProfileApi();
+  late final _api = widget.api ?? ProfileApi();
   Future<ProfileInfo>? _future;
   final _handleController = TextEditingController();
   bool _checkingHandle = false;
@@ -138,6 +140,7 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         _future = Future.value(updated);
         _handleAvailable = null;
+        _editingProfile = false;
         _handleStatus = l10n.identifierUpdated;
       });
       if (widget.onSessionUpdated != null) {
@@ -166,7 +169,8 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Future<void> _confirmDeleteAccount() async {
+  Future<void> _confirmDeleteAccount({BuildContext? routeContext}) async {
+    if (_deletingAccount) return;
     final l10n = S.of(context);
     final confirm = await showDialog<bool>(
       context: context,
@@ -219,6 +223,9 @@ class _ProfilePageState extends State<ProfilePage> {
         await _api.deleteAccount(token: widget.session.token);
       }
       if (!mounted) return;
+      if (routeContext != null && routeContext.mounted) {
+        Navigator.of(routeContext).pop();
+      }
       _showSnack(l10n.accountDeleted);
       widget.onLogout();
     } on ApiException catch (e) {
@@ -404,368 +411,245 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  Widget _section(String title, List<Widget> children) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (title.isNotEmpty) ...[
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
+          ],
+          ...children,
+        ],
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
-    final l10n = S.of(context);
-    final locale = Localizations.localeOf(context).languageCode;
-
+    final l = S.of(context);
     return FiestaaaPageLayout(
+      maxWidth: 760,
       child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            FiestaaaPageHeader(
-              title: l10n.myProfile,
-              subtitle: l10n.manageAccountAndInvitations,
-            ),
-            const BetaLinks(),
-            TextButton.icon(
-              onPressed: () => context.push('/safety'),
-              icon: const Icon(Icons.shield_outlined),
-              label: Text(
-                betaText(
-                  context,
-                  'Sécurité et signalements',
-                  'Safety and reports',
-                ),
-              ),
-            ),
+            FiestaaaPageHeader(title: l.myProfile),
             FutureBuilder<ProfileInfo>(
               future: _future,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const SizedBox(
-                    height: 240,
-                    child: Center(child: CircularProgressIndicator()),
-                  );
+                if (!snapshot.hasData) {
+                  if (snapshot.hasError) {
+                    return Column(
+                      children: [
+                        Text(l.profileLoadFailed),
+                        TextButton.icon(
+                          onPressed: () => setState(
+                            () => _future = _api.fetchProfile(
+                              widget.session.token,
+                            ),
+                          ),
+                          icon: const Icon(Icons.refresh),
+                          label: Text(l.retry),
+                        ),
+                      ],
+                    );
+                  }
+                  return const Center(child: CircularProgressIndicator());
                 }
-                if (snapshot.hasError) {
-                  return Column(
-                    children: [
-                      Text(l10n.profileLoadFailed),
-                      const SizedBox(height: 8),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _future = _api.fetchProfile(widget.session.token);
-                          });
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: Text(l10n.retry),
-                      ),
-                    ],
-                  );
-                }
-
-                final profile = snapshot.data;
-                if (profile == null) {
-                  return Text(l10n.profileNotFound);
-                }
-
+                final profile = snapshot.data!;
                 if (_handleController.text.isEmpty) {
                   _handleController.text = profile.handle;
                 }
-
-                return Column(
-                  children: [
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
+                return _section(betaText(context, 'Compte', 'Account'), [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundImage: profile.avatarUrl == null
+                            ? null
+                            : platformNetworkImage(profile.avatarUrl!),
+                        child: profile.avatarUrl == null
+                            ? const Icon(Icons.person_outline)
+                            : null,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: CircleAvatar(
-                                radius: 26,
-                                backgroundColor: FiestaaaPalette.primary
-                                    .withValues(alpha: 0.14),
-                                foregroundColor: FiestaaaPalette.primary,
-                                backgroundImage: profile.avatarUrl == null
-                                    ? null
-                                    : platformNetworkImage(profile.avatarUrl!),
-                                child: profile.avatarUrl == null
-                                    ? Text(
-                                        profile.email
-                                            .substring(0, 1)
-                                            .toUpperCase(),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      )
-                                    : null,
-                              ),
-                              title: Text(
-                                profile.email,
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              subtitle: Text(
-                                l10n.tokenValidUntil(
-                                  DateFormat.yMMMMd(
-                                    locale,
-                                  ).format(profile.expiration),
-                                  DateFormat.Hm().format(profile.expiration),
-                                ),
-                              ),
-                              trailing: Chip(
-                                label: Text(
-                                  l10n.connected,
-                                  style: const TextStyle(
-                                    color: FiestaaaPalette.primary,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                backgroundColor: FiestaaaPalette.primary
-                                    .withValues(alpha: 0.12),
-                              ),
+                            Text(
+                              '@${profile.handle}',
+                              style: Theme.of(context).textTheme.titleLarge,
                             ),
-                            const SizedBox(height: 12),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                Chip(
-                                  avatar: const Icon(Icons.tag, size: 18),
-                                  label: Text(profile.handle),
-                                ),
-                                OutlinedButton.icon(
-                                  onPressed: _updatingHandle
-                                      ? null
-                                      : () => _pickAndUploadAvatar(profile),
-                                  icon: _updatingHandle
-                                      ? const SizedBox(
-                                          width: 14,
-                                          height: 14,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const Icon(Icons.image),
-                                  label: Text(
-                                    _updatingHandle
-                                        ? l10n.uploading
-                                        : l10n.changePhoto,
-                                  ),
-                                ),
-                                OutlinedButton.icon(
-                                  onPressed: _deletingAccount
-                                      ? null
-                                      : _confirmDeleteAccount,
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Theme.of(
-                                      context,
-                                    ).colorScheme.fiestaaaDanger,
-                                    side: BorderSide(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.fiestaaaDanger,
-                                    ),
-                                  ),
-                                  icon: _deletingAccount
-                                      ? const SizedBox(
-                                          width: 14,
-                                          height: 14,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const Icon(Icons.delete_forever),
-                                  label: Text(l10n.deleteMyAccount),
-                                ),
-                                OutlinedButton.icon(
-                                  onPressed: widget.onLogout,
-                                  icon: const Icon(Icons.logout),
-                                  label: Text(l10n.logout),
-                                ),
-                              ],
-                            ),
+                            const SizedBox(height: 4),
+                            Text(profile.email),
                           ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.edit_outlined,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  l10n.updateIdentifier,
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.w700),
-                                ),
-                                const Spacer(),
-                                if (_checkingHandle || _updatingHandle)
-                                  const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: _handleController,
-                              enabled: !_updatingHandle,
-                              decoration: InputDecoration(
-                                labelText: l10n.identifierExample,
-                                helperText: l10n.identifierHelperText,
-                                prefixIcon: const Icon(Icons.alternate_email),
-                                suffixIcon: _handleAvailable == true
-                                    ? Icon(
-                                        Icons.check_circle,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.fiestaaaSuccess,
-                                      )
-                                    : null,
-                              ),
-                            ),
-                            if (_handleStatus != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: Text(
-                                  _handleStatus!,
-                                  style: TextStyle(
-                                    color: _handleAvailable == false
-                                        ? Theme.of(
-                                            context,
-                                          ).colorScheme.fiestaaaDanger
-                                        : Theme.of(
-                                            context,
-                                          ).colorScheme.fiestaaaSuccess,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                OutlinedButton.icon(
-                                  onPressed: _checkingHandle
-                                      ? null
-                                      : _checkHandleAvailability,
-                                  icon: const Icon(Icons.search),
-                                  label: Text(l10n.check),
-                                ),
-                                const SizedBox(width: 8),
-                                ElevatedButton.icon(
-                                  onPressed: _updatingHandle
-                                      ? null
-                                      : () => _updateHandle(profile),
-                                  icon: const Icon(Icons.save_outlined),
-                                  label: Text(
-                                    _updatingHandle
-                                        ? l10n.updating
-                                        : l10n.update,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: _updatingHandle
+                        ? null
+                        : () => setState(() {
+                            if (_editingProfile) {
+                              _handleController.text = profile.handle;
+                              _handleStatus = null;
+                              _handleAvailable = null;
+                            }
+                            _editingProfile = !_editingProfile;
+                          }),
+                    icon: const Icon(Icons.edit_outlined),
+                    label: Text(_editingProfile ? l.cancel : l.editProfile),
+                  ),
+                  if (_editingProfile) ...[
+                    OutlinedButton.icon(
+                      onPressed: _updatingHandle
+                          ? null
+                          : () => _pickAndUploadAvatar(profile),
+                      icon: const Icon(Icons.image_outlined),
+                      label: Text(
+                        _updatingHandle ? l.uploading : l.changePhoto,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    if (widget.themeService != null)
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.dark_mode,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    l10n.changeTheme,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.w700),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              OutlinedButton.icon(
-                                onPressed: _showThemeDialog,
-                                icon: const Icon(Icons.brightness_6_outlined),
-                                label: Text(
-                                  _themeLabel(
-                                    widget.themeService?.mode ??
-                                        ThemeMode.system,
-                                    l10n,
-                                  ),
-                                ),
-                              ),
-                            ],
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _handleController,
+                      enabled: !_updatingHandle,
+                      decoration: InputDecoration(
+                        labelText: l.identifierExample,
+                        helperText: l.identifierHelperText,
+                        prefixIcon: const Icon(Icons.alternate_email),
+                      ),
+                    ),
+                    if (_handleStatus != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          _handleStatus!,
+                          style: TextStyle(
+                            color: _handleAvailable == false
+                                ? Theme.of(context).colorScheme.error
+                                : Theme.of(context).fiestaaaMutedText,
                           ),
                         ),
                       ),
                     const SizedBox(height: 12),
-                    if (widget.localeService != null)
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.language,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    l10n.changeLanguage,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.w700),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              OutlinedButton.icon(
-                                onPressed: _showLanguageDialog,
-                                icon: const Icon(Icons.translate),
-                                label: Text(
-                                  _languageLabel(
-                                    widget.localeService?.locale,
-                                    l10n,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: _checkingHandle
+                              ? null
+                              : _checkHandleAvailability,
+                          icon: const Icon(Icons.search),
+                          label: Text(l.check),
                         ),
-                      ),
-                    const SizedBox(height: 12),
+                        FilledButton.icon(
+                          onPressed: _updatingHandle
+                              ? null
+                              : () => _updateHandle(profile),
+                          icon: const Icon(Icons.save_outlined),
+                          label: Text(_updatingHandle ? l.updating : l.update),
+                        ),
+                      ],
+                    ),
                   ],
-                );
+                ]);
               },
+            ),
+            const SizedBox(height: 12),
+            _section(betaText(context, 'Préférences', 'Preferences'), [
+              if (widget.themeService != null)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.brightness_6_outlined),
+                  title: Text(l.changeTheme),
+                  subtitle: Text(_themeLabel(widget.themeService!.mode, l)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _showThemeDialog,
+                ),
+              if (widget.localeService != null)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.translate),
+                  title: Text(l.changeLanguage),
+                  subtitle: Text(
+                    _languageLabel(widget.localeService!.locale, l),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _showLanguageDialog,
+                ),
+            ]),
+            const SizedBox(height: 12),
+            _section(betaText(context, 'Sécurité', 'Safety'), [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.shield_outlined),
+                title: Text(
+                  betaText(
+                    context,
+                    'Blocages et signalements',
+                    'Blocks and reports',
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/safety'),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            _section(betaText(context, 'Aide', 'Help'), [
+              const BetaLinks(list: true),
+            ]),
+            const SizedBox(height: 24),
+            _section('', [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.manage_accounts_outlined),
+                title: Text(l.manageAccount),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute(
+                    builder: (pageContext) => Scaffold(
+                      appBar: AppBar(title: Text(l.manageAccount)),
+                      body: FiestaaaPageLayout(
+                        maxWidth: 760,
+                        child: ListView(
+                          children: [
+                            Text(l.deleteAccountWarning),
+                            const SizedBox(height: 24),
+                            OutlinedButton.icon(
+                              onPressed: _deletingAccount
+                                  ? null
+                                  : () => _confirmDeleteAccount(
+                                      routeContext: pageContext,
+                                    ),
+                              icon: const Icon(Icons.delete_forever_outlined),
+                              label: Text(l.deleteMyAccount),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.error,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: widget.onLogout,
+              icon: const Icon(Icons.logout),
+              label: Text(l.logout),
             ),
           ],
         ),

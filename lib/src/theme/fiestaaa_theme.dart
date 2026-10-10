@@ -1,3 +1,4 @@
+import '../core/presentation/widgets/fiestaaa_motion.dart';
 import 'package:flutter/material.dart';
 
 class FiestaaaPalette {
@@ -369,7 +370,7 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
       color: surfaceRaised,
       surfaceTintColor: surfaceRaised,
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
@@ -395,6 +396,19 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
       ),
       labelStyle: TextStyle(fontFamily: 'Manrope', color: inputLabelColor),
       prefixIconColor: primaryColor,
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: isDark ? primaryColor : const Color(0xFF5936CD),
+        textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+      ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -471,7 +485,7 @@ class FiestaaaPageLayout extends StatelessWidget {
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: maxWidth),
-            child: child,
+            child: FiestaaaEntrance(child: child),
           ),
         ),
       ),
@@ -521,60 +535,9 @@ class FiestaaaBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final paddedChild = padding != null
-        ? Padding(padding: padding!, child: child)
-        : child;
-    return Container(
-      decoration: BoxDecoration(
-        gradient: FiestaaaPalette.backgroundGradientFor(brightness),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: -120,
-            left: -60,
-            child: _AccentBlob(
-              size: 220,
-              color: FiestaaaPalette.primary.withValues(
-                alpha: brightness == Brightness.dark ? 0.22 : 0.16,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -80,
-            right: -40,
-            child: _AccentBlob(
-              size: 200,
-              color: FiestaaaPalette.secondary.withValues(
-                alpha: brightness == Brightness.dark ? 0.26 : 0.22,
-              ),
-            ),
-          ),
-          paddedChild,
-        ],
-      ),
-    );
-  }
-}
-
-class _AccentBlob extends StatelessWidget {
-  const _AccentBlob({required this.size, required this.color});
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color, color.withValues(alpha: 0.01)],
-        ),
-      ),
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+      child: padding == null ? child : Padding(padding: padding!, child: child),
     );
   }
 }

@@ -12,6 +12,7 @@ class _NewEventItemData {
 class _EventItemsSection extends StatelessWidget {
   const _EventItemsSection({
     required this.title,
+    this.showTitle = true,
     required this.subtitle,
     required this.items,
     required this.addLabel,
@@ -29,6 +30,7 @@ class _EventItemsSection extends StatelessWidget {
   });
 
   final String title;
+  final bool showTitle;
   final String subtitle;
   final List<EventItemModel> items;
   final String addLabel;
@@ -56,14 +58,15 @@ class _EventItemsSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(
-              child: Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
+            if (showTitle)
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-            ),
             if (onAdd != null) ...[
               const SizedBox(width: 8),
               TextButton.icon(
@@ -454,7 +457,10 @@ class _EventItemTile extends StatelessWidget {
                             valueColor: AlwaysStoppedAnimation(Colors.white),
                           ),
                         )
-                      : const Icon(Icons.delete_outline),
+                      : Icon(
+                          Icons.delete_outline,
+                          semanticLabel: S.of(context).delete,
+                        ),
                 ),
             ],
           ),
@@ -480,28 +486,6 @@ class _EventItemTile extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                InkWell(
-                  onTap: (!isLoading && canReserve) ? onTap : null,
-                  customBorder: const CircleBorder(),
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: hasContributed ? accentGreen : Colors.transparent,
-                      border: Border.all(
-                        color: (hasContributed || isFull)
-                            ? accentGreen
-                            : textColor.withValues(alpha: 0.35),
-                        width: 2,
-                      ),
-                    ),
-                    child: hasContributed
-                        ? const Icon(Icons.check, color: Colors.white, size: 18)
-                        : null,
-                  ),
-                ),
-                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -582,7 +566,9 @@ class _EventItemTile extends StatelessWidget {
                       horizontal: 10,
                       vertical: 8,
                     ),
-                    textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                    textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   onPressed: contributors.isEmpty
                       ? null
@@ -595,12 +581,15 @@ class _EventItemTile extends StatelessWidget {
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: LinearProgressIndicator(
-                minHeight: 10,
-                value: ratio.clamp(0, 1),
-                backgroundColor: barBackground,
-                valueColor: AlwaysStoppedAnimation(
-                  ratio <= 0 ? barEmpty : accentGreen,
+              child: Semantics(
+                container: true,
+                child: LinearProgressIndicator(
+                  minHeight: 10,
+                  value: ratio.clamp(0, 1),
+                  backgroundColor: barBackground,
+                  valueColor: AlwaysStoppedAnimation(
+                    ratio <= 0 ? barEmpty : accentGreen,
+                  ),
                 ),
               ),
             ),
@@ -689,7 +678,10 @@ class _EventItemTile extends StatelessWidget {
                                 ),
                               ),
                             )
-                          : const Icon(Icons.delete_outline),
+                          : Icon(
+                              Icons.delete_outline,
+                              semanticLabel: S.of(context).delete,
+                            ),
                     ),
                   ],
                 ],

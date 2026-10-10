@@ -44,16 +44,152 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsNothing);
+    await tester.tap(find.text('Block someone'));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'test_person');
-    await tester.tap(find.text('Block direct contact'));
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(blocked, isFalse);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(blocked, isFalse);
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Block'));
     await tester.pumpAndSettle();
     expect(blocked, isTrue);
-    await tester.ensureVisible(find.text('Unblock'));
+    await tester.scrollUntilVisible(
+      find.text('Unblock'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Unblock'));
     await tester.pumpAndSettle();
     expect(blocked, isFalse);
     expect(find.text('Unblock'), findsNothing);
   });
+  testWidgets(
+    'Reporting is separate from blocking and keeps form input after a failure',
+    (tester) async {
+      final calls = <String>[];
+      var fail = true;
+      final api = BetaApi(
+        client: MockClient((request) async {
+          calls.add('${request.method} ${request.url.path}');
+          if (request.url.path.endsWith('/safety/user')) {
+            return http.Response('{"public_id":"target-id"}', 200);
+          }
+          if (request.url.path.endsWith('/reports')) {
+            final body = jsonDecode(request.body);
+            expect(body['public_id'], 'target-id');
+            expect(body['comment'], 'A useful explanation');
+            return http.Response('{}', fail ? 503 : 201);
+          }
+          return http.Response('[]', 200);
+        }),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SafetyPage(token: 'session', api: api),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Report a problem'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Send report'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Send report'));
+      await tester.pumpAndSettle();
+      expect(calls.where((call) => call.startsWith('POST')), isEmpty);
+      await tester.enterText(find.byType(TextField).first, 'person');
+      await tester.enterText(
+        find.byType(TextField).last,
+        'A useful explanation',
+      );
+      await tester.ensureVisible(find.text('Send report'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Send report'));
+      await tester.pumpAndSettle();
+      expect(find.text('A useful explanation'), findsOneWidget);
+      fail = false;
+      await tester.ensureVisible(find.text('Send report'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Send report'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Report sent. Thank you for letting us know.'),
+        findsOneWidget,
+      );
+      expect(find.byType(TextField), findsNothing);
+      expect(
+        calls.where(
+          (call) => call.contains('POST') && call.contains('/me/blocks'),
+        ),
+        isEmpty,
+      );
+    },
+  );
+  testWidgets('An event report retains event scope without a user lookup', (
+    tester,
+  ) async {
+    Map<String, dynamic>? report;
+    final api = BetaApi(
+      client: MockClient((request) async {
+        expect(request.url.path, isNot(endsWith('/safety/user')));
+        if (request.method == 'POST') {
+          report = jsonDecode(request.body) as Map<String, dynamic>;
+        }
+        return http.Response(request.method == 'GET' ? '[]' : '{}', 200);
+      }),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SafetyPage(token: 'session', eventId: 42, api: api),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Block someone'), findsNothing);
+    await tester.ensureVisible(find.text('Send report'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Send report'));
+    await tester.pumpAndSettle();
+    expect(report?['event_id'], 42);
+    expect(report?.containsKey('public_id'), isFalse);
+  });
+  testWidgets(
+    'Recovery rejects a missing email and allows another address after generic confirmation',
+    (tester) async {
+      var calls = 0;
+      final api = BetaApi(
+        client: MockClient((request) async {
+          calls++;
+          return http.Response('{"status":"recovery_requested"}', 202);
+        }),
+      );
+      await tester.pumpWidget(MaterialApp(home: PasswordResetPage(api: api)));
+      await tester.tap(find.text('Send reset link'));
+      await tester.pumpAndSettle();
+      expect(calls, 0);
+      expect(find.text('Enter a valid email address.'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'unknown@example.invalid');
+      await tester.ensureVisible(find.text('Send reset link'));
+      await tester.tap(find.text('Send reset link'));
+      await tester.pumpAndSettle();
+      expect(calls, 1);
+      expect(find.text('Check your inbox'), findsOneWidget);
+      expect(find.text('Return to sign in'), findsOneWidget);
+      expect(find.byType(TextField), findsNothing);
+      await tester.ensureVisible(find.text('Use another email'));
+      await tester.tap(find.text('Use another email'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        isEmpty,
+      );
+      api.close();
+    },
+  );
   testWidgets('Recovery sends generic request and presents provider guidance', (
     tester,
   ) async {
@@ -67,7 +203,7 @@ void main() {
     );
     await tester.pumpWidget(MaterialApp(home: PasswordResetPage(api: api)));
     await tester.enterText(find.byType(TextField), 'test@example.test');
-    await tester.tap(find.text('Continue'));
+    await tester.tap(find.text('Send reset link'));
     await tester.pumpAndSettle();
     expect(calls.single['email'], 'test@example.test');
     expect(
@@ -97,12 +233,12 @@ void main() {
         find.byType(TextField).last,
         'DifferentPassword2!',
       );
-      await tester.tap(find.text('Continue'));
+      await tester.tap(find.text('Save password'));
       await tester.pump();
       expect(calls, 0);
       expect(find.text('Passwords do not match.'), findsOneWidget);
       await tester.enterText(find.byType(TextField).last, 'ChangedPassword2!');
-      await tester.tap(find.text('Continue'));
+      await tester.tap(find.text('Save password'));
       await tester.pumpAndSettle();
       expect(calls, 1);
       expect(find.byType(TextField), findsNothing);

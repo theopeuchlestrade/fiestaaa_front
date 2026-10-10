@@ -4,10 +4,15 @@
   "type": "module",
   "scripts": {
     "contract:backend": "node tool/check_backend_contract.mjs",
-    "smoke:web": "node tool/smoke_web.mjs"
+    "smoke:web": "node tool/smoke_web.mjs",
+    "spec:validate": "openspec validate --all --strict"
   },
   "devDependencies": {
     "playwright": "1.63.0",
-    "pngjs": "7.0.0"
+    "pngjs": "7.0.0",
+    "@fission-ai/openspec": "1.14.1"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }

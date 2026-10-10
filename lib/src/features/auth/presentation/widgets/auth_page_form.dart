@@ -30,7 +30,7 @@ extension _AuthPageForm on _AuthPageState {
       foregroundColor: socialForeground,
       side: BorderSide(color: socialBorder),
       shape: shape,
-      textStyle: const TextStyle(
+      textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
         fontSize: 16,
         fontWeight: FontWeight.w500,
         fontFamily: 'Manrope', // Explicitly ensuring font consistency
@@ -85,8 +85,6 @@ extension _AuthPageForm on _AuthPageState {
         children: [
           if (_isSubmitting) const LinearProgressIndicator(),
           if (_isSubmitting) const SizedBox(height: 12),
-          _buildAlphaBanner(compact: false),
-          const SizedBox(height: 20),
           if (!_isCompletingRegistration) ...[
             Container(
               decoration: BoxDecoration(
@@ -108,6 +106,9 @@ extension _AuthPageForm on _AuthPageState {
                           vertical: 14,
                           horizontal: 12,
                         ),
+                        disabledForegroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primary,
                         foregroundColor: _isLoginMode
                             ? FiestaaaPalette.primary
                             : toggleInactive,
@@ -117,7 +118,8 @@ extension _AuthPageForm on _AuthPageState {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                        textStyle: Theme.of(context).textTheme.labelLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -133,6 +135,9 @@ extension _AuthPageForm on _AuthPageState {
                           vertical: 14,
                           horizontal: 12,
                         ),
+                        disabledForegroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primary,
                         foregroundColor: _isRegisterMode
                             ? FiestaaaPalette.primary
                             : toggleInactive,
@@ -142,7 +147,8 @@ extension _AuthPageForm on _AuthPageState {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                        textStyle: Theme.of(context).textTheme.labelLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -224,6 +230,11 @@ extension _AuthPageForm on _AuthPageState {
                           ? l10n.passwordHelperText
                           : null,
                       suffixIcon: IconButton(
+                        tooltip: betaText(
+                          context,
+                          'Afficher ou masquer le mot de passe',
+                          'Show or hide password',
+                        ),
                         icon: Icon(
                           _obscurePassword
                               ? Icons.visibility
@@ -248,6 +259,11 @@ extension _AuthPageForm on _AuthPageState {
                       labelText: l10n.confirmPassword,
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
+                        tooltip: betaText(
+                          context,
+                          'Afficher ou masquer le mot de passe',
+                          'Show or hide password',
+                        ),
                         icon: Icon(
                           _obscureConfirm
                               ? Icons.visibility
@@ -312,19 +328,9 @@ extension _AuthPageForm on _AuthPageState {
             const SizedBox(height: 16),
             _buildSocialButtons(context),
             const BetaLinks(recovery: true),
+            const SizedBox(height: 20),
+            _buildAlphaBanner(compact: false),
             const SizedBox(height: 12),
-            Center(
-              child: TextButton(
-                onPressed: _isSubmitting
-                    ? null
-                    : () => _toggleMode(
-                        _isLoginMode ? AuthMode.register : AuthMode.login,
-                      ),
-                child: Text(
-                  _isLoginMode ? l10n.newToFiestaaa : l10n.alreadyRegistered,
-                ),
-              ),
-            ),
           ],
         ],
       ),

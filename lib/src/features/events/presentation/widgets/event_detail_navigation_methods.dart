@@ -53,7 +53,14 @@ extension _EventDetailNavigationMethods on _EventDetailPageState {
       if (!mounted) return;
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).unableToGenerateLink, isError: true);
@@ -181,18 +188,8 @@ extension _EventDetailNavigationMethods on _EventDetailPageState {
   }
 
   Future<void> _openInvitations() async {
-    await _openDynamicPageModal(
-      pageBuilder: (_) => EventInvitationsPage(
-        session: widget.session,
-        eventId: _currentEvent.id,
-        eventName: _currentEvent.name,
-        ownerEmail: _currentEvent.ownerEmail,
-        eventReadOnly: _isReadOnly,
-        realtimeStream: _realtime?.stream,
-        compactModal: true,
-      ),
-    );
-    await _loadItems();
+    await context.push('/events/${_currentEvent.id}/participants');
+    if (mounted) await _resync();
   }
 
   void _openMyQRCode() {
@@ -220,67 +217,22 @@ extension _EventDetailNavigationMethods on _EventDetailPageState {
   }
 
   Future<void> _openCarpools() async {
-    await _openDynamicPageModal(
-      pageBuilder: (_) => EventCarpoolsPage(
-        eventId: _currentEvent.id,
-        eventName: _currentEvent.name,
-        eventDate: _currentEvent.startDateTime,
-        session: widget.session,
-        isOwner: _isOwner,
-        hasAcceptedInvitation: _hasAcceptedInvitation,
-        eventReadOnly: _isReadOnly,
-        compactModal: true,
-      ),
-    );
+    await context.push('/events/${_currentEvent.id}/carpools');
+    if (mounted) await _resync();
   }
 
   Future<void> _openExpenses() async {
-    await _openDynamicPageModal(
-      pageBuilder: (_) => EventExpensesPage(
-        eventId: _currentEvent.id,
-        eventName: _currentEvent.name,
-        ownerEmail: _currentEvent.ownerEmail,
-        session: widget.session,
-        isOwner: _isOwner,
-        hasAcceptedInvitation: _hasAcceptedInvitation,
-        isReadOnly: _isReadOnly,
-        realtimeStream: _realtime?.stream,
-        compactModal: true,
-      ),
-    );
+    await context.push('/events/${_currentEvent.id}/expenses');
+    if (mounted) await _resync();
   }
 
   Future<void> _openPollsModal() async {
-    await _openFeatureModal(
-      title: S.of(context).ephemeralPolls,
-      headerActionsBuilder: (context) => [
-        IconButton(
-          onPressed: _loadingPolls ? null : () => _loadPolls(showLoading: true),
-          icon: const Icon(Icons.refresh),
-          tooltip: S.of(context).refresh,
-        ),
-      ],
-      onRefresh: () => _loadPolls(showLoading: true),
-      contentBuilder: (context) =>
-          _buildPollsBlock(showTitle: false, collapsible: false),
-      fitContent: true,
-    );
+    await context.push('/events/${_currentEvent.id}/polls');
+    if (mounted) await _resync();
   }
 
   Future<void> _openItemsModal() async {
-    await _openFeatureModal(
-      title: S.of(context).availableItems,
-      headerActionsBuilder: (context) => [
-        IconButton(
-          onPressed: _loadingItems ? null : () => _loadItems(showLoading: true),
-          icon: const Icon(Icons.refresh),
-          tooltip: S.of(context).refresh,
-        ),
-      ],
-      onRefresh: () => _loadItems(showLoading: true),
-      contentBuilder: (context) =>
-          _buildItemsBlock(showTitle: false, collapsible: false),
-      fitContent: true,
-    );
+    await context.push('/events/${_currentEvent.id}/items');
+    if (mounted) await _resync();
   }
 }

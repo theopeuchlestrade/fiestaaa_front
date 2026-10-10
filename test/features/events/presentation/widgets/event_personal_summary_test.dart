@@ -79,7 +79,7 @@ Widget summary({
 );
 void main() {
   testWidgets('missing data never reports caught up', (tester) async {
-    await tester.pumpWidget(summary(items: null));
+    await tester.pumpWidget(summary(polls: null));
     await tester.pumpAndSettle();
     expect(find.text('Information unavailable'), findsOneWidget);
     expect(find.text('You’re all caught up'), findsNothing);
@@ -99,10 +99,11 @@ void main() {
       summary(polls: [poll(voted: true), poll(expired: true)]),
     );
     await tester.pumpAndSettle();
-    expect(find.text('You’re all caught up'), findsOneWidget);
+    expect(find.text('For you'), findsNothing);
     await tester.pumpWidget(summary(polls: [poll()]));
     await tester.pumpAndSettle();
-    expect(find.text('Which dessert?'), findsOneWidget);
+    expect(find.text('Which dessert?'), findsNothing);
+    expect(find.text('Polls to answer'), findsOneWidget);
   });
   testWidgets('finished and disabled modules do not request action', (
     tester,
@@ -114,8 +115,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Information unavailable'), findsNothing);
   });
-  testWidgets('personal quantities open the item module', (tester) async {
-    var opened = false;
+  testWidgets('personal quantities are not repeated on the overview', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       summary(
         contributions: [
@@ -130,12 +132,11 @@ void main() {
             email: 'other@example.com',
           ),
         ],
-        onItems: () => opened = true,
       ),
     );
     await tester.pumpAndSettle();
     expect(find.textContaining('7'), findsNothing);
-    await tester.tap(find.text('Your items to bring'));
-    expect(opened, isTrue);
+    expect(find.text('Your items to bring'), findsNothing);
+    expect(find.text('For you'), findsNothing);
   });
 }

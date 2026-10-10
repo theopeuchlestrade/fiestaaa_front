@@ -569,7 +569,14 @@ class _EventEditPageState extends State<EventEditPage>
       Navigator.of(context).pop(EventEditPageResult.updated(updated));
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).updateError, isError: true);
@@ -625,7 +632,14 @@ class _EventEditPageState extends State<EventEditPage>
       Navigator.of(context).pop(const EventEditPageResult.deleted());
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).deleteImpossible, isError: true);

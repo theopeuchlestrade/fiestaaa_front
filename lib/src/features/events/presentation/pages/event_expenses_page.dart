@@ -1,3 +1,5 @@
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
+import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header.dart';
 import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
@@ -17,6 +19,9 @@ import 'package:intl/intl.dart';
 class EventExpensesPage extends StatefulWidget {
   const EventExpensesPage({
     super.key,
+    this.moduleLocations = const {},
+    this.invitationsApi,
+    this.eventsApi,
     required this.eventId,
     required this.eventName,
     required this.ownerEmail,
@@ -28,6 +33,9 @@ class EventExpensesPage extends StatefulWidget {
     this.compactModal = false,
   });
 
+  final Map<String, String> moduleLocations;
+  final EventsApi? eventsApi;
+  final InvitationsApi? invitationsApi;
   final int eventId;
   final String eventName;
   final String ownerEmail;
@@ -46,13 +54,14 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
   final _refreshQueue = RefreshQueue();
   int _scopeGeneration = 0;
 
-  final _eventsApi = EventsApi();
-  final _invitationsApi = InvitationsApi();
+  late final _eventsApi = widget.eventsApi ?? EventsApi();
+  late final _invitationsApi = widget.invitationsApi ?? InvitationsApi();
 
   List<EventExpenseModel> _expenses = const [];
   EventExpensesSummaryModel? _summary;
   List<InvitationModel> _invitations = const [];
   bool _loading = true;
+  bool _hasLoaded = false;
   String? _error;
   int? _deletingExpenseId;
   StreamSubscription<Map<String, dynamic>>? _realtimeSub;
@@ -96,6 +105,7 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
         oldWidget.session.token != widget.session.token) {
       _scopeGeneration++;
       _expenses = const [];
+      _hasLoaded = false;
       _summary = null;
       _invitations = const [];
       _loadData();
@@ -136,7 +146,7 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
     );
     if (showLoading) {
       setState(() {
-        _loading = true;
+        _loading = !_hasLoaded;
         _error = null;
       });
     }
@@ -163,6 +173,7 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
       }
       setState(() {
         _expenses = results[0] as List<EventExpenseModel>;
+        _hasLoaded = true;
         _summary = results[1] as EventExpensesSummaryModel;
         _invitations = results[2] as List<InvitationModel>;
         _error = null;
@@ -173,7 +184,13 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
               (_scopeGeneration, widget.session.token, widget.eventId)) {
         return;
       }
-      setState(() => _error = e.message);
+      setState(
+        () => _error = localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).sharedExpensesLoadFailed,
+        ),
+      );
     } catch (_) {
       if (!mounted ||
           requestScope !=
@@ -294,7 +311,7 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                       Text(
                         l10n.addSharedExpense,
                         style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -488,7 +505,14 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                               navigator.pop(true);
                             } on ApiException catch (e) {
                               if (!mounted) return;
-                              _showSnack(e.message, isError: true);
+                              _showSnack(
+                                localizedApiError(
+                                  l10n,
+                                  e,
+                                  fallback: l10n.expenseCreateFailed,
+                                ),
+                                isError: true,
+                              );
                             } catch (_) {
                               if (!mounted) return;
                               _showSnack(
@@ -552,7 +576,14 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
       _showSnack(S.of(context).expenseDeleted);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).expenseDeleteFailed, isError: true);
@@ -615,9 +646,10 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                 child: CircularProgressIndicator(),
               ),
             )
-          else if (_error != null)
+          else if (_error != null && !_hasLoaded)
             _buildErrorState(l10n)
           else ...[
+            if (_error != null) _buildErrorState(l10n),
             _buildSummaryCard(l10n),
             const SizedBox(height: 16),
             _buildExpensesList(l10n),
@@ -634,69 +666,12 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
     return Scaffold(body: FiestaaaPageLayout(child: realtimeContent));
   }
 
-  Widget _buildHeroSection(S l10n) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: isDark
-            ? FiestaaaPalette.darkCardGradient
-            : FiestaaaPalette.lightCardGradient,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: scheme.shadow.withValues(alpha: isDark ? 0.24 : 0.12),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.sharedExpenses,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.sharedExpensesHelper,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.86),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (widget.compactModal)
-                IconButton(
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.14),
-                    foregroundColor: Colors.white,
-                  ),
-                  icon: const Icon(Icons.close),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildHeroSection(S l10n) => EventModuleHeader(
+    title: l10n.expensesModule,
+    eventName: widget.eventName,
+    eventId: widget.eventId,
+    locations: widget.moduleLocations,
+  );
 
   Widget _buildErrorState(S l10n) {
     final theme = Theme.of(context);
@@ -752,6 +727,12 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
     );
   }
 
+  String _money(int cents) => NumberFormat.currency(
+    locale: S.of(context).localeName,
+    symbol: '€',
+    decimalDigits: 2,
+  ).format(cents / 100);
+
   Widget _buildSummaryCard(S l10n) {
     final summary = _summary;
     if (summary == null) {
@@ -762,6 +743,8 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
     final scheme = theme.colorScheme;
     final positiveColor = scheme.fiestaaaSuccess;
     final negativeColor = scheme.fiestaaaDanger;
+    final userId = _currentUserId;
+    final ownBalance = userId == null ? null : _balanceByUserId(userId);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -780,13 +763,15 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                         widget.isReadOnly
                             ? l10n.finalSplit
                             : l10n.currentSplitPreview,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Text(
-                        l10n.totalSharedExpenses(summary.formattedTotal),
+                        l10n.totalSharedExpenses(
+                          _money(summary.totalExpensesCents),
+                        ),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
@@ -796,86 +781,111 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 18),
-            Text(
-              l10n.expenseParticipants,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
+            if (ownBalance != null) ...[
+              const SizedBox(height: 16),
+              Text(l10n.myExpenseBalance, style: theme.textTheme.labelLarge),
+              const SizedBox(height: 4),
+              Text(
+                ownBalance.balanceCents >= 0
+                    ? l10n.expenseReceives(_money(ownBalance.balanceCents))
+                    : l10n.expenseOwes(_money(-ownBalance.balanceCents)),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            ...summary.balances.map(
-              (balance) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _BalanceTile(
-                  label: _displayName(
-                    userId: balance.userId,
-                    handle: balance.handle,
-                    email: _memberByUserId(balance.userId)?.email,
+              const SizedBox(height: 12),
+            ],
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: Text(
+                l10n.expenseSplitDetails,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurface,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              children: [
+                const SizedBox(height: 18),
+                Text(
+                  l10n.expenseParticipants,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
-                  avatarUrl: _avatarUrlForUserId(
-                    balance.userId,
-                    fallbackAvatarUrl: balance.avatarUrl,
+                ),
+                const SizedBox(height: 12),
+                ...summary.balances.map(
+                  (balance) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _BalanceTile(
+                      label: _displayName(
+                        userId: balance.userId,
+                        handle: balance.handle,
+                        email: _memberByUserId(balance.userId)?.email,
+                      ),
+                      avatarUrl: _avatarUrlForUserId(
+                        balance.userId,
+                        fallbackAvatarUrl: balance.avatarUrl,
+                      ),
+                      paidLabel: l10n.expensePaid(_money(balance.paidCents)),
+                      owedLabel: l10n.expenseOwed(_money(balance.owedCents)),
+                      balanceLabel: balance.balanceCents >= 0
+                          ? l10n.expenseReceives(_money(balance.balanceCents))
+                          : l10n.expenseOwes(_money(-balance.balanceCents)),
+                      balanceColor: balance.balanceCents >= 0
+                          ? positiveColor
+                          : negativeColor,
+                    ),
                   ),
-                  paidLabel: l10n.expensePaid(balance.formattedPaid),
-                  owedLabel: l10n.expenseOwed(balance.formattedOwed),
-                  balanceLabel: balance.balanceCents >= 0
-                      ? l10n.expenseReceives(balance.formattedBalance)
-                      : l10n.expenseOwes(
-                          NumberFormat.currency(
-                            locale: Intl.getCurrentLocale(),
-                            symbol: '€',
-                          ).format((-balance.balanceCents) / 100),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.settlementSuggestions,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (summary.settlements.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerHighest.withValues(
+                        alpha: 0.55,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: scheme.outlineVariant),
+                    ),
+                    child: Text(
+                      l10n.noSettlementNeeded,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  )
+                else
+                  ...summary.settlements.map(
+                    (settlement) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _SettlementTile(
+                        fromLabel: _displayNameForUserId(
+                          settlement.fromUserId,
+                          handle: settlement.fromHandle,
                         ),
-                  balanceColor: balance.balanceCents >= 0
-                      ? positiveColor
-                      : negativeColor,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.settlementSuggestions,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (summary.settlements.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHighest.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: scheme.outlineVariant),
-                ),
-                child: Text(
-                  l10n.noSettlementNeeded,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              )
-            else
-              ...summary.settlements.map(
-                (settlement) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _SettlementTile(
-                    fromLabel: _displayNameForUserId(
-                      settlement.fromUserId,
-                      handle: settlement.fromHandle,
+                        fromAvatarUrl: _avatarUrlForUserId(
+                          settlement.fromUserId,
+                        ),
+                        toLabel: _displayNameForUserId(
+                          settlement.toUserId,
+                          handle: settlement.toHandle,
+                        ),
+                        toAvatarUrl: _avatarUrlForUserId(settlement.toUserId),
+                        amountLabel: _money(settlement.amountCents),
+                      ),
                     ),
-                    fromAvatarUrl: _avatarUrlForUserId(settlement.fromUserId),
-                    toLabel: _displayNameForUserId(
-                      settlement.toUserId,
-                      handle: settlement.toHandle,
-                    ),
-                    toAvatarUrl: _avatarUrlForUserId(settlement.toUserId),
-                    amountLabel: settlement.formattedAmount,
                   ),
-                ),
-              ),
+              ],
+            ),
           ],
         ),
       ),
@@ -951,17 +961,13 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                               children: [
                                 Text(
                                   expense.title,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
                                   style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
                                   l10n.paidBy(paidByLabel),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: scheme.onSurfaceVariant,
                                   ),
@@ -971,8 +977,9 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                                   DateFormat.yMMMMd(l10n.localeName)
                                       .add_Hm()
                                       .format(expense.expenseDate.toLocal()),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: scheme.onSurfaceVariant,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: scheme.onSurface,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],
@@ -995,10 +1002,10 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
-                            expense.formattedAmount,
+                            _money(expense.amountCents),
                             style: theme.textTheme.labelLarge?.copyWith(
                               color: scheme.onPrimaryContainer,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -1020,49 +1027,66 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Icon(Icons.delete_outline),
+                                : Icon(
+                                    Icons.delete_outline,
+                                    semanticLabel: S.of(context).delete,
+                                  ),
                           ),
                         ],
                       ],
                     ),
                   ],
                 ),
-                if ((expense.note?.trim().isNotEmpty ?? false)) ...[
-                  const SizedBox(height: 14),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: scheme.surfaceContainerHighest.withValues(
-                        alpha: 0.45,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      expense.note!,
-                      style: theme.textTheme.bodyMedium,
+                ExpansionTile(
+                  tilePadding: EdgeInsets.zero,
+                  title: Text(
+                    l10n.expenseParticipants,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurface,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ],
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: expense.participants
-                      .map(
-                        (participant) => _ParticipantBadge(
-                          label: _displayName(
-                            userId: participant.userId,
-                            handle: participant.handle,
-                            email: _memberByUserId(participant.userId)?.email,
+                  children: [
+                    if ((expense.note?.trim().isNotEmpty ?? false)) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: scheme.surfaceContainerHighest.withValues(
+                            alpha: 0.45,
                           ),
-                          avatarUrl: _avatarUrlForUserId(
-                            participant.userId,
-                            fallbackAvatarUrl: participant.avatarUrl,
-                          ),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                      )
-                      .toList(),
+                        child: Text(
+                          expense.note!,
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: expense.participants
+                          .map(
+                            (participant) => _ParticipantBadge(
+                              label: _displayName(
+                                userId: participant.userId,
+                                handle: participant.handle,
+                                email: _memberByUserId(
+                                  participant.userId,
+                                )?.email,
+                              ),
+                              avatarUrl: _avatarUrlForUserId(
+                                participant.userId,
+                                fallbackAvatarUrl: participant.avatarUrl,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1090,7 +1114,7 @@ class _UserAvatar extends StatelessWidget {
     final hasImage = avatarUrl != null && avatarUrl!.isNotEmpty;
     return CircleAvatar(
       radius: radius,
-      backgroundColor: FiestaaaPalette.primary.withValues(alpha: 0.16),
+      backgroundColor: scheme.primaryContainer,
       backgroundImage: hasImage ? platformNetworkImage(avatarUrl!) : null,
       onBackgroundImageError: hasImage ? (error, stackTrace) {} : null,
       child: hasImage
@@ -1098,8 +1122,8 @@ class _UserAvatar extends StatelessWidget {
           : Text(
               initial,
               style: TextStyle(
-                color: scheme.primary,
-                fontWeight: FontWeight.w800,
+                color: scheme.onPrimaryContainer,
+                fontWeight: FontWeight.w600,
               ),
             ),
     );
@@ -1151,7 +1175,7 @@ class _BalanceTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -1189,7 +1213,7 @@ class _BalanceTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelLarge?.copyWith(
                 color: balanceColor,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -1296,7 +1320,7 @@ class _SettlementTile extends StatelessWidget {
                 amountLabel,
                 style: theme.textTheme.labelLarge?.copyWith(
                   color: scheme.onSecondaryContainer,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
