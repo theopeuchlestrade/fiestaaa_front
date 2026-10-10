@@ -13,7 +13,7 @@
 - Pending invitations and disabled modules do not request protected item data; accepted participant view switching and retained content after failed refresh pass (5 tests).
 - All tests use synthetic accounts and isolated fake APIs. No production mutation occurred.
 
-- Final full regression suite: 755 passed.
+- Final local regression suite: 755 passed; 46.51% line coverage (6369/13694).
 
 ## In progress
 - Frontend CI, including Android/iOS compilation and exact Linux visual comparison.
@@ -35,3 +35,7 @@ OpenSpec 1.14.1's development-only braces advisory has no upstream patched versi
 ## First remote CI observation
 
 Backend PR 213 is green, including Rust tests, coverage and container scan. Frontend run 38038353418 compiled Android/iOS and the web container successfully, but failed exact Linux comparisons and detected several contrast cases that were not flagged by macOS. Link typography/contrast and the secondary event title were strengthened; support navigation now uses a distinct label. The comparison still fails on mismatching pixels and produces artifacts even when an accessibility check fails. Final remote CI is still required.
+
+## Linux reference provenance
+
+The 12 Linux references were reviewed and replaced with actual test images from GitHub Actions run 38039174003 at commit 9a490735f9a9200cf0d1d3f8a48de18c73adc91f (Flutter 3.44.0). All selected accessibility checks passed in that run; exact pixel comparisons correctly failed against the provisional macOS seeds. The reference update changes no application or test logic. A subsequent green CI run is required to validate these references.
