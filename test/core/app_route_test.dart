@@ -66,6 +66,16 @@ void main() {
         ).routeInformationProvider.value.uri.path,
         path,
       );
+      final router = GoRouter.of(tester.element(find.byType(EventRoutePage)));
+      router.push('/events/43/${module.name}');
+      await tester.pumpAndSettle();
+      expect(
+        router.routeInformationProvider.value.uri.path,
+        '/events/43/${module.name}',
+      );
+      router.pop();
+      await tester.pumpAndSettle();
+      expect(router.routeInformationProvider.value.uri.path, path);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpAndSettle();
     });

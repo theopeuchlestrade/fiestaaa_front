@@ -328,7 +328,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
-    final labels = [l10n.fiestaaa, l10n.friends, l10n.profile];
+    final labels = [l10n.fiestaaas, l10n.friends, l10n.profile];
     final icons = [Icons.event_note, Icons.group, Icons.person];
     final counts = [_pendingEventInvites, _pendingFriendRequests, 0];
     return LayoutBuilder(
@@ -348,7 +348,7 @@ class _HomePageState extends State<HomePage> {
                           icon: CountedIcon(
                             icon: icons[i],
                             count: counts[i],
-                            label: labels[i],
+                            label: counts[i] > 0 ? l10n.pending : '',
                           ),
                           label: Text(labels[i]),
                         ),
@@ -370,7 +370,7 @@ class _HomePageState extends State<HomePage> {
                       icon: CountedIcon(
                         icon: icons[i],
                         count: counts[i],
-                        label: labels[i],
+                        label: counts[i] > 0 ? l10n.pending : '',
                       ),
                       label: labels[i],
                     ),

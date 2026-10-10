@@ -17,7 +17,7 @@
 
 ## In progress
 - Frontend CI, including Android/iOS compilation and exact Linux visual comparison.
-- Linux reference update from actual CI-produced test images; never treat copied macOS seed references as validated Linux output.
+- Final browser fixes and corresponding Linux reference refresh.
 
 ## Required before a beta delivery
 
@@ -39,3 +39,7 @@ Backend PR 213 is green, including Rust tests, coverage and container scan. Fron
 ## Linux reference provenance
 
 The 12 Linux references were reviewed and replaced with actual test images from GitHub Actions run 38039174003 at commit 9a490735f9a9200cf0d1d3f8a48de18c73adc91f (Flutter 3.44.0). All selected accessibility checks passed in that run; exact pixel comparisons correctly failed against the provisional macOS seeds. The reference update changes no application or test logic. A subsequent green CI run is required to validate these references.
+
+## Browser validation findings
+
+Run 38039468296 passed every CI job, including native compilation and Linux comparisons. Local web testing then identified the hidden Flutter semantics opt-in and unchanged browser URLs after imperative navigation. Web startup now exposes semantics using the official Flutter approach; pushed event/module URLs are reflected because every GoRoute is independently loadable. Route tests cover push/pop URL restoration. The list and navigation label use “Fiestaaas”; icon semantics retain pending counts without repeating the destination name. The resulting final revision still requires CI and browser verification.

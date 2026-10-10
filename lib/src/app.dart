@@ -71,6 +71,9 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     if (kIsWeb && _resetToken != null) {
       removeSensitiveQueryParameters(['token']);
     }
+    // Every pushed GoRoute has an independently loadable URL. Keep it visible
+    // so event/module pages survive browser reload and can be shared.
+    GoRouter.optionURLReflectsImperativeAPIs = true;
     _router = GoRouter(
       initialLocation:
           widget.initialLocation ??

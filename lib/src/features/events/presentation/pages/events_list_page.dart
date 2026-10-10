@@ -379,7 +379,7 @@ class EventsListPageState extends State<EventsListPage> {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
-                  l.fiestaaa,
+                  l.fiestaaas,
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 if (widget.onCreate != null)
