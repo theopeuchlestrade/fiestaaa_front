@@ -44,8 +44,19 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsNothing);
+    await tester.tap(find.text('Block someone'));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'test_person');
-    await tester.tap(find.text('Block direct contact'));
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(blocked, isFalse);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(blocked, isFalse);
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Block'));
     await tester.pumpAndSettle();
     expect(blocked, isTrue);
     await tester.scrollUntilVisible(
@@ -57,6 +68,94 @@ void main() {
     await tester.pumpAndSettle();
     expect(blocked, isFalse);
     expect(find.text('Unblock'), findsNothing);
+  });
+  testWidgets(
+    'Reporting is separate from blocking and keeps form input after a failure',
+    (tester) async {
+      final calls = <String>[];
+      var fail = true;
+      final api = BetaApi(
+        client: MockClient((request) async {
+          calls.add('${request.method} ${request.url.path}');
+          if (request.url.path.endsWith('/safety/user')) {
+            return http.Response('{"public_id":"target-id"}', 200);
+          }
+          if (request.url.path.endsWith('/reports')) {
+            final body = jsonDecode(request.body);
+            expect(body['public_id'], 'target-id');
+            expect(body['comment'], 'A useful explanation');
+            return http.Response('{}', fail ? 503 : 201);
+          }
+          return http.Response('[]', 200);
+        }),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SafetyPage(token: 'session', api: api),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Report a problem'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Send report'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Send report'));
+      await tester.pumpAndSettle();
+      expect(calls.where((call) => call.startsWith('POST')), isEmpty);
+      await tester.enterText(find.byType(TextField).first, 'person');
+      await tester.enterText(
+        find.byType(TextField).last,
+        'A useful explanation',
+      );
+      await tester.ensureVisible(find.text('Send report'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Send report'));
+      await tester.pumpAndSettle();
+      expect(find.text('A useful explanation'), findsOneWidget);
+      fail = false;
+      await tester.ensureVisible(find.text('Send report'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Send report'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Report sent. Thank you for letting us know.'),
+        findsOneWidget,
+      );
+      expect(find.byType(TextField), findsNothing);
+      expect(
+        calls.where(
+          (call) => call.contains('POST') && call.contains('/me/blocks'),
+        ),
+        isEmpty,
+      );
+    },
+  );
+  testWidgets('An event report retains event scope without a user lookup', (
+    tester,
+  ) async {
+    Map<String, dynamic>? report;
+    final api = BetaApi(
+      client: MockClient((request) async {
+        expect(request.url.path, isNot(endsWith('/safety/user')));
+        if (request.method == 'POST') {
+          report = jsonDecode(request.body) as Map<String, dynamic>;
+        }
+        return http.Response(request.method == 'GET' ? '[]' : '{}', 200);
+      }),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SafetyPage(token: 'session', eventId: 42, api: api),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Block someone'), findsNothing);
+    await tester.ensureVisible(find.text('Send report'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Send report'));
+    await tester.pumpAndSettle();
+    expect(report?['event_id'], 42);
+    expect(report?.containsKey('public_id'), isFalse);
   });
   testWidgets('Recovery sends generic request and presents provider guidance', (
     tester,

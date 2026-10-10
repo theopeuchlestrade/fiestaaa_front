@@ -465,6 +465,10 @@ void main() {
                 );
                 await tester.pumpAndSettle();
                 expect(tester.takeException(), isNull);
+                if (screen == 'expenses' && locale == 'fr') {
+                  expect(find.textContaining('24,00'), findsWidgets);
+                  expect(find.textContaining('€24.00'), findsNothing);
+                }
                 if (screen == 'carpools') {
                   expect(find.text('Paris — Gare de Lyon'), findsOneWidget);
                 }

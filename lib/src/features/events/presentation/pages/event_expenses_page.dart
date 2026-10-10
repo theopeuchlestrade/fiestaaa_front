@@ -311,7 +311,7 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                       Text(
                         l10n.addSharedExpense,
                         style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -727,6 +727,12 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
     );
   }
 
+  String _money(int cents) => NumberFormat.currency(
+    locale: S.of(context).localeName,
+    symbol: '€',
+    decimalDigits: 2,
+  ).format(cents / 100);
+
   Widget _buildSummaryCard(S l10n) {
     final summary = _summary;
     if (summary == null) {
@@ -757,13 +763,15 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                         widget.isReadOnly
                             ? l10n.finalSplit
                             : l10n.currentSplitPreview,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Text(
-                        l10n.totalSharedExpenses(summary.formattedTotal),
+                        l10n.totalSharedExpenses(
+                          _money(summary.totalExpensesCents),
+                        ),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
@@ -779,22 +787,29 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
               const SizedBox(height: 4),
               Text(
                 ownBalance.balanceCents >= 0
-                    ? l10n.expenseReceives(ownBalance.formattedBalance)
-                    : l10n.expenseOwes(
-                        ownBalance.formatCents(-ownBalance.balanceCents),
-                      ),
-                style: theme.textTheme.titleLarge,
+                    ? l10n.expenseReceives(_money(ownBalance.balanceCents))
+                    : l10n.expenseOwes(_money(-ownBalance.balanceCents)),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
+              const SizedBox(height: 12),
             ],
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
-              title: Text(l10n.expenseSplitDetails),
+              title: Text(
+                l10n.expenseSplitDetails,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurface,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               children: [
                 const SizedBox(height: 18),
                 Text(
                   l10n.expenseParticipants,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -811,16 +826,11 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                         balance.userId,
                         fallbackAvatarUrl: balance.avatarUrl,
                       ),
-                      paidLabel: l10n.expensePaid(balance.formattedPaid),
-                      owedLabel: l10n.expenseOwed(balance.formattedOwed),
+                      paidLabel: l10n.expensePaid(_money(balance.paidCents)),
+                      owedLabel: l10n.expenseOwed(_money(balance.owedCents)),
                       balanceLabel: balance.balanceCents >= 0
-                          ? l10n.expenseReceives(balance.formattedBalance)
-                          : l10n.expenseOwes(
-                              NumberFormat.currency(
-                                locale: Intl.getCurrentLocale(),
-                                symbol: '€',
-                              ).format((-balance.balanceCents) / 100),
-                            ),
+                          ? l10n.expenseReceives(_money(balance.balanceCents))
+                          : l10n.expenseOwes(_money(-balance.balanceCents)),
                       balanceColor: balance.balanceCents >= 0
                           ? positiveColor
                           : negativeColor,
@@ -831,7 +841,7 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                 Text(
                   l10n.settlementSuggestions,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -870,7 +880,7 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                           handle: settlement.toHandle,
                         ),
                         toAvatarUrl: _avatarUrlForUserId(settlement.toUserId),
-                        amountLabel: settlement.formattedAmount,
+                        amountLabel: _money(settlement.amountCents),
                       ),
                     ),
                   ),
@@ -952,7 +962,7 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                                 Text(
                                   expense.title,
                                   style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 const SizedBox(height: 6),
@@ -992,10 +1002,10 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
-                            expense.formattedAmount,
+                            _money(expense.amountCents),
                             style: theme.textTheme.labelLarge?.copyWith(
                               color: scheme.onPrimaryContainer,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -1029,7 +1039,13 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                 ),
                 ExpansionTile(
                   tilePadding: EdgeInsets.zero,
-                  title: Text(l10n.expenseParticipants),
+                  title: Text(
+                    l10n.expenseParticipants,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurface,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   children: [
                     if ((expense.note?.trim().isNotEmpty ?? false)) ...[
                       const SizedBox(height: 14),
@@ -1107,7 +1123,7 @@ class _UserAvatar extends StatelessWidget {
               initial,
               style: TextStyle(
                 color: scheme.onPrimaryContainer,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
               ),
             ),
     );
@@ -1159,7 +1175,7 @@ class _BalanceTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -1197,7 +1213,7 @@ class _BalanceTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelLarge?.copyWith(
                 color: balanceColor,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -1304,7 +1320,7 @@ class _SettlementTile extends StatelessWidget {
                 amountLabel,
                 style: theme.textTheme.labelLarge?.copyWith(
                   color: scheme.onSecondaryContainer,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),

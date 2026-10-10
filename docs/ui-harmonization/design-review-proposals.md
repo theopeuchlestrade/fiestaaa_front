@@ -36,3 +36,6 @@ The owner accepted the revised content-first home: no repeated Fiestaaas heading
 
 ## Review constraints
 Design proposals should show mobile and desktop before implementation of each batch. No production, store operation, new API or business permission change is authorized by this document. Existing functions must remain available. Visual checks cover both themes/languages, four widths and enlarged text; new end-to-end phone testing requires the owner to resume it.
+
+## Safety and expense review refinement
+The owner requested a complete safety redesign and reported inconsistent expense typography. Signal provides inspiration for distinct block/report entry points, without importing Signal-specific business rules (https://support.signal.org/hc/en-us/articles/360007060072). Material typography roles guide quieter section titles and consistent text hierarchy (https://m3.material.io/styles/typography/applying-type). The safety landing page now separates actions and blocked users; forms appear only after selecting an action. Blocking explains consequences before confirmation; reports do not implicitly block. Errors retain form values and feedback is brought into view. Expense currency uses the selected app locale rather than the process-wide Intl default; smaller section titles and consistent detail-row styles reduce visual competition.

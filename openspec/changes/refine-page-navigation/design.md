@@ -8,3 +8,6 @@ Export 18 actual screens in French at 360px light and 1440px dark. The gallery d
 
 ## Validation
 Run the complete regression suite, 576 layout cases, selected full-screen accessibility checks, module replacement/back regression, analysis, OpenSpec, and remote CI with reviewed Linux references. Native end-to-end testing remains stopped by the owner; VoiceOver remains deferred.
+
+## Safety and expense refinement
+Separate blocking from reporting with a settings-style safety landing page, explicit consequences before blocking, contextual report forms, useful empty/error states and one support link. Keep existing API permissions and payloads. Use the active app locale for expense currency, regular metadata and restrained section/amount hierarchy. Inspiration: Signal separates block/report actions (https://support.signal.org/hc/en-us/articles/360007060072); Material provides semantic typography roles (https://m3.material.io/styles/typography/applying-type). No native end-to-end test resumption.

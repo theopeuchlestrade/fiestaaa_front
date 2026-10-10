@@ -368,6 +368,7 @@ class _SafetyPageState extends State<SafetyPage> {
   late final _api = widget.api ?? BetaApi();
   late final _handle = TextEditingController(text: widget.initialHandle);
   final _comment = TextEditingController();
+  final _scroll = ScrollController();
   String _reason = 'harassment';
   String? _message;
   bool _busy = false;
@@ -377,6 +378,7 @@ class _SafetyPageState extends State<SafetyPage> {
     _api.close();
     _handle.dispose();
     _comment.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -387,6 +389,7 @@ class _SafetyPageState extends State<SafetyPage> {
     setState(() {
       _busy = true;
       _message = null;
+      _failed = false;
     });
     try {
       var id = publicId;
@@ -429,172 +432,420 @@ class _SafetyPageState extends State<SafetyPage> {
       }
       if (mounted) {
         setState(() {
-          _message = betaText(
-            context,
-            'Demande enregistrée.',
-            'Request recorded.',
-          );
+          _message = action == 'report'
+              ? _text(
+                  'Signalement envoyé. Merci de nous avoir prévenus.',
+                  'Report sent. Thank you for letting us know.',
+                )
+              : action == 'block'
+              ? _text(
+                  'La personne a été bloquée.',
+                  'The person has been blocked.',
+                )
+              : _text(
+                  'La personne a été débloquée.',
+                  'The person has been unblocked.',
+                );
+          if (widget.eventId == null) _action = null;
+          if (action == 'report') _comment.clear();
           _blocks = _api.call('/me/blocks', token: widget.token);
         });
+        _showFeedback();
       }
     } catch (_) {
       if (mounted) {
-        setState(
-          () => _message = betaText(
-            context,
+        setState(() {
+          _failed = true;
+          _message = _text(
             'Impossible de traiter la demande. Vérifiez l’identifiant et votre connexion.',
             'Unable to process request. Check the handle and your connection.',
-          ),
-        );
+          );
+        });
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() => _busy = false);
+        _showFeedback();
+      }
     }
   }
 
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(
-        betaText(context, 'Sécurité et signalements', 'Safety and reports'),
-      ),
-    ),
-    body: FiestaaaBackground(
-      child: FiestaaaPageLayout(
-        maxWidth: 760,
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            if (widget.eventId == null) ...[
-              Text(
-                betaText(
-                  context,
-                  'Bloquer coupe les demandes d’amitié et invitations directes. Les événements communs restent accessibles ; vous pouvez les quitter ou les signaler.',
-                  'Blocking stops friend requests and direct invitations. Shared events remain accessible; you can leave or report them.',
-                ),
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _handle,
-                decoration: InputDecoration(
-                  labelText: betaText(
-                    context,
-                    'Identifiant de la personne',
-                    'User handle',
-                  ),
-                ),
-              ),
-              FilledButton(
-                onPressed: _busy ? null : () => _act('block'),
-                child: Text(
-                  betaText(
-                    context,
-                    'Bloquer les contacts directs',
-                    'Block direct contact',
-                  ),
-                ),
-              ),
-            ] else
-              Text(
-                betaText(
-                  context,
-                  'Signaler cet événement',
-                  'Report this event',
-                ),
-              ),
-            DropdownButtonFormField<String>(
-              isExpanded: true,
-              itemHeight: null,
-              decoration: InputDecoration(
-                labelText: betaText(context, 'Motif', 'Reason'),
-              ),
-              initialValue: _reason,
-              items: [
-                for (final r in [
-                  ('harassment', 'Harcèlement', 'Harassment'),
-                  (
-                    'inappropriate',
-                    'Contenu inapproprié',
-                    'Inappropriate content',
-                  ),
-                  ('spam', 'Spam', 'Spam'),
-                  ('other', 'Autre', 'Other'),
-                ])
-                  DropdownMenuItem(
-                    value: r.$1,
-                    child: Text(betaText(context, r.$2, r.$3)),
-                  ),
-              ],
-              onChanged: _busy ? null : (v) => setState(() => _reason = v!),
+  void _showFeedback() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _scroll.hasClients) {
+        _scroll.animateTo(
+          0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  String? _action;
+  bool _failed = false;
+
+  String _text(String fr, String en) => betaText(context, fr, en);
+
+  void _selectAction(String action) => setState(() {
+    _action = action;
+    _message = null;
+    _failed = false;
+  });
+
+  Future<void> _submit() async {
+    if (widget.eventId == null && _handle.text.trim().isEmpty) {
+      setState(() {
+        _failed = true;
+        _message = _text(
+          'Saisissez l’identifiant de la personne.',
+          'Enter the user handle.',
+        );
+      });
+      return;
+    }
+    final action = widget.eventId != null ? 'report' : _action!;
+    if (action == 'block') {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            _text(
+              'Bloquer @${_handle.text.trim()} ?',
+              'Block @${_handle.text.trim()}?',
             ),
-            TextField(
-              controller: _comment,
-              maxLength: 1000,
-              maxLines: 4,
-              decoration: InputDecoration(
-                labelText: betaText(
-                  context,
-                  'Détails du signalement',
-                  'Report details',
-                ),
-              ),
+          ),
+          content: Text(
+            _text(
+              'L’amitié et les demandes en attente seront retirées. Les demandes d’amitié et invitations directes seront bloquées dans les deux sens. Les événements communs et les contributions restent accessibles.',
+              'The friendship and pending requests will be removed. Friend requests and direct invitations will be blocked both ways. Shared events and contributions remain accessible.',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(_text('Annuler', 'Cancel')),
             ),
             FilledButton(
-              onPressed: _busy ? null : () => _act('report'),
-              child: Text(
-                betaText(context, 'Envoyer le signalement', 'Send report'),
-              ),
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(_text('Bloquer', 'Block')),
             ),
-            if (_message != null) Text(_message!),
-            const SizedBox(height: 24),
-            Text(
-              betaText(context, 'Personnes bloquées', 'Blocked users'),
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            FutureBuilder<dynamic>(
-              future: _blocks,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return TextButton(
-                    onPressed: () => setState(
-                      () => _blocks = _api.call(
-                        '/me/blocks',
-                        token: widget.token,
-                      ),
-                    ),
-                    child: Text(betaText(context, 'Réessayer', 'Retry')),
-                  );
-                }
-                if (!snapshot.hasData) return const LinearProgressIndicator();
-                return Column(
-                  children: [
-                    for (final b in snapshot.data as List<dynamic>)
-                      ListTile(
-                        title: Text(b['handle'] as String),
-                        trailing: TextButton(
-                          onPressed: _busy
-                              ? null
-                              : () => _act(
-                                  'unblock',
-                                  publicId: b['public_id'] as String,
-                                ),
-                          child: Text(
-                            betaText(context, 'Débloquer', 'Unblock'),
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-            const BetaLinks(),
           ],
         ),
+      );
+      if (confirmed != true || !mounted) {
+        return;
+      }
+    }
+    await _act(action);
+  }
+
+  Widget _actionCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String action,
+  }) => Card(
+    child: ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      leading: Icon(icon),
+      title: Text(title, style: Theme.of(context).textTheme.titleMedium),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Text(subtitle),
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: _busy ? null : () => _selectAction(action),
+    ),
+  );
+
+  Widget _blockedUsers() => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _text('Personnes bloquées', 'Blocked users'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 12),
+          FutureBuilder<dynamic>(
+            future: _blocks,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _text(
+                        'La liste n’a pas pu être chargée.',
+                        'The list could not be loaded.',
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => setState(
+                        () => _blocks = _api.call(
+                          '/me/blocks',
+                          token: widget.token,
+                        ),
+                      ),
+                      icon: const Icon(Icons.refresh),
+                      label: Text(_text('Réessayer', 'Retry')),
+                    ),
+                  ],
+                );
+              }
+              if (!snapshot.hasData) {
+                return const LinearProgressIndicator();
+              }
+              final blocks = snapshot.data as List<dynamic>;
+              if (blocks.isEmpty) {
+                return Text(
+                  _text(
+                    'Vous n’avez bloqué personne.',
+                    'You have not blocked anyone.',
+                  ),
+                );
+              }
+              return Column(
+                children: [
+                  for (final b in blocks)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text('@${b['handle']}'),
+                      trailing: TextButton(
+                        onPressed: _busy
+                            ? null
+                            : () => _act(
+                                'unblock',
+                                publicId: b['public_id'] as String,
+                              ),
+                        child: Text(_text('Débloquer', 'Unblock')),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     ),
   );
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final reporting = widget.eventId != null || _action == 'report';
+    final editing = widget.eventId != null || _action != null;
+    final title = editing
+        ? (reporting
+              ? _text('Signaler un problème', 'Report a problem')
+              : _text('Bloquer une personne', 'Block someone'))
+        : _text('Sécurité et signalements', 'Safety and reports');
+    return Scaffold(
+      appBar: AppBar(
+        leading: _action != null && widget.eventId == null
+            ? BackButton(
+                onPressed: _busy
+                    ? () {}
+                    : () => setState(() {
+                        _action = null;
+                        _message = null;
+                      }),
+              )
+            : const RouteBackButton(fallback: '/profile'),
+        title: Text(title),
+      ),
+      body: FiestaaaBackground(
+        child: FiestaaaPageLayout(
+          maxWidth: 760,
+          child: ListView(
+            controller: _scroll,
+            padding: const EdgeInsets.all(20),
+            children: [
+              if (_message != null) ...[
+                Semantics(
+                  liveRegion: true,
+                  child: Card(
+                    color: _failed
+                        ? scheme.errorContainer
+                        : scheme.primaryContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        _message!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: _failed
+                              ? scheme.onErrorContainer
+                              : scheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              if (!editing) ...[
+                Text(
+                  _text(
+                    'Choisissez ce dont vous avez besoin.',
+                    'Choose how we can help.',
+                  ),
+                  style: theme.textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 16),
+                _actionCard(
+                  icon: Icons.person_off_outlined,
+                  title: _text('Bloquer une personne', 'Block someone'),
+                  subtitle: _text(
+                    'Arrêter les demandes et invitations directes.',
+                    'Stop friend requests and direct invitations.',
+                  ),
+                  action: 'block',
+                ),
+                const SizedBox(height: 12),
+                _actionCard(
+                  icon: Icons.flag_outlined,
+                  title: _text('Signaler un problème', 'Report a problem'),
+                  subtitle: _text(
+                    'Alerter l’équipe sur une personne ou un contenu.',
+                    'Notify the team about a person or content.',
+                  ),
+                  action: 'report',
+                ),
+                const SizedBox(height: 24),
+                _blockedUsers(),
+              ] else ...[
+                Text(
+                  reporting
+                      ? _text(
+                          'Votre signalement sera examiné par l’équipe. Il ne bloque pas automatiquement la personne.',
+                          'The team will review your report. Reporting does not automatically block the person.',
+                        )
+                      : _text(
+                          'Les contacts directs seront coupés dans les deux sens. Les événements communs restent accessibles ; vous pouvez les quitter ou les signaler.',
+                          'Direct contact will be blocked both ways. Shared events remain accessible; you can leave or report them.',
+                        ),
+                  style: theme.textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 24),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (widget.eventId == null) ...[
+                          TextField(
+                            controller: _handle,
+                            enabled: !_busy,
+                            decoration: InputDecoration(
+                              labelText: _text(
+                                'Identifiant de la personne',
+                                'User handle',
+                              ),
+                              hintText: _text(
+                                'Exemple : alex',
+                                'Example: alex',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ] else ...[
+                          Text(
+                            _text('Événement concerné', 'Reported event'),
+                            style: theme.textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _text(
+                              'L’événement depuis lequel vous avez ouvert cette page.',
+                              'The event from which you opened this page.',
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                        if (reporting) ...[
+                          DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            itemHeight: null,
+                            decoration: InputDecoration(
+                              labelText: _text('Motif', 'Reason'),
+                            ),
+                            initialValue: _reason,
+                            items: [
+                              for (final r in [
+                                ('harassment', 'Harcèlement', 'Harassment'),
+                                (
+                                  'inappropriate',
+                                  'Contenu inapproprié',
+                                  'Inappropriate content',
+                                ),
+                                ('spam', 'Spam', 'Spam'),
+                                ('other', 'Autre', 'Other'),
+                              ])
+                                DropdownMenuItem(
+                                  value: r.$1,
+                                  child: Text(_text(r.$2, r.$3)),
+                                ),
+                            ],
+                            onChanged: _busy
+                                ? null
+                                : (v) => setState(() => _reason = v!),
+                          ),
+                          const SizedBox(height: 20),
+                          TextField(
+                            controller: _comment,
+                            enabled: !_busy,
+                            maxLength: 1000,
+                            minLines: 3,
+                            maxLines: 6,
+                            decoration: InputDecoration(
+                              labelText: _text(
+                                'Détails (facultatif)',
+                                'Details (optional)',
+                              ),
+                              alignLabelWithHint: true,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        FilledButton(
+                          onPressed: _busy ? null : _submit,
+                          child: _busy
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  reporting
+                                      ? _text(
+                                          'Envoyer le signalement',
+                                          'Send report',
+                                        )
+                                      : _text('Continuer', 'Continue'),
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+              TextButton.icon(
+                onPressed: () => context.push('/support'),
+                icon: const Icon(Icons.help_outline),
+                label: Text(_text('Contacter l’assistance', 'Contact support')),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
