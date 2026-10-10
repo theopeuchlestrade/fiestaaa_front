@@ -43,3 +43,5 @@ The 12 Linux references were reviewed and replaced with actual test images from 
 ## Browser validation findings
 
 Run 38039468296 passed every CI job, including native compilation and Linux comparisons. Local web testing then identified the hidden Flutter semantics opt-in and unchanged browser URLs after imperative navigation. Web startup now exposes semantics using the official Flutter approach; pushed event/module URLs are reflected because every GoRoute is independently loadable. Route tests cover push/pop URL restoration. The list and navigation label use “Fiestaaas”; icon semantics retain pending counts without repeating the destination name. The resulting final revision still requires CI and browser verification.
+
+The two list references were refreshed from run 38040033077 at commit 8a8983bc17f9ff4da9111d8c9c5b1c2b55946f63 to include the plural destination label. The other ten references matched exactly; accessibility checks and all compilation jobs passed.
