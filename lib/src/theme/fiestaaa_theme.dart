@@ -1,3 +1,4 @@
+import '../core/presentation/widgets/fiestaaa_motion.dart';
 import 'package:flutter/material.dart';
 
 class FiestaaaPalette {
@@ -484,7 +485,7 @@ class FiestaaaPageLayout extends StatelessWidget {
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: maxWidth),
-            child: child,
+            child: FiestaaaEntrance(child: child),
           ),
         ),
       ),

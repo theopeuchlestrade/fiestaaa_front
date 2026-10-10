@@ -1,3 +1,4 @@
+import '../core/presentation/widgets/fiestaaa_motion.dart';
 import '../theme/fiestaaa_theme.dart';
 import '../core/presentation/widgets/route_back_button.dart';
 import 'dart:convert';
@@ -184,6 +185,19 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
       return;
     }
     final reset = widget.token != null;
+    if (!reset &&
+        (!_email.text.trim().contains('@') ||
+            _email.text.trim().endsWith('@'))) {
+      setState(
+        () => _error = betaText(
+          context,
+          'Saisissez une adresse email valide.',
+          'Enter a valid email address.',
+        ),
+      );
+      return;
+    }
+    FocusScope.of(context).unfocus();
     if (reset && _password.text != _confirmation.text) {
       setState(
         () => _error = betaText(
@@ -206,7 +220,8 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
             ? {'token': widget.token, 'password': _password.text}
             : {'email': _email.text.trim()},
       );
-      if (mounted) setState(() => _done = true);
+      if (!mounted) return;
+      setState(() => _done = true);
       _password.clear();
       _confirmation.clear();
     } on ApiException catch (e) {
@@ -238,110 +253,269 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
     }
   }
 
+  bool _showPassword = false;
+  bool _showConfirmation = false;
+
+  String _text(String fr, String en) => betaText(context, fr, en);
+
+  Widget _passwordField(
+    TextEditingController controller, {
+    required bool confirmation,
+  }) => TextField(
+    controller: controller,
+    enabled: !_busy,
+    obscureText: !(confirmation ? _showConfirmation : _showPassword),
+    autofillHints: const [AutofillHints.newPassword],
+    autocorrect: false,
+    enableSuggestions: false,
+    decoration: InputDecoration(
+      labelText: confirmation
+          ? _text('Confirmer le mot de passe', 'Confirm password')
+          : _text('Nouveau mot de passe', 'New password'),
+      suffixIcon: IconButton(
+        tooltip: (confirmation ? _showConfirmation : _showPassword)
+            ? _text('Masquer le mot de passe', 'Hide password')
+            : _text('Afficher le mot de passe', 'Show password'),
+        onPressed: () => setState(() {
+          if (confirmation) {
+            _showConfirmation = !_showConfirmation;
+          } else {
+            _showPassword = !_showPassword;
+          }
+        }),
+        icon: Icon(
+          (confirmation ? _showConfirmation : _showPassword)
+              ? Icons.visibility_off_outlined
+              : Icons.visibility_outlined,
+        ),
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final reset = widget.token != null;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Scaffold(
       appBar: AppBar(
+        leading: const RouteBackButton(fallback: '/auth'),
         title: Text(
-          betaText(context, 'Récupérer mon compte', 'Recover my account'),
+          reset
+              ? _text('Nouveau mot de passe', 'New password')
+              : _text('Récupérer mon compte', 'Recover my account'),
         ),
       ),
-      body: FiestaaaBackground(
-        child: FiestaaaPageLayout(
-          maxWidth: 760,
-          child: ListView(
-            shrinkWrap: true,
-            padding: const EdgeInsets.all(24),
-            children: [
-              if (_done) ...[
-                Text(
-                  betaText(
-                    context,
-                    reset
-                        ? 'Mot de passe modifié. Reconnectez-vous sur vos appareils.'
-                        : 'Si ce compte utilise un mot de passe, un email vous sera envoyé. Pour Apple ou Google, utilisez votre fournisseur de connexion.',
-                    reset
-                        ? 'Password changed. Sign in again on your devices.'
-                        : 'If this account uses a password, an email will be sent. For Apple or Google, use your sign-in provider.',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () => context.go('/auth'),
-                  child: Text(
-                    betaText(
-                      context,
-                      'Revenir à la connexion',
-                      'Return to sign in',
-                    ),
-                  ),
-                ),
-              ] else ...[
-                if (!reset)
-                  TextField(
-                    controller: _email,
-                    keyboardType: TextInputType.emailAddress,
-                    autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(labelText: 'Email'),
-                  ),
-                if (reset) ...[
-                  Text(
-                    betaText(
-                      context,
-                      'Au moins 12 caractères, avec majuscule, minuscule, chiffre et symbole.',
-                      'At least 12 characters including uppercase, lowercase, digit and symbol.',
-                    ),
-                  ),
-                  TextField(
-                    controller: _password,
-                    obscureText: true,
-                    autofillHints: const [AutofillHints.newPassword],
-                    decoration: InputDecoration(
-                      labelText: betaText(
-                        context,
-                        'Nouveau mot de passe',
-                        'New password',
+      body: FiestaaaPageLayout(
+        maxWidth: 760,
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            AnimatedSwitcher(
+              duration: fiestaaaMotionDuration(context),
+              // Only the current form participates in focus/semantics during transition.
+              layoutBuilder: (current, previous) =>
+                  current ?? const SizedBox.shrink(),
+              child: Card(
+                key: ValueKey(_done),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Icon(
+                          _done ? Icons.check_circle_outline : Icons.lock_reset,
+                          size: 32,
+                          color: scheme.primary,
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 16),
+                      if (_done) ...[
+                        Text(
+                          reset
+                              ? _text(
+                                  'Mot de passe mis à jour',
+                                  'Password updated',
+                                )
+                              : _text(
+                                  'Vérifiez votre boîte mail',
+                                  'Check your inbox',
+                                ),
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 12),
+                        Semantics(
+                          liveRegion: true,
+                          child: Text(
+                            reset
+                                ? _text(
+                                    'Reconnectez-vous avec votre nouveau mot de passe sur vos appareils.',
+                                    'Sign in again with your new password on your devices.',
+                                  )
+                                : _text(
+                                    'Si ce compte utilise un mot de passe, un email vous sera envoyé pour le réinitialiser.',
+                                    'If this account uses a password, an email will be sent to reset it.',
+                                  ),
+                            style: theme.textTheme.bodyLarge,
+                          ),
+                        ),
+                        if (!reset) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            _text(
+                              'Ouvrez le lien reçu pour choisir un nouveau mot de passe. Pensez à vérifier vos indésirables.',
+                              'Open the link to choose a new password. Remember to check your spam folder.',
+                            ),
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+                        FilledButton(
+                          onPressed: () => context.go('/auth'),
+                          child: Text(
+                            _text(
+                              'Revenir à la connexion',
+                              'Return to sign in',
+                            ),
+                          ),
+                        ),
+                        if (!reset) ...[
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () => setState(() {
+                              _done = false;
+                              _email.clear();
+                              _error = null;
+                            }),
+                            child: Text(
+                              _text(
+                                'Utiliser une autre adresse',
+                                'Use another email',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ] else ...[
+                        Text(
+                          reset
+                              ? _text(
+                                  'Choisissez un mot de passe pour retrouver l’accès à votre compte.',
+                                  'Choose a password to regain access to your account.',
+                                )
+                              : _text(
+                                  'Recevez un lien pour choisir un nouveau mot de passe.',
+                                  'Receive a link to choose a new password.',
+                                ),
+                          style: theme.textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: 24),
+                        if (!reset)
+                          TextField(
+                            controller: _email,
+                            enabled: !_busy,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.done,
+                            autofillHints: const [AutofillHints.email],
+                            autocorrect: false,
+                            decoration: InputDecoration(
+                              labelText: _text(
+                                'Adresse email',
+                                'Email address',
+                              ),
+                              hintText: _text(
+                                'vous@exemple.fr',
+                                'you@example.com',
+                              ),
+                            ),
+                            onSubmitted: (_) => _submit(),
+                          )
+                        else ...[
+                          _passwordField(_password, confirmation: false),
+                          const SizedBox(height: 20),
+                          _passwordField(_confirmation, confirmation: true),
+                          const SizedBox(height: 12),
+                          Text(
+                            _text(
+                              'Au moins 12 caractères, avec majuscule, minuscule, chiffre et symbole.',
+                              'At least 12 characters including uppercase, lowercase, digit and symbol.',
+                            ),
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
+                        if (_error != null) ...[
+                          const SizedBox(height: 16),
+                          Semantics(
+                            liveRegion: true,
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: scheme.errorContainer,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                _error!,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: scheme.onErrorContainer,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+                        FilledButton(
+                          onPressed: _busy ? null : _submit,
+                          child: Text(
+                            _busy
+                                ? _text('En cours…', 'Working…')
+                                : reset
+                                ? _text(
+                                    'Enregistrer le mot de passe',
+                                    'Save password',
+                                  )
+                                : _text('Envoyer le lien', 'Send reset link'),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                  TextField(
-                    controller: _confirmation,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      labelText: betaText(
-                        context,
-                        'Confirmer le mot de passe',
-                        'Confirm password',
-                      ),
-                    ),
-                  ),
-                ],
-                if (_error != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Text(_error!),
-                  ),
-                FilledButton(
-                  onPressed: _busy ? null : _submit,
-                  child: Text(
-                    betaText(
-                      context,
-                      _busy ? 'En cours…' : 'Continuer',
-                      _busy ? 'Working…' : 'Continue',
-                    ),
-                  ),
-                ),
-              ],
-              TextButton(
-                onPressed: () => context.go('/auth'),
-                child: Text(
-                  betaText(context, 'Retour à la connexion', 'Back to sign in'),
                 ),
               ),
-              const BetaLinks(),
+            ),
+            if (!reset) ...[
+              const SizedBox(height: 20),
+              Text(
+                _text(
+                  'Vous utilisez Apple ou Google ?',
+                  'Using Apple or Google?',
+                ),
+                style: theme.textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _text(
+                  'Revenez à la connexion et choisissez votre fournisseur. Aucun nouveau mot de passe n’est nécessaire.',
+                  'Return to sign in and choose your provider. You do not need a new password.',
+                ),
+                style: theme.textTheme.bodyMedium,
+              ),
             ],
-          ),
+            const SizedBox(height: 24),
+            Wrap(
+              spacing: 12,
+              children: [
+                TextButton(
+                  onPressed: () => context.push('/support'),
+                  child: Text(_text('Besoin d’aide ?', 'Need help?')),
+                ),
+                TextButton(
+                  onPressed: () => context.push('/privacy'),
+                  child: Text(_text('Confidentialité', 'Privacy')),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

@@ -157,6 +157,39 @@ void main() {
     expect(report?['event_id'], 42);
     expect(report?.containsKey('public_id'), isFalse);
   });
+  testWidgets(
+    'Recovery rejects a missing email and allows another address after generic confirmation',
+    (tester) async {
+      var calls = 0;
+      final api = BetaApi(
+        client: MockClient((request) async {
+          calls++;
+          return http.Response('{"status":"recovery_requested"}', 202);
+        }),
+      );
+      await tester.pumpWidget(MaterialApp(home: PasswordResetPage(api: api)));
+      await tester.tap(find.text('Send reset link'));
+      await tester.pumpAndSettle();
+      expect(calls, 0);
+      expect(find.text('Enter a valid email address.'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'unknown@example.invalid');
+      await tester.ensureVisible(find.text('Send reset link'));
+      await tester.tap(find.text('Send reset link'));
+      await tester.pumpAndSettle();
+      expect(calls, 1);
+      expect(find.text('Check your inbox'), findsOneWidget);
+      expect(find.text('Return to sign in'), findsOneWidget);
+      expect(find.byType(TextField), findsNothing);
+      await tester.ensureVisible(find.text('Use another email'));
+      await tester.tap(find.text('Use another email'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        isEmpty,
+      );
+      api.close();
+    },
+  );
   testWidgets('Recovery sends generic request and presents provider guidance', (
     tester,
   ) async {
@@ -170,7 +203,7 @@ void main() {
     );
     await tester.pumpWidget(MaterialApp(home: PasswordResetPage(api: api)));
     await tester.enterText(find.byType(TextField), 'test@example.test');
-    await tester.tap(find.text('Continue'));
+    await tester.tap(find.text('Send reset link'));
     await tester.pumpAndSettle();
     expect(calls.single['email'], 'test@example.test');
     expect(
@@ -200,12 +233,12 @@ void main() {
         find.byType(TextField).last,
         'DifferentPassword2!',
       );
-      await tester.tap(find.text('Continue'));
+      await tester.tap(find.text('Save password'));
       await tester.pump();
       expect(calls, 0);
       expect(find.text('Passwords do not match.'), findsOneWidget);
       await tester.enterText(find.byType(TextField).last, 'ChangedPassword2!');
-      await tester.tap(find.text('Continue'));
+      await tester.tap(find.text('Save password'));
       await tester.pumpAndSettle();
       expect(calls, 1);
       expect(find.byType(TextField), findsNothing);

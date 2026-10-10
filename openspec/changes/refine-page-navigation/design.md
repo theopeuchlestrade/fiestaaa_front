@@ -11,3 +11,6 @@ Run the complete regression suite, 576 layout cases, selected full-screen access
 
 ## Safety and expense refinement
 Separate blocking from reporting with a settings-style safety landing page, explicit consequences before blocking, contextual report forms, useful empty/error states and one support link. Keep existing API permissions and payloads. Use the active app locale for expense currency, regular metadata and restrained section/amount hierarchy. Inspiration: Signal separates block/report actions (https://support.signal.org/hc/en-us/articles/360007060072); Material provides semantic typography roles (https://m3.material.io/styles/typography/applying-type). No native end-to-end test resumption.
+
+## Recovery and motion
+The recovery page has one title, an explained email request, separate provider guidance, structured generic confirmation and one sign-in destination. Password confirmation keeps the existing API and validation contracts with optional visibility toggles. Shared page entrances use a 180ms fade and 6px translation once per mount. Recovery state changes fade only the current form so outgoing fields do not retain focus or semantics. Disable motion for system disableAnimations or accessibleNavigation. Do not animate continuous content updates or delay actions.
