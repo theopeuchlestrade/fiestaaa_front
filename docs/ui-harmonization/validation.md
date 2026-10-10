@@ -59,3 +59,11 @@ Final local validation after expanded accessibility checks: 755 tests passed, in
 The owner confirmed sign-in and event display on iPhone (guest) and Pixel (creator), using separate QA build 9002. Android local HTTP was enabled only for the Mac LAN address in the disposable QA source. Store apps remain installed. Native contribution/realtime validation is in progress. Node 22.23.3 is installed through NVM; strict OpenSpec passes for both repositories.
 
 Local regression after final error localization: 756 tests passed. Credential errors are localized in French and English, provider authorization failures use translated copy, and invitations/create/edit no longer expose raw server strings. The safety explanation has separate spacing from the input and stronger typography after Linux detected a contrast failure. Final remote validation remains required.
+
+The owner confirmed native needs/contribution and realtime behavior on QA build 9002: the iPhone guest contributed one unit, and both devices displayed 3/6 without refreshing the Pixel creator view. This validates this flow on the isolated API, not store distribution or provider authentication.
+
+The owner confirmed native poll voting and realtime behavior on QA build 9002: the iPhone guest voted “Salade”, received confirmation, and the result appeared automatically on the Pixel creator view.
+
+The owner confirmed the native expense summary (24 EUR, 12 EUR per participant) and return navigation to the event on both phones using QA build 9002.
+
+Native carpool testing exposed a delayed refresh: joining succeeded and the creator eventually saw the update, but the page ignored the existing server events (`carpool_created`, `carpool_updated`, `carpool_deleted`, `carpool_joined`, `carpool_left`). The frontend now refreshes on these events without changing the backend contract. A regression test failed before the fix and also checks unrelated events and other event IDs are ignored. Native retesting remains required.

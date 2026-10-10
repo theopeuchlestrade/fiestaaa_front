@@ -107,8 +107,17 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
       final type = message['type'] as String?;
       final eventId = message['event_id'];
       if (eventId is int && eventId != widget.eventId) return;
-      if (type == 'event.carpools.changed' || type == 'realtime.ready') {
-        _loadCarpools();
+      // Existing server mutations use individual carpool event names.
+      switch (type) {
+        case 'carpool_created':
+        case 'carpool_updated':
+        case 'carpool_deleted':
+        case 'carpool_joined':
+        case 'carpool_left':
+        case 'event.carpools.changed':
+        case 'realtime.ready':
+          _loadCarpools();
+          break;
       }
     });
   }
