@@ -9,3 +9,4 @@
 - [x] Reorganize carpool choices, current-ride priority and concise role-specific cards; update the visual gallery.
 - [x] Clarify poll response priority, voting controls and closed results; refresh the visual gallery.
 - [x] Clarify expense balance, ledger and settlement disclosures; refresh the visual gallery.
+- [x] Clarify participant responses and invitation actions; refresh the visual gallery.

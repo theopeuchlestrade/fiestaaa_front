@@ -1,4 +1,5 @@
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
+import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
@@ -58,6 +59,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
 
   final _emailController = TextEditingController();
   bool _submitting = false;
+  bool _showInviteForm = false;
   List<FriendModel> _friends = [];
   List<FriendRequestModel> _friendRequests = [];
   bool _sendingFriendAsk = false;
@@ -228,6 +230,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       );
       if (!mounted) return;
       _emailController.clear();
+      setState(() => _showInviteForm = false);
       await _fetch();
       if (!mounted) return;
       final successMessage = result.emailSent
@@ -310,13 +313,6 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     });
   }
 
-  Widget _statusIcon(IconData icon, Color color) {
-    return SizedBox.square(
-      dimension: kMinInteractiveDimension,
-      child: Center(child: Icon(icon, color: color)),
-    );
-  }
-
   Future<void> _openInviteFriendsPage() async {
     if (!_canMutate) return;
     final invitedCount = await Navigator.of(context).push<int>(
@@ -393,57 +389,50 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
         invitation.email.toLowerCase() == widget.session.email.toLowerCase();
     final isEventOwner =
         invitation.email.toLowerCase() == widget.ownerEmail.toLowerCase();
-
-    final actions = <Widget>[];
-
-    if (!isSelf) {
-      if (_isFriendWith(identifier)) {
-        actions.add(
-          _statusIcon(
-            Icons.verified,
-            Theme.of(
-              context,
-            ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.info).foreground,
+    final canAddFriend =
+        !isSelf &&
+        !_isFriendWith(identifier) &&
+        !_hasPendingFriendRequestWith(identifier);
+    final canRemove = _canMutate && !isEventOwner;
+    if (isSelf && !canRemove) return null;
+    return PopupMenuButton<String>(
+      tooltip: betaText(
+        context,
+        'Actions du participant',
+        'Participant actions',
+      ),
+      onSelected: (action) {
+        if (action == 'friend') _sendFriendRequestForInvitation(invitation);
+        if (action == 'remove') _deleteInvitation(invitation);
+      },
+      itemBuilder: (_) => [
+        if (!isSelf && !canAddFriend)
+          PopupMenuItem<String>(
+            enabled: false,
+            child: Text(
+              _isFriendWith(identifier)
+                  ? betaText(context, 'Déjà amis', 'Already friends')
+                  : betaText(
+                      context,
+                      'Demande d’amitié en attente',
+                      'Friend request pending',
+                    ),
+            ),
           ),
-        );
-      } else if (_hasPendingFriendRequestWith(identifier)) {
-        actions.add(
-          _statusIcon(
-            Icons.hourglass_top,
-            Theme.of(
-              context,
-            ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.warning).foreground,
+        if (canAddFriend)
+          PopupMenuItem(
+            value: 'friend',
+            enabled: !_sendingFriendAsk,
+            child: Text(S.of(context).addAsFriend),
           ),
-        );
-      } else {
-        actions.add(
-          IconButton(
-            onPressed: _sendingFriendAsk
-                ? null
-                : () => _sendFriendRequestForInvitation(invitation),
-            icon: const Icon(Icons.person_add_alt_1),
-            tooltip: S.of(context).addAsFriend,
+        if (canRemove)
+          PopupMenuItem(
+            value: 'remove',
+            child: Text(
+              betaText(context, 'Retirer l’invitation', 'Remove invitation'),
+            ),
           ),
-        );
-      }
-    }
-
-    if (_canMutate && !isEventOwner) {
-      actions.add(
-        IconButton(
-          onPressed: () => _deleteInvitation(invitation),
-          icon: const Icon(Icons.delete),
-          tooltip: S.of(context).delete,
-        ),
-      );
-    }
-
-    if (actions.isEmpty) return null;
-    return Wrap(
-      spacing: 4,
-      runSpacing: 4,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: actions,
+      ],
     );
   }
 
@@ -508,20 +497,38 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
             const SizedBox(height: 16),
           ],
           if (_canMutate) ...[
-            _InviteForm(
-              emailController: _emailController,
-              onSubmit: _submitting ? null : _createInvitation,
-              submitting: _submitting,
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                FilledButton.icon(
+                  onPressed: () =>
+                      setState(() => _showInviteForm = !_showInviteForm),
+                  icon: const Icon(Icons.person_add_outlined),
+                  label: Text(
+                    betaText(context, 'Inviter une personne', 'Invite someone'),
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _openInviteFriendsPage,
+                  icon: const Icon(Icons.group_add_outlined),
+                  label: Text(S.of(context).inviteFriends),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _openInviteFriendsPage,
-                icon: const Icon(Icons.group_add_outlined),
-                label: Text(S.of(context).inviteFriends),
+            if (_showInviteForm) ...[
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: _InviteForm(
+                    emailController: _emailController,
+                    onSubmit: _submitting ? null : _createInvitation,
+                    submitting: _submitting,
+                  ),
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: 24),
           ],
           if (_error != null && _invitations.isNotEmpty)
@@ -562,46 +569,67 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   }
 
   List<Widget> _buildInvitationSections() {
-    final scheme = Theme.of(context).colorScheme;
-    final sections = [
-      (
-        status: 'Waiting',
-        title: S.of(context).waiting,
-        emptyLabel: S.of(context).noWaitingInvitation,
-        icon: Icons.hourglass_bottom,
-        color: scheme.fiestaaaStatus(FiestaaaStatusTone.warning).foreground,
-      ),
-      (
-        status: 'Accepted',
-        title: S.of(context).acceptedSectionTitle,
-        emptyLabel: S.of(context).noOneAcceptedYet,
-        icon: Icons.check_circle,
-        color: scheme.fiestaaaStatus(FiestaaaStatusTone.success).foreground,
-      ),
-      (
-        status: 'Declined',
-        title: S.of(context).declinedSectionTitle,
-        emptyLabel: S.of(context).noDeclineRecorded,
-        icon: Icons.cancel,
-        color: scheme.fiestaaaStatus(FiestaaaStatusTone.danger).foreground,
-      ),
-    ];
-
-    return sections
-        .map(
-          (section) => InvitationStatusSection(
-            title: section.title,
-            icon: section.icon,
-            accentColor: section.color,
-            invitations: _invitations
-                .where((inv) => inv.status == section.status)
-                .toList(),
-            ownerEmail: widget.ownerEmail,
-            emptyLabel: section.emptyLabel,
-            trailingBuilder: _invitationActions,
-          ),
-        )
+    final theme = Theme.of(context);
+    final accepted = _invitations
+        .where((inv) => inv.status == 'Accepted')
         .toList();
+    final waiting = _invitations
+        .where((inv) => inv.status == 'Waiting')
+        .toList();
+    final declined = _invitations
+        .where((inv) => inv.status == 'Declined')
+        .toList();
+    Widget section(
+      String title,
+      List<InvitationModel> values,
+      IconData icon, {
+      bool showHeading = true,
+    }) => InvitationStatusSection(
+      title: title,
+      showHeading: showHeading,
+      icon: icon,
+      accentColor: theme.colorScheme.onSurface,
+      invitations: values,
+      ownerEmail: widget.ownerEmail,
+      emptyLabel: S.of(context).noOneAcceptedYet,
+      trailingBuilder: _invitationActions,
+    );
+    return [
+      if (accepted.isNotEmpty)
+        section(
+          betaText(context, 'Confirmés', 'Confirmed'),
+          accepted,
+          Icons.people_outline,
+        ),
+      if (waiting.isNotEmpty)
+        section(
+          betaText(context, 'En attente de réponse', 'Awaiting a response'),
+          waiting,
+          Icons.schedule_outlined,
+        ),
+      if (declined.isNotEmpty)
+        Card(
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.symmetric(horizontal: 20),
+            title: Text(
+              '${S.of(context).declinedSectionTitle} · ${declined.length}',
+              style: theme.textTheme.titleSmall,
+            ),
+            children: [
+              section(
+                betaText(
+                  context,
+                  'Invitations refusées',
+                  'Declined invitations',
+                ),
+                declined,
+                Icons.person_off_outlined,
+                showHeading: false,
+              ),
+            ],
+          ),
+        ),
+    ];
   }
 }
 
@@ -621,11 +649,6 @@ class _InviteForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          S.of(context).inviteUser,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 12),
         TextField(
           controller: emailController,
           keyboardType: TextInputType.emailAddress,
@@ -637,7 +660,7 @@ class _InviteForm extends StatelessWidget {
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton.icon(
+          child: FilledButton.icon(
             onPressed: onSubmit,
             icon: submitting
                 ? const SizedBox(
