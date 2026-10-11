@@ -1,4 +1,5 @@
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
+import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header.dart';
 import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
@@ -628,17 +629,6 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
             _buildReadOnlyBanner(l10n),
             const SizedBox(height: 16),
           ],
-          if (_canInteract) ...[
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _openCreateExpenseSheet,
-                icon: const Icon(Icons.add),
-                label: Text(l10n.addSharedExpense),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
           if (_loading)
             const Center(
               child: Padding(
@@ -651,7 +641,18 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
           else ...[
             if (_error != null) _buildErrorState(l10n),
             _buildSummaryCard(l10n),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
+            if (_canInteract) ...[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: FilledButton.icon(
+                  onPressed: _openCreateExpenseSheet,
+                  icon: const Icon(Icons.add),
+                  label: Text(l10n.addSharedExpense),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
             _buildExpensesList(l10n),
           ],
         ],
@@ -746,76 +747,56 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
     final userId = _currentUserId;
     final ownBalance = userId == null ? null : _balanceByUserId(userId);
 
+    String balanceLabel(int cents) => cents == 0
+        ? betaText(
+            context,
+            'Aucun remboursement nécessaire',
+            'No repayment needed',
+          )
+        : cents > 0
+        ? l10n.expenseReceives(_money(cents))
+        : l10n.expenseOwes(_money(-cents));
     return Card(
-      clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.isReadOnly
-                            ? l10n.finalSplit
-                            : l10n.currentSplitPreview,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.totalSharedExpenses(
-                          _money(summary.totalExpensesCents),
-                        ),
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            Text(
+              ownBalance == null
+                  ? (widget.isReadOnly
+                        ? l10n.finalSplit
+                        : l10n.currentSplitPreview)
+                  : l10n.myExpenseBalance,
+              style: theme.textTheme.titleSmall,
             ),
             if (ownBalance != null) ...[
-              const SizedBox(height: 16),
-              Text(l10n.myExpenseBalance, style: theme.textTheme.labelLarge),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               Text(
-                ownBalance.balanceCents >= 0
-                    ? l10n.expenseReceives(_money(ownBalance.balanceCents))
-                    : l10n.expenseOwes(_money(-ownBalance.balanceCents)),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                balanceLabel(ownBalance.balanceCents),
+                style: theme.textTheme.titleLarge,
               ),
-              const SizedBox(height: 12),
             ],
+            const SizedBox(height: 12),
+            Text(
+              l10n.totalSharedExpenses(_money(summary.totalExpensesCents)),
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
               title: Text(
-                l10n.expenseSplitDetails,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface,
-                  fontWeight: FontWeight.w500,
+                betaText(
+                  context,
+                  'Bilan par participant',
+                  'Participant balances',
                 ),
+                style: theme.textTheme.bodyLarge,
               ),
               children: [
-                const SizedBox(height: 18),
-                Text(
-                  l10n.expenseParticipants,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ...summary.balances.map(
-                  (balance) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
+                for (final balance in summary.balances)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
                     child: _BalanceTile(
                       label: _displayName(
                         userId: balance.userId,
@@ -828,62 +809,59 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                       ),
                       paidLabel: l10n.expensePaid(_money(balance.paidCents)),
                       owedLabel: l10n.expenseOwed(_money(balance.owedCents)),
-                      balanceLabel: balance.balanceCents >= 0
-                          ? l10n.expenseReceives(_money(balance.balanceCents))
-                          : l10n.expenseOwes(_money(-balance.balanceCents)),
-                      balanceColor: balance.balanceCents >= 0
+                      balanceLabel: balanceLabel(balance.balanceCents),
+                      balanceColor: balance.balanceCents == 0
+                          ? scheme.onSurface
+                          : balance.balanceCents > 0
                           ? positiveColor
                           : negativeColor,
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.settlementSuggestions,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
+              ],
+            ),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: Text(
+                betaText(context, 'Qui rembourse qui ?', 'Who repays whom?'),
+                style: theme.textTheme.bodyLarge,
+              ),
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    betaText(
+                      context,
+                      'Suggestions calculées à partir des dépenses. Les paiements se font en dehors de Fiestaaa.',
+                      'Suggestions based on expenses. Payments take place outside Fiestaaa.',
+                    ),
+                    style: theme.textTheme.bodyMedium,
                   ),
                 ),
                 const SizedBox(height: 12),
                 if (summary.settlements.isEmpty)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: scheme.surfaceContainerHighest.withValues(
-                        alpha: 0.55,
-                      ),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: scheme.outlineVariant),
-                    ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
                     child: Text(
                       l10n.noSettlementNeeded,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
+                      style: theme.textTheme.bodyMedium,
                     ),
                   )
                 else
-                  ...summary.settlements.map(
-                    (settlement) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
+                  for (final settlement in summary.settlements)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
                       child: _SettlementTile(
                         fromLabel: _displayNameForUserId(
                           settlement.fromUserId,
                           handle: settlement.fromHandle,
                         ),
-                        fromAvatarUrl: _avatarUrlForUserId(
-                          settlement.fromUserId,
-                        ),
                         toLabel: _displayNameForUserId(
                           settlement.toUserId,
                           handle: settlement.toHandle,
                         ),
-                        toAvatarUrl: _avatarUrlForUserId(settlement.toUserId),
                         amountLabel: _money(settlement.amountCents),
                       ),
                     ),
-                  ),
               ],
             ),
           ],
@@ -923,176 +901,122 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
     }
 
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
     return Column(
-      children: _expenses.map((expense) {
-        final paidByLabel = _displayNameForUserId(
-          expense.paidByUserId,
-          handle: expense.paidByHandle,
-        );
-        return Card(
-          margin: const EdgeInsets.only(bottom: 14),
-          clipBehavior: Clip.antiAlias,
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _UserAvatar(
-                            label: paidByLabel,
-                            avatarUrl: _avatarUrlForUserId(
-                              expense.paidByUserId,
-                              fallbackAvatarUrl: expense.paidByAvatarUrl,
-                            ),
-                            radius: 22,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  expense.title,
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  l10n.paidBy(paidByLabel),
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: scheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  DateFormat.yMMMMd(l10n.localeName)
-                                      .add_Hm()
-                                      .format(expense.expenseDate.toLocal()),
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: scheme.onSurface,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: scheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Text(
-                            _money(expense.amountCents),
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: scheme.onPrimaryContainer,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        if (_canDeleteExpense(expense)) ...[
-                          const SizedBox(height: 8),
-                          IconButton(
-                            onPressed: _deletingExpenseId == expense.id
-                                ? null
-                                : () => _deleteExpense(expense),
-                            style: IconButton.styleFrom(
-                              backgroundColor: scheme.surfaceContainerHighest
-                                  .withValues(alpha: 0.8),
-                            ),
-                            icon: _deletingExpenseId == expense.id
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Icon(
-                                    Icons.delete_outline,
-                                    semanticLabel: S.of(context).delete,
-                                  ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-                ExpansionTile(
-                  tilePadding: EdgeInsets.zero,
-                  title: Text(
-                    l10n.expenseParticipants,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurface,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  children: [
-                    if ((expense.note?.trim().isNotEmpty ?? false)) ...[
-                      const SizedBox(height: 14),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: scheme.surfaceContainerHighest.withValues(
-                            alpha: 0.45,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          betaText(context, 'Historique des dépenses', 'Expense history'),
+          style: theme.textTheme.titleSmall,
+        ),
+        const SizedBox(height: 12),
+        for (final expense in _expenses)
+          Card(
+            key: ValueKey(expense.id),
+            margin: const EdgeInsets.only(bottom: 16),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
                         child: Text(
-                          expense.note!,
-                          style: theme.textTheme.bodyMedium,
+                          expense.title,
+                          style: theme.textTheme.titleMedium,
                         ),
                       ),
-                    ],
-                    const SizedBox(height: 14),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: expense.participants
-                          .map(
-                            (participant) => _ParticipantBadge(
-                              label: _displayName(
-                                userId: participant.userId,
-                                handle: participant.handle,
-                                email: _memberByUserId(
-                                  participant.userId,
-                                )?.email,
-                              ),
-                              avatarUrl: _avatarUrlForUserId(
-                                participant.userId,
-                                fallbackAvatarUrl: participant.avatarUrl,
-                              ),
+                      if (_canDeleteExpense(expense))
+                        PopupMenuButton<String>(
+                          tooltip: betaText(
+                            context,
+                            'Actions de la dépense',
+                            'Expense actions',
+                          ),
+                          enabled: _deletingExpenseId != expense.id,
+                          onSelected: (_) => _deleteExpense(expense),
+                          itemBuilder: (_) => [
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Text(l10n.delete),
                             ),
-                          )
-                          .toList(),
+                          ],
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _money(expense.amountCents),
+                    style: theme.textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.paidBy(
+                      _displayNameForUserId(
+                        expense.paidByUserId,
+                        handle: expense.paidByHandle,
+                      ),
                     ),
-                  ],
-                ),
-              ],
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    DateFormat.yMMMd(
+                      l10n.localeName,
+                    ).add_Hm().format(expense.expenseDate.toLocal()),
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Text(
+                      betaText(
+                        context,
+                        'Détail et participants',
+                        'Details and participants',
+                      ),
+                      style: theme.textTheme.bodyLarge,
+                    ),
+                    children: [
+                      if (expense.note?.trim().isNotEmpty ?? false) ...[
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            expense.note!,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      for (final participant in expense.participants)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: _UserAvatar(
+                            label: _displayName(
+                              userId: participant.userId,
+                              handle: participant.handle,
+                              email: _memberByUserId(participant.userId)?.email,
+                            ),
+                            avatarUrl: _avatarUrlForUserId(
+                              participant.userId,
+                              fallbackAvatarUrl: participant.avatarUrl,
+                            ),
+                          ),
+                          title: Text(
+                            _displayName(
+                              userId: participant.userId,
+                              handle: participant.handle,
+                              email: _memberByUserId(participant.userId)?.email,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        );
-      }).toList(),
+      ],
     );
   }
 }
@@ -1122,8 +1046,9 @@ class _UserAvatar extends StatelessWidget {
           : Text(
               initial,
               style: TextStyle(
-                color: scheme.onPrimaryContainer,
-                fontWeight: FontWeight.w600,
+                color: scheme.onSurface,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
               ),
             ),
     );
@@ -1172,8 +1097,6 @@ class _BalanceTile extends StatelessWidget {
                   children: [
                     Text(
                       label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -1181,16 +1104,12 @@ class _BalanceTile extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       paidLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
                     ),
                     Text(
                       owedLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -1209,8 +1128,6 @@ class _BalanceTile extends StatelessWidget {
             ),
             child: Text(
               balanceLabel,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelLarge?.copyWith(
                 color: balanceColor,
                 fontWeight: FontWeight.w600,
@@ -1226,147 +1143,37 @@ class _BalanceTile extends StatelessWidget {
 class _SettlementTile extends StatelessWidget {
   const _SettlementTile({
     required this.fromLabel,
-    required this.fromAvatarUrl,
     required this.toLabel,
-    required this.toAvatarUrl,
     required this.amountLabel,
   });
-
   final String fromLabel;
-  final String? fromAvatarUrl;
   final String toLabel;
-  final String? toAvatarUrl;
   final String amountLabel;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     return Container(
-      padding: const EdgeInsets.all(14),
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.42),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: scheme.outlineVariant),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    _UserAvatar(label: fromLabel, avatarUrl: fromAvatarUrl),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        fromLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: scheme.primaryContainer,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.arrow_forward_rounded,
-                  color: scheme.onPrimaryContainer,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Row(
-                  children: [
-                    _UserAvatar(label: toLabel, avatarUrl: toAvatarUrl),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        toLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: scheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                amountLabel,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: scheme.onSecondaryContainer,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+          Text(
+            betaText(
+              context,
+              '$fromLabel rembourse $toLabel',
+              '$fromLabel repays $toLabel',
             ),
+            style: theme.textTheme.bodyLarge,
           ),
+          const SizedBox(height: 8),
+          Text(amountLabel, style: theme.textTheme.titleMedium),
         ],
-      ),
-    );
-  }
-}
-
-class _ParticipantBadge extends StatelessWidget {
-  const _ParticipantBadge({required this.label, this.avatarUrl});
-
-  final String label;
-  final String? avatarUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 220),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainerHighest.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: scheme.outlineVariant),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _UserAvatar(label: label, avatarUrl: avatarUrl, radius: 12),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
