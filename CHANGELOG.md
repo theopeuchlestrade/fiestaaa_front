@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Keep event and module loading/error screens in the shared themed layout instead of briefly showing the legacy Fiestaaa app bar; preserve inline back navigation and accessible placeholders.
 
+- Strengthen semantic text/control contrasts, unselected navigation labels and public navigation touch targets; keep modal and authentication headings readable at enlarged text sizes.
+- Enable Android predictive back with existing form-exit protection.
+
+### Changed
+
+- Align provider login presentation with official Google resources and the Apple sign-in control; retain the shared app identity elsewhere.
+
 ## [0.6.0] - 2026-10-11
 
 ### Added

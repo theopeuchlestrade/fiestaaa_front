@@ -2,69 +2,62 @@ part of '../pages/auth_page.dart';
 
 extension _AuthPageForm on _AuthPageState {
   Widget _buildSocialButtons(BuildContext context) {
-    const double buttonHeight = 48;
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(24),
-    );
+    final l = S.of(context);
     final theme = Theme.of(context);
-    final socialBackground = theme.colorScheme.surface;
-    final socialForeground = theme.colorScheme.onSurface;
-    final socialBorder = theme.fiestaaaSoftBorder;
-    final appleColor = socialForeground;
-
-    Widget spinner(Color color) {
-      return SizedBox(
-        height: 18,
-        width: 18,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation(color),
-        ),
-      );
-    }
-
-    final socialButtonStyle = OutlinedButton.styleFrom(
-      minimumSize: const Size.fromHeight(buttonHeight),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      backgroundColor: socialBackground,
-      foregroundColor: socialForeground,
-      side: BorderSide(color: socialBorder),
-      shape: shape,
-      textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
-        fontFamily: 'Manrope', // Explicitly ensuring font consistency
-      ),
-      elevation: 0,
-    );
-
-    Widget wrapSocial(Widget child) => Center(child: child);
-
-    final Widget googleButton = OutlinedButton.icon(
+    final scale = MediaQuery.textScalerOf(context).scale(1);
+    final height = 48 * scale;
+    final ios = theme.platform == TargetPlatform.iOS;
+    final googleButton = OutlinedButton.icon(
       onPressed: _isSubmitting ? null : _continueWithGoogle,
-      style: socialButtonStyle,
-      icon: _socialInProgress == 'google'
-          ? spinner(FiestaaaPalette.primary)
-          : const GoogleLogo(size: 24),
-      label: Text(S.of(context).continueWithGoogle),
+      style: OutlinedButton.styleFrom(
+        minimumSize: Size.fromHeight(height),
+        padding: EdgeInsets.symmetric(horizontal: ios ? 16 : 12, vertical: 12),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF1F1F1F),
+        side: const BorderSide(color: Color(0xFF747775)),
+        shape: const StadiumBorder(),
+        iconAlignment: IconAlignment.start,
+        textStyle: const TextStyle(
+          fontFamily: 'Google Sans',
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          height: 20 / 14,
+        ),
+      ),
+      icon: Padding(
+        padding: EdgeInsets.only(right: ios ? 4 : 2),
+        child: const GoogleLogo(),
+      ),
+      label: Text(l.continueWithGoogle),
     );
-
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        wrapSocial(googleButton),
-        const SizedBox(height: 12),
-        if (_shouldShowAppleButton)
-          wrapSocial(
-            OutlinedButton.icon(
+        googleButton,
+        if (_shouldShowAppleButton) ...[
+          const SizedBox(height: 12),
+          // Scale the whole provider control so its text remains readable while
+          // keeping the logo proportions and sufficient height at large text.
+          MediaQuery.withNoTextScaling(
+            child: SignInWithAppleButton(
               onPressed: _isSubmitting ? null : _continueWithApple,
-              style: socialButtonStyle,
-              icon: _socialInProgress == 'apple'
-                  ? spinner(appleColor)
-                  : Icon(Icons.apple, color: appleColor, size: 24),
-              label: Text(S.of(context).continueWithApple),
+              text: l.continueWithApple,
+              height: height,
+              style: theme.brightness == Brightness.dark
+                  ? SignInWithAppleButtonStyle.white
+                  : SignInWithAppleButtonStyle.black,
+              borderRadius: BorderRadius.circular(24),
             ),
           ),
+        ],
+        if (_socialInProgress != null) ...[
+          const SizedBox(height: 12),
+          Semantics(
+            label: l.loading,
+            liveRegion: true,
+            child: const ExcludeSemantics(child: LinearProgressIndicator()),
+          ),
+        ],
       ],
     );
   }
@@ -315,11 +308,15 @@ extension _AuthPageForm on _AuthPageState {
             Row(
               children: [
                 Expanded(child: Divider(color: dividerColor)),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    l10n.orContinueWith,
-                    style: TextStyle(color: dividerText, fontSize: 13),
+                Flexible(
+                  flex: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      l10n.orContinueWith,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: dividerText, fontSize: 13),
+                    ),
                   ),
                 ),
                 Expanded(child: Divider(color: dividerColor)),

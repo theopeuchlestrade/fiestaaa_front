@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:fiestaaa_front/src/features/auth/presentation/widgets/google_logo.dart';
 import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/features/beta_api.dart';
 import 'package:fiestaaa_front/src/features/friends/presentation/pages/friends_page.dart';
@@ -215,6 +216,9 @@ void main() {
     await (FontLoader(
       'Manrope',
     )..addFont(rootBundle.load('assets/fonts/Manrope.ttf'))).load();
+    await (FontLoader(
+      'Google Sans',
+    )..addFont(rootBundle.load('assets/fonts/GoogleSans-Medium.ttf'))).load();
     await (FontLoader(
       'MaterialIcons',
     )..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
@@ -485,6 +489,26 @@ void main() {
                   ),
                 );
                 await tester.pumpAndSettle();
+                if (screen == 'auth') {
+                  // Wait for the bundled bitmap decode; pumpAndSettle alone can
+                  // finish before a cold image cache supplies the first frame.
+                  await tester.runAsync(
+                    () => precacheImage(
+                      const AssetImage(
+                        'assets/identity/google-signin-light-4x.png',
+                      ),
+                      tester.element(find.byType(GoogleLogo)),
+                    ),
+                  );
+                  await tester.pumpAndSettle();
+                  final logo = tester.widget<RawImage>(
+                    find.descendant(
+                      of: find.byType(GoogleLogo),
+                      matching: find.byType(RawImage),
+                    ),
+                  );
+                  expect(logo.image, isNotNull);
+                }
                 expect(tester.takeException(), isNull);
                 if (screen == 'expenses' && locale == 'fr') {
                   expect(find.textContaining('24,00'), findsWidgets);
@@ -563,6 +587,10 @@ void main() {
                     await expectLater(
                       tester,
                       meetsGuideline(androidTapTargetGuideline),
+                    );
+                    await expectLater(
+                      tester,
+                      meetsGuideline(iOSTapTargetGuideline),
                     );
                     await expectLater(
                       tester,

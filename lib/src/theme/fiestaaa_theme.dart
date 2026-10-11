@@ -16,9 +16,9 @@ class FiestaaaPalette {
   static const Color darkSurfaceLow = Color(0xFF101726);
   static const Color darkSurfaceHigh = Color(0xFF182236);
   static const Color darkSurfaceHighest = Color(0xFF202A40);
-  static const Color lightOutline = Color(0xFFD3DAEE);
+  static const Color lightOutline = Color(0xFF737D98);
   static const Color lightOutlineVariant = Color(0xFFE3E8F7);
-  static const Color darkOutline = Color(0xFF45506A);
+  static const Color darkOutline = Color(0xFF73809B);
   static const Color darkOutlineVariant = Color(0xFF303A50);
   static const Color success = Color(0xFF15803D);
   static const Color successDark = Color(0xFF4ADE80);
@@ -289,6 +289,7 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
         primary: primaryColor,
         secondary: FiestaaaPalette.secondary,
         tertiary: FiestaaaPalette.accent,
+        onTertiary: FiestaaaPalette.lightText,
         surface: surfaceRaised,
         surfaceContainerLowest: surfaceColor,
         surfaceContainerLow: surfaceLow,
@@ -313,6 +314,7 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
             ? const Color(0xFF2B2144)
             : const Color(0xFFF0E9FF),
         error: isDark ? FiestaaaPalette.dangerDark : FiestaaaPalette.danger,
+        onError: isDark ? FiestaaaPalette.darkSurface : Colors.white,
         errorContainer: isDark
             ? FiestaaaPalette.dangerContainerDark
             : FiestaaaPalette.dangerContainer,
@@ -439,7 +441,7 @@ ThemeData _buildFiestaaaTheme(Brightness brightness) {
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
       backgroundColor: surfaceRaised.withValues(alpha: isDark ? 0.92 : 0.94),
       selectedItemColor: primaryColor,
-      unselectedItemColor: textColor.withValues(alpha: 0.58),
+      unselectedItemColor: colorScheme.onSurfaceVariant,
       elevation: 12,
       type: BottomNavigationBarType.fixed,
       showUnselectedLabels: true,

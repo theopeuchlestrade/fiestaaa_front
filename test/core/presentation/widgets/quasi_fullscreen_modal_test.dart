@@ -3,6 +3,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('modal heading wraps at enlarged text without hiding close', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    const title = 'Ajouter une contribution à ce besoin';
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: const TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const Scaffold(
+          body: QuasiFullscreenModalScaffold(title: title, child: Text('Form')),
+        ),
+      ),
+    );
+    expect(tester.widget<Text>(find.text(title)).maxLines, isNull);
+    expect(find.byTooltip('Close'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('showQuasiFullscreenModal affiche le contenu', (tester) async {
     await tester.pumpWidget(
       MaterialApp(

@@ -37,3 +37,11 @@ brand assets are covered by `TRADEMARKS.md`, not by the source-code license.
 The bundled Manrope variable font is distributed under the SIL Open Font License
 1.1. Copyright and license: `assets/fonts/OFL.txt`. Source:
 https://github.com/google/fonts/tree/main/ofl/manrope.
+
+## Sign-in presentation resources
+
+Google Sans Medium (v14.000, Android static build) is bundled under the SIL Open Font License 1.1; see `assets/fonts/GoogleSans-OFL.txt`. Source: https://github.com/googlefonts/googlesans/releases/tag/v14.000. Only the Google sign-in control uses this family; the app retains Manrope.
+
+The Google gradient G is displayed from the approved light icon-only 4x PNG, preserving its proportions and colors. Source: https://developers.google.com/static/identity/images/signin-assets.zip (retrieved 12 October 2026). Use is limited to the sign-in control under https://developers.google.com/identity/branding-guidelines.
+
+The Apple sign-in control and logo renderer come from the existing `sign_in_with_apple` dependency. No marketing logo is substituted.
