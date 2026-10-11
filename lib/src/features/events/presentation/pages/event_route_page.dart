@@ -4,6 +4,8 @@ import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
+import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
+import 'package:fiestaaa_front/src/core/presentation/widgets/async_content.dart';
 import 'event_detail_page.dart';
 export 'event_detail_page.dart' show EventModule;
 
@@ -72,40 +74,94 @@ class _EventRoutePageState extends State<EventRoutePage> {
     super.dispose();
   }
 
-  AppBar _appBar(BuildContext context) => AppBar(
-    title: const Text('Fiestaaa'),
-    leading: BackButton(
-      onPressed: () {
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
-        } else {
-          context.go('/events');
-        }
-      },
-    ),
-  );
+  void _back() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      context.go(
+        widget.module == null ? '/events' : '/events/${widget.eventId}',
+      );
+    }
+  }
+
+  String? _moduleTitle(BuildContext context) {
+    final l = S.of(context);
+    return switch (widget.module) {
+      EventModule.items => l.itemsModule,
+      EventModule.polls => l.pollsModule,
+      EventModule.expenses => l.expensesModule,
+      EventModule.carpools => l.carpools,
+      EventModule.participants => l.participants,
+      null => null,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (_failed) {
+    if (_event == null) {
+      final l = S.of(context);
+      final title = _moduleTitle(context);
       return Scaffold(
-        appBar: _appBar(context),
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+        body: FiestaaaPageLayout(
+          child: ListView(
+            padding: EdgeInsets.zero,
             children: [
-              Text(S.of(context).unableToLoadFiestaaa),
-              const SizedBox(height: 16),
-              FilledButton(onPressed: _load, child: Text(S.of(context).retry)),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    BackButton(onPressed: _back),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: title != null
+                          ? Semantics(
+                              header: true,
+                              child: Text(
+                                title,
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.headlineSmall,
+                              ),
+                            )
+                          : const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 6),
+                              child: _LoadingBlock(height: 28, width: 220),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              if (_failed)
+                AsyncNotice(
+                  message: l.unableToLoadFiestaaa,
+                  actionLabel: l.retry,
+                  onAction: _load,
+                  compact: true,
+                )
+              else
+                Semantics(
+                  key: const ValueKey('event-route-loading'),
+                  label: l.loading,
+                  liveRegion: true,
+                  child: const ExcludeSemantics(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        LinearProgressIndicator(minHeight: 2),
+                        SizedBox(height: 20),
+                        _LoadingBlock(height: 132),
+                        SizedBox(height: 16),
+                        _LoadingBlock(height: 84),
+                        SizedBox(height: 16),
+                        _LoadingBlock(height: 84),
+                      ],
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
-      );
-    }
-    if (_event == null) {
-      return Scaffold(
-        appBar: _appBar(context),
-        body: const Center(child: CircularProgressIndicator()),
       );
     }
     return EventDetailPage(
@@ -120,4 +176,24 @@ class _EventRoutePageState extends State<EventRoutePage> {
       },
     );
   }
+}
+
+/// Neutral placeholders only: no event information or restricted controls.
+class _LoadingBlock extends StatelessWidget {
+  const _LoadingBlock({required this.height, this.width});
+  final double height;
+  final double? width;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.centerLeft,
+    child: Container(
+      height: height,
+      width: width ?? double.infinity,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+  );
 }

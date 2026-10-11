@@ -9,9 +9,70 @@ import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_route_page.dart';
 
+import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
+
 final session = SessionData(token: 'test', email: 'guest@example.invalid');
 
 void main() {
+  for (final width in [360.0, 720.0, 1024.0, 1440.0]) {
+    for (final dark in [false, true]) {
+      for (final locale in ['fr', 'en']) {
+        testWidgets('loading keeps themed layout at $width / $dark / $locale', (
+          tester,
+        ) async {
+          tester.view.physicalSize = Size(width, 900);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          final pending = Completer<http.Response>();
+          final api = EventsApi(client: MockClient((_) => pending.future));
+          final semantics = tester.ensureSemantics();
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: dark ? buildFiestaaaDarkTheme() : buildFiestaaaTheme(),
+              locale: Locale(locale),
+              localizationsDelegates: S.localizationsDelegates,
+              supportedLocales: S.supportedLocales,
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: const TextScaler.linear(2)),
+                child: child!,
+              ),
+              home: EventRoutePage(
+                session: session,
+                eventId: 1,
+                module: EventModule.expenses,
+                api: api,
+              ),
+            ),
+          );
+          await tester.pump(const Duration(milliseconds: 400));
+          expect(find.byType(AppBar), findsNothing);
+          expect(find.text('Fiestaaa'), findsNothing);
+          expect(
+            find.text(locale == 'fr' ? 'Dépenses' : 'Expenses'),
+            findsOneWidget,
+          );
+          expect(find.byType(FiestaaaPageLayout), findsOneWidget);
+          expect(find.byType(BackButton), findsOneWidget);
+          expect(
+            find.bySemanticsLabel(
+              locale == 'fr' ? 'Chargement...' : 'Loading...',
+            ),
+            findsOneWidget,
+          );
+          expect(tester.takeException(), isNull);
+          await tester.pumpWidget(const SizedBox());
+          semantics.dispose();
+          pending.complete(http.Response('{}', 503));
+          await tester.pump();
+          api.dispose();
+        });
+      }
+    }
+  }
+
   testWidgets(
     'switching event routes loads the destination and ignores stale responses',
     (tester) async {
@@ -52,7 +113,7 @@ void main() {
       expect(requests, ['/events/1', '/events/2']);
       first.complete(http.Response('{}', 503));
       await tester.pump();
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byKey(const ValueKey('event-route-loading')), findsOneWidget);
       expect(find.text('Réessayer'), findsNothing);
       second.complete(http.Response('{}', 503));
       await tester.pumpAndSettle();
@@ -137,7 +198,7 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byKey(const ValueKey('event-route-loading')), findsOneWidget);
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
     expect(find.text('Open'), findsOneWidget);
