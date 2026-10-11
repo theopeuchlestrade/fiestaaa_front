@@ -18,6 +18,9 @@ import 'package:http/testing.dart';
 import '../widgets/event_personal_summary_test.dart' as fixtures;
 
 class _Api extends EventsApi {
+  _Api({this.covered = false, this.contributed = false});
+  final bool covered;
+  final bool contributed;
   int itemReads = 0;
   bool fail = false;
   @override
@@ -44,7 +47,7 @@ class _Api extends EventsApi {
               ? 'Organizer need'
               : 'Personal bring',
           maxQuantity: 6,
-          reservedQuantity: 0,
+          reservedQuantity: kind == EventItemKind.need && covered ? 6 : 0,
           unitLabel: 'units',
           kind: kind,
           createdByEmail: kind == EventItemKind.need
@@ -65,7 +68,16 @@ class _Api extends EventsApi {
   Future<List<ItemContributionModel>> fetchEventItemContributions({
     required String token,
     required int eventId,
-  }) async => [];
+  }) async => contributed
+      ? [
+          ItemContributionModel(
+            itemId: 1,
+            quantity: 2,
+            email: 'guest@example.com',
+            handle: 'guest',
+          ),
+        ]
+      : [];
   @override
   void dispose() {}
 }
@@ -147,12 +159,27 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Organizer need'), findsOneWidget);
       expect(find.text('Personal bring'), findsNothing);
-      expect(find.text('Add'), findsNothing);
-      await tester.tap(find.widgetWithText(ChoiceChip, 'What we bring'));
+      expect(find.text('Add a need'), findsNothing);
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Personal brings'));
       await tester.pumpAndSettle();
       expect(find.text('Personal bring'), findsOneWidget);
       expect(find.text('Organizer need'), findsNothing);
-      expect(find.text('Add'), findsOneWidget);
+      expect(find.text('Add my personal bring'), findsOneWidget);
+    },
+  );
+  testWidgets(
+    'A covered need keeps contribution editing only for its contributor',
+    (tester) async {
+      await tester.pumpWidget(_app(_Api(covered: true, contributed: true)));
+      await tester.pumpAndSettle();
+      expect(find.text('Need covered'), findsOneWidget);
+      expect(find.textContaining('Your contribution: 2'), findsOneWidget);
+      expect(find.byType(OutlinedButton), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_app(_Api(covered: true)));
+      await tester.pumpAndSettle();
+      expect(find.text('Need covered'), findsOneWidget);
+      expect(find.byType(OutlinedButton), findsNothing);
     },
   );
   testWidgets('switching to personal brings resets need-only filters', (
@@ -160,9 +187,11 @@ void main() {
   ) async {
     await tester.pumpWidget(_app(_Api()));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Filter and sort'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('items_scope_toCover')));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ChoiceChip, 'What we bring'));
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Personal brings'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('items_scope_toCover')), findsNothing);
     expect(

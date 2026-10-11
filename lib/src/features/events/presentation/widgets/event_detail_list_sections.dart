@@ -208,6 +208,11 @@ extension _EventDetailListSections on _EventDetailPageState {
   List<EventItemModel> _sortNeedItems(List<EventItemModel> items) =>
       sortNeedItems(items: items, sort: _itemsSort);
 
+  String _itemsScopeViewLabel(S l, EventItemsScope scope) =>
+      _itemsKind == EventItemKind.bring && scope == EventItemsScope.mine
+      ? betaText(context, 'Mes apports', 'My brings')
+      : _itemsScopeLabel(l, scope);
+
   Widget _buildItemsScopeAndSortControls() {
     final l10n = S.of(context);
     return EventItemsFilterControls(
@@ -216,7 +221,7 @@ extension _EventDetailListSections on _EventDetailPageState {
           : const [EventItemsScope.all, EventItemsScope.mine],
       selectedScope: _itemsScope,
       selectedSort: _itemsSort,
-      scopeLabelBuilder: (scope) => _itemsScopeLabel(l10n, scope),
+      scopeLabelBuilder: (scope) => _itemsScopeViewLabel(l10n, scope),
       sortLabelBuilder: (sort) => _itemsSortLabel(l10n, sort),
       sortTooltip: l10n.sortBy,
       onScopeChanged: (scope) {
@@ -273,7 +278,61 @@ extension _EventDetailListSections on _EventDetailPageState {
           ],
         ),
         const SizedBox(height: 16),
-        _buildItemsScopeAndSortControls(),
+        Text(
+          needs
+              ? betaText(
+                  context,
+                  'L’organisateur indique les besoins. Choisissez ce que vous pouvez apporter pour y contribuer.',
+                  'The organizer lists the needs. Choose what you can bring to contribute.',
+                )
+              : betaText(
+                  context,
+                  'Ce que chacun prévoit d’apporter en plus des besoins. Chaque apport est lié à la personne qui l’ajoute.',
+                  'What everyone plans to bring in addition to the needs. Each personal bring belongs to the person who adds it.',
+                ),
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        if (!_isReadOnly && (needs ? _isOwner : _canContributeItems)) ...[
+          const SizedBox(height: 20),
+          FilledButton.icon(
+            onPressed: _creatingCustomItem
+                ? null
+                : () => _openAddItemDialog(kind: _itemsKind),
+            icon: const Icon(Icons.add),
+            label: Text(
+              needs
+                  ? betaText(context, 'Ajouter un besoin', 'Add a need')
+                  : betaText(
+                      context,
+                      'Indiquer ce que j’apporte',
+                      'Add my personal bring',
+                    ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 12),
+        ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          title: Text(
+            betaText(context, 'Filtres et tri', 'Filter and sort'),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          subtitle:
+              _itemsScope != EventItemsScope.all ||
+                  _itemsSort != EventItemsSort.smart
+              ? Text(
+                  '${_itemsScopeViewLabel(l, _itemsScope)} · ${_itemsSortLabel(l, _itemsSort)}',
+                )
+              : null,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildItemsScopeAndSortControls(),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
         if (_itemsError != null)
           Column(
@@ -285,17 +344,17 @@ extension _EventDetailListSections on _EventDetailPageState {
         if (_loadingItems && _eventItems == null)
           const Center(child: CircularProgressIndicator())
         else
-          _EventItemsSection(
-            title: needs ? l.needSectionTitle : l.bringSectionTitle,
-            showTitle: false,
-            subtitle: needs ? l.needItemsSubtitle : l.chooseWhatYouBring,
+          _EventItemsList(
             items: selected,
-            addLabel: l.add,
-            onAdd: !_isReadOnly && (needs ? _isOwner : _canContributeItems)
-                ? () => _openAddItemDialog(kind: _itemsKind)
-                : null,
-            isAdding: _creatingCustomItem,
-            emptyLabel: needs ? l.noNeedItemsYet : l.noBringItemsYet,
+            emptyLabel: _itemsScope != EventItemsScope.all
+                ? betaText(
+                    context,
+                    'Aucun résultat pour ce filtre.',
+                    'No results for this filter.',
+                  )
+                : needs
+                ? l.noNeedItemsYet
+                : l.noBringItemsYet,
             reservingItemId: _reservingItemId,
             deletingItemId: _deletingItemId,
             onReserve: _openQuantityDialog,

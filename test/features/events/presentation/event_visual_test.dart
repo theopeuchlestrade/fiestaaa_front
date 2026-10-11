@@ -61,14 +61,28 @@ class _Api extends EventsApi {
       eventId: 1,
       itemId: 1,
       typeId: 1,
-      typeName: 'Drinks',
-      name: 'Soft drinks',
+      typeName: 'Boissons',
+      name: 'Boissons sans alcool',
       maxQuantity: 6,
       reservedQuantity: 2,
-      unitLabel: 'bottles',
+      unitLabel: 'bouteilles',
       kind: EventItemKind.need,
       createdByEmail: 'owner@example.com',
       createdByHandle: 'demo',
+      createdByAvatarUrl: null,
+    ),
+    EventItemModel(
+      eventId: 1,
+      itemId: 2,
+      typeId: 2,
+      typeName: 'À partager',
+      name: 'Gâteau au chocolat',
+      maxQuantity: 1,
+      reservedQuantity: 0,
+      unitLabel: 'gâteau',
+      kind: EventItemKind.bring,
+      createdByEmail: 'guest@example.com',
+      createdByHandle: 'alex',
       createdByAvatarUrl: null,
     ),
   ];
@@ -76,7 +90,14 @@ class _Api extends EventsApi {
   Future<List<ItemContributionModel>> fetchEventItemContributions({
     required String token,
     required int eventId,
-  }) async => [];
+  }) async => [
+    ItemContributionModel(
+      itemId: 1,
+      quantity: 2,
+      email: 'guest@example.com',
+      handle: 'alex',
+    ),
+  ];
   @override
   Future<List<PollModel>> fetchEventPolls({
     required String token,
@@ -482,6 +503,25 @@ void main() {
                       '../../../../docs/ui-harmonization/renders/${screen}_${width.toInt()}_${dark ? 'dark' : 'light'}_fr.png',
                     ),
                   );
+                }
+                if (const bool.fromEnvironment('UI_REVIEW_EXPORT') &&
+                    screen == 'needs' &&
+                    scale == 1 &&
+                    locale == 'fr' &&
+                    ((width == 360 && !dark) || (width == 1440 && dark))) {
+                  await tester.tap(
+                    find.widgetWithText(ChoiceChip, 'Apports libres'),
+                  );
+                  await tester.pumpAndSettle();
+                  expect(tester.takeException(), isNull);
+                  await expectLater(
+                    find.byKey(const ValueKey('screen')),
+                    matchesGoldenFile(
+                      '../../../../docs/ui-harmonization/states/brings_${width.toInt()}_${dark ? 'dark' : 'light'}_fr.png',
+                    ),
+                  );
+                  await tester.tap(find.widgetWithText(ChoiceChip, 'Besoins'));
+                  await tester.pumpAndSettle();
                 }
                 final accessibility =
                     scale == 1 &&

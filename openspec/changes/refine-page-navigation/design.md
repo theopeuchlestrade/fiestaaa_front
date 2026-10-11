@@ -14,3 +14,6 @@ Separate blocking from reporting with a settings-style safety landing page, expl
 
 ## Recovery and motion
 The recovery page has one title, an explained email request, separate provider guidance, structured generic confirmation and one sign-in destination. Password confirmation keeps the existing API and validation contracts with optional visibility toggles. Shared page entrances use a 180ms fade and 6px translation once per mount. Recovery state changes fade only the current form so outgoing fields do not retain focus or semantics. Disable motion for system disableAnimations or accessibleNavigation. Do not animate continuous content updates or delay actions.
+
+## Needs and personal brings
+Keep organizer needs and personal brings as separate views with short labels and one explanation per view. Put the permitted create action ahead of the list; move all existing scope/sort controls into a named disclosure with active-filter summary. Needs show one total/progress, optional personal contribution, contributor details and the existing contribution action; covered needs remain editable by existing contributors. Personal brings show quantity and creator without contribution controls. No API or permission changes. AnyList inspires a list-first hierarchy and categories (https://anylist.net/lists), without introducing shopping completion semantics.

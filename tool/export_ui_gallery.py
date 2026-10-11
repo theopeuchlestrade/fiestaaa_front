@@ -26,3 +26,14 @@ if count != 18:
     raise ValueError(f'Expected 18 screens, found {count}')
 preview.write_text(content)
 print(f'Refreshed {count * 2} embedded renders.')
+
+# Complementary personal-brings states keep the main 18-screen index unchanged.
+content = preview.read_text()
+for state in (folder / 'states').glob('brings_*.png'):
+    marker = 'data-review-state="' + state.name + '"'
+    pattern = r'(' + re.escape(marker) + r' src=")[^"]+(")'
+    encoded = base64.b64encode(state.read_bytes()).decode()
+    content, replaced = re.subn(pattern, lambda match: match[1] + 'data:image/png;base64,' + encoded + match[2], content)
+    if replaced != 1:
+        raise ValueError(f'Missing complementary gallery state: {state.name}')
+preview.write_text(content)
