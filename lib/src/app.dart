@@ -58,7 +58,8 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   PushNotificationIntent? _pendingNotificationIntent;
   int _notificationIntentSerial = 0;
   StreamSubscription<PushNotificationIntent>? _notificationIntentSub;
-  StreamSubscription<void>? _unauthorizedSub;
+  StreamSubscription<ApiUnauthorizedResponse>? _unauthorizedSub;
+  Completer<void>? _unauthorizedCleanup;
   bool _handlingUnauthorized = false;
   late final GoRouter _router;
   String? _resetToken;
@@ -283,8 +284,8 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     _notificationIntentSub = PushNotificationService.instance.intents.listen(
       _handlePushNotificationIntent,
     );
-    _unauthorizedSub = ApiHttpClient.unauthorized.listen((_) {
-      unawaited(_handleUnauthorized());
+    _unauthorizedSub = ApiHttpClient.unauthorized.listen((response) {
+      unawaited(_handleUnauthorized(response));
     });
     unawaited(_init());
   }
@@ -446,6 +447,9 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   }
 
   Future<void> _handleAuthenticated(SessionData session) async {
+    // An old session's async cleanup must finish before saving a new login.
+    await _unauthorizedCleanup?.future;
+    if (!mounted) return;
     await SessionStorage.save(session);
     unawaited(PushNotificationService.instance.syncSession(session));
     if (!mounted) return;
@@ -504,9 +508,20 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     _router.go('/auth');
   }
 
-  Future<void> _handleUnauthorized() async {
-    if (_session == null || _loadingSession || _handlingUnauthorized) return;
+  Future<void> _handleUnauthorized(ApiUnauthorizedResponse response) async {
+    final rejectedSession = _session;
+    if (rejectedSession == null ||
+        _loadingSession ||
+        _handlingUnauthorized ||
+        !response.appliesToSession(
+          rejectedSession.token,
+          cookieSession: kIsWeb,
+        )) {
+      return;
+    }
     _handlingUnauthorized = true;
+    final cleanup = Completer<void>();
+    _unauthorizedCleanup = cleanup;
     try {
       await PushNotificationService.instance.clearSession();
       await SessionStorage.clear();
@@ -521,6 +536,8 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       _router.go('/auth');
     } finally {
       _handlingUnauthorized = false;
+      _unauthorizedCleanup = null;
+      cleanup.complete();
     }
   }
 

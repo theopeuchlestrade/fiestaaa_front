@@ -24,14 +24,24 @@ class ApiHttpClient extends http.BaseClient {
           .then((info) => 'flutter/${info.version}')
           .onError((_, _) => 'flutter/unknown');
 
-  static final StreamController<void> _unauthorizedController =
-      StreamController<void>.broadcast();
+  static final StreamController<ApiUnauthorizedResponse>
+  _unauthorizedController =
+      StreamController<ApiUnauthorizedResponse>.broadcast();
 
-  static Stream<void> get unauthorized => _unauthorizedController.stream;
+  static Stream<ApiUnauthorizedResponse> get unauthorized =>
+      _unauthorizedController.stream;
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final elapsed = Stopwatch()..start();
+    // Capture the request's identity before web transport strips Authorization.
+    final authorization = request.headers.entries
+        .where((entry) => entry.key.toLowerCase() == 'authorization')
+        .map((entry) => entry.value)
+        .firstOrNull;
+    final bearerToken = authorization?.startsWith('Bearer ') == true
+        ? authorization!.substring(7)
+        : null;
     try {
       final clientVersion = await _clientVersion.timeout(timeout);
       request.headers.putIfAbsent(
@@ -64,7 +74,7 @@ class ApiHttpClient extends http.BaseClient {
         },
       );
       if (response.statusCode == 401) {
-        _unauthorizedController.add(null);
+        _unauthorizedController.add(ApiUnauthorizedResponse(bearerToken));
       }
       return http.StreamedResponse(
         _readWithinDeadline(response.stream, elapsed),
@@ -158,4 +168,14 @@ class ApiTransportException implements Exception {
   const ApiTransportException(this.error);
 
   final ApiTransportError error;
+}
+
+/// A refusal belongs to the request that failed, not every active session.
+/// Keep credentials in memory only; never include them in logs or error text.
+class ApiUnauthorizedResponse {
+  const ApiUnauthorizedResponse(this._bearerToken);
+  final String? _bearerToken;
+
+  bool appliesToSession(String token, {required bool cookieSession}) =>
+      cookieSession || (_bearerToken != null && _bearerToken == token);
 }
