@@ -47,6 +47,58 @@ void main() {
     await expectLater(unauthorized, completes);
   });
 
+  test(
+    'late 401 belongs to old bearer, never a newly authenticated session',
+    () async {
+      final pending = Completer<http.Response>();
+      final client = ApiHttpClient(
+        MockClient((_) => pending.future),
+        clientVersion: Future.value('test'),
+      );
+      final notice = ApiHttpClient.unauthorized.first;
+      final request = client.get(
+        Uri.parse('https://example.test/ws-ticket'),
+        headers: {'Authorization': 'Bearer old-session'},
+      );
+      await Future<void>.delayed(Duration.zero);
+      pending.complete(http.Response('{}', 401));
+      await request;
+      final failure = await notice;
+      expect(
+        failure.appliesToSession('new-session', cookieSession: false),
+        isFalse,
+      );
+      expect(
+        failure.appliesToSession('old-session', cookieSession: false),
+        isTrue,
+      );
+      client.close();
+    },
+  );
+  test(
+    'failed public login cannot invalidate an active native bearer',
+    () async {
+      final client = ApiHttpClient(
+        MockClient((_) async => http.Response('{}', 401)),
+        clientVersion: Future.value('test'),
+      );
+      final notice = ApiHttpClient.unauthorized.first;
+      await client.post(Uri.parse('https://example.test/auth/login'));
+      expect(
+        (await notice).appliesToSession('active-session', cookieSession: false),
+        isFalse,
+      );
+      client.close();
+    },
+  );
+  test('cookie refusals retain existing web session invalidation', () {
+    expect(
+      const ApiUnauthorizedResponse(
+        null,
+      ).appliesToSession('', cookieSession: true),
+      isTrue,
+    );
+  });
   test('turns timeouts into a typed transport error', () async {
     final client = ApiHttpClient(
       MockClient((_) async {
