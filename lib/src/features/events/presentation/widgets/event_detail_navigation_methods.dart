@@ -83,24 +83,15 @@ extension _EventDetailNavigationMethods on _EventDetailPageState {
         .toString();
   }
 
-  Future<void> _openMap(double latitude, double longitude) async {
-    // On Android, try geo: scheme to let the OS/app chooser handle it directly.
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      final geo = Uri.parse('geo:$latitude,$longitude?q=$latitude,$longitude');
-      try {
-        final opened = await launchUrl(
-          geo,
-          mode: LaunchMode.externalApplication,
-        );
-        if (opened) return;
-      } catch (_) {
-        // fallback to manual choice below
-      }
-    }
-
+  Future<void> _openMap() async {
     final provider = await _pickMapProvider();
-    if (provider == null) return;
-    final uri = _uriForProvider(provider, latitude, longitude);
+    if (provider == null || !mounted) return;
+    final uri = mapDestinationUri(
+      provider,
+      address: _currentEvent.address,
+      latitude: _currentEvent.latitude,
+      longitude: _currentEvent.longitude,
+    );
     try {
       final success = await launchUrl(
         uri,
@@ -111,52 +102,55 @@ extension _EventDetailNavigationMethods on _EventDetailPageState {
       }
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Impossible d\'ouvrir la carte', isError: true);
+      _showSnack(S.of(context).unableToOpenMap, isError: true);
     }
   }
 
-  Future<String?> _pickMapProvider() {
-    return showModalBottomSheet<String>(
+  Future<MapProvider?> _pickMapProvider() {
+    return showModalBottomSheet<MapProvider>(
       context: context,
       showDragHandle: true,
-      builder: (context) => SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.explore),
-              title: Text(S.of(context).mapProviderGoogle),
-              onTap: () => Navigator.of(context).pop('google'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.apple),
-              title: Text(S.of(context).mapProviderApple),
-              onTap: () => Navigator.of(context).pop('apple'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.map),
-              title: Text(S.of(context).mapProviderOsm),
-              onTap: () => Navigator.of(context).pop('osm'),
-            ),
-          ],
+      builder: (context) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+                child: Text(
+                  S.of(context).openInMapsApp,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.explore_outlined),
+                title: Text(S.of(context).mapProviderGoogle),
+                onTap: () => Navigator.of(context).pop(MapProvider.google),
+              ),
+              if (kIsWeb ||
+                  defaultTargetPlatform == TargetPlatform.iOS ||
+                  defaultTargetPlatform == TargetPlatform.macOS)
+                ListTile(
+                  leading: const Icon(Icons.map_outlined),
+                  title: Text(S.of(context).mapProviderApple),
+                  onTap: () => Navigator.of(context).pop(MapProvider.apple),
+                ),
+              ListTile(
+                leading: const Icon(Icons.directions_car_outlined),
+                title: const Text('Waze'),
+                onTap: () => Navigator.of(context).pop(MapProvider.waze),
+              ),
+              ListTile(
+                leading: const Icon(Icons.public),
+                title: Text(S.of(context).mapProviderOsm),
+                onTap: () => Navigator.of(context).pop(MapProvider.osm),
+              ),
+            ],
+          ),
         ),
       ),
     );
-  }
-
-  Uri _uriForProvider(String provider, double lat, double lon) {
-    switch (provider) {
-      case 'google':
-        return Uri.parse(
-          'https://www.google.com/maps/search/?api=1&query=$lat,$lon',
-        );
-      case 'apple':
-        return Uri.parse('https://maps.apple.com/?ll=$lat,$lon');
-      default:
-        return Uri.parse(
-          'https://www.openstreetmap.org/?mlat=$lat&mlon=$lon#map=17/$lat/$lon',
-        );
-    }
   }
 
   Future<void> _openEditEvent() async {
