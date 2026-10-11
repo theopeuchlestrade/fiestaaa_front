@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'dart:async';
 import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header.dart';
@@ -455,7 +456,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
             _buildWarningBanner(l10n),
             const SizedBox(height: 16),
           ],
-          if (_canInteract) ...[
+          if (_canInteract && !userIsInAnyCarpool) ...[
             _buildCreateSection(l10n, canCreateCarpool),
             const SizedBox(height: 24),
           ],
@@ -592,16 +593,21 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
     final theme = Theme.of(context);
     final userHandle = widget.session.handle?.toLowerCase();
 
+    final own = _carpools!
+        .where(
+          (c) =>
+              userHandle != null &&
+              (c.driverHandle?.toLowerCase() == userHandle ||
+                  c.passengers.any(
+                    (p) => p.handle?.toLowerCase() == userHandle,
+                  )),
+        )
+        .toList();
+    final others = _carpools!.where((c) => !own.contains(c)).toList();
+    final ordered = [...own, ...others];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.carpoolsCount(_carpools!.length),
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: theme.fiestaaaMutedText,
-          ),
-        ),
-        const SizedBox(height: 12),
         LayoutBuilder(
           builder: (context, constraints) {
             final screenWidth = constraints.maxWidth;
@@ -624,7 +630,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
             return Wrap(
               spacing: spacing,
               runSpacing: spacing,
-              children: _carpools!.map((carpool) {
+              children: ordered.map((carpool) {
                 final isDriver =
                     userHandle != null &&
                     carpool.driverHandle?.toLowerCase() == userHandle;
@@ -674,23 +680,38 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
 
                 return SizedBox(
                   width: itemWidth,
-                  child: CarpoolCard(
-                    carpool: carpool,
-                    isDriver: isDriver,
-                    isPassenger: isPassenger,
-                    unavailableReason: unavailableReason,
-                    isJoining: _joiningCarpoolId == carpool.carpoolId,
-                    isLeaving: _leavingCarpoolId == carpool.carpoolId,
-                    onJoin: canJoin
-                        ? () => _joinCarpool(carpool.carpoolId)
-                        : null,
-                    onLeave: canLeave
-                        ? () => _leaveCarpool(carpool.carpoolId)
-                        : null,
-                    onEdit: canEdit
-                        ? () => _openCarpoolCreatePage(existing: carpool)
-                        : null,
-                    onDelete: canDelete ? () => _deleteCarpool(carpool) : null,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (own.contains(carpool))
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            betaText(context, 'Votre trajet', 'Your ride'),
+                            style: theme.textTheme.labelLarge,
+                          ),
+                        ),
+                      CarpoolCard(
+                        carpool: carpool,
+                        isDriver: isDriver,
+                        isPassenger: isPassenger,
+                        unavailableReason: unavailableReason,
+                        isJoining: _joiningCarpoolId == carpool.carpoolId,
+                        isLeaving: _leavingCarpoolId == carpool.carpoolId,
+                        onJoin: canJoin
+                            ? () => _joinCarpool(carpool.carpoolId)
+                            : null,
+                        onLeave: canLeave
+                            ? () => _leaveCarpool(carpool.carpoolId)
+                            : null,
+                        onEdit: canEdit
+                            ? () => _openCarpoolCreatePage(existing: carpool)
+                            : null,
+                        onDelete: canDelete
+                            ? () => _deleteCarpool(carpool)
+                            : null,
+                      ),
+                    ],
                   ),
                 );
               }).toList(),

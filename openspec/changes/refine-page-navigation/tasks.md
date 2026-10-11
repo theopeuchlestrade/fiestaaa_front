@@ -6,3 +6,4 @@
 - [x] Separate safety actions, correct expense typography/local currency, and refresh the review gallery.
 - [x] Refine recovery request/confirmation and add accessible, restrained motion with updated renders.
 - [x] Reorganize needs/personal brings with clear actions, simpler cards and reviewed renders.
+- [x] Reorganize carpool choices, current-ride priority and concise role-specific cards; update the visual gallery.

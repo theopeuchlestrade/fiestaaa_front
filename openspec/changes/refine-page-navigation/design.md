@@ -17,3 +17,6 @@ The recovery page has one title, an explained email request, separate provider g
 
 ## Needs and personal brings
 Keep organizer needs and personal brings as separate views with short labels and one explanation per view. Put the permitted create action ahead of the list; move all existing scope/sort controls into a named disclosure with active-filter summary. Needs show one total/progress, optional personal contribution, contributor details and the existing contribution action; covered needs remain editable by existing contributors. Personal brings show quantity and creator without contribution controls. No API or permission changes. AnyList inspires a list-first hierarchy and categories (https://anylist.net/lists), without introducing shopping completion semantics.
+
+## Carpool refinement
+Prioritize the current ride while retaining the selected sort order among other rides. Cards present one departure date/time, map-enabled meeting point, driver, one capacity label and role-specific action. Notes and passenger identities remain in an expandable detail section; driver deletion moves into a named action menu. Hide the disabled creation prompt once an account has a ride. No API, reservation policy, realtime or payment changes. BlaBlaCar inspires departure/meeting-point emphasis (https://www.blablacar.fr/apps-mobile).
