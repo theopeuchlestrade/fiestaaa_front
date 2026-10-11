@@ -34,6 +34,7 @@ import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/quasi_fullscreen_modal.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
+import 'package:fiestaaa_front/src/core/map_destination.dart';
 import 'package:fiestaaa_front/src/core/external_uri_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
@@ -469,15 +470,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         subtitle: Text(
                           _formatEventAddress(context, _currentEvent),
                         ),
-                        trailing: _currentEvent.hasCoordinates
-                            ? const Icon(Icons.open_in_new)
-                            : null,
-                        onTap: _currentEvent.hasCoordinates
-                            ? () => _openMap(
-                                _currentEvent.latitude!,
-                                _currentEvent.longitude!,
-                              )
-                            : null,
+                        trailing: const Icon(Icons.open_in_new),
+                        onTap: _openMap,
                       ),
                       if (_currentEvent.description.trim().isNotEmpty)
                         _DetailTile(

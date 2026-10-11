@@ -12,6 +12,7 @@ import 'package:fiestaaa_front/src/features/events/presentation/pages/event_deta
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -135,6 +136,29 @@ class _GuestInvitations extends InvitationsApi {
 }
 
 void main() {
+  for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+    testWidgets('address without coordinates offers maps on $platform', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = platform;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      await tester.pumpWidget(_app(_page(_Api(), 1, <_Realtime>[])));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Address'));
+      await tester.tap(find.text('Address'));
+      await tester.pumpAndSettle();
+      expect(find.text('Google Maps'), findsOneWidget);
+      expect(find.text('Waze'), findsOneWidget);
+      expect(find.text('OpenStreetMap'), findsOneWidget);
+      expect(
+        find.text('Apple Maps'),
+        platform == TargetPlatform.iOS ? findsOneWidget : findsNothing,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      debugDefaultTargetPlatformOverride = null;
+    });
+  }
+
   testWidgets('direct event back returns to the event list', (tester) async {
     final clients = <_Realtime>[];
     final router = GoRouter(
