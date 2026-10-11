@@ -3,5 +3,5 @@
 - [x] 1.2 Preserve saved pins, translated failures and platform-specific options.
 
 ## 2. Validation
-- [ ] 2.1 Run URI and mobile chooser tests, analysis and strict OpenSpec validation.
-- [ ] 2.2 Prepare a local QA update for phone launch validation.
+- [x] 2.1 Run URI and mobile chooser tests, analysis and strict OpenSpec validation.
+- [x] 2.2 Prepare a local QA update for phone launch validation.
