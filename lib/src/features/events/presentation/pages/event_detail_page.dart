@@ -1,4 +1,5 @@
 import 'package:fiestaaa_front/src/core/presentation/widgets/route_back_button.dart';
+import 'package:fiestaaa_front/src/core/presentation/widgets/fiestaaa_motion.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header.dart';
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/async_content.dart';

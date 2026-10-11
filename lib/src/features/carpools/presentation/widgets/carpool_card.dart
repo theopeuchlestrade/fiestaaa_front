@@ -350,7 +350,9 @@ class _DriverAvatar extends StatelessWidget {
         ? Text(
             (handle?.isNotEmpty == true) ? handle![0].toUpperCase() : '?',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onPrimaryContainer,
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
             ),
           )
         : null,

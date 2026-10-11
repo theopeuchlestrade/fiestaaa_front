@@ -45,7 +45,7 @@ extension _EventDetailListSections on _EventDetailPageState {
             padding: const EdgeInsets.only(bottom: 8),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: TextButton.icon(
+              child: FilledButton.icon(
                 onPressed: _creatingPoll ? null : _openCreatePollSheet,
                 icon: _creatingPoll
                     ? const SizedBox(
@@ -62,15 +62,6 @@ extension _EventDetailListSections on _EventDetailPageState {
               ),
             ),
           ),
-        const SizedBox(height: 6),
-        Text(
-          S.of(context).collectQuickFeedback,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(
-              context,
-            ).colorScheme.onSurface.withValues(alpha: 0.6),
-          ),
-        ),
         const SizedBox(height: 12),
         if (_pollsError != null && _polls != null)
           AsyncNotice(
@@ -136,6 +127,7 @@ extension _EventDetailListSections on _EventDetailPageState {
       children: group
           .map(
             (poll) => _PollCard(
+              key: ValueKey(poll.id),
               poll: poll,
               onToggleOption: (optionId) => _toggleVote(poll, optionId),
               onViewVotes: () => _showPollVotes(poll),
@@ -159,22 +151,35 @@ extension _EventDetailListSections on _EventDetailPageState {
           .toList(),
     );
     final active = polls.where((poll) => !poll.isExpired).toList();
+    final unanswered = active.where((poll) => poll.myVotes.isEmpty).toList();
+    final answered = active.where((poll) => poll.myVotes.isNotEmpty).toList();
     final closed = polls.where((poll) => poll.isExpired).toList();
-    final l = S.of(context);
+    final theme = Theme.of(context);
+    Widget group(String title, List<PollModel> values) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(title, style: theme.textTheme.titleSmall),
+        const SizedBox(height: 12),
+        cards(values),
+      ],
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (active.isNotEmpty) ...[
-          Text(l.openPolls, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
-          cards(active),
-        ],
-        if (closed.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Text(l.closedPolls, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
-          cards(closed),
-        ],
+        if (unanswered.isNotEmpty)
+          group(
+            _canVotePolls
+                ? betaText(
+                    context,
+                    'À vous de répondre',
+                    'Awaiting your answer',
+                  )
+                : S.of(context).openPolls,
+            unanswered,
+          ),
+        if (answered.isNotEmpty)
+          group(betaText(context, 'Vos réponses', 'Your answers'), answered),
+        if (closed.isNotEmpty) group(S.of(context).closedPolls, closed),
       ],
     );
   }

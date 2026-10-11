@@ -23,6 +23,9 @@ class _Api extends EventsApi {
   final bool contributed;
   int itemReads = 0;
   bool fail = false;
+  List<PollModel> polls = [];
+  List<int>? submittedVotes;
+  int pollReads = 0;
   @override
   Future<EventModel> fetchEventById({
     required String token,
@@ -63,7 +66,33 @@ class _Api extends EventsApi {
   Future<List<PollModel>> fetchEventPolls({
     required String token,
     required int eventId,
-  }) async => [];
+  }) async {
+    pollReads++;
+    return polls;
+  }
+
+  @override
+  Future<PollModel> votePoll({
+    required String token,
+    required int eventId,
+    required int pollId,
+    required List<int> optionIds,
+  }) async {
+    submittedVotes = optionIds;
+    final old = polls.firstWhere((poll) => poll.id == pollId);
+    final next = _poll(
+      id: old.id,
+      question: old.question,
+      votes: optionIds,
+      multiple: old.allowMultiple,
+    );
+    polls = [
+      for (final poll in polls)
+        if (poll.id == pollId) next else poll,
+    ];
+    return next;
+  }
+
   @override
   Future<List<ItemContributionModel>> fetchEventItemContributions({
     required String token,
@@ -109,17 +138,20 @@ Widget _app(
   String status = 'Accepted',
   bool enabled = true,
   bool owner = false,
+  EventModule module = EventModule.items,
 }) => MaterialApp(
   locale: const Locale('en'),
   localizationsDelegates: S.localizationsDelegates,
   supportedLocales: S.supportedLocales,
   home: EventDetailPage(
-    module: EventModule.items,
+    module: module,
     session: SessionData(
       token: 'test',
       email: owner ? 'owner@example.com' : 'guest@example.com',
     ),
-    event: fixtures.event(features: enabled ? [eventFeatureItems] : []),
+    event: fixtures.event(
+      features: enabled ? [eventFeatureItems, eventFeaturePolls] : [],
+    ),
     eventsApi: api,
     invitationsApi: _Invitations(status),
     realtimeClientFactory: (_, _) => _Realtime(),
@@ -128,7 +160,122 @@ Widget _app(
     ),
   ),
 );
+PollModel _poll({
+  int id = 1,
+  String question = 'Food?',
+  List<int> votes = const [],
+  bool multiple = false,
+  bool expired = false,
+}) => PollModel(
+  id: id,
+  eventId: 1,
+  question: question,
+  allowMultiple: multiple,
+  expiresAt: DateTime(2099),
+  createdAt: DateTime(2026),
+  createdByEmail: 'owner@example.com',
+  options: [
+    PollOptionModel(id: 1, label: 'Pizza', voteCount: 1, voters: []),
+    PollOptionModel(id: 2, label: 'Salad', voteCount: 0, voters: []),
+  ],
+  myVotes: votes,
+  totalVotes: 1,
+  hasExpired: expired,
+);
 void main() {
+  testWidgets(
+    'unanswered polls precede answers and closed polls keep results accessible',
+    (tester) async {
+      final api = _Api()
+        ..polls = [
+          _poll(id: 1, question: 'Answered', votes: [1]),
+          _poll(id: 2, question: 'Pending'),
+          _poll(id: 3, question: 'Closed', expired: true),
+        ];
+      await tester.pumpWidget(_app(api, module: EventModule.polls));
+      await tester.pumpAndSettle();
+      final questions = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((text) => text.data)
+          .where((text) => ['Answered', 'Pending', 'Closed'].contains(text))
+          .toList();
+      expect(questions, ['Pending', 'Answered', 'Closed']);
+      expect(find.text('Awaiting your answer'), findsOneWidget);
+      expect(find.text('Your answers'), findsOneWidget);
+      await tester.ensureVisible(find.text('View results'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('View results'));
+      await tester.pumpAndSettle();
+      final closed = find
+          .ancestor(of: find.text('Closed'), matching: find.byType(Card))
+          .first;
+      expect(
+        find.descendant(of: closed, matching: find.text('Pizza')),
+        findsOneWidget,
+      );
+      await tester.ensureVisible(
+        find.descendant(of: closed, matching: find.text('Pizza')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(of: closed, matching: find.text('Pizza')),
+      );
+      expect(api.submittedVotes, isNull);
+    },
+  );
+  for (final multiple in [false, true]) {
+    testWidgets(
+      'immediate vote keeps single/multiple selection and deselection ($multiple)',
+      (tester) async {
+        final api = _Api()
+          ..polls = [
+            _poll(votes: [1], multiple: multiple),
+          ];
+        await tester.pumpWidget(_app(api, module: EventModule.polls));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Salad'));
+        await tester.pumpAndSettle();
+        expect(api.submittedVotes, multiple ? [1, 2] : [2]);
+        await tester.tap(find.text('Salad'));
+        await tester.pumpAndSettle();
+        expect(api.submittedVotes, multiple ? [1] : []);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+  testWidgets(
+    'vote identities stay accessible and deletion still asks confirmation',
+    (tester) async {
+      final api = _Api()..polls = [_poll()];
+      await tester.pumpWidget(
+        _app(api, module: EventModule.polls, owner: true),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Who voted?'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(find.text('No votes yet.'), findsWidgets);
+      Navigator.of(tester.element(find.byType(BottomSheet))).pop();
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Poll actions'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.text('Food?'), findsOneWidget);
+    },
+  );
+  testWidgets('waiting guests never load protected polls', (tester) async {
+    final api = _Api()..polls = [_poll()];
+    await tester.pumpWidget(
+      _app(api, module: EventModule.polls, status: 'Waiting'),
+    );
+    await tester.pumpAndSettle();
+    expect(api.pollReads, 0);
+    expect(find.text('Food?'), findsNothing);
+  });
   testWidgets('waiting guests do not load protected item content', (
     tester,
   ) async {
