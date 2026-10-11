@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-11
+
+### Added
+
+- Offer Google Maps, Waze and OpenStreetMap when tapping an event address, with Apple Maps on Apple platforms and web; support address-only events without saved coordinates.
+
+### Changed
+
+- Harmonize all screens around the violet/cyan Manrope theme, shared headers, forms, buttons and accessible loading, error and empty states.
+- Simplify the event home and overview, with three main destinations and dedicated routes for event modules.
+- Separate organizer needs from personal brings and clarify contributions, poll voting/results, carpool seats, expense balances and participant response groups.
+- Reorganize profile, safety/reporting and account recovery with clearer actions and translated feedback.
+- Add subtle entrance animations while respecting reduced-motion accessibility preferences.
+- Adopt pinned OpenSpec tooling and presentation contracts with strict CI validation.
+
+### Fixed
+
+- Prevent stale unauthorized requests from an old native login from invalidating a newer session, and serialize session cleanup before saving new credentials.
+- Refresh open carpool modules promptly after realtime updates.
+- Preserve draft creation, edit exit protection, readable enlarged text and usable back navigation during network interruptions.
+
 ## [0.5.0] - 2026-10-09
 
 ### Changed
