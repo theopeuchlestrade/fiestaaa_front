@@ -47,3 +47,7 @@ test
 
 # Generated assets
 web/firebase-messaging-sw.js
+
+# Specification development files
+openspec
+.agents

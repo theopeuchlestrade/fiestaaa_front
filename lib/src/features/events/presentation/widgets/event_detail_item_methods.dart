@@ -7,7 +7,8 @@ extension _EventDetailItemMethods on _EventDetailPageState {
   );
 
   Future<void> _loadItemsOnce({bool showLoading = true}) async {
-    if (!mounted) return;
+    if (!_isFeatureEnabled(eventFeatureItems)) return;
+    if (!mounted || (!_isOwner && !_hasAcceptedInvitation)) return;
     final requestScope = (
       _scopeGeneration,
       widget.session.token,
@@ -61,7 +62,11 @@ extension _EventDetailItemMethods on _EventDetailPageState {
         return;
       }
       _updateState(() {
-        _itemsError = e.message;
+        _itemsError = localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).unableToLoadItems,
+        );
         _summaryItems = null;
       });
     } catch (_) {
@@ -91,7 +96,8 @@ extension _EventDetailItemMethods on _EventDetailPageState {
   );
 
   Future<void> _loadPollsOnce({bool showLoading = true}) async {
-    if (!mounted) return;
+    if (!_isFeatureEnabled(eventFeaturePolls)) return;
+    if (!mounted || (!_isOwner && !_hasAcceptedInvitation)) return;
     final requestScope = (
       _scopeGeneration,
       widget.session.token,
@@ -121,7 +127,11 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       _updateState(
         () => _pollsError = e.statusCode == 403
             ? S.of(context).acceptInvitationBeforeVoting
-            : e.message,
+            : localizedApiError(
+                S.of(context),
+                e,
+                fallback: S.of(context).unableToLoadPolls,
+              ),
       );
     } catch (_) {
       if (!mounted ||
@@ -219,6 +229,9 @@ extension _EventDetailItemMethods on _EventDetailPageState {
                           ),
                           IconButton(
                             onPressed: () => Navigator.of(context).pop(),
+                            tooltip: MaterialLocalizations.of(
+                              context,
+                            ).closeButtonTooltip,
                             icon: const Icon(Icons.close),
                           ),
                         ],
@@ -365,7 +378,14 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       await _loadItems(showLoading: false);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).addItemFailed, isError: true);
@@ -409,7 +429,14 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       await _loadItems(showLoading: false);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).deleteItemFailed, isError: true);
@@ -436,7 +463,14 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       await _loadItems(showLoading: false);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).networkError, isError: true);

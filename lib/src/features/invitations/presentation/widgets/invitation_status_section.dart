@@ -14,10 +14,12 @@ class InvitationStatusSection extends StatelessWidget {
     required this.invitations,
     required this.emptyLabel,
     required this.ownerEmail,
+    this.showHeading = true,
     this.onDelete,
     this.trailingBuilder,
   });
 
+  final bool showHeading;
   final String title;
   final IconData icon;
   final Color accentColor;
@@ -37,26 +39,12 @@ class InvitationStatusSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(icon, color: accentColor),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                if (invitations.isNotEmpty)
-                  Chip(
-                    label: Text('${invitations.length}'),
-                    backgroundColor: accentColor.withValues(alpha: 0.15),
-                    side: BorderSide(color: accentColor.withValues(alpha: 0.4)),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
+            if (showHeading)
+              Text(
+                invitations.isEmpty ? title : '$title · ${invitations.length}',
+                style: theme.textTheme.titleSmall,
+              ),
+            if (showHeading) const SizedBox(height: 12),
             if (invitations.isEmpty)
               Text(
                 emptyLabel,
@@ -79,26 +67,8 @@ class InvitationStatusSection extends StatelessWidget {
     final handle = invitation.handle?.isNotEmpty == true
         ? invitation.handle!
         : S.of(context).accountToCreate;
-    final display = '@$handle';
-    final scheme = Theme.of(context).colorScheme;
-    final title = Row(
-      children: [
-        Flexible(
-          child: Text(display, maxLines: 1, overflow: TextOverflow.ellipsis),
-        ),
-        if (isOwner) ...[
-          const SizedBox(width: 8),
-          Tooltip(
-            message: S.of(context).eventCreator,
-            child: Icon(
-              Icons.emoji_events,
-              color: scheme.fiestaaaWarning,
-              size: 18,
-            ),
-          ),
-        ],
-      ],
-    );
+    final display = invitation.handle?.isNotEmpty == true ? '@$handle' : handle;
+    final title = Text(display, style: Theme.of(context).textTheme.bodyLarge);
     Widget? trailing;
     if (trailingBuilder != null) {
       trailing = trailingBuilder!(invitation);
@@ -116,15 +86,17 @@ class InvitationStatusSection extends StatelessWidget {
         fallbackText: invitation.handle ?? invitation.email,
       ),
       title: title,
-      subtitle: Text(
-        S
-            .of(context)
-            .sentOn(
-              DateFormat.yMMMMd(
-                Localizations.localeOf(context).toString(),
-              ).format(invitation.dateInvi),
+      subtitle: isOwner
+          ? Text(S.of(context).eventCreator)
+          : Text(
+              S
+                  .of(context)
+                  .sentOn(
+                    DateFormat.yMMMd(
+                      Localizations.localeOf(context).toString(),
+                    ).format(invitation.dateInvi),
+                  ),
             ),
-      ),
       trailing: trailing,
     );
   }

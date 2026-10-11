@@ -90,3 +90,6 @@ untranslated.txt
 
 # Generated from verified production signing identities.
 /web/.well-known/
+
+# Generated visual comparison diagnostics
+test/features/events/presentation/failures/

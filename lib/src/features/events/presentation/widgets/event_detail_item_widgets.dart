@@ -9,117 +9,6 @@ class _NewEventItemData {
   final EventItemKind kind;
 }
 
-class _EventItemsSection extends StatelessWidget {
-  const _EventItemsSection({
-    required this.title,
-    required this.subtitle,
-    required this.items,
-    required this.addLabel,
-    this.onAdd,
-    this.isAdding = false,
-    required this.emptyLabel,
-    required this.reservingItemId,
-    required this.deletingItemId,
-    required this.onReserve,
-    required this.onDelete,
-    required this.isOwner,
-    required this.currentUserEmail,
-    required this.canReserveItems,
-    required this.contributions,
-  });
-
-  final String title;
-  final String subtitle;
-  final List<EventItemModel> items;
-  final String addLabel;
-  final VoidCallback? onAdd;
-  final bool isAdding;
-  final String emptyLabel;
-  final int? reservingItemId;
-  final int? deletingItemId;
-  final void Function(EventItemModel item) onReserve;
-  final void Function(EventItemModel item) onDelete;
-  final bool isOwner;
-  final String currentUserEmail;
-  final bool canReserveItems;
-  final Map<int, List<ItemContributionModel>> contributions;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textColor = theme.colorScheme.onSurface;
-    final badgeBackground = theme.colorScheme.primary.withValues(alpha: 0.12);
-    final badgeText = theme.colorScheme.primary;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            if (onAdd != null) ...[
-              const SizedBox(width: 8),
-              TextButton.icon(
-                onPressed: isAdding ? null : onAdd,
-                icon: isAdding
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.add),
-                label: Text(addLabel),
-              ),
-            ],
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: badgeBackground,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                '${items.length}',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: badgeText,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Text(
-          subtitle,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: textColor.withValues(alpha: 0.7),
-          ),
-        ),
-        const SizedBox(height: 12),
-        _EventItemsList(
-          items: items,
-          emptyLabel: emptyLabel,
-          reservingItemId: reservingItemId,
-          deletingItemId: deletingItemId,
-          onReserve: onReserve,
-          onDelete: onDelete,
-          isOwner: isOwner,
-          currentUserEmail: currentUserEmail,
-          canReserveItems: canReserveItems,
-          contributions: contributions,
-        ),
-      ],
-    );
-  }
-}
-
 class _EventItemsList extends StatelessWidget {
   const _EventItemsList({
     required this.items,
@@ -300,400 +189,148 @@ class _EventItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final surface = theme.colorScheme.surface;
-    final borderColor = theme.dividerColor;
-    final textColor = theme.colorScheme.onSurface;
-    final mutedText = textColor.withValues(alpha: 0.6);
-    final actionBackground = theme.fiestaaaMutedSurface;
-    final actionForeground = textColor;
-    final avatarBackground = theme.fiestaaaAvatarSurface;
-    final avatarForeground = textColor;
-    final barBackground = theme.fiestaaaSoftSurface;
-    final barEmpty = theme.fiestaaaSoftBorder;
-    final shadow = theme.colorScheme.scrim.withValues(
-      alpha: theme.brightness == Brightness.dark ? 0.25 : 0.12,
-    );
-    final dangerStyle = theme.colorScheme.fiestaaaStatus(
-      FiestaaaStatusTone.danger,
-    );
-    final ratio = item.maxQuantity == 0
-        ? 0.0
-        : item.reservedQuantity / item.maxQuantity;
-    final available = item.remaining;
-    final contributors = contributions;
-    final myContribution = contributors
-        .where((c) => c.email.toLowerCase() == currentUserEmail.toLowerCase())
-        .toList();
-    final isFull = available <= 0;
-    final hasContributed = myContribution.isNotEmpty;
+    final scheme = theme.colorScheme;
+    final l = S.of(context);
     final isBring = item.kind == EventItemKind.bring;
-    final accentGreen = theme.colorScheme.fiestaaaSuccess;
-
-    if (isBring) {
-      final creatorName = _displayName(context, item.createdByHandle);
-      final creatorInitial = _displayInitial(context, item.createdByHandle);
-      return Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: borderColor),
-          boxShadow: [
-            BoxShadow(
-              color: shadow,
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: accentGreen.withValues(alpha: 0.15),
-                  border: Border.all(color: accentGreen, width: 2),
-                ),
-                child: Icon(
-                  Icons.volunteer_activism_outlined,
-                  color: accentGreen,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.name,
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      S
-                          .of(context)
-                          .bringQuantityLabel(item.maxQuantity, item.unitLabel),
-                      style: TextStyle(
-                        color: mutedText,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      S.of(context).bringPersonalLabel,
-                      style: TextStyle(
-                        color: accentGreen,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 14,
-                          backgroundColor: avatarBackground,
-                          backgroundImage: item.createdByAvatarUrl == null
-                              ? null
-                              : platformNetworkImage(item.createdByAvatarUrl!),
-                          child: item.createdByAvatarUrl == null
-                              ? Text(
-                                  creatorInitial,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: avatarForeground,
-                                  ),
-                                )
-                              : null,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            creatorName,
-                            style: TextStyle(
-                              color: mutedText,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              if (onDelete != null)
-                TextButton(
-                  style: TextButton.styleFrom(
-                    backgroundColor: dangerStyle.background,
-                    foregroundColor: dangerStyle.foreground,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 12,
-                      horizontal: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: isDeleting ? null : onDelete,
-                  child: isDeleting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation(Colors.white),
-                          ),
-                        )
-                      : const Icon(Icons.delete_outline),
-                ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(color: shadow, blurRadius: 12, offset: const Offset(0, 6)),
-        ],
-      ),
+    final full = item.remaining <= 0;
+    final mine = contributions
+        .where((c) => c.email.toLowerCase() == currentUserEmail.toLowerCase())
+        .fold<int>(0, (sum, c) => sum + c.quantity);
+    final ratio = item.maxQuantity <= 0
+        ? 0.0
+        : (item.reservedQuantity / item.maxQuantity).clamp(0.0, 1.0);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                InkWell(
-                  onTap: (!isLoading && canReserve) ? onTap : null,
-                  customBorder: const CircleBorder(),
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: hasContributed ? accentGreen : Colors.transparent,
-                      border: Border.all(
-                        color: (hasContributed || isFull)
-                            ? accentGreen
-                            : textColor.withValues(alpha: 0.35),
-                        width: 2,
-                      ),
-                    ),
-                    child: hasContributed
-                        ? const Icon(Icons.check, color: Colors.white, size: 18)
-                        : null,
-                  ),
-                ),
-                const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.name,
-                        style: TextStyle(
-                          color: textColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 6,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          if (contributors.isNotEmpty)
-                            SizedBox(
-                              height: 28,
-                              width: 110,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: contributors
-                                    .take(4)
-                                    .toList()
-                                    .asMap()
-                                    .entries
-                                    .map((entry) {
-                                      final idx = entry.key;
-                                      final c = entry.value;
-                                      final left = idx * 22.0;
-                                      return Positioned(
-                                        left: left,
-                                        child: CircleAvatar(
-                                          radius: 14,
-                                          backgroundColor: avatarBackground,
-                                          backgroundImage: c.avatarUrl == null
-                                              ? null
-                                              : platformNetworkImage(
-                                                  c.avatarUrl!,
-                                                ),
-                                          child: c.avatarUrl == null
-                                              ? Text(
-                                                  _displayInitial(
-                                                    context,
-                                                    c.handle,
-                                                  ),
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w700,
-                                                    color: avatarForeground,
-                                                  ),
-                                                )
-                                              : null,
-                                        ),
-                                      );
-                                    })
-                                    .toList(),
-                              ),
-                            ),
-                          Text(
-                            '${item.reservedQuantity}/${item.maxQuantity} ${item.unitLabel}',
-                            style: TextStyle(
-                              color: mutedText,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                  child: Text(item.name, style: theme.textTheme.titleMedium),
                 ),
-                TextButton.icon(
-                  style: TextButton.styleFrom(
-                    foregroundColor: textColor.withValues(alpha: 0.75),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                    textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                if (onDelete != null && canReserve)
+                  IconButton(
+                    tooltip: l.delete,
+                    onPressed: isDeleting ? null : onDelete,
+                    icon: isDeleting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.delete_outline),
                   ),
-                  onPressed: contributors.isEmpty
-                      ? null
-                      : () => _showContributors(context, contributors),
-                  icon: const Icon(Icons.visibility_outlined, size: 18),
-                  label: Text(S.of(context).view),
-                ),
               ],
             ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: LinearProgressIndicator(
-                minHeight: 10,
-                value: ratio.clamp(0, 1),
-                backgroundColor: barBackground,
-                valueColor: AlwaysStoppedAnimation(
-                  ratio <= 0 ? barEmpty : accentGreen,
-                ),
+            const SizedBox(height: 8),
+            if (isBring) ...[
+              Text(
+                l.bringQuantityLabel(item.maxQuantity, item.unitLabel),
+                style: theme.textTheme.bodyLarge,
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              available > 0
-                  ? S
-                        .of(context)
-                        .remainingAvailable(
-                          available,
-                          item.unitLabel,
-                          available > 1 ? 's' : '',
-                        )
-                  : S.of(context).quotaFilled,
-              style: TextStyle(
-                color: isFull ? accentGreen : mutedText,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 14),
-            if (canReserve)
+              const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(
-                    child: TextButton.icon(
-                      style: TextButton.styleFrom(
-                        backgroundColor: actionBackground,
-                        foregroundColor: actionForeground,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: isLoading ? null : onTap,
-                      icon: isLoading
-                          ? SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation(
-                                  actionForeground,
-                                ),
-                              ),
-                            )
-                          : Icon(
-                              hasContributed
-                                  ? Icons.check_circle
-                                  : Icons.radio_button_unchecked,
-                              color: hasContributed
-                                  ? accentGreen
-                                  : actionForeground,
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: scheme.primaryContainer,
+                    backgroundImage: item.createdByAvatarUrl == null
+                        ? null
+                        : platformNetworkImage(item.createdByAvatarUrl!),
+                    child: item.createdByAvatarUrl == null
+                        ? Text(
+                            _displayInitial(context, item.createdByHandle),
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: scheme.onPrimaryContainer,
                             ),
-                      label: Text(
-                        isLoading
-                            ? S.of(context).sending
-                            : (hasContributed
-                                  ? S.of(context).editContribution
-                                  : S.of(context).iContribute),
-                      ),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _displayName(context, item.createdByHandle),
+                      style: theme.textTheme.bodyMedium,
                     ),
                   ),
-                  if (onDelete != null) ...[
-                    const SizedBox(width: 10),
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        backgroundColor: dangerStyle.background,
-                        foregroundColor: dangerStyle.foreground,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 14,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: isDeleting ? null : onDelete,
-                      child: isDeleting
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                          : const Icon(Icons.delete_outline),
-                    ),
-                  ],
                 ],
               ),
+            ] else ...[
+              Text(
+                '${item.reservedQuantity} / ${item.maxQuantity} ${item.unitLabel}',
+                style: theme.textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 10),
+              Semantics(
+                container: true,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    minHeight: 6,
+                    value: ratio,
+                    backgroundColor: scheme.surfaceContainerHighest,
+                    valueColor: AlwaysStoppedAnimation(scheme.primary),
+                  ),
+                ),
+              ),
+              if (full) ...[
+                const SizedBox(height: 10),
+                Text(
+                  betaText(context, 'Besoin couvert', 'Need covered'),
+                  style: theme.textTheme.labelLarge,
+                ),
+              ],
+              if (mine > 0) ...[
+                const SizedBox(height: 12),
+                Text(
+                  betaText(
+                    context,
+                    'Votre contribution : $mine ${item.unitLabel}',
+                    'Your contribution: $mine ${item.unitLabel}',
+                  ),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurface,
+                  ),
+                ),
+              ],
+              if (contributions.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => _showContributors(context, contributions),
+                    icon: const Icon(Icons.people_outline),
+                    label: Text(
+                      betaText(context, 'Qui apporte ?', 'Who is bringing it?'),
+                    ),
+                  ),
+                ),
+              ],
+              if (canReserve && (!full || mine > 0)) ...[
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: isLoading ? null : onTap,
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(mine > 0 ? Icons.edit_outlined : Icons.add),
+                  label: Text(
+                    isLoading
+                        ? l.sending
+                        : mine > 0
+                        ? l.editContribution
+                        : l.iContribute,
+                  ),
+                ),
+              ],
+            ],
           ],
         ),
       ),

@@ -633,7 +633,14 @@ class _EventCreatePageState extends State<EventCreatePage>
       widget.onEventCreated();
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).creationFailed, isError: true);

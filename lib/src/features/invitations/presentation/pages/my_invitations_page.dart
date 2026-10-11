@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
@@ -115,7 +116,14 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
         await _fetchEventInvitations();
         return;
       }
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).actionFailed, isError: true);
@@ -142,7 +150,14 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
       );
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnack(e.message, isError: true);
+      _showSnack(
+        localizedApiError(
+          S.of(context),
+          e,
+          fallback: S.of(context).actionFailed,
+        ),
+        isError: true,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(S.of(context).actionFailed, isError: true);

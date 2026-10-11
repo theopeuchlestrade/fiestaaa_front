@@ -1,60 +1,39 @@
 part of '../pages/event_detail_page.dart';
 
 extension _EventDetailHeaderMethods on _EventDetailPageState {
-  List<Widget> _buildHeaderActions() {
-    return [
-      if (_isOwner && !_isReadOnly)
-        IconButton(
-          onPressed: _openEditEvent,
-          icon: const Icon(Icons.edit),
-          tooltip: S.of(context).editFiestaaa,
-        ),
-      if (_isOwner && !_isReadOnly)
-        IconButton(
-          onPressed: _sharingLink ? null : _shareEvent,
-          icon: _sharingLink
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.share_outlined),
-          tooltip: S.of(context).shareFiestaaa,
-        ),
-    ];
-  }
-
   Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            BackButton(
-              onPressed: () {
-                if (Navigator.of(context).canPop()) {
-                  Navigator.of(context).pop();
-                } else {
-                  context.go('/events');
-                }
-              },
-            ),
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Wrap(
-                  alignment: WrapAlignment.end,
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: _buildHeaderActions(),
-                ),
+    final l = S.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RouteBackButton(fallback: '/events'),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Semantics(
+              header: true,
+              child: Text(
+                _currentEvent.name,
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        FiestaaaPageHeader(title: _currentEvent.name),
-      ],
+          ),
+          if (_isOwner && !_isReadOnly)
+            PopupMenuButton<String>(
+              enabled: !_sharingLink,
+              tooltip: l.eventActions,
+              onSelected: (value) {
+                if (value == 'edit') _openEditEvent();
+                if (value == 'share') _shareEvent();
+              },
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'edit', child: Text(l.editFiestaaa)),
+                PopupMenuItem(value: 'share', child: Text(l.shareFiestaaa)),
+              ],
+            ),
+        ],
+      ),
     );
   }
 

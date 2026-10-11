@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -6,7 +7,6 @@ import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
 import 'package:fiestaaa_front/src/features/carpools/domain/carpool_model.dart';
-import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class CarpoolCard extends StatelessWidget {
@@ -38,21 +38,48 @@ class CarpoolCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final l10n = S.of(context);
-    final passengerStyle = theme.colorScheme.fiestaaaStatus(
-      FiestaaaStatusTone.info,
-    );
-
+    final l = S.of(context);
+    final notes = carpool.notes?.trim();
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header: Driver info + Seats indicator
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    _formatDepartureTime(context, carpool.departAt),
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+                if (isDriver && onDelete != null)
+                  PopupMenuButton<String>(
+                    tooltip: betaText(
+                      context,
+                      'Actions du trajet',
+                      'Ride actions',
+                    ),
+                    onSelected: (_) => onDelete!(),
+                    itemBuilder: (_) => [
+                      PopupMenuItem(value: 'delete', child: Text(l.delete)),
+                    ],
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _InfoRow(
+              icon: Icons.location_on_outlined,
+              iconColor: theme.colorScheme.primary,
+              text: carpool.origin,
+              onTap: () => _openMap(context, carpool),
+              actionIcon: Icons.map_outlined,
+            ),
+            const SizedBox(height: 16),
+            Row(
               children: [
                 _DriverAvatar(
                   handle: carpool.driverHandle,
@@ -65,272 +92,127 @@ class CarpoolCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        carpool.driverHandle ?? l10n.unknownDriver,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                        carpool.driverHandle ?? l.unknownDriver,
+                        style: theme.textTheme.bodyLarge,
                       ),
-                      const SizedBox(height: 2),
-                      if (isDriver)
-                        _StatusBadge(
-                          label: l10n.youAreDriver,
-                          color: FiestaaaPalette.primary,
-                          icon: Icons.directions_car,
-                        )
-                      else if (isPassenger)
-                        _StatusBadge(
-                          label: l10n.youArePassenger,
-                          color: passengerStyle.foreground,
-                          icon: Icons.person,
+                      if (isDriver || isPassenger)
+                        Text(
+                          isDriver ? l.youAreDriver : l.youArePassenger,
+                          style: theme.textTheme.bodyMedium,
                         ),
                     ],
                   ),
                 ),
-                _SeatsIndicator(
-                  seatsTaken: carpool.seatsTaken,
-                  seatsTotal: carpool.seatsTotal,
-                ),
               ],
             ),
             const SizedBox(height: 16),
-
-            // Location and time info
-            _InfoRow(
-              icon: Icons.location_on_outlined,
-              iconColor: FiestaaaPalette.primary,
-              text: carpool.origin,
-              onTap: () => _openMap(context, carpool),
-              actionIcon: Icons.map_outlined,
-            ),
-            const SizedBox(height: 8),
-            _InfoRow(
-              icon: Icons.schedule_outlined,
-              iconColor: FiestaaaPalette.secondary,
-              text: _formatDepartureTime(context, carpool.departAt),
-              secondaryText: _formatRelativeTime(context, carpool.departAt),
-            ),
-
-            // Notes section
-            if (carpool.notes != null && carpool.notes!.trim().isNotEmpty) ...[
-              const SizedBox(height: 12),
-              const SizedBox(height: 12),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final notes = carpool.notes!.trim();
-                  // Simple check: longer than ~60 chars might need expansion?
-                  // Or just use the truncation and allow tap to expand.
-                  final isLong = notes.length > 50 || notes.contains('\n');
-
-                  return InkWell(
-                    onTap: () => _showFullNotes(context, notes),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(
-                          alpha: theme.brightness == Brightness.dark
-                              ? 0.16
-                              : 0.08,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: theme.brightness == Brightness.dark
-                                ? 0.28
-                                : 0.16,
-                          ),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.chat_bubble_outline,
-                                size: 16,
-                                color: FiestaaaPalette.primary.withValues(
-                                  alpha: 0.7,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  notes,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    fontStyle: FontStyle.italic,
-                                    height: 1.4,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (isLong) ...[
-                            const SizedBox(height: 4),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                l10n.seeMore, // "See more" (make sure to have this or hardcode for now if missing)
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  );
-                },
+            Text(
+              carpool.isFull
+                  ? l.carpoolFull
+                  : '${carpool.seatsAvailable} ${l.seatsAvailable(carpool.seatsAvailable)} ${betaText(context, carpool.seatsAvailable == 1 ? 'disponible' : 'disponibles', 'available')}',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
               ),
-            ],
-
-            // Passengers section
-            if (carpool.passengers.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Row(
+            ),
+            if ((notes?.isNotEmpty ?? false) ||
+                carpool.passengers.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: Text(
+                  betaText(context, 'Détails du trajet', 'Ride details'),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                childrenPadding: const EdgeInsets.only(bottom: 16),
                 children: [
-                  Icon(
-                    Icons.people_outline,
-                    size: 18,
-                    color: theme.fiestaaaMutedText,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    l10n.passengersCount(carpool.passengers.length),
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.fiestaaaMutedText,
+                  if (notes?.isNotEmpty ?? false) ...[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        notes!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (carpool.passengers.isNotEmpty) ...[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        l.passengersCount(carpool.passengers.length),
+                        style: theme.textTheme.titleSmall,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    for (final passenger in carpool.passengers)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: _DriverAvatar(
+                          handle: passenger.handle,
+                          avatarUrl: passenger.avatarUrl,
+                          isCurrentUser: false,
+                        ),
+                        title: Text(passenger.handle ?? l.anonymous),
+                      ),
+                  ],
                 ],
               ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: carpool.passengers.map((passenger) {
-                  return _PassengerChip(
-                    handle: passenger.handle,
-                    avatarUrl: passenger.avatarUrl,
-                  );
-                }).toList(),
-              ),
             ],
-
-            // Actions section
             const SizedBox(height: 16),
-            _buildActions(context, l10n),
+            _buildActions(context, l),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActions(BuildContext context, S l10n) {
-    final theme = Theme.of(context);
-    final showJoinButton = onJoin != null && unavailableReason == null;
-
-    return Row(
-      children: [
-        if (showJoinButton)
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: isJoining ? null : onJoin,
-              icon: isJoining
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.add, size: 18),
-              label: Text(
-                isJoining ? l10n.joining : l10n.join,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          )
-        else if (isPassenger && onLeave != null)
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: isLeaving ? null : onLeave,
-              icon: isLeaving
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.logout, size: 18),
-              label: Text(
-                isLeaving ? l10n.leaving : l10n.leave,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          )
-        else if (unavailableReason != null && !isDriver && !isPassenger)
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-              decoration: BoxDecoration(
-                color: theme.fiestaaaMutedSurface,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 16,
-                    color: theme.fiestaaaMutedText,
-                  ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      unavailableReason!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: theme.fiestaaaMutedText,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        if (isDriver) ...[
-          if (onEdit != null) ...[
-            const SizedBox(width: 8),
-            _ActionIconButton(
-              icon: Icons.edit_outlined,
-              tooltip: l10n.edit,
-              onPressed: onEdit!,
-            ),
-          ],
-          if (onDelete != null) ...[
-            const SizedBox(width: 8),
-            _ActionIconButton(
-              icon: Icons.delete_outline,
-              tooltip: l10n.delete,
-              onPressed: onDelete!,
-              color: theme.colorScheme.fiestaaaDanger,
-            ),
-          ],
-        ],
-      ],
-    );
+  Widget _buildActions(BuildContext context, S l) {
+    if (isDriver) {
+      return onEdit == null
+          ? const SizedBox.shrink()
+          : OutlinedButton.icon(
+              onPressed: onEdit,
+              icon: const Icon(Icons.edit_outlined),
+              label: Text(l.edit),
+            );
+    }
+    if (isPassenger && onLeave != null) {
+      return OutlinedButton.icon(
+        onPressed: isLeaving ? null : onLeave,
+        icon: const Icon(Icons.logout),
+        label: Text(isLeaving ? l.leaving : l.leave),
+      );
+    }
+    if (onJoin != null && unavailableReason == null) {
+      return FilledButton.icon(
+        onPressed: isJoining ? null : onJoin,
+        icon: isJoining
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.add),
+        label: Text(
+          isJoining
+              ? l.joining
+              : betaText(context, 'Rejoindre ce trajet', 'Join this ride'),
+        ),
+      );
+    }
+    // Full capacity is already shown once above; other reasons stay explicit.
+    if (unavailableReason != null &&
+        !(carpool.isFull && unavailableReason == l.carpoolFull)) {
+      return Text(
+        unavailableReason!,
+        style: Theme.of(context).textTheme.bodyMedium,
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   Future<void> _openMap(BuildContext context, CarpoolModel carpool) async {
@@ -441,52 +323,8 @@ class CarpoolCard extends StatelessWidget {
 
   String _formatDepartureTime(BuildContext context, DateTime dateTime) {
     final locale = Localizations.localeOf(context).toString();
-    final formatter = DateFormat.yMMMMEEEEd(locale).add_Hm();
+    final formatter = DateFormat.yMMMd(locale).add_Hm();
     return formatter.format(dateTime.toLocal());
-  }
-
-  String _formatRelativeTime(BuildContext context, DateTime dateTime) {
-    final l10n = S.of(context);
-    final now = DateTime.now();
-    final difference = dateTime.difference(now);
-
-    if (difference.isNegative) {
-      return l10n.alreadyPassed;
-    } else if (difference.inMinutes < 60) {
-      return l10n.inMinutes(difference.inMinutes);
-    } else if (difference.inHours < 24) {
-      final hours = difference.inHours;
-      final minutes = difference.inMinutes % 60;
-      return minutes > 0
-          ? l10n.inHoursAndMinutes(hours, minutes)
-          : l10n.inHours(hours);
-    } else if (difference.inDays == 1) {
-      return l10n.tomorrow;
-    } else {
-      return l10n.inDays(difference.inDays);
-    }
-  }
-
-  void _showFullNotes(BuildContext context, String notes) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.chat_bubble_outline, color: FiestaaaPalette.primary),
-            const SizedBox(width: 10),
-            Text(S.of(context).carpoolNotes),
-          ],
-        ),
-        content: SingleChildScrollView(child: Text(notes)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(S.of(context).close),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -502,95 +340,29 @@ class _DriverAvatar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        CircleAvatar(
-          radius: 24,
-          backgroundColor: FiestaaaPalette.primary.withValues(alpha: 0.15),
-          backgroundImage: avatarUrl != null
-              ? platformNetworkImage(avatarUrl!)
-              : null,
-          child: avatarUrl == null
-              ? Text(
-                  (handle?.isNotEmpty == true) ? handle![0].toUpperCase() : '?',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: FiestaaaPalette.primary,
-                    fontSize: 18,
-                  ),
-                )
-              : null,
-        ),
-        if (isCurrentUser)
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                color: FiestaaaPalette.primary,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.surface,
-                  width: 2,
-                ),
-              ),
-              child: const Icon(Icons.check, size: 8, color: Colors.white),
+  Widget build(BuildContext context) => CircleAvatar(
+    radius: 20,
+    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+    backgroundImage: avatarUrl != null
+        ? platformNetworkImage(avatarUrl!)
+        : null,
+    child: avatarUrl == null
+        ? Text(
+            (handle?.isNotEmpty == true) ? handle![0].toUpperCase() : '?',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
             ),
-          ),
-      ],
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  final String label;
-  final Color color;
-  final IconData icon;
-
-  const _StatusBadge({
-    required this.label,
-    required this.color,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+          )
+        : null,
+  );
 }
 
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String text;
-  final String? secondaryText;
   final VoidCallback? onTap;
   final IconData? actionIcon;
 
@@ -598,7 +370,6 @@ class _InfoRow extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.text,
-    this.secondaryText,
     this.onTap,
     this.actionIcon,
   });
@@ -609,14 +380,7 @@ class _InfoRow extends StatelessWidget {
     final content = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: iconColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, size: 16, color: iconColor),
-        ),
+        Icon(icon, size: 20, color: theme.colorScheme.onSurface),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -624,24 +388,13 @@ class _InfoRow extends StatelessWidget {
             children: [
               Text(
                 text,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w700,
                   decoration: onTap != null ? TextDecoration.underline : null,
-                  decorationColor: theme.colorScheme.primary.withValues(
-                    alpha: 0.5,
-                  ),
+                  decorationColor: theme.colorScheme.onSurface,
                 ),
               ),
-              if (secondaryText != null)
-                Text(
-                  secondaryText!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.fiestaaaMutedText,
-                    fontSize: 11,
-                  ),
-                ),
             ],
           ),
         ),
@@ -650,7 +403,7 @@ class _InfoRow extends StatelessWidget {
           Icon(
             actionIcon ?? Icons.open_in_new,
             size: 16,
-            color: theme.colorScheme.primary,
+            color: theme.colorScheme.onSurface,
           ),
         ],
       ],
@@ -660,9 +413,12 @@ class _InfoRow extends StatelessWidget {
       return InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-          child: content,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            child: content,
+          ),
         ),
       );
     }
@@ -670,154 +426,6 @@ class _InfoRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
       child: content,
-    );
-  }
-}
-
-class _SeatsIndicator extends StatelessWidget {
-  final int seatsTaken;
-  final int seatsTotal;
-
-  const _SeatsIndicator({required this.seatsTaken, required this.seatsTotal});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = S.of(context);
-    final seatsAvailable = seatsTotal - seatsTaken;
-    final isFull = seatsTaken >= seatsTotal;
-    final progress = seatsTotal > 0 ? seatsTaken / seatsTotal : 0.0;
-    final theme = Theme.of(context);
-    final statusStyle = theme.colorScheme.fiestaaaStatus(
-      isFull ? FiestaaaStatusTone.danger : FiestaaaStatusTone.success,
-    );
-
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: statusStyle.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: statusStyle.border),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox(
-                width: 40,
-                height: 40,
-                child: CircularProgressIndicator(
-                  value: progress,
-                  backgroundColor: theme.fiestaaaSoftSurface,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    statusStyle.foreground,
-                  ),
-                  strokeWidth: 3,
-                ),
-              ),
-              Text(
-                '$seatsAvailable',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: statusStyle.foreground,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            l10n.seatsAvailable(seatsAvailable),
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: statusStyle.foreground,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PassengerChip extends StatelessWidget {
-  final String? handle;
-  final String? avatarUrl;
-
-  const _PassengerChip({required this.handle, required this.avatarUrl});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = S.of(context);
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: theme.fiestaaaMutedSurface,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircleAvatar(
-            radius: 12,
-            backgroundColor: FiestaaaPalette.secondary.withValues(alpha: 0.2),
-            backgroundImage: avatarUrl != null
-                ? platformNetworkImage(avatarUrl!)
-                : null,
-            child: avatarUrl == null
-                ? Text(
-                    (handle?.isNotEmpty == true)
-                        ? handle![0].toUpperCase()
-                        : '?',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: FiestaaaPalette.secondary,
-                    ),
-                  )
-                : null,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            handle ?? l10n.anonymous,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionIconButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
-  final Color? color;
-
-  const _ActionIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final buttonColor = color ?? FiestaaaPalette.primary;
-    return Container(
-      decoration: BoxDecoration(
-        color: buttonColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 20),
-        color: buttonColor,
-        tooltip: tooltip,
-        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-      ),
     );
   }
 }

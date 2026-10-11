@@ -1,7 +1,7 @@
+import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import '../../data/apple_sign_in.dart';
 import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
@@ -17,8 +17,6 @@ import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-part '../widgets/auth_page_mobile_layout.dart';
-part '../widgets/auth_page_desktop_layout.dart';
 part '../widgets/auth_page_form.dart';
 part '../widgets/auth_page_alpha_banner.dart';
 
@@ -43,8 +41,6 @@ class AuthPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthPage> {
-  static const double _desktopBreakpoint = 1024;
-  static const double _desktopMaxWidth = 1400;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -202,7 +198,11 @@ Bug report
       'email_not_verified' => l10n.loginRequiresVerifiedEmail,
       'handle_taken' => l10n.identifierTaken,
       'expired_token' || 'invalid_token' => l10n.emailVerificationFailed,
-      _ => message,
+      _ => localizedApiError(
+        l10n,
+        ApiException(message, code: code),
+        fallback: l10n.actionFailed,
+      ),
     };
   }
 
@@ -442,7 +442,7 @@ Bug report
       if (e.code == AuthorizationErrorCode.canceled) {
         return;
       }
-      _showSnack(e.message, isError: true);
+      _showSnack(S.of(context).appleLoginFailed, isError: true);
     } on ApiException catch (e) {
       if (!mounted) return;
       _showSnack(_mapApiMessage(e.message, code: e.code), isError: true);
@@ -532,53 +532,31 @@ Bug report
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: FiestaaaBackground(
-        padding: EdgeInsets.zero,
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final viewportWidth = constraints.maxWidth;
-              final viewportHeight = constraints.maxHeight;
-              final useDesktopLayout = viewportWidth >= _desktopBreakpoint;
-
-              if (!useDesktopLayout) {
-                return _buildMobileLayout(
-                  context,
-                  maxWidth: viewportWidth,
-                  minHeight: viewportHeight,
-                );
-              }
-
-              final horizontalPadding = viewportWidth >= 1440 ? 32.0 : 24.0;
-              final verticalPadding = viewportHeight >= 880 ? 24.0 : 16.0;
-              final contentWidth = math.min(
-                _desktopMaxWidth,
-                math.max(0.0, viewportWidth - (horizontalPadding * 2)),
-              );
-              final contentHeight = math.max(
-                0.0,
-                viewportHeight - (verticalPadding * 2),
-              );
-
-              return Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding,
-                  vertical: verticalPadding,
+  Widget build(BuildContext context) => Scaffold(
+    body: FiestaaaPageLayout(
+      maxWidth: 760,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.celebration_outlined,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-                child: Center(
-                  child: SizedBox(
-                    width: contentWidth,
-                    height: contentHeight,
-                    child: _buildDesktopLayout(context),
-                  ),
-                ),
-              );
-            },
-          ),
+                const SizedBox(width: 12),
+                Text('Fiestaaa', style: Theme.of(context).textTheme.titleLarge),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Card(
+              key: const ValueKey('auth-card'),
+              child: _buildAuthForm(context, 20),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
 }

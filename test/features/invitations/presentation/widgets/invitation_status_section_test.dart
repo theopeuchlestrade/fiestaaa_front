@@ -93,7 +93,10 @@ void main() {
     );
 
     expect(find.byType(ListTile), findsNWidgets(2));
-    expect(find.byIcon(Icons.emoji_events), findsOneWidget);
+    expect(
+      find.text(S.of(tester.element(find.byType(ListTile).first)).eventCreator),
+      findsOneWidget,
+    );
     expect(find.byIcon(Icons.delete), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.delete));

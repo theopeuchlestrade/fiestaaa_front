@@ -5,6 +5,7 @@ import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'event_detail_page.dart';
+export 'event_detail_page.dart' show EventModule;
 
 class EventRoutePage extends StatefulWidget {
   const EventRoutePage({
@@ -12,11 +13,13 @@ class EventRoutePage extends StatefulWidget {
     required this.session,
     required this.eventId,
     this.api,
+    this.module,
   });
 
   final SessionData session;
   final int eventId;
   final EventsApi? api;
+  final EventModule? module;
 
   @override
   State<EventRoutePage> createState() => _EventRoutePageState();
@@ -107,6 +110,7 @@ class _EventRoutePageState extends State<EventRoutePage> {
     }
     return EventDetailPage(
       event: _event!,
+      module: widget.module,
       session: widget.session,
       onEventRemoved: (_) => context.go('/events'),
       onInvitationStatusChanged: (_, status) {

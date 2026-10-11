@@ -52,6 +52,10 @@ Future<void> _bootstrap() async {
     debugPrint('Fiestaaa startup initializeDateFormatting failed: $error');
   }
   runApp(const FiestaaaApp());
+  if (kIsWeb) {
+    // Expose semantic controls without requiring the hidden opt-in button.
+    WidgetsBinding.instance.ensureSemantics();
+  }
   WidgetsBinding.instance.addPostFrameCallback((_) {
     debugPrint(
       'Fiestaaa startup first frame scheduled after '

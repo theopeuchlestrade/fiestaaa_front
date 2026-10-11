@@ -20,26 +20,22 @@ class _EventDetailFeatureActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return OutlinedButton(
-      onPressed: data.onPressed,
-      style: OutlinedButton.styleFrom(
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.4)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      child: Row(
-        children: [
-          Icon(data.icon, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              data.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+    return Material(
+      color: colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: ListTile(
+        leading: Icon(data.icon, color: colorScheme.primary),
+        title: Text(
+          data.label,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w700,
           ),
-        ],
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: data.onPressed,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
     );
   }

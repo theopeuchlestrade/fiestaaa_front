@@ -1,0 +1,12 @@
+## Tasks
+- [x] Implement shared module headers and contextual navigation.
+- [x] Refine event, module, friend, profile and recovery presentation.
+- [x] Validate regression/layout/accessibility checks and review actual renders.
+- [x] Deliver the HTML review gallery and verify remote references.
+- [x] Separate safety actions, correct expense typography/local currency, and refresh the review gallery.
+- [x] Refine recovery request/confirmation and add accessible, restrained motion with updated renders.
+- [x] Reorganize needs/personal brings with clear actions, simpler cards and reviewed renders.
+- [x] Reorganize carpool choices, current-ride priority and concise role-specific cards; update the visual gallery.
+- [x] Clarify poll response priority, voting controls and closed results; refresh the visual gallery.
+- [x] Clarify expense balance, ledger and settlement disclosures; refresh the visual gallery.
+- [x] Clarify participant responses and invitation actions; refresh the visual gallery.
