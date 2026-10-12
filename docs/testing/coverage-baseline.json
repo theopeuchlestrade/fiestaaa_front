@@ -1,0 +1,125 @@
+{
+  "sourceSha": "afb8f4243266d4c5f27136c0d58c10336228880d",
+  "rawCiPercent": 56.02,
+  "platform": "macOS arm64",
+  "rawLocal": {
+    "found": 13946,
+    "hit": 7813,
+    "percent": 56.02323246809121
+  },
+  "applicationLocal": {
+    "found": 12487,
+    "hit": 7397,
+    "percent": 59.23760711139585,
+    "floor": 0,
+    "target": 70
+  },
+  "groups": [
+    {
+      "name": "authentication-sessions",
+      "floor": 0,
+      "target": 80,
+      "found": 1055,
+      "hit": 507,
+      "percent": 48.056872037914694
+    },
+    {
+      "name": "permissions-participation",
+      "floor": 0,
+      "target": 80,
+      "found": 1105,
+      "hit": 830,
+      "percent": 75.1131221719457
+    },
+    {
+      "name": "cache-synchronization",
+      "floor": 0,
+      "target": 80,
+      "found": 949,
+      "hit": 618,
+      "percent": 65.12118018967334
+    },
+    {
+      "name": "notifications-qr",
+      "floor": 0,
+      "target": 80,
+      "found": 673,
+      "hit": 319,
+      "percent": 47.399702823179794
+    }
+  ],
+  "missing": [
+    "lib/main.dart",
+    "lib/src/core/pending_token_storage.dart",
+    "lib/src/core/platform_http_client_stub.dart",
+    "lib/src/core/platform_network_image.dart",
+    "lib/src/core/platform_network_image_stub.dart",
+    "lib/src/core/platform_web_socket.dart",
+    "lib/src/core/platform_web_socket_stub.dart",
+    "lib/src/features/auth/data/session_storage.dart",
+    "lib/src/features/auth/data/session_storage_stub.dart",
+    "lib/src/features/carpools/presentation/carpools_controller.dart",
+    "lib/src/features/events/presentation/event_expenses_controller.dart",
+    "lib/src/features/events/presentation/event_form_browser_guard.dart",
+    "lib/src/features/friends/presentation/friends_controller.dart",
+    "lib/src/features/invitations/presentation/pages/my_invitations_page.dart",
+    "lib/src/features/profile/presentation/pages/avatar_file_picker.dart",
+    "lib/src/features/qr_checkin/presentation/qr_controller.dart"
+  ],
+  "unmeasured": [
+    {
+      "path": "lib/src/core/firebase_messaging_support_web.dart",
+      "reason": "Browser-only adapter; Dart VM does not select this implementation. Browser functional checks are separate."
+    },
+    {
+      "path": "lib/src/core/pending_token_storage_web.dart",
+      "reason": "Browser-only adapter; Dart VM does not select this implementation. Browser functional checks are separate."
+    },
+    {
+      "path": "lib/src/core/platform_http_client_web.dart",
+      "reason": "Browser-only adapter; Dart VM does not select this implementation. Browser functional checks are separate."
+    },
+    {
+      "path": "lib/src/core/query_param_sanitizer_web.dart",
+      "reason": "Browser-only adapter; Dart VM does not select this implementation. Browser functional checks are separate."
+    },
+    {
+      "path": "lib/src/core/web_notification_html.dart",
+      "reason": "Browser-only adapter; Dart VM does not select this implementation. Browser functional checks are separate."
+    },
+    {
+      "path": "lib/src/features/auth/data/session_storage_web.dart",
+      "reason": "Browser-only adapter; Dart VM does not select this implementation. Browser functional checks are separate."
+    },
+    {
+      "path": "lib/src/features/auth/presentation/widgets/google_auth_impl_web.dart",
+      "reason": "Browser-only adapter; Dart VM does not select this implementation. Browser functional checks are separate."
+    },
+    {
+      "path": "lib/src/features/events/presentation/event_form_browser_guard_web.dart",
+      "reason": "Browser-only adapter; Dart VM does not select this implementation. Browser functional checks are separate."
+    },
+    {
+      "path": "lib/src/features/profile/presentation/pages/avatar_file_picker_web.dart",
+      "reason": "Browser-only adapter; Dart VM does not select this implementation. Browser functional checks are separate."
+    }
+  ],
+  "excluded": [
+    {
+      "path": "lib/firebase_options.dart",
+      "reason": "Generated localization/Firebase configuration, not handwritten application behavior."
+    },
+    {
+      "path": "lib/l10n/app_localizations.dart",
+      "reason": "Generated localization/Firebase configuration, not handwritten application behavior."
+    },
+    {
+      "path": "lib/l10n/app_localizations_en.dart",
+      "reason": "Generated localization/Firebase configuration, not handwritten application behavior."
+    },
+    {
+      "path": "lib/l10n/app_localizations_fr.dart",
+      "reason": "Generated localization/Firebase configuration, not handwritten application behavior."
+    }
+  ]
+}

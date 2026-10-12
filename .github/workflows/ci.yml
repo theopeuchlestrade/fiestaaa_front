@@ -91,6 +91,16 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup coverage tooling
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '22'
+
+      - name: Test coverage report and publication guards
+        run: npm run coverage:test
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2.23.0
@@ -140,6 +150,9 @@ jobs:
       - name: Run tests with coverage
         run: flutter test --coverage --dart-define-from-file=.env.ci
 
+      - name: Test browser storage and link adapters (not instrumented by Dart VM)
+        run: flutter test --platform chrome test/browser/platform_storage_browser.dart --dart-define-from-file=.env.ci
+
       - name: Upload visual failure artifacts
         if: failure()
         uses: actions/upload-artifact@v7
@@ -148,25 +161,24 @@ jobs:
           path: test/features/events/presentation/failures
           if-no-files-found: ignore
 
-      - name: Enforce 22% line coverage
+      - name: Enforce coverage policy and summarize
+        env:
+          COVERAGE_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          awk -F: '
-            /^LF:/ { total += $2 }
-            /^LH:/ { hit += $2 }
-            END {
-              coverage = total == 0 ? 0 : (100 * hit / total)
-              printf "Flutter line coverage: %.2f%% (%d/%d)\n", coverage, hit, total
-              if (coverage < 22) exit 1
-            }
-          ' coverage/lcov.info
+          if [ -n "$COVERAGE_BASE_SHA" ]; then
+            npm run coverage:report -- --base "$COVERAGE_BASE_SHA"
+          else
+            npm run coverage:report
+          fi
 
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: frontend-coverage-lcov
-          path: coverage/lcov.info
+          name: frontend-coverage-report
+          path: coverage/report
           if-no-files-found: error
+          retention-days: 7
 
   web-container-build:
     name: Web Container Build

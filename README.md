@@ -3,6 +3,7 @@
 <img src=".github/assets/fiestaaa_logo.png" alt="Fiestaaa Logo" width="120">
 
 [![CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/workflows/ci.yml/badge.svg)](https://github.com/theopeuchlestrade/fiestaaa_front/actions/workflows/ci.yml)
+[![Frontend coverage](https://raw.githubusercontent.com/theopeuchlestrade/fiestaaa_front/coverage-reports/badge.svg)](https://github.com/theopeuchlestrade/fiestaaa_front/tree/coverage-reports)
 [![Flutter 3.44.0](https://img.shields.io/badge/Flutter-3.44.0-02569B.svg?logo=flutter)](https://flutter.dev)
 [![Dart 3.11](https://img.shields.io/badge/Dart-3.11-0175C2.svg?logo=dart)](https://dart.dev)
 [![MPL-2.0 License](https://img.shields.io/badge/license-MPL--2.0-brightgreen.svg)](LICENSE)
@@ -117,9 +118,11 @@ flutter test --dart-define-from-file=.env
 flutter test --coverage --dart-define-from-file=.env
 ```
 
-CI uploads the generated `coverage/lcov.info` report as a workflow artifact.
-The quality job enforces a 22% line-coverage floor, ratcheted upward as critical
-flows gain direct tests.
+CI provides seven-day LCOV, HTML and JSON report artifacts plus a job summary.
+See [coverage policy and measurement limits](docs/testing/coverage.md).
+The quality job enforces the versioned application and critical-group floors,
+with an 80% changed-executable-line requirement. The target is 70% application
+coverage and 80% for each critical group; the badge identifies Dart VM coverage.
 
 **Fresh clone sequence:**
 ```bash

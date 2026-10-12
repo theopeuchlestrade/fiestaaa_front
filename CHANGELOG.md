@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Expand behavior tests and enforce 70% Dart VM application coverage, 80% for critical groups and changed executable lines; add GitHub-native coverage reports and isolated browser adapter checks.
+
 - Reuse session-scoped event resources across module navigation, share concurrent reads and load only the active module; preserve server-backed access checks, realtime invalidation and content during refresh failures.
 
 ## [0.7.0] - 2026-10-12

@@ -19,6 +19,30 @@ import '../widgets/event_personal_summary_test.dart' as fixtures;
 class _Api extends EventsApi {
   bool fail = false;
   int created = 0;
+  int updated = 0;
+  int deleted = 0;
+  EventPayload? lastPayload;
+  @override
+  Future<EventModel> updateEvent({
+    required String token,
+    required int eventId,
+    required EventPayload payload,
+  }) async {
+    updated++;
+    lastPayload = payload;
+    if (fail) throw StateError('offline');
+    return fixtures.event();
+  }
+
+  @override
+  Future<void> deleteEvent({
+    required String token,
+    required int eventId,
+  }) async {
+    deleted++;
+    if (fail) throw StateError('offline');
+  }
+
   @override
   Future<List<AddressSuggestion>> searchAddresses({
     required String token,
@@ -118,6 +142,69 @@ void main() {
     expect(find.text('Birthday'), findsNothing);
     expect(await store.read('me@example.com'), isNull);
   });
+  testWidgets(
+    'edit preserves input through a failed save and returns an updated result on retry',
+    (tester) async {
+      final api = _Api()..fail = true;
+      final nav = GlobalKey<NavigatorState>();
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorKey: nav,
+          locale: const Locale('en'),
+          localizationsDelegates: S.localizationsDelegates,
+          supportedLocales: S.supportedLocales,
+          home: const Scaffold(body: Text('Home')),
+        ),
+      );
+      EventEditPageResult? result;
+      nav.currentState!
+          .push<EventEditPageResult>(
+            MaterialPageRoute(
+              builder: (_) => EventEditPage(
+                session: SessionData(
+                  token: 'token',
+                  email: 'owner@example.com',
+                ),
+                initialEvent: fixtures.event(),
+                eventsApi: api,
+                paymentProvidersApi: providers(),
+              ),
+            ),
+          )
+          .then((value) => result = value);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        '  Edited dinner  ',
+      );
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(
+        api.updated,
+        0,
+      ); // An address without coordinates must be revalidated.
+      await tester.ensureVisible(find.byTooltip('Search'));
+      await tester.tap(find.byTooltip('Search'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Paris, France'));
+      await tester.tap(find.text('Paris, France'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(api.updated, 1);
+      expect(find.text('  Edited dinner  '), findsOneWidget);
+      expect(result, isNull);
+      expect(api.lastPayload!.name, 'Edited dinner');
+      expect(api.lastPayload!.latitude, 48.85);
+      api.fail = false;
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(api.updated, 2);
+      expect(result!.deleted, isFalse);
+      expect(result!.event!.id, 1);
+      expect(find.text('Home'), findsOneWidget);
+    },
+  );
   testWidgets('editing asks before discarding changes', (tester) async {
     final nav = GlobalKey<NavigatorState>();
     await tester.pumpWidget(
