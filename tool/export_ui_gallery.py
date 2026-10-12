@@ -17,7 +17,7 @@ for mobile in sorted((folder / 'renders').glob('*_360_light_fr.png')):
     def replace_image(_):
         data = base64.b64encode(next(images).read_bytes()).decode()
         return f'src="data:image/png;base64,{data}"'
-    block, replaced = re.subn(r'src="data:image/png;base64,[^"]+"', replace_image, match.group(2))
+    block, replaced = re.subn(r'src="data:image/png;base64,[^"]*"', replace_image, match.group(2))
     if replaced != 2:
         raise ValueError(f'Expected two images: {screen}')
     content = content[:match.start(2)] + block + content[match.end(2):]
