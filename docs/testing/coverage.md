@@ -43,7 +43,7 @@ Added assertions cover local HTTP request/response boundaries, Google/Apple plug
 
 Three Chrome-only tests cover browser identity hints without bearer persistence, pending-link storage and sensitive-query removal. These checks are not part of Dart VM coverage. Physical iPhone/Pixel checks have not been performed for this test-only change.
 
-Stability: the complete 1,084-test suite passed three consecutive times, including randomized ordering seeds 203 and 307. Static analysis and formatting pass. The 26 coverage-tool tests, 14 strict OpenSpec validations and the 63-path backend contract check pass. Native compilation and the GitHub workflow are verified separately in PR CI.
+Stability: the complete 1,084-test suite passed three consecutive times, including randomized ordering seeds 203 and 307. Static analysis and formatting pass. The 28 coverage-tool tests, 14 strict OpenSpec validations and the 63-path backend contract check pass. Native compilation and the GitHub workflow are verified separately in PR CI.
 
 ## GitHub CI confirmation
 
