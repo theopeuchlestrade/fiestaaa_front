@@ -1,3 +1,6 @@
+import 'package:fiestaaa_front/src/core/realtime_client.dart';
+import 'dart:async';
+import 'package:fiestaaa_front/src/core/event_data_store.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
@@ -16,12 +19,15 @@ class EventRoutePage extends StatefulWidget {
     required this.eventId,
     this.api,
     this.module,
+    this.realtimeClientFactory,
   });
 
   final SessionData session;
   final int eventId;
   final EventsApi? api;
   final EventModule? module;
+  final RealtimeClient Function(String token, int eventId)?
+  realtimeClientFactory;
 
   @override
   State<EventRoutePage> createState() => _EventRoutePageState();
@@ -32,28 +38,59 @@ class _EventRoutePageState extends State<EventRoutePage> {
   EventModel? _event;
   bool _failed = false;
   int _loadGeneration = 0;
+  StreamSubscription<EventAccessChange>? _accessSub;
 
   @override
   void initState() {
     super.initState();
     _api = widget.api ?? EventsApi();
-    _load();
+    _event = EventDataStore.instance.peek<EventModel>(
+      widget.session.token,
+      widget.eventId,
+      'context',
+      fresh: widget.module != null,
+    );
+    _accessSub = EventDataStore.instance.accessChanges.listen((change) {
+      if (!mounted ||
+          change.generation != EventDataStore.instance.generation ||
+          change.eventId != widget.eventId ||
+          !change.denied) {
+        return;
+      }
+      _loadGeneration++;
+      setState(() {
+        _event = null;
+        _failed = true;
+      });
+    });
+    _load(initial: true);
   }
 
   @override
   void didUpdateWidget(covariant EventRoutePage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.eventId != widget.eventId ||
-        oldWidget.session.token != widget.session.token) {
-      _load();
+        oldWidget.session.token != widget.session.token ||
+        oldWidget.session.email != widget.session.email ||
+        oldWidget.session.publicId != widget.session.publicId) {
+      _event = EventDataStore.instance.peek<EventModel>(
+        widget.session.token,
+        widget.eventId,
+        'context',
+        fresh: widget.module != null,
+      );
+      _load(initial: true);
     }
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool initial = false}) async {
     final generation = ++_loadGeneration;
     setState(() {
       _failed = false;
-      _event = null;
+      if (!initial) {
+        EventDataStore.instance.invalidateEvent(widget.eventId);
+        _event = null;
+      }
     });
     try {
       final event = await _api.fetchEventById(
@@ -70,6 +107,7 @@ class _EventRoutePageState extends State<EventRoutePage> {
 
   @override
   void dispose() {
+    _accessSub?.cancel();
     if (widget.api == null) _api.dispose();
     super.dispose();
   }
@@ -165,6 +203,10 @@ class _EventRoutePageState extends State<EventRoutePage> {
       );
     }
     return EventDetailPage(
+      eventsApi: _api,
+      contextRefreshFailed: _failed,
+      onContextRetry: () => _load(initial: true),
+      realtimeClientFactory: widget.realtimeClientFactory,
       event: _event!,
       module: widget.module,
       session: widget.session,

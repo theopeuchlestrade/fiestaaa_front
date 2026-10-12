@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/event_data_store.dart';
 import 'dart:convert';
 
 import 'package:fiestaaa_front/src/core/api_response.dart';
@@ -136,18 +137,20 @@ class EventsApi {
     required String token,
     required int eventId,
   }) async {
-    final response = await _client.get(
-      buildApiUri('/events/$eventId'),
-      headers: apiAuthHeaders(token),
-    );
-
-    if (response.statusCode == 200) {
-      return EventModel.fromJson(
-        decodeJsonBody<Map<String, dynamic>>(response),
+    return EventDataStore.instance.read(token, eventId, 'context', () async {
+      final response = await _client.get(
+        buildApiUri('/events/$eventId'),
+        headers: apiAuthHeaders(token),
       );
-    }
 
-    throw _apiError(response, fallbackMessage: 'Fiestaaa introuvable');
+      if (response.statusCode == 200) {
+        return EventModel.fromJson(
+          decodeJsonBody<Map<String, dynamic>>(response),
+        );
+      }
+
+      throw _apiError(response, fallbackMessage: 'Fiestaaa introuvable');
+    });
   }
 
   Future<List<EventItemModel>> fetchEventItems(
@@ -155,27 +158,34 @@ class EventsApi {
     String? token,
     String? scope,
   }) async {
-    final uri = buildApiUri(
-      '/events/$eventId/items',
-      queryParameters: scope == null ? null : {'scope': scope},
-    );
-    final headers = <String, String>{};
-    if (token != null && token.trim().isNotEmpty) {
-      headers.addAll(apiAuthHeaders(token));
-    }
-    final response = await _client.get(
-      uri,
-      headers: headers.isEmpty ? null : headers,
-    );
-    if (response.statusCode == 200) {
-      final decoded = decodeJsonBody<List<dynamic>>(response);
-      return decoded
-          .map((e) => EventItemModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw _apiError(
-      response,
-      fallbackMessage: 'Impossible de récupérer les items',
+    return EventDataStore.instance.read(
+      token,
+      eventId,
+      'items:${scope ?? 'all'}',
+      () async {
+        final uri = buildApiUri(
+          '/events/$eventId/items',
+          queryParameters: scope == null ? null : {'scope': scope},
+        );
+        final headers = <String, String>{};
+        if (token != null && token.trim().isNotEmpty) {
+          headers.addAll(apiAuthHeaders(token));
+        }
+        final response = await _client.get(
+          uri,
+          headers: headers.isEmpty ? null : headers,
+        );
+        if (response.statusCode == 200) {
+          final decoded = decodeJsonBody<List<dynamic>>(response);
+          return decoded
+              .map((e) => EventItemModel.fromJson(e as Map<String, dynamic>))
+              .toList();
+        }
+        throw _apiError(
+          response,
+          fallbackMessage: 'Impossible de récupérer les items',
+        );
+      },
     );
   }
 
@@ -183,20 +193,22 @@ class EventsApi {
     required String token,
     required int eventId,
   }) async {
-    final response = await _client.get(
-      buildApiUri('/events/$eventId/polls'),
-      headers: apiAuthHeaders(token),
-    );
-    if (response.statusCode == 200) {
-      final decoded = decodeJsonBody<List<dynamic>>(response);
-      return decoded
-          .map((e) => PollModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw _apiError(
-      response,
-      fallbackMessage: 'Impossible de charger les sondages',
-    );
+    return EventDataStore.instance.read(token, eventId, 'polls', () async {
+      final response = await _client.get(
+        buildApiUri('/events/$eventId/polls'),
+        headers: apiAuthHeaders(token),
+      );
+      if (response.statusCode == 200) {
+        final decoded = decodeJsonBody<List<dynamic>>(response);
+        return decoded
+            .map((e) => PollModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      throw _apiError(
+        response,
+        fallbackMessage: 'Impossible de charger les sondages',
+      );
+    });
   }
 
   Future<PollModel> createEventPoll({
@@ -281,19 +293,29 @@ class EventsApi {
     required String token,
     required int eventId,
   }) async {
-    final response = await _client.get(
-      buildApiUri('/events/$eventId/items/contributions'),
-      headers: apiAuthHeaders(token),
-    );
-    if (response.statusCode == 200) {
-      final decoded = decodeJsonBody<List<dynamic>>(response);
-      return decoded
-          .map((e) => ItemContributionModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw _apiError(
-      response,
-      fallbackMessage: 'Impossible de charger les contributions',
+    return EventDataStore.instance.read(
+      token,
+      eventId,
+      'contributions',
+      () async {
+        final response = await _client.get(
+          buildApiUri('/events/$eventId/items/contributions'),
+          headers: apiAuthHeaders(token),
+        );
+        if (response.statusCode == 200) {
+          final decoded = decodeJsonBody<List<dynamic>>(response);
+          return decoded
+              .map(
+                (e) =>
+                    ItemContributionModel.fromJson(e as Map<String, dynamic>),
+              )
+              .toList();
+        }
+        throw _apiError(
+          response,
+          fallbackMessage: 'Impossible de charger les contributions',
+        );
+      },
     );
   }
 
@@ -449,36 +471,45 @@ class EventsApi {
     required String token,
     required int eventId,
   }) async {
-    return collectCursorPages(
-      request: (cursor) => _client.get(
-        buildApiUri(
-          '/events/$eventId/expenses',
-          queryParameters: {'limit': '100', 'cursor': ?cursor},
+    return EventDataStore.instance.read(token, eventId, 'expenses', () async {
+      return collectCursorPages(
+        request: (cursor) => _client.get(
+          buildApiUri(
+            '/events/$eventId/expenses',
+            queryParameters: {'limit': '100', 'cursor': ?cursor},
+          ),
+          headers: apiAuthHeaders(token),
         ),
-        headers: apiAuthHeaders(token),
-      ),
-      decode: EventExpenseModel.fromJson,
-    );
+        decode: EventExpenseModel.fromJson,
+      );
+    });
   }
 
   Future<EventExpensesSummaryModel> fetchEventExpensesSummary({
     required String token,
     required int eventId,
   }) async {
-    final response = await _client.get(
-      buildApiUri('/events/$eventId/expenses/summary'),
-      headers: apiAuthHeaders(token),
-    );
+    return EventDataStore.instance.read(
+      token,
+      eventId,
+      'expense-summary',
+      () async {
+        final response = await _client.get(
+          buildApiUri('/events/$eventId/expenses/summary'),
+          headers: apiAuthHeaders(token),
+        );
 
-    if (response.statusCode == 200) {
-      return EventExpensesSummaryModel.fromJson(
-        decodeJsonBody<Map<String, dynamic>>(response),
-      );
-    }
+        if (response.statusCode == 200) {
+          return EventExpensesSummaryModel.fromJson(
+            decodeJsonBody<Map<String, dynamic>>(response),
+          );
+        }
 
-    throw _apiError(
-      response,
-      fallbackMessage: 'Impossible de calculer le partage',
+        throw _apiError(
+          response,
+          fallbackMessage: 'Impossible de calculer le partage',
+        );
+      },
     );
   }
 

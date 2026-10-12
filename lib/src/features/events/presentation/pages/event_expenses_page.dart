@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/event_data_store.dart';
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header.dart';
@@ -66,6 +67,7 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
   String? _error;
   int? _deletingExpenseId;
   StreamSubscription<Map<String, dynamic>>? _realtimeSub;
+  bool _seenRealtimeReady = false;
 
   bool get _canInteract =>
       !widget.isReadOnly && (widget.isOwner || widget.hasAcceptedInvitation);
@@ -91,6 +93,35 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
   @override
   void initState() {
     super.initState();
+    if (EventDataStore.instance.canReuseProtected(
+      widget.session.token,
+      widget.eventId,
+    )) {
+      final store = EventDataStore.instance;
+      final expenses = store.peek<List<EventExpenseModel>>(
+        widget.session.token,
+        widget.eventId,
+        'expenses',
+      );
+      _summary = store.peek<EventExpensesSummaryModel>(
+        widget.session.token,
+        widget.eventId,
+        'expense-summary',
+      );
+      _invitations =
+          store.peek<List<InvitationModel>>(
+            widget.session.token,
+            widget.eventId,
+            'participants',
+          ) ??
+          [];
+      if (expenses != null) {
+        _expenses = expenses;
+        _hasLoaded = true;
+        _loading = false;
+      }
+    }
+
     _loadData();
     _realtimeSub = widget.realtimeStream?.listen(_handleRealtime);
   }
@@ -103,7 +134,9 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
       _realtimeSub = widget.realtimeStream?.listen(_handleRealtime);
     }
     if (oldWidget.eventId != widget.eventId ||
-        oldWidget.session.token != widget.session.token) {
+        oldWidget.session.token != widget.session.token ||
+        oldWidget.session.email != widget.session.email ||
+        oldWidget.session.publicId != widget.session.publicId) {
       _scopeGeneration++;
       _expenses = const [];
       _hasLoaded = false;
@@ -124,6 +157,24 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
 
   void _handleRealtime(Map<String, dynamic> message) {
     final type = message['type'] as String?;
+    if (type == 'realtime.ready') {
+      if (!_seenRealtimeReady) {
+        _seenRealtimeReady = true;
+        if (EventDataStore.instance.applies(widget.session.token)) return;
+      }
+      EventDataStore.instance.observeRealtime(
+        widget.session.token,
+        widget.eventId,
+        message,
+        reconnect: true,
+      );
+    } else {
+      EventDataStore.instance.observeRealtime(
+        widget.session.token,
+        widget.eventId,
+        message,
+      );
+    }
     if (!mounted ||
         (type != 'event_expenses_changed' && type != 'realtime.ready')) {
       return;
@@ -154,10 +205,27 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
 
     try {
       final results = await Future.wait([
-        _eventsApi.fetchEventExpenses(
-          token: widget.session.token,
-          eventId: widget.eventId,
-        ),
+        _eventsApi
+            .fetchEventExpenses(
+              token: widget.session.token,
+              eventId: widget.eventId,
+            )
+            .then((data) {
+              if (mounted &&
+                  requestScope ==
+                      (
+                        _scopeGeneration,
+                        widget.session.token,
+                        widget.eventId,
+                      )) {
+                setState(() {
+                  _expenses = data;
+                  _hasLoaded = true;
+                  _loading = false;
+                });
+              }
+              return data;
+            }),
         _eventsApi.fetchEventExpensesSummary(
           token: widget.session.token,
           eventId: widget.eventId,
@@ -640,7 +708,14 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
             _buildErrorState(l10n)
           else ...[
             if (_error != null) _buildErrorState(l10n),
-            _buildSummaryCard(l10n),
+            if (_summary == null)
+              Semantics(
+                label: l10n.loading,
+                liveRegion: true,
+                child: const LinearProgressIndicator(),
+              )
+            else
+              _buildSummaryCard(l10n),
             const SizedBox(height: 20),
             if (_canInteract) ...[
               Align(
@@ -691,7 +766,10 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
             Text(_error!, textAlign: TextAlign.center),
             const SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: () => _loadData(),
+              onPressed: () {
+                EventDataStore.instance.invalidateEvent(widget.eventId);
+                _loadData();
+              },
               icon: const Icon(Icons.refresh),
               label: Text(l10n.retry),
             ),

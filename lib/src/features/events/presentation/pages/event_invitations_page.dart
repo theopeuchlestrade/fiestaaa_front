@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/event_data_store.dart';
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header.dart';
@@ -64,6 +65,7 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   List<FriendRequestModel> _friendRequests = [];
   bool _sendingFriendAsk = false;
   StreamSubscription<Map<String, dynamic>>? _realtimeSub;
+  bool _seenRealtimeReady = false;
 
   bool get _isOwner =>
       widget.session.email.toLowerCase() == widget.ownerEmail.toLowerCase();
@@ -72,6 +74,21 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   @override
   void initState() {
     super.initState();
+    if (EventDataStore.instance.canReuseProtected(
+      widget.session.token,
+      widget.eventId,
+    )) {
+      final saved = EventDataStore.instance.peek<List<InvitationModel>>(
+        widget.session.token,
+        widget.eventId,
+        'participants',
+      );
+      if (saved != null) {
+        _invitations = saved;
+        _loading = false;
+      }
+    }
+
     _fetch();
     _loadFriendsAndRequests();
     _realtimeSub = widget.realtimeStream?.listen(_handleRealtime);
@@ -91,7 +108,9 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   void didUpdateWidget(covariant EventInvitationsPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.eventId != widget.eventId ||
-        oldWidget.session.token != widget.session.token) {
+        oldWidget.session.token != widget.session.token ||
+        oldWidget.session.email != widget.session.email ||
+        oldWidget.session.publicId != widget.session.publicId) {
       _scopeGeneration++;
       _invitations = [];
       _fetch();
@@ -105,6 +124,24 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
 
   void _handleRealtime(Map<String, dynamic> message) {
     final type = message['type'] as String?;
+    if (type == 'realtime.ready') {
+      if (!_seenRealtimeReady) {
+        _seenRealtimeReady = true;
+        if (EventDataStore.instance.applies(widget.session.token)) return;
+      }
+      EventDataStore.instance.observeRealtime(
+        widget.session.token,
+        widget.eventId,
+        message,
+        reconnect: true,
+      );
+    } else {
+      EventDataStore.instance.observeRealtime(
+        widget.session.token,
+        widget.eventId,
+        message,
+      );
+    }
     if (type == null) return;
     final eventId = message['event_id'];
     if (eventId is int && eventId != widget.eventId) return;
@@ -535,7 +572,13 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
             Column(
               children: [
                 Text(_error!),
-                TextButton(onPressed: _fetch, child: Text(S.of(context).retry)),
+                TextButton(
+                  onPressed: () {
+                    EventDataStore.instance.invalidateEvent(widget.eventId);
+                    _fetch();
+                  },
+                  child: Text(S.of(context).retry),
+                ),
               ],
             ),
           if (_loading)
@@ -546,7 +589,10 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
                 Text(_error!),
                 const SizedBox(height: 8),
                 ElevatedButton(
-                  onPressed: _fetch,
+                  onPressed: () {
+                    EventDataStore.instance.invalidateEvent(widget.eventId);
+                    _fetch();
+                  },
                   child: Text(S.of(context).retry),
                 ),
               ],

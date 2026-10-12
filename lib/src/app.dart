@@ -1,3 +1,4 @@
+import 'core/event_data_store.dart';
 import 'features/events/presentation/pages/event_create_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_route_page.dart';
 import 'features/beta_pages.dart';
@@ -342,6 +343,15 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
         if (!mounted) return;
         setState(() {
           _session = refreshed;
+          if (refreshed == null) {
+            EventDataStore.instance.clear();
+          } else {
+            EventDataStore.instance.bind(
+              refreshed.token,
+              refreshed.email,
+              accountId: refreshed.publicId,
+            );
+          }
           _loadingSession = false;
         });
         _router.refresh();
@@ -354,6 +364,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       if (!mounted) return;
       setState(() {
         _session = null;
+        EventDataStore.instance.clear();
         _loadingSession = false;
       });
       _router.refresh();
@@ -363,6 +374,11 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     if (!mounted) return;
     setState(() {
       _session = session;
+      EventDataStore.instance.bind(
+        session.token,
+        session.email,
+        accountId: session.publicId,
+      );
       _loadingSession = false;
     });
     _router.refresh();
@@ -392,6 +408,15 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     if (!mounted) return;
     setState(() {
       _session = refreshed;
+      if (refreshed == null) {
+        EventDataStore.instance.clear();
+      } else {
+        EventDataStore.instance.bind(
+          refreshed.token,
+          refreshed.email,
+          accountId: refreshed.publicId,
+        );
+      }
       _loadingSession = false;
     });
     _router.refresh();
@@ -455,6 +480,11 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     if (!mounted) return;
     setState(() {
       _session = session;
+      EventDataStore.instance.bind(
+        session.token,
+        session.email,
+        accountId: session.publicId,
+      );
       _pendingRegistrationCompletionToken = null;
       _authFlashCode = null;
       _authFlashIsError = false;
@@ -487,6 +517,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   }
 
   Future<void> _handleLogout() async {
+    EventDataStore.instance.clear();
     _pendingDestination = null;
     final token = _session?.token;
     await PushNotificationService.instance.clearSession();
@@ -500,6 +531,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     if (!mounted) return;
     setState(() {
       _session = null;
+      EventDataStore.instance.clear();
       _pendingRegistrationCompletionToken = null;
       _authFlashCode = null;
       _authFlashIsError = false;
@@ -528,6 +560,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       if (!mounted || _session == null) return;
       setState(() {
         _session = null;
+        EventDataStore.instance.clear();
         _pendingRegistrationCompletionToken = null;
         _authFlashCode = 'session_expired';
         _authFlashIsError = true;
@@ -543,6 +576,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
 
   @override
   void dispose() {
+    EventDataStore.instance.clear();
     _localeService.removeListener(_onLocaleChanged);
     _themeService.removeListener(_onThemeChanged);
     _notificationIntentSub?.cancel();

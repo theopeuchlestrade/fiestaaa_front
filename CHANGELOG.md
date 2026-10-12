@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Reuse session-scoped event resources across module navigation, share concurrent reads and load only the active module; preserve server-backed access checks, realtime invalidation and content during refresh failures.
+
 ## [0.7.0] - 2026-10-12
 
 ### Fixed

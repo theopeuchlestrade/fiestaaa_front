@@ -1,0 +1,46 @@
+--- a/lib/src/core/api_http_client.dart
++++ b/lib/src/core/api_http_client.dart
+@@ -160,7 +160,8 @@
+     : super(inner ?? createPlatformHttpClient());
+ }
+ 
+-http.Client createApiHttpClient() => ApiClient();
++const apiHttpClientFactoryKey = #fiestaaaApiHttpClientFactory;
++http.Client createApiHttpClient() { final factory = Zone.current[apiHttpClientFactoryKey] as http.Client Function()?; return factory == null ? ApiClient() : factory(); }
+ 
+ enum ApiTransportError { timeout, network }
+ 
+--- a/lib/src/features/events/presentation/pages/event_route_page.dart
++++ b/lib/src/features/events/presentation/pages/event_route_page.dart
+@@ -1,3 +1,4 @@
++import 'package:fiestaaa_front/src/core/realtime_client.dart';
+ import 'package:flutter/material.dart';
+ import 'package:go_router/go_router.dart';
+ import 'package:fiestaaa_front/l10n/app_localizations.dart';
+@@ -16,12 +17,14 @@
+     required this.eventId,
+     this.api,
+     this.module,
++    this.realtimeClientFactory,
+   });
+ 
+   final SessionData session;
+   final int eventId;
+   final EventsApi? api;
+   final EventModule? module;
++  final RealtimeClient Function(String token, int eventId)? realtimeClientFactory;
+ 
+   @override
+   State<EventRoutePage> createState() => _EventRoutePageState();
+@@ -165,6 +168,7 @@
+       );
+     }
+     return EventDetailPage(
++      realtimeClientFactory: widget.realtimeClientFactory,
+       event: _event!,
+       module: widget.module,
+       session: widget.session,
+--- a/lib/src/core/event_data_store.dart
++++ b/lib/src/core/event_data_store.dart
+@@ -0,0 +1 @@
++class EventDataStore { static final instance = EventDataStore(); void bind(String token, String identity) {} void clear() {} }

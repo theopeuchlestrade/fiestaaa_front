@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/event_data_store.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/route_back_button.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/fiestaaa_motion.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header.dart';
@@ -99,6 +100,8 @@ class EventDetailPage extends StatefulWidget {
     this.onEventRemoved,
     this.onInvitationStatusChanged,
     this.module,
+    this.contextRefreshFailed = false,
+    this.onContextRetry,
     this.eventsApi,
     this.invitationsApi,
     this.paymentProvidersApi,
@@ -106,6 +109,8 @@ class EventDetailPage extends StatefulWidget {
   });
 
   final EventModule? module;
+  final bool contextRefreshFailed;
+  final VoidCallback? onContextRetry;
   final EventsApi? eventsApi;
   final InvitationsApi? invitationsApi;
   final PaymentProvidersApi? paymentProvidersApi;
@@ -156,6 +161,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
   int? _votingPollId;
   int? _deletingPollId;
   bool _creatingPoll = false;
+  StreamSubscription<EventAccessChange>? _accessSub;
+  bool _seenRealtimeReady = false;
+  bool _contextVerified = false;
   bool _pollsExpanded = true;
   EventItemKind _itemsKind = EventItemKind.need;
   EventItemsScope _itemsScope = EventItemsScope.all;
@@ -175,20 +183,142 @@ class _EventDetailPageState extends State<EventDetailPage> {
   void initState() {
     super.initState();
     _currentEvent = widget.event;
-    _loadPolls();
-    _loadItems();
+    _contextVerified =
+        !EventDataStore.instance.applies(widget.session.token) ||
+        EventDataStore.instance.isFresh(
+          widget.session.token,
+          _currentEvent.id,
+          'context',
+        );
+    _hydrateSnapshots();
+    _loadVisibleData();
     _loadMyInvitation();
-    _loadPaymentProviders();
+    if (widget.module == null && _canShowPaymentFeature) {
+      _loadPaymentProviders();
+    }
     _startRealtime();
+    _accessSub = EventDataStore.instance.accessChanges.listen((change) {
+      if (!mounted ||
+          change.generation != EventDataStore.instance.generation ||
+          change.eventId != _currentEvent.id) {
+        return;
+      }
+      if (change.denied) {
+        _leaveUnavailableEvent();
+        return;
+      }
+      _scopeGeneration++;
+      _updateState(() {
+        _myInvitation = null;
+        _invitationKnown = false;
+      });
+      _loadMyInvitation();
+    });
+  }
+
+  bool get _needsItems => widget.module == EventModule.items;
+  bool get _needsPolls =>
+      widget.module == EventModule.polls || widget.module == null;
+
+  void _hydrateSnapshots() {
+    final store = EventDataStore.instance;
+    _myInvitation = store.peek<InvitationModel>(
+      widget.session.token,
+      _currentEvent.id,
+      'access',
+      fresh: true,
+    );
+    _invitationKnown = store.isFresh(
+      widget.session.token,
+      _currentEvent.id,
+      'access',
+    );
+    if (!store.canReuseProtected(widget.session.token, _currentEvent.id)) {
+      return;
+    }
+    _eventItems = store.peek<List<EventItemModel>>(
+      widget.session.token,
+      _currentEvent.id,
+      'items:${_itemsScope.apiValue}',
+    );
+    _summaryItems = _eventItems;
+    _polls = store.peek<List<PollModel>>(
+      widget.session.token,
+      _currentEvent.id,
+      'polls',
+    );
+    _loadingItems = _eventItems == null;
+    _loadingPolls = _polls == null;
+    final contributions = store.peek<List<ItemContributionModel>>(
+      widget.session.token,
+      _currentEvent.id,
+      'contributions',
+    );
+    if (contributions != null) {
+      _contributions = {};
+      for (final c in contributions) {
+        _contributions.putIfAbsent(c.itemId, () => []).add(c);
+      }
+      _contributionsKnown = true;
+    }
+  }
+
+  Future<void> _loadVisibleData({bool refresh = false}) async {
+    if (refresh) {
+      final store = EventDataStore.instance;
+      if (_needsItems) {
+        store.invalidate(_currentEvent.id, [
+          'items:${_itemsScope.apiValue}',
+          'items:all',
+          'contributions',
+        ]);
+      }
+      if (_needsPolls) store.invalidate(_currentEvent.id, ['polls']);
+    }
+    await Future.wait([
+      if (_needsItems) _loadItems(showLoading: false),
+      if (_needsPolls) _loadPolls(showLoading: false),
+    ]);
   }
 
   @override
   void didUpdateWidget(covariant EventDetailPage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.contextRefreshFailed && !oldWidget.contextRefreshFailed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showRefreshFailure(retry: widget.onContextRetry);
+      });
+    }
+    if (oldWidget.event.id == widget.event.id &&
+        oldWidget.session.token == widget.session.token &&
+        oldWidget.session.email == widget.session.email &&
+        oldWidget.session.publicId == widget.session.publicId &&
+        !identical(oldWidget.event, widget.event)) {
+      _currentEvent = widget.event;
+      _contextVerified =
+          !EventDataStore.instance.applies(widget.session.token) ||
+          EventDataStore.instance.isFresh(
+            widget.session.token,
+            _currentEvent.id,
+            'context',
+          );
+      _loadVisibleData();
+      _loadMyInvitation();
+      if (_isOwner && _realtime == null) _startRealtime();
+    }
     if (oldWidget.event.id != widget.event.id ||
-        oldWidget.session.token != widget.session.token) {
+        oldWidget.session.token != widget.session.token ||
+        oldWidget.session.email != widget.session.email ||
+        oldWidget.session.publicId != widget.session.publicId) {
       _scopeGeneration++;
       _currentEvent = widget.event;
+      _contextVerified =
+          !EventDataStore.instance.applies(widget.session.token) ||
+          EventDataStore.instance.isFresh(
+            widget.session.token,
+            _currentEvent.id,
+            'context',
+          );
       _eventUnavailable = false;
       _eventItems = null;
       _polls = null;
@@ -205,7 +335,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
   @override
   void dispose() {
     _refreshQueue.dispose();
-    _eventsApi.dispose();
+    _accessSub?.cancel();
+    if (widget.eventsApi == null) _eventsApi.dispose();
     _invitationsApi.dispose();
     _paymentProvidersApi.dispose();
     _realtimeSub?.cancel();
@@ -215,8 +346,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   bool get _isOwner =>
+      _contextVerified &&
       widget.session.email.toLowerCase() ==
-      _currentEvent.ownerEmail.toLowerCase();
+          _currentEvent.ownerEmail.toLowerCase();
 
   bool get _hasAcceptedInvitation => _myInvitation?.status == 'Accepted';
   bool get _isWaitingInvitation => _myInvitation?.status == 'Waiting';

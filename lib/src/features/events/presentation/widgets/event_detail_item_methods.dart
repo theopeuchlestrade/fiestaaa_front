@@ -15,9 +15,10 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       widget.event.id,
     );
     _updateState(() {
-      if (showLoading) _loadingItems = true;
+      if (showLoading) _loadingItems = _eventItems == null;
       _itemsError = null;
     });
+    final contributions = _loadContributions();
     try {
       final data = await _eventsApi.fetchEventItems(
         widget.event.id,
@@ -31,6 +32,7 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       }
       _updateState(() {
         _eventItems = data;
+        _loadingItems = false;
       });
       try {
         final summary = _itemsScope == EventItemsScope.all
@@ -54,7 +56,7 @@ extension _EventDetailItemMethods on _EventDetailPageState {
         }
         _updateState(() => _summaryItems = null);
       }
-      await _loadContributions();
+      await contributions;
     } on ApiException catch (e) {
       if (!mounted ||
           requestScope !=
@@ -104,7 +106,7 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       widget.event.id,
     );
     _updateState(() {
-      if (showLoading) _loadingPolls = true;
+      if (showLoading) _loadingPolls = _polls == null;
       _pollsError = null;
     });
     try {

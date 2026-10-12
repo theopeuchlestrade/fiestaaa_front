@@ -183,7 +183,7 @@ extension _EventDetailNavigationMethods on _EventDetailPageState {
 
   Future<void> _openInvitations() async {
     await context.push('/events/${_currentEvent.id}/participants');
-    if (mounted) await _resync();
+    if (mounted) await _resync(invalidate: false);
   }
 
   void _openMyQRCode() {
@@ -212,21 +212,21 @@ extension _EventDetailNavigationMethods on _EventDetailPageState {
 
   Future<void> _openCarpools() async {
     await context.push('/events/${_currentEvent.id}/carpools');
-    if (mounted) await _resync();
+    if (mounted) await _resync(invalidate: false);
   }
 
   Future<void> _openExpenses() async {
     await context.push('/events/${_currentEvent.id}/expenses');
-    if (mounted) await _resync();
+    if (mounted) await _resync(invalidate: false);
   }
 
   Future<void> _openPollsModal() async {
     await context.push('/events/${_currentEvent.id}/polls');
-    if (mounted) await _resync();
+    if (mounted) await _resync(invalidate: false);
   }
 
   Future<void> _openItemsModal() async {
     await context.push('/events/${_currentEvent.id}/items');
-    if (mounted) await _resync();
+    if (mounted) await _resync(invalidate: false);
   }
 }

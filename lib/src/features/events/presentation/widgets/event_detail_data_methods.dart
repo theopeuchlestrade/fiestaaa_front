@@ -35,9 +35,19 @@ extension _EventDetailDataMethods on _EventDetailPageState {
     if (eventId is int && eventId != _currentEvent.id) {
       return;
     }
+    EventDataStore.instance.observeRealtime(
+      widget.session.token,
+      _currentEvent.id,
+      message,
+      reconnect: _seenRealtimeReady,
+    );
     switch (type) {
       case 'realtime.ready':
-        _resync();
+        if (_seenRealtimeReady ||
+            !EventDataStore.instance.applies(widget.session.token)) {
+          _resync(invalidate: false);
+        }
+        _seenRealtimeReady = true;
         break;
       case 'event.updated':
         _refreshEvent();
@@ -46,10 +56,10 @@ extension _EventDetailDataMethods on _EventDetailPageState {
         _leaveUnavailableEvent();
         break;
       case 'event.items.changed':
-        _loadItems(showLoading: false);
+        if (_needsItems) _loadItems(showLoading: false);
         break;
       case 'event.polls.changed':
-        _loadPolls(showLoading: false);
+        if (_needsPolls) _loadPolls(showLoading: false);
         break;
       case 'event.invitations.changed':
         _loadMyInvitation();
@@ -59,23 +69,25 @@ extension _EventDetailDataMethods on _EventDetailPageState {
     }
   }
 
-  Future<void> _resync() => _refreshQueue.run('resync', _resyncOnce);
+  Future<void> _resync({bool invalidate = true}) =>
+      _refreshQueue.run('resync', () => _resyncOnce(invalidate: invalidate));
 
-  Future<void> _resyncOnce() async {
+  Future<void> _resyncOnce({bool invalidate = true}) async {
+    if (invalidate) EventDataStore.instance.invalidateEvent(_currentEvent.id);
     await _refreshEvent();
     if (!mounted || _eventUnavailable) return;
-    await Future.wait([
-      _loadMyInvitation(),
-      _loadItems(showLoading: false),
-      _loadPolls(showLoading: false),
-    ]);
+    await _loadMyInvitation();
+    await _loadVisibleData();
   }
 
-  void _showRefreshFailure() {
+  void _showRefreshFailure({VoidCallback? retry}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(S.of(context).unableToLoadFiestaaa),
-        action: SnackBarAction(label: S.of(context).retry, onPressed: _resync),
+        action: SnackBarAction(
+          label: S.of(context).retry,
+          onPressed: retry ?? _resync,
+        ),
       ),
     );
   }
@@ -116,6 +128,7 @@ extension _EventDetailDataMethods on _EventDetailPageState {
       }
       _updateState(() {
         _currentEvent = updated;
+        _contextVerified = true;
         _eventUnavailable = false;
       });
     } on ApiException catch (error) {
@@ -160,20 +173,24 @@ extension _EventDetailDataMethods on _EventDetailPageState {
       _loadingMyInvitation = true;
     });
     try {
-      final mine = await _invitationsApi.fetchMyInvitations(
+      final match = await EventDataStore.instance.read<InvitationModel?>(
         widget.session.token,
+        _currentEvent.id,
+        'access',
+        () async {
+          final mine = await _invitationsApi.fetchMyInvitations(
+            widget.session.token,
+          );
+          for (final invitation in mine) {
+            if (invitation.eventId == _currentEvent.id) return invitation;
+          }
+          return null;
+        },
       );
       if (!mounted ||
           requestScope !=
               (_scopeGeneration, widget.session.token, widget.event.id)) {
         return;
-      }
-      InvitationModel? match;
-      for (final inv in mine) {
-        if (inv.eventId == _currentEvent.id) {
-          match = inv;
-          break;
-        }
       }
       final wasAccepted = _hasAcceptedInvitation;
       _updateState(() {
@@ -184,7 +201,7 @@ extension _EventDetailDataMethods on _EventDetailPageState {
           (_hasAcceptedInvitation && _realtime == null)) {
         _updateState(_startRealtime);
         if (_hasAcceptedInvitation) {
-          await Future.wait([_loadItems(), _loadPolls()]);
+          await _loadVisibleData();
         }
       }
     } catch (_) {
@@ -265,9 +282,7 @@ extension _EventDetailDataMethods on _EventDetailPageState {
         return;
       }
       await _loadMyInvitation();
-      if (status == 'Accepted') {
-        await _loadPolls(showLoading: false);
-      }
+      if (status == 'Accepted') await _loadVisibleData();
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 410) {
