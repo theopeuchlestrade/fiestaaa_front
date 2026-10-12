@@ -96,6 +96,6 @@ Native frame timings are recorded separately (first 1,000 callbacks, all routes 
 - Local analysis: no issues. Full suite: 940 passed, including visual variants and new fake-clock, in-flight, stale-response, account-switch, pending-access, first-frame reuse, module request scope and partial-expense tests.
 - Backend contract: compatible, 63 paths. Strict OpenSpec: 13 items passed. No backend/API snapshot or migration change.
 - Existing regression tests cover contributions, votes, expenses, rides, memberships, realtime refresh, offline content/back and session safety. Golden variants retain light/dark, French/English and enlarged-text layouts.
-- Exact-head GitHub CI must pass before this PR is considered merge-ready.
+- Full implementation CI passed on `b2c77a67d5e56f7d690e045c6771eaf763b4ff46`: [run 38259385096](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/38259385096). Analysis/tests, strict OpenSpec, backend contract, secret/workflow/Docker checks and Android/iOS/web builds all succeeded. Documentation-only follow-up commits must retain passing PR checks.
 - A real isolated-server end-to-end run of this candidate, manual phone role/network recovery checks and renewed VoiceOver/TalkBack checks are **not performed** by the synthetic benchmark. Those acceptance items remain open in OpenSpec task 5.3. Native rendering was measured on both physical phones; no platform is omitted from the timing comparison.
 - No merge, release, beta submission or production deployment is part of this PR.

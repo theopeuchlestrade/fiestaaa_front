@@ -20,7 +20,7 @@
 - [x] 4.3 Preserve scroll, drafts, one connection banner and return actions through refresh; verify offline/reconnect tests and repeated navigation eviction/disposal tests.
 
 ## 5. Integrated acceptance
-- [ ] 5.1 Run analysis, full regression tests, backend contract and strict OpenSpec CI; record exact successful checks without changing backend permissions or API snapshots.
+- [x] 5.1 Run analysis, full regression tests, backend contract and strict OpenSpec CI; record exact successful checks without changing backend permissions or API snapshots.
 - [x] 5.2 Compare baseline/candidate on iPhone, Pixel and web in matching profile/release conditions; record 20 samples per selected flow, cold/warm p50/p95, request counts and rendering time. Require eligible warm content p95 <= 200 ms and no unrelated requests or avoidable serial cold stages; explicitly list any untested platform.
 - [ ] 5.3 Verify creator, accepted and pending roles, direct links, sibling/back navigation, account replacement, realtime and network recovery on the isolated environment; record light/dark FR/EN and enlarged-text/loading accessibility regressions. Prepare a reviewable PR with evidence and remaining limitations; no production/store delivery.
 
@@ -30,3 +30,5 @@
 ## Evidence and remaining acceptance
 
 See `docs/performance/event-navigation.md` and `docs/performance/navigation-results.md`. Automated regression coverage does not replace a live isolated-server end-to-end run. Final device benchmarks and exact-head CI are recorded separately; unperformed checks remain open.
+
+Implementation CI passed on `b2c77a67d5e56f7d690e045c6771eaf763b4ff46`: https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/38259385096. The follow-up commit only records validation evidence; task 5.3 remains open.
