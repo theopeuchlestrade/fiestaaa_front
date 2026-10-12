@@ -6,10 +6,10 @@ Source: `afb8f4243266d4c5f27136c0d58c10336228880d`. Full isolated suite on macOS
 
 | Critical group | Baseline | Current floor | Final target |
 |---|---:|---:|---:|
-| authentication-sessions | 48.06% | 48.0% | 80% |
-| permissions-participation | 75.11% | 75.1% | 80% |
-| cache-synchronization | 65.12% | 65.1% | 80% |
-| notifications-qr | 47.40% | 47.3% | 80% |
+| authentication-sessions | 48.06% | 80% | 80% |
+| permissions-participation | 75.11% | 80% | 80% |
+| cache-synchronization | 65.12% | 80% | 80% |
+| notifications-qr | 47.40% | 80% | 80% |
 
 Final application target: **70%**. The versioned policy ratchets floors only after added tests are measured. Excluding generated sources is a denominator change, not an added-test gain.
 
@@ -44,3 +44,9 @@ Added assertions cover local HTTP request/response boundaries, Google/Apple plug
 Three Chrome-only tests cover browser identity hints without bearer persistence, pending-link storage and sensitive-query removal. These checks are not part of Dart VM coverage. Physical iPhone/Pixel checks have not been performed for this test-only change.
 
 Stability: the complete 1,084-test suite passed three consecutive times, including randomized ordering seeds 203 and 307. Static analysis and formatting pass. The 26 coverage-tool tests, 14 strict OpenSpec validations and the 63-path backend contract check pass. Native compilation and the GitHub workflow are verified separately in PR CI.
+
+## GitHub CI confirmation
+
+[Complete frontend CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/38290024396) passes on implementation commit `902591a` (tested merge source `83483cc30599a9bce546c9a4e86c40d32fd86ce8`). Ubuntu Dart VM application coverage is 70.31%; critical groups are 81.33%, 80.27%, 81.56% and 92.72%. The report artifact is available from that run for seven days. Chrome adapter tests, web container smoke, Android debug and unsigned iOS compilation all pass. These compilation results are separate from phone validation.
+
+The coordinated backend change is [PR #218](https://github.com/theopeuchlestrade/fiestaaa_back/pull/218); the frontend is [PR #206](https://github.com/theopeuchlestrade/fiestaaa_front/pull/206). Final evidence edits affect documentation only.
