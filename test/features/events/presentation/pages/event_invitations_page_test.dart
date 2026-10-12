@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/api_response.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_invitations_page.dart';
@@ -19,29 +20,57 @@ class _Friends extends FriendsApi {
 
 class _Invitations extends InvitationsApi {
   bool empty = false;
+  Object? loadError;
   int? removed;
+  String? sent;
+  Object? mutationError;
+  bool sendEmail = false;
+  @override
+  Future<InvitationCreationResult> createInvitation({
+    required String token,
+    required int eventId,
+    required String identifier,
+  }) async {
+    if (mutationError != null) throw mutationError!;
+    sent = identifier;
+    return sendEmail
+        ? InvitationCreationResult.emailSent()
+        : InvitationCreationResult.invitation(
+            InvitationModel(
+              eventId: eventId,
+              email: 'newguest@example.invalid',
+              status: 'Waiting',
+              dateInvi: DateTime(2026),
+            ),
+          );
+  }
+
   @override
   Future<List<InvitationModel>> fetchEventInvitations({
     required String token,
     required int eventId,
-  }) async => empty
-      ? []
-      : [
-          for (final row in [
-            ('owner', 'Accepted'),
-            ('guest', 'Accepted'),
-            ('pending', 'Waiting'),
-            ('declined', 'Declined'),
-          ])
-            InvitationModel(
-              invitationId: row.$1 == 'guest' ? 2 : 1,
-              eventId: 1,
-              email: '${row.$1}@example.invalid',
-              handle: row.$1,
-              status: row.$2,
-              dateInvi: DateTime(2026),
-            ),
-        ];
+  }) async {
+    if (loadError != null) throw loadError!;
+    return empty
+        ? []
+        : [
+            for (final row in [
+              ('owner', 'Accepted'),
+              ('guest', 'Accepted'),
+              ('pending', 'Waiting'),
+              ('declined', 'Declined'),
+            ])
+              InvitationModel(
+                invitationId: row.$1 == 'guest' ? 2 : 1,
+                eventId: 1,
+                email: '${row.$1}@example.invalid',
+                handle: row.$1,
+                status: row.$2,
+                dateInvi: DateTime(2026),
+              ),
+          ];
+  }
+
   @override
   Future<void> deleteInvitation({
     required String token,
@@ -49,6 +78,7 @@ class _Invitations extends InvitationsApi {
     required String email,
     int? invitationId,
   }) async {
+    if (mutationError != null) throw mutationError!;
     removed = invitationId;
   }
 
@@ -82,6 +112,73 @@ Future<void> tapVisible(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
+  for (final error in [
+    ApiException('unavailable', statusCode: 503),
+    StateError('offline'),
+  ]) {
+    testWidgets('participant load failure displays retry and recovers $error', (
+      tester,
+    ) async {
+      final api = _Invitations()..loadError = error;
+      await tester.pumpWidget(_app(api));
+      await tester.pumpAndSettle();
+      expect(find.text('@guest'), findsNothing);
+      expect(find.text('Retry'), findsOneWidget);
+      api.loadError = null;
+      await tapVisible(tester, find.text('Retry'));
+      expect(find.text('@guest'), findsOneWidget);
+      expect(find.text('Retry'), findsNothing);
+    });
+  }
+  for (final email in [false, true]) {
+    testWidgets(
+      'invitation validates identifier and closes only after successful send ($email)',
+      (tester) async {
+        final api = _Invitations()..sendEmail = email;
+        await tester.pumpWidget(_app(api));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Invite someone'));
+        await tester.pumpAndSettle();
+        await tapVisible(tester, find.text('Send invitation'));
+        expect(api.sent, isNull);
+        await tester.enterText(find.byType(TextField), 'bad handle!');
+        await tapVisible(tester, find.text('Send invitation'));
+        expect(api.sent, isNull);
+        await tester.enterText(
+          find.byType(TextField),
+          email ? ' newguest@example.invalid ' : ' newguest ',
+        );
+        await tapVisible(tester, find.text('Send invitation'));
+        expect(api.sent, email ? 'newguest@example.invalid' : 'newguest');
+        expect(find.byType(TextField), findsNothing);
+      },
+    );
+  }
+  for (final error in [
+    ApiException('invitation_expired', statusCode: 410),
+    ApiException('contact_unavailable', statusCode: 403),
+    StateError('offline'),
+  ]) {
+    testWidgets('invitation failure retains input and allows retry $error', (
+      tester,
+    ) async {
+      final api = _Invitations()..mutationError = error;
+      await tester.pumpWidget(_app(api));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Invite someone'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'newguest');
+      await tapVisible(tester, find.text('Send invitation'));
+      expect(api.sent, isNull);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'newguest',
+      );
+      api.mutationError = null;
+      await tapVisible(tester, find.text('Send invitation'));
+      expect(api.sent, 'newguest');
+    });
+  }
   testWidgets(
     'confirmed precede waiting and declined identities expand without duplicate count',
     (tester) async {

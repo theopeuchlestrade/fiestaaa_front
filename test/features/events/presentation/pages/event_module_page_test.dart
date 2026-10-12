@@ -21,6 +21,10 @@ class _Api extends EventsApi {
   _Api({this.covered = false, this.contributed = false});
   final bool covered;
   final bool contributed;
+  int? reserved;
+  String? createdName;
+  EventItemKind? createdKind;
+  Object? mutationError;
   int itemReads = 0;
   bool fail = false;
   List<PollModel> polls = [];
@@ -60,6 +64,33 @@ class _Api extends EventsApi {
           createdByAvatarUrl: null,
         ),
     ];
+  }
+
+  @override
+  Future<EventItemModel> reserveEventItem({
+    required String token,
+    required int eventId,
+    required int itemId,
+    required int quantity,
+  }) async {
+    if (mutationError != null) throw mutationError!;
+    reserved = quantity;
+    return (await fetchEventItems(eventId, token: token)).first;
+  }
+
+  @override
+  Future<EventItemModel> createCustomEventItem({
+    required String token,
+    required int eventId,
+    required String name,
+    required int maxQuantity,
+    required String unitLabel,
+    EventItemKind? itemKind,
+  }) async {
+    if (mutationError != null) throw mutationError!;
+    createdName = name;
+    createdKind = itemKind;
+    return (await fetchEventItems(eventId, token: token)).first;
   }
 
   @override
@@ -183,6 +214,95 @@ PollModel _poll({
   hasExpired: expired,
 );
 void main() {
+  testWidgets(
+    'contribution validates quantity and refreshes only after successful reservation',
+    (tester) async {
+      final api = _Api();
+      await tester.pumpWidget(_app(api));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('I contribute'));
+      await tester.pumpAndSettle();
+      for (final value in ['', '-1', '7', 'invalid']) {
+        await tester.enterText(find.byType(TextFormField), value);
+        await tester.tap(find.text('Validate'));
+        await tester.pumpAndSettle();
+        expect(api.reserved, isNull);
+        expect(find.byType(AlertDialog), findsOneWidget);
+      }
+      await tester.enterText(find.byType(TextFormField), '2');
+      final reads = api.itemReads;
+      await tester.tap(find.text('Validate'));
+      await tester.pumpAndSettle();
+      expect(api.reserved, 2);
+      expect(api.itemReads, greaterThan(reads));
+      expect(find.byType(AlertDialog), findsNothing);
+    },
+  );
+  for (final error in [
+    ApiException('quantity_unavailable', statusCode: 409),
+    StateError('offline'),
+  ]) {
+    testWidgets(
+      'failed contribution retains need and remains retryable: $error',
+      (tester) async {
+        final api = _Api()..mutationError = error;
+        await tester.pumpWidget(_app(api));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('I contribute'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextFormField), '1');
+        await tester.tap(find.text('Validate'));
+        await tester.pumpAndSettle();
+        expect(api.reserved, isNull);
+        expect(find.text('Organizer need'), findsOneWidget);
+        api.mutationError = null;
+        await tester.tap(find.text('I contribute'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextFormField), '0');
+        await tester.tap(find.text('Validate'));
+        await tester.pumpAndSettle();
+        expect(api.reserved, 0);
+      },
+    );
+  }
+  for (final owner in [true, false]) {
+    testWidgets(
+      'item creation validates name and quantity and preserves need/bring role $owner',
+      (tester) async {
+        final api = _Api();
+        await tester.pumpWidget(_app(api, owner: owner));
+        await tester.pumpAndSettle();
+        if (!owner) {
+          await tester.tap(find.widgetWithText(ChoiceChip, 'Personal brings'));
+          await tester.pumpAndSettle();
+        }
+        await tester.tap(
+          find.text(owner ? 'Add a need' : 'Add my personal bring'),
+        );
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Add the item'));
+        await tester.tap(find.text('Add the item'));
+        await tester.pumpAndSettle();
+        expect(api.createdName, isNull);
+        await tester.enterText(
+          find.byType(TextFormField).at(0),
+          '  Fictional item  ',
+        );
+        await tester.enterText(find.byType(TextFormField).at(1), '0');
+        await tester.tap(find.text('Add the item'));
+        await tester.pumpAndSettle();
+        expect(api.createdName, isNull);
+        await tester.enterText(find.byType(TextFormField).at(1), '3');
+        await tester.tap(find.text('Add the item'));
+        await tester.pumpAndSettle();
+        expect(api.createdName, 'Fictional item');
+        expect(
+          api.createdKind,
+          owner ? EventItemKind.need : EventItemKind.bring,
+        );
+      },
+    );
+  }
   testWidgets(
     'unanswered polls precede answers and closed polls keep results accessible',
     (tester) async {
