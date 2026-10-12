@@ -546,7 +546,12 @@ Bug report
                   color: Theme.of(context).colorScheme.primary,
                 ),
                 const SizedBox(width: 12),
-                Text('Fiestaaa', style: Theme.of(context).textTheme.titleLarge),
+                Expanded(
+                  child: Text(
+                    'Fiestaaa',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 24),

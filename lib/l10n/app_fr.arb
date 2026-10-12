@@ -1063,5 +1063,7 @@
   "pollsModule": "Sondages",
   "expensesModule": "Dépenses",
   "organizerNeeds": "Besoins de l’organisateur",
-  "personalBrings": "Apports personnels"
+  "personalBrings": "Apports personnels",
+  "scannerFlashlight": "Lampe torche",
+  "scannerSwitchCamera": "Changer de caméra"
 }

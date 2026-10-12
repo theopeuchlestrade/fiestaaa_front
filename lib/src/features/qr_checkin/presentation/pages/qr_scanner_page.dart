@@ -6,6 +6,7 @@ import 'package:fiestaaa_front/src/features/qr_checkin/domain/qr_checkin_models.
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../widgets/checkin_views.dart';
 
 class QRScannerPage extends StatefulWidget {
   final int eventId;
@@ -140,396 +141,97 @@ class _QRScannerPageState extends State<QRScannerPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final brightness = theme.brightness;
-    final isDark = brightness == Brightness.dark;
-    final surface = FiestaaaPalette.surfaceFor(brightness);
-    final surfaceRaised = FiestaaaPalette.surfaceRaisedFor(brightness);
-
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Text(S.of(context).scanner),
-        backgroundColor: surfaceRaised.withValues(alpha: isDark ? 0.76 : 0.88),
-        surfaceTintColor: Colors.transparent,
-        actions: [
-          ValueListenableBuilder(
-            valueListenable: _scannerController,
-            builder: (context, state, child) {
-              final isTorchOn = state.torchState == TorchState.on;
-              return IconButton(
-                icon: Icon(
-                  isTorchOn ? Icons.flash_on : Icons.flash_off,
-                  color: isTorchOn
-                      ? Colors.amber.shade300
-                      : theme.colorScheme.onSurface,
+  Widget build(BuildContext context) => Scaffold(
+    body: CheckinScannerView(
+      eventName: widget.eventName,
+      stats: _stats,
+      result: _lastScanResult == null ? null : _buildResultOverlay(),
+      controls: ValueListenableBuilder(
+        valueListenable: _scannerController,
+        builder: (context, state, _) => Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (_isLoadingStats)
+              const Padding(
+                padding: EdgeInsets.all(12),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
                 ),
-                onPressed: state.isRunning
-                    ? () => _scannerController.toggleTorch()
-                    : null,
-              );
-            },
-          ),
-          ValueListenableBuilder(
-            valueListenable: _scannerController,
-            builder: (context, state, child) {
-              final isFront = state.cameraDirection == CameraFacing.front;
-              return IconButton(
-                icon: Icon(
-                  isFront ? Icons.camera_front : Icons.camera_rear,
-                  color: theme.colorScheme.onSurface,
-                ),
-                onPressed: state.isRunning
-                    ? () => _scannerController.switchCamera()
-                    : null,
-              );
-            },
-          ),
-        ],
+              ),
+            IconButton(
+              tooltip: S.of(context).scannerFlashlight,
+              icon: Icon(
+                state.torchState == TorchState.on
+                    ? Icons.flash_on
+                    : Icons.flash_off,
+              ),
+              onPressed: state.isRunning
+                  ? () => _scannerController.toggleTorch()
+                  : null,
+            ),
+            const SizedBox(width: 16),
+            IconButton(
+              tooltip: S.of(context).scannerSwitchCamera,
+              icon: const Icon(Icons.flip_camera_ios_outlined),
+              onPressed: state.isRunning
+                  ? () => _scannerController.switchCamera()
+                  : null,
+            ),
+          ],
+        ),
       ),
-      body: Stack(
+      preview: Stack(
+        fit: StackFit.expand,
         children: [
           MobileScanner(
             controller: _scannerController,
             onDetect: _handleBarcode,
-            // Display errors above all preview decorations below.
             errorBuilder: (context, error) => const SizedBox.shrink(),
           ),
-          Positioned.fill(
-            child: IgnorePointer(
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: -110,
-                    left: -60,
-                    child: _ScannerAccentGlow(
-                      size: 240,
-                      color: theme.colorScheme.primary.withValues(
-                        alpha: isDark ? 0.30 : 0.18,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 80,
-                    right: -40,
-                    child: _ScannerAccentGlow(
-                      size: 220,
-                      color: theme.colorScheme.secondary.withValues(
-                        alpha: isDark ? 0.32 : 0.20,
-                      ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            surfaceRaised.withValues(
-                              alpha: isDark ? 0.72 : 0.56,
-                            ),
-                            Colors.transparent,
-                            surface.withValues(alpha: isDark ? 0.86 : 0.68),
-                          ],
-                          stops: const [0.0, 0.35, 1.0],
+          if (_isScanning) const Center(child: CircularProgressIndicator()),
+          ValueListenableBuilder(
+            valueListenable: _scannerController,
+            builder: (context, state, _) {
+              final error = state.error;
+              if (error == null) return const SizedBox.shrink();
+              return ColoredBox(
+                color: Theme.of(context).colorScheme.surface,
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.no_photography_outlined,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 32,
                         ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          _buildScannerMask(surface.withValues(alpha: isDark ? 0.78 : 0.66)),
-          Center(child: _buildScanFrame()),
-          Positioned(
-            top: MediaQuery.of(context).padding.top + kToolbarHeight + 12,
-            left: 20,
-            right: 20,
-            child: Column(
-              children: [
-                _buildEventOverlay(),
-                if (!_isLoadingStats && _stats != null) ...[
-                  const SizedBox(height: 12),
-                  _buildStatsOverlay(),
-                ],
-              ],
-            ),
-          ),
-          if (_lastScanResult != null)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: SafeArea(top: false, child: _buildResultOverlay()),
-            ),
-          if (_isScanning && _lastScanResult == null)
-            Center(
-              child: CircularProgressIndicator(
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          Positioned.fill(
-            child: ValueListenableBuilder(
-              valueListenable: _scannerController,
-              builder: (context, state, _) {
-                final error = state.error;
-                if (error == null) return const SizedBox.shrink();
-                return ColoredBox(
-                  color: theme.colorScheme.surface,
-                  child: SafeArea(
-                    child: Center(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(32),
-                        child: Text(
+                        const SizedBox(height: 16),
+                        Text(
                           error.errorCode ==
                                   MobileScannerErrorCode.permissionDenied
                               ? S.of(context).cameraPermissionDeniedHelp
                               : S.of(context).cameraUnavailableHelp,
                           textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurface,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScannerMask(Color overlayColor) {
-    return IgnorePointer(
-      child: ColorFiltered(
-        colorFilter: ColorFilter.mode(overlayColor, BlendMode.srcOut),
-        child: Stack(
-          children: [
-            Container(
-              decoration: const BoxDecoration(
-                color: Colors.black,
-                backgroundBlendMode: BlendMode.dstOut,
-              ),
-            ),
-            Center(
-              child: Container(
-                width: 292,
-                height: 292,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(28),
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScanFrame() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return IgnorePointer(
-      child: Container(
-        width: 292,
-        height: 292,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(
-            color: theme.colorScheme.primary.withValues(alpha: 0.92),
-            width: 2.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.primary.withValues(
-                alpha: isDark ? 0.34 : 0.18,
-              ),
-              blurRadius: 24,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: theme.colorScheme.secondary.withValues(alpha: 0.56),
-                width: 1.2,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEventOverlay() {
-    final theme = Theme.of(context);
-    final brightness = theme.brightness;
-    final isDark = brightness == Brightness.dark;
-    final surfaceRaised = FiestaaaPalette.surfaceRaisedFor(brightness);
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: surfaceRaised.withValues(alpha: isDark ? 0.84 : 0.92),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(
-            alpha: isDark ? 0.28 : 0.14,
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.24 : 0.10),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+              );
+            },
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              gradient: FiestaaaPalette.cardGradientFor(brightness),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.qr_code_scanner_rounded,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.eventName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  S.of(context).scanner,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.66),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatsOverlay() {
-    final stats = _stats;
-    if (stats == null) {
-      return const SizedBox.shrink();
-    }
-
-    final theme = Theme.of(context);
-    final brightness = theme.brightness;
-    final isDark = brightness == Brightness.dark;
-    final surfaceRaised = FiestaaaPalette.surfaceRaisedFor(brightness);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      decoration: BoxDecoration(
-        color: surfaceRaised.withValues(alpha: isDark ? 0.78 : 0.88),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(
-            alpha: isDark ? 0.26 : 0.14,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildStatItem(
-              S.of(context).invited,
-              '${stats.totalInvited}',
-            ),
-          ),
-          _buildStatDivider(),
-          Expanded(
-            child: _buildStatItem(
-              S.of(context).present,
-              '${stats.totalCheckedIn}',
-              isHighlight: true,
-            ),
-          ),
-          _buildStatDivider(),
-          Expanded(
-            child: _buildStatItem(
-              S.of(context).remaining,
-              '${stats.pendingCheckins}',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatDivider() {
-    final theme = Theme.of(context);
-    return Container(
-      height: 26,
-      width: 1,
-      color: theme.colorScheme.outline.withValues(alpha: 0.22),
-      margin: const EdgeInsets.symmetric(horizontal: 10),
-    );
-  }
-
-  Widget _buildStatItem(
-    String label,
-    String value, {
-    bool isHighlight = false,
-  }) {
-    final theme = Theme.of(context);
-    final color = isHighlight
-        ? theme.colorScheme.primary
-        : theme.colorScheme.onSurface;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          value,
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: color,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.64),
-          ),
-        ),
-      ],
-    );
-  }
+    ),
+  );
 
   Widget _buildResultOverlay() {
     final theme = Theme.of(context);
@@ -626,8 +328,8 @@ class _QRScannerPageState extends State<QRScannerPage> {
                       radius: 28,
                       child: Text(
                         initials,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: theme.colorScheme.onPrimary,
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
                         ),
@@ -673,8 +375,8 @@ class _QRScannerPageState extends State<QRScannerPage> {
                 _scheduleScannerStart();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: statusColor,
-                foregroundColor: Colors.white,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -684,27 +386,6 @@ class _QRScannerPageState extends State<QRScannerPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ScannerAccentGlow extends StatelessWidget {
-  const _ScannerAccentGlow({required this.size, required this.color});
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color, color.withValues(alpha: 0.01)],
-        ),
       ),
     );
   }

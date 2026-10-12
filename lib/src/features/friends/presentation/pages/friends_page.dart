@@ -1642,42 +1642,6 @@ class _RequestsTab extends StatelessWidget {
         ),
         padding: const EdgeInsets.only(top: 4, bottom: 32),
         children: [
-          _SectionPanel(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _SectionHeader(
-                  icon: Icons.mail_outline,
-                  title: S.of(context).friendRequests,
-                  trailing: loading
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : null,
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _InfoPill(
-                      icon: Icons.mark_email_unread_outlined,
-                      value: '${incoming.length}',
-                      label: S.of(context).received,
-                    ),
-                    _InfoPill(
-                      icon: Icons.outbox_outlined,
-                      value: '${outgoing.length}',
-                      label: S.of(context).sent,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
           if (error != null && (incoming.isNotEmpty || outgoing.isNotEmpty))
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1712,23 +1676,25 @@ class _RequestsTab extends StatelessWidget {
               message: S.of(context).noRequestInProgress,
             )
           else ...[
-            _RequestsBucket(
-              title: S.of(context).received,
-              icon: Icons.mark_email_unread_outlined,
-              requests: incoming,
-              userEmail: userEmail,
-              incoming: true,
-              onAccept: onAccept,
-              onDecline: onDecline,
-            ),
+            if (incoming.isNotEmpty)
+              _RequestsBucket(
+                title: S.of(context).received,
+                icon: Icons.mark_email_unread_outlined,
+                requests: incoming,
+                userEmail: userEmail,
+                incoming: true,
+                onAccept: onAccept,
+                onDecline: onDecline,
+              ),
             const SizedBox(height: 12),
-            _RequestsBucket(
-              title: S.of(context).sent,
-              icon: Icons.outbox_outlined,
-              requests: outgoing,
-              userEmail: userEmail,
-              incoming: false,
-            ),
+            if (outgoing.isNotEmpty)
+              _RequestsBucket(
+                title: S.of(context).sent,
+                icon: Icons.outbox_outlined,
+                requests: outgoing,
+                userEmail: userEmail,
+                incoming: false,
+              ),
           ],
         ],
       ),
@@ -1910,14 +1876,19 @@ class _RequestsBucket extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _SectionPanel(
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionHeader(
-            icon: icon,
-            title: title,
-            trailing: _CountBadge(count: requests.length),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              '$title (${requests.length})',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+            ),
           ),
           const SizedBox(height: 12),
           if (requests.isEmpty)
@@ -1932,12 +1903,14 @@ class _RequestsBucket extends StatelessWidget {
               itemCount: requests.length,
               separatorBuilder: (context, index) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
-                return _RequestTile(
-                  request: requests[index],
-                  userEmail: userEmail,
-                  incoming: incoming,
-                  onAccept: onAccept,
-                  onDecline: onDecline,
+                return _TileShell(
+                  child: _RequestTile(
+                    request: requests[index],
+                    userEmail: userEmail,
+                    incoming: incoming,
+                    onAccept: onAccept,
+                    onDecline: onDecline,
+                  ),
                 );
               },
             ),
@@ -1999,50 +1972,63 @@ class _RequestTile extends StatelessWidget {
         );
       }
 
-      return Chip(
-        label: Text(
-          S.of(context).pending,
-          style: TextStyle(
-            color: theme.colorScheme.onSecondaryContainer,
-            fontWeight: FontWeight.w700,
-          ),
+      return Text(
+        S.of(context).pending,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
         ),
-        backgroundColor: theme.colorScheme.secondaryContainer,
       );
     }
 
-    return _TileShell(
+    return Padding(
+      padding: const EdgeInsets.all(12),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final compact = constraints.maxWidth < 430;
-          final actions = trailingActions(compact: compact);
-
-          return ListTile(
-            dense: true,
-            visualDensity: VisualDensity.compact,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 6,
-            ),
-            leading: _AvatarCircle(
-              url: avatarUrl,
-              fallbackText: handle.isNotEmpty ? handle : email,
-              size: 42,
-            ),
-            title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(email, maxLines: 1, overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 4),
-                Text(subtitle, style: theme.textTheme.bodySmall),
-                if (compact) ...[const SizedBox(height: 10), actions],
-              ],
-            ),
-            trailing: compact ? null : actions,
-            isThreeLine: compact,
+          final compact =
+              constraints.maxWidth < 600 ||
+              MediaQuery.textScalerOf(context).scale(1) > 1.3;
+          final identity = Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _AvatarCircle(
+                url: avatarUrl,
+                fallbackText: handle.isNotEmpty ? handle : email,
+                size: 42,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           );
+          return compact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    identity,
+                    const SizedBox(height: 12),
+                    trailingActions(compact: true),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(child: identity),
+                    const SizedBox(width: 16),
+                    trailingActions(compact: false),
+                  ],
+                );
         },
       ),
     );
@@ -2239,41 +2225,11 @@ class _InfoPill extends StatelessWidget {
   }
 }
 
-class _CountBadge extends StatelessWidget {
-  const _CountBadge({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        '$count',
-        style: TextStyle(
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-}
-
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.icon,
-    required this.title,
-    this.trailing,
-  });
+  const _SectionHeader({required this.icon, required this.title});
 
   final IconData icon;
   final String title;
-  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -2297,7 +2253,6 @@ class _SectionHeader extends StatelessWidget {
             ),
           ),
         ),
-        ?trailing,
       ],
     );
   }

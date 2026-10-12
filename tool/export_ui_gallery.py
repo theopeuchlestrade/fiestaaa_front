@@ -17,17 +17,17 @@ for mobile in sorted((folder / 'renders').glob('*_360_light_fr.png')):
     def replace_image(_):
         data = base64.b64encode(next(images).read_bytes()).decode()
         return f'src="data:image/png;base64,{data}"'
-    block, replaced = re.subn(r'src="data:image/png;base64,[^"]+"', replace_image, match.group(2))
+    block, replaced = re.subn(r'src="data:image/png;base64,[^"]*"', replace_image, match.group(2))
     if replaced != 2:
         raise ValueError(f'Expected two images: {screen}')
     content = content[:match.start(2)] + block + content[match.end(2):]
     count += 1
-if count != 18:
-    raise ValueError(f'Expected 18 screens, found {count}')
+if count != 21:
+    raise ValueError(f'Expected 21 screens, found {count}')
 preview.write_text(content)
 print(f'Refreshed {count * 2} embedded renders.')
 
-# Complementary personal-brings states keep the main 18-screen index unchanged.
+# Complementary personal-brings states keep the main 21-screen index unchanged.
 content = preview.read_text()
 for state in (folder / 'states').glob('brings_*.png'):
     marker = 'data-review-state="' + state.name + '"'

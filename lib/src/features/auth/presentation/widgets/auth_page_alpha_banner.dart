@@ -67,7 +67,7 @@ extension _AuthPageAlphaBanner on _AuthPageState {
           Row(
             children: [
               Expanded(
-                child: SelectableText(
+                child: Text(
                   l10n.reportBugsTo(_AuthPageState._feedbackEmail),
                   style: TextStyle(
                     color: bannerText,

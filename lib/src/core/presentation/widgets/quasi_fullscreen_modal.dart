@@ -51,8 +51,6 @@ class QuasiFullscreenModalScaffold extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),

@@ -292,11 +292,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
     final allowed = _isOwner || _hasAcceptedInvitation;
     if (!allowed || (feature != null && !_isFeatureEnabled(feature))) {
       return Scaffold(
-        appBar: AppBar(leading: BackButton(onPressed: back)),
         body: FiestaaaPageLayout(
           child: ListView(
             children: [
-              FiestaaaPageHeader(title: title),
+              EventModuleHeader(
+                title: title,
+                eventName: _currentEvent.name,
+                eventId: _currentEvent.id,
+              ),
               if (!_isOwner && !_invitationKnown && _loadingMyInvitation)
                 const Center(child: CircularProgressIndicator())
               else ...[
