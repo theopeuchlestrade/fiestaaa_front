@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-12
+
 ### Fixed
 
 - Keep event and module loading/error screens in the shared themed layout instead of briefly showing the legacy Fiestaaa app bar; preserve inline back navigation and accessible placeholders.
