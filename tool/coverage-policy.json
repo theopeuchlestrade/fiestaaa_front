@@ -32,7 +32,7 @@
         "lib/src/features/auth/**",
         "lib/src/app.dart"
       ],
-      "floor": 48.0,
+      "floor": 80,
       "target": 80
     },
     {
@@ -44,7 +44,7 @@
         "lib/src/features/beta_api.dart",
         "lib/src/features/beta_pages.dart"
       ],
-      "floor": 75.1,
+      "floor": 80,
       "target": 80
     },
     {
@@ -57,7 +57,7 @@
         "lib/src/features/events/presentation/widgets/event_detail_data_methods.dart",
         "lib/src/features/events/presentation/widgets/event_detail_item_methods.dart"
       ],
-      "floor": 65.1,
+      "floor": 80,
       "target": 80
     },
     {
@@ -67,14 +67,14 @@
         "lib/src/features/notifications/**",
         "lib/src/features/qr_checkin/**"
       ],
-      "floor": 47.3,
+      "floor": 80,
       "target": 80
     }
   ],
   "version": 1,
-  "floor": 59.2,
+  "floor": 70,
   "patchFloor": 80,
-  "stage": "baseline",
+  "stage": "final",
   "baseline": {
     "sourceSha": "afb8f4243266d4c5f27136c0d58c10336228880d",
     "rawCiPercent": 56.02,

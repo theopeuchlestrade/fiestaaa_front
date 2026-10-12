@@ -34,3 +34,13 @@ After the complete main push CI succeeds, a separate guarded workflow downloads 
 ## Acceptance
 
 Global floor 70%, each critical group 80%, changed executable lines 80%. Targeted behavior suites must pass three consecutive times and the full existing CI must pass. All API/contracts remain unchanged. Physical-device and browser checks are recorded separately from instrumented line coverage; no release or production action is part of this change.
+
+## Behavior-test evidence
+
+The final isolated Dart VM collection runs 1,084 tests: raw 66.52%, application **70.31% (8,782/12,490)**. The collector now maps three additional application lines (12,490 rather than 12,487); the additional mappings are in the already measured event-edit and home-page files. The exclusion policy is unchanged. This is distinguished from the added-test gain. Critical groups: authentication/sessions 81.42%, permissions/participation 80.27%, cache/synchronization 81.56%, notifications/QR 92.57%. The enforced policy now requires 70% globally and 80% per group.
+
+Added assertions cover local HTTP request/response boundaries, Google/Apple plugin doubles, translated refusals, restored/expired/offline sessions, input preservation and draft recovery, need/bring roles, quantity limits and retries, invitation privacy and retry, avatar cancellation/denial/size limits, notification registration/rotation/APNs readiness, QR expiry, refused/duplicate scans and explicit rearming. No real providers or production data are used.
+
+Three Chrome-only tests cover browser identity hints without bearer persistence, pending-link storage and sensitive-query removal. These checks are not part of Dart VM coverage. Physical iPhone/Pixel checks have not been performed for this test-only change.
+
+Stability: the complete 1,084-test suite passed three consecutive times, including randomized ordering seeds 203 and 307. Static analysis and formatting pass. The 26 coverage-tool tests, 14 strict OpenSpec validations and the 63-path backend contract check pass. Native compilation and the GitHub workflow are verified separately in PR CI.
