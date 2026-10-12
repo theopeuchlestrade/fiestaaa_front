@@ -40,7 +40,9 @@ void main() {
     testWidgets(
       'iOS provider controls remain readable at enlarged text / $dark',
       (tester) async {
-        tester.view.physicalSize = const Size(360, 1400);
+        // Retain mobile width and 200% text, but expose the whole scrollable
+        // form so clipped edge semantics do not masquerade as small targets.
+        tester.view.physicalSize = const Size(360, 2600);
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);

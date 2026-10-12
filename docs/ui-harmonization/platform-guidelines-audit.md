@@ -1,7 +1,7 @@
 # Apple and Android interface audit — 12 October 2026
 
 ## Scope and conclusion
-The shared interface has a good foundation, but there was no basis for declaring complete HIG/Material compliance. This audit examines source behavior and synthetic widget fixtures, not App Store certification. The owner requested platform guideline alignment and deferred new phone tests.
+The shared interface has a good foundation, but there was no basis for declaring complete HIG/Material compliance. This audit examines source behavior and synthetic widget fixtures, not App Store certification. The owner requested platform guideline alignment; physical phone checks resumed on QA 9007 after an initial deferral.
 
 Preserve Manrope and violet/cyan for the app. Provider sign-in controls are exceptions with their own branding. HIG/Material do not require making every custom app look identical to system Settings, nor does using Flutter Material on iOS alone establish a violation. Native gestures and assistive technology still need device verification.
 
@@ -49,4 +49,6 @@ The pre-change 576 fixture variants passed existing checks, which did not detect
 
 All 576 updated Linux render cases pass layout and the selected label/contrast/Android/Apple target checks using the existing Flutter 3.44.0 image in an isolated copy. Updated reference pixels are generated from these real tests rather than copied from macOS. The macOS gallery uses actual renders with the bundled fonts. Source text of public documents was compared before/after stripping CSS and is unchanged.
 
-Full local regression: **817 tests passed**; analysis reported no issues; strict OpenSpec validated 11 items. Cold-cache logo decoding is explicitly awaited and asserted before auth references are captured. Remote CI is pending for the updated PR. Phone tests remain deferred.
+Full local regression: **817 tests passed**; analysis reported no issues; strict OpenSpec validated 11 items. Cold-cache logo decoding is explicitly awaited and asserted before auth references are captured. Remote CI must be rerun for the updated PR. QA 0.6.0 (9007) is installed alongside the store app on the Pixel 7 and iPhone; the owner confirmed the home, event and build number on both. Gestures, transitions and new screen-reader checks remain pending.
+
+QA 9007 follow-up: CI also enables Apple through its OAuth defines, which made auth references differ from local configuration. Auth fixtures now explicitly target iOS so provider availability is invariant. The report email remains readable text with the existing copy control instead of an undersized selectable-text target. SF Pro is provided by iOS and is not redistributed: portable test renders use Google Sans as an explicitly documented SF-family fallback. Native Apple typography must be checked on the iPhone, not certified from the Linux gallery. Enlarged-text target tests use a tall mobile-width viewport so partially clipped scroll-edge semantics are not mistaken for undersized controls; the 360 px render matrix separately checks actual scrolling layouts.

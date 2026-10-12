@@ -219,6 +219,11 @@ void main() {
     await (FontLoader(
       'Google Sans',
     )..addFont(rootBundle.load('assets/fonts/GoogleSans-Medium.ttf'))).load();
+    // SF Pro is supplied by iOS and must not be redistributed in Linux tests.
+    // Use a documented preview fallback rather than Flutter's block test font.
+    await (FontLoader(
+      '.SF Pro Text',
+    )..addFont(rootBundle.load('assets/fonts/GoogleSans-Medium.ttf'))).load();
     await (FontLoader(
       'MaterialIcons',
     )..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
@@ -611,6 +616,9 @@ void main() {
                 invitations.dispose();
                 providers.dispose();
               },
+              variant: TargetPlatformVariant({
+                screen == 'auth' ? TargetPlatform.iOS : TargetPlatform.android,
+              }),
             );
           }
         }
