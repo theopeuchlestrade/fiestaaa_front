@@ -1047,5 +1047,7 @@
   "pollsModule": "Polls",
   "expensesModule": "Expenses",
   "organizerNeeds": "Organizer needs",
-  "personalBrings": "Personal brings"
+  "personalBrings": "Personal brings",
+  "scannerFlashlight": "Flashlight",
+  "scannerSwitchCamera": "Switch camera"
 }

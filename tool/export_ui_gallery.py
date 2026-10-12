@@ -22,12 +22,12 @@ for mobile in sorted((folder / 'renders').glob('*_360_light_fr.png')):
         raise ValueError(f'Expected two images: {screen}')
     content = content[:match.start(2)] + block + content[match.end(2):]
     count += 1
-if count != 18:
-    raise ValueError(f'Expected 18 screens, found {count}')
+if count != 21:
+    raise ValueError(f'Expected 21 screens, found {count}')
 preview.write_text(content)
 print(f'Refreshed {count * 2} embedded renders.')
 
-# Complementary personal-brings states keep the main 18-screen index unchanged.
+# Complementary personal-brings states keep the main 21-screen index unchanged.
 content = preview.read_text()
 for state in (folder / 'states').glob('brings_*.png'):
     marker = 'data-review-state="' + state.name + '"'

@@ -1,3 +1,5 @@
+import 'package:fiestaaa_front/src/features/qr_checkin/presentation/widgets/checkin_views.dart';
+import 'package:fiestaaa_front/src/features/qr_checkin/domain/qr_checkin_models.dart';
 import 'dart:convert';
 import 'package:fiestaaa_front/src/features/auth/presentation/widgets/google_logo.dart';
 import 'package:fiestaaa_front/src/features/beta_pages.dart';
@@ -244,6 +246,9 @@ void main() {
     'carpools',
     'participants',
     'friends',
+    'requests',
+    'ticket',
+    'scanner',
     'recovery',
     'safety',
     'privacy',
@@ -281,6 +286,27 @@ void main() {
                                   'email': 'guest@example.invalid',
                                   'handle': 'invité',
                                   'since': '2099-01-01T00:00:00Z',
+                                },
+                              ]
+                            : screen == 'requests'
+                            ? [
+                                {
+                                  'id': 1,
+                                  'sender_email': 'camille@example.invalid',
+                                  'sender_handle': 'camille',
+                                  'receiver_email': 'owner@example.com',
+                                  'receiver_handle': 'demo',
+                                  'status': 'Pending',
+                                  'created_at': '2099-01-01T00:00:00Z',
+                                },
+                                {
+                                  'id': 2,
+                                  'sender_email': 'owner@example.com',
+                                  'sender_handle': 'demo',
+                                  'receiver_email': 'alex@example.invalid',
+                                  'receiver_handle': 'alex',
+                                  'status': 'Pending',
+                                  'created_at': '2099-01-02T00:00:00Z',
                                 },
                               ]
                             : [],
@@ -435,11 +461,81 @@ void main() {
                       ),
                     ),
                   ),
-                  'friends' => FriendsPage(
+                  'friends' || 'requests' => FriendsPage(
+                    requestsOpenSerial: screen == 'requests' ? 1 : 0,
                     session: session,
                     friendsApi: friendsApi,
                     eventsApi: api,
                     invitationsApi: invitations,
+                  ),
+                  'ticket' => Scaffold(
+                    body: FiestaaaPageLayout(
+                      maxWidth: 760,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            CheckinHeader(
+                              title: locale == 'fr'
+                                  ? 'Mon billet'
+                                  : 'My ticket',
+                              eventName: 'Soirée entre amis',
+                            ),
+                            TicketCard(
+                              data: QRCodeData(
+                                qrToken:
+                                    'fiestaaa-review-only-not-a-real-ticket',
+                                eventId: 1,
+                                generatedAt: DateTime.utc(2099, 7, 1, 19, 55),
+                                expiresAt: DateTime.utc(2099, 7, 1, 20),
+                              ),
+                              remaining: const Duration(
+                                minutes: 4,
+                                seconds: 32,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  'scanner' => Scaffold(
+                    body: CheckinScannerView(
+                      eventName: 'Soirée entre amis',
+                      stats: const QRScanStats(
+                        totalInvited: 12,
+                        totalCheckedIn: 8,
+                        pendingCheckins: 4,
+                      ),
+                      preview: ColoredBox(
+                        color: const Color(0xFF202A36),
+                        child: Center(
+                          child: Icon(
+                            Icons.qr_code_2,
+                            size: 100,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      controls: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            onPressed: () {},
+                            tooltip: locale == 'fr'
+                                ? 'Lampe torche'
+                                : 'Flashlight',
+                            icon: const Icon(Icons.flash_off),
+                          ),
+                          IconButton(
+                            onPressed: () {},
+                            tooltip: locale == 'fr'
+                                ? 'Changer de caméra'
+                                : 'Switch camera',
+                            icon: const Icon(Icons.flip_camera_ios_outlined),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   'recovery' => const PasswordResetPage(),
                   'safety' => SafetyPage(
