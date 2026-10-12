@@ -1,0 +1,129 @@
+{
+  "label": "Dart VM lines",
+  "roots": [
+    "lib"
+  ],
+  "extensions": [
+    ".dart"
+  ],
+  "target": 70,
+  "exclusions": [
+    {
+      "paths": [
+        "lib/l10n/**",
+        "lib/firebase_options.dart"
+      ],
+      "reason": "Generated localization/Firebase configuration, not handwritten application behavior."
+    }
+  ],
+  "unmeasured": [
+    {
+      "paths": [
+        "lib/src/**/*_web.dart",
+        "lib/src/core/web_notification_html.dart"
+      ],
+      "reason": "Browser-only adapter; Dart VM does not select this implementation. Browser functional checks are separate."
+    }
+  ],
+  "groups": [
+    {
+      "name": "authentication-sessions",
+      "paths": [
+        "lib/src/features/auth/**",
+        "lib/src/app.dart"
+      ],
+      "floor": 48.0,
+      "target": 80
+    },
+    {
+      "name": "permissions-participation",
+      "paths": [
+        "lib/src/features/invitations/**",
+        "lib/src/features/events/presentation/pages/event_route_page.dart",
+        "lib/src/features/events/presentation/pages/event_invitations_page.dart",
+        "lib/src/features/beta_api.dart",
+        "lib/src/features/beta_pages.dart"
+      ],
+      "floor": 75.1,
+      "target": 80
+    },
+    {
+      "name": "cache-synchronization",
+      "paths": [
+        "lib/src/core/event_data_store.dart",
+        "lib/src/core/api_http_client.dart",
+        "lib/src/core/realtime_client.dart",
+        "lib/src/core/refresh_queue.dart",
+        "lib/src/features/events/presentation/widgets/event_detail_data_methods.dart",
+        "lib/src/features/events/presentation/widgets/event_detail_item_methods.dart"
+      ],
+      "floor": 65.1,
+      "target": 80
+    },
+    {
+      "name": "notifications-qr",
+      "paths": [
+        "lib/src/core/push_notification_service.dart",
+        "lib/src/features/notifications/**",
+        "lib/src/features/qr_checkin/**"
+      ],
+      "floor": 47.3,
+      "target": 80
+    }
+  ],
+  "version": 1,
+  "floor": 59.2,
+  "patchFloor": 80,
+  "stage": "baseline",
+  "baseline": {
+    "sourceSha": "afb8f4243266d4c5f27136c0d58c10336228880d",
+    "rawCiPercent": 56.02,
+    "platform": "macOS arm64",
+    "rawLocal": {
+      "found": 13946,
+      "hit": 7813,
+      "percent": 56.02323246809121
+    },
+    "applicationLocal": {
+      "found": 12487,
+      "hit": 7397,
+      "percent": 59.23760711139585,
+      "floor": 0,
+      "target": 70
+    },
+    "groups": [
+      {
+        "name": "authentication-sessions",
+        "floor": 0,
+        "target": 80,
+        "found": 1055,
+        "hit": 507,
+        "percent": 48.056872037914694
+      },
+      {
+        "name": "permissions-participation",
+        "floor": 0,
+        "target": 80,
+        "found": 1105,
+        "hit": 830,
+        "percent": 75.1131221719457
+      },
+      {
+        "name": "cache-synchronization",
+        "floor": 0,
+        "target": 80,
+        "found": 949,
+        "hit": 618,
+        "percent": 65.12118018967334
+      },
+      {
+        "name": "notifications-qr",
+        "floor": 0,
+        "target": 80,
+        "found": 673,
+        "hit": 319,
+        "percent": 47.399702823179794
+      }
+    ]
+  }
+}

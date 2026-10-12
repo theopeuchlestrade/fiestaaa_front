@@ -53,7 +53,7 @@ migrate_working_dir/
 .pub/
 /build/
 node_modules/
-coverage/
+/coverage/
 
 # Symbolication related
 app.*.symbols
