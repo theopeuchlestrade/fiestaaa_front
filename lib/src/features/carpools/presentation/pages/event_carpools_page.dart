@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/event_data_store.dart';
 import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'dart:async';
@@ -59,6 +60,7 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
   int? _editingCarpoolId;
   RealtimeClient? _realtime;
   StreamSubscription<Map<String, dynamic>>? _realtimeSub;
+  bool _seenRealtimeReady = false;
   String? _sortBy; // New: Current sort option
 
   bool get _canInteract =>
@@ -67,6 +69,18 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
   @override
   void initState() {
     super.initState();
+    if (EventDataStore.instance.canReuseProtected(
+      widget.session.token,
+      widget.eventId,
+    )) {
+      _carpools = EventDataStore.instance.peek<List<CarpoolModel>>(
+        widget.session.token,
+        widget.eventId,
+        'carpools:${_sortBy ?? 'default'}',
+      );
+      _loading = _carpools == null;
+    }
+
     _loadCarpools();
     _setupRealtime();
   }
@@ -76,7 +90,9 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.realtimeStream != widget.realtimeStream) _setupRealtime();
     if (oldWidget.eventId != widget.eventId ||
-        oldWidget.session.token != widget.session.token) {
+        oldWidget.session.token != widget.session.token ||
+        oldWidget.session.email != widget.session.email ||
+        oldWidget.session.publicId != widget.session.publicId) {
       _scopeGeneration++;
       _carpools = null;
       _realtime?.dispose();
@@ -108,6 +124,24 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
       message,
     ) {
       final type = message['type'] as String?;
+      if (type == 'realtime.ready') {
+        if (!_seenRealtimeReady) {
+          _seenRealtimeReady = true;
+          if (EventDataStore.instance.applies(widget.session.token)) return;
+        }
+        EventDataStore.instance.observeRealtime(
+          widget.session.token,
+          widget.eventId,
+          message,
+          reconnect: true,
+        );
+      } else {
+        EventDataStore.instance.observeRealtime(
+          widget.session.token,
+          widget.eventId,
+          message,
+        );
+      }
       final eventId = message['event_id'];
       if (eventId is int && eventId != widget.eventId) return;
       // Existing server mutations use individual carpool event names.
@@ -439,7 +473,10 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
     final canCreateCarpool = _canInteract && !userIsInAnyCarpool;
 
     final content = RefreshIndicator(
-      onRefresh: _loadCarpools,
+      onRefresh: () {
+        EventDataStore.instance.invalidateEvent(widget.eventId);
+        return _loadCarpools();
+      },
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         shrinkWrap: widget.compactModal,
@@ -550,7 +587,10 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
         ),
         const SizedBox(height: 16),
         ElevatedButton.icon(
-          onPressed: _loadCarpools,
+          onPressed: () {
+            EventDataStore.instance.invalidateEvent(widget.eventId);
+            _loadCarpools();
+          },
           icon: const Icon(Icons.refresh),
           label: Text(l10n.retry),
         ),

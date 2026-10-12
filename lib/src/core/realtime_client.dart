@@ -1,3 +1,4 @@
+import 'event_data_store.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
@@ -256,6 +257,8 @@ class RealtimeClient {
     });
   }
 
+  bool _hasReceivedReady = false;
+
   void _handleData(dynamic data) {
     if (data is! String) return;
     if (data == 'pong') {
@@ -274,7 +277,16 @@ class RealtimeClient {
     } catch (_) {
       return;
     }
+    if (eventId != null) {
+      EventDataStore.instance.observeRealtime(
+        token,
+        eventId!,
+        message,
+        reconnect: _hasReceivedReady,
+      );
+    }
     if (message['type'] == 'realtime.ready') {
+      _hasReceivedReady = true;
       _readyTimer?.cancel();
       _reconnectBackoff.reset();
       _setState(RealtimeConnectionState.connected);

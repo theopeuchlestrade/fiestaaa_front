@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/event_data_store.dart';
 import 'dart:async';
 
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
@@ -318,4 +319,47 @@ void main() {
     expect(inner.calls, 0);
     client.close();
   });
+  test(
+    'closing a client retains an in-flight response for shared readers',
+    () async {
+      final pending = Completer<http.Response>();
+      final client = ApiHttpClient(
+        MockClient((_) => pending.future),
+        clientVersion: Future.value('test'),
+      );
+      final response = client.get(
+        Uri.parse('https://fixture.invalid/events/1'),
+      );
+      await Future<void>.delayed(Duration.zero);
+      client.close();
+      pending.complete(http.Response('shared', 200));
+      expect((await response).body, 'shared');
+    },
+  );
+  test(
+    'late unauthorized response does not clear a replacement session',
+    () async {
+      final store = EventDataStore.instance..bind('old-token', 'old-account');
+      final pending = Completer<http.Response>();
+      final events = <ApiUnauthorizedResponse>[];
+      final subscription = ApiHttpClient.unauthorized.listen(events.add);
+      final client = ApiHttpClient(
+        MockClient((_) => pending.future),
+        clientVersion: Future.value('test'),
+      );
+      final response = client.get(
+        Uri.parse('https://fixture.invalid/events/1'),
+        headers: {'Authorization': 'Bearer old-token'},
+      );
+      await Future<void>.delayed(Duration.zero);
+      store.bind('new-token', 'new-account');
+      pending.complete(http.Response('{}', 401));
+      await response;
+      await Future<void>.delayed(Duration.zero);
+      expect(events, isEmpty);
+      await subscription.cancel();
+      client.close();
+      store.clear();
+    },
+  );
 }

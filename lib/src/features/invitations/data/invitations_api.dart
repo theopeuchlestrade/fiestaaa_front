@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/event_data_store.dart';
 import 'dart:convert';
 
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
@@ -16,15 +17,22 @@ class InvitationsApi {
     required String token,
     required int eventId,
   }) async {
-    return collectCursorPages(
-      request: (cursor) => _client.get(
-        buildApiUri(
-          '/events/$eventId/invitations',
-          queryParameters: {'limit': '100', 'cursor': ?cursor},
-        ),
-        headers: apiAuthHeaders(token),
-      ),
-      decode: InvitationModel.fromJson,
+    return EventDataStore.instance.read(
+      token,
+      eventId,
+      'participants',
+      () async {
+        return collectCursorPages(
+          request: (cursor) => _client.get(
+            buildApiUri(
+              '/events/$eventId/invitations',
+              queryParameters: {'limit': '100', 'cursor': ?cursor},
+            ),
+            headers: apiAuthHeaders(token),
+          ),
+          decode: InvitationModel.fromJson,
+        );
+      },
     );
   }
 

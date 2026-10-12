@@ -1,0 +1,50 @@
+[
+  {
+    "file": "web-baseline.json",
+    "sha256": "fad0c832ae42516f221e35584efdecbad9e108bbe5016fda93496505bb42da45",
+    "label": "candidate",
+    "samples": 240,
+    "mode": "Flutter web release; headless Chrome 154.0.8037.98; 390\u00d7844",
+    "sourceSide": "baseline"
+  },
+  {
+    "file": "web-candidate.json",
+    "sha256": "2e891f94368932dae3b0940e6d742c417a744cbca23f9c01f42ee828be1d1c5c",
+    "label": "candidate",
+    "samples": 240,
+    "mode": "Flutter web release; headless Chrome 154.0.8037.98; 390\u00d7844",
+    "sourceSide": "candidate"
+  },
+  {
+    "file": "pixel-baseline.json",
+    "sha256": "292a4417403e626563d8eb41a03264b802fbb37a3482fb93b4e8281a466b4f65",
+    "label": "baseline-pixel",
+    "samples": 240,
+    "mode": "Android 17 / API 37; Flutter profile; physical device",
+    "sourceSide": "baseline"
+  },
+  {
+    "file": "pixel-candidate.json",
+    "sha256": "1f234acdff53ffc0498ecd2ee25a7c3aa97ac004061b43ed9aaea6c3199edd78",
+    "label": "candidate-pixel",
+    "samples": 240,
+    "mode": "Android 17 / API 37; Flutter profile; physical device",
+    "sourceSide": "candidate"
+  },
+  {
+    "file": "iphone-baseline.json",
+    "sha256": "2850506602f1155b0ee6d5646b00cc524dcce13215d29daca5e430c133187184",
+    "label": "baseline-iphone",
+    "samples": 240,
+    "mode": "iOS 27.0.1; Flutter profile; physical device",
+    "sourceSide": "baseline"
+  },
+  {
+    "file": "iphone-candidate.json",
+    "sha256": "474c563dc9a32217e33062372bf6ce74664dac73913402b0d08574bb4b3253f0",
+    "label": "candidate-iphone",
+    "samples": 240,
+    "mode": "iOS 27.0.1; Flutter profile; physical device",
+    "sourceSide": "candidate"
+  }
+]

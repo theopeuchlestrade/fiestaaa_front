@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/core/event_data_store.dart';
 import 'dart:convert';
 
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
@@ -17,15 +18,26 @@ class CarpoolsApi {
     required int eventId,
     String? sortBy,
   }) async {
-    return collectCursorPages(
-      request: (cursor) => _client.get(
-        buildApiUri(
-          '/events/$eventId/carpools',
-          queryParameters: {'limit': '100', 'cursor': ?cursor, 'sort': ?sortBy},
-        ),
-        headers: apiAuthHeaders(token),
-      ),
-      decode: CarpoolModel.fromJson,
+    return EventDataStore.instance.read(
+      token,
+      eventId,
+      'carpools:${sortBy ?? 'default'}',
+      () async {
+        return collectCursorPages(
+          request: (cursor) => _client.get(
+            buildApiUri(
+              '/events/$eventId/carpools',
+              queryParameters: {
+                'limit': '100',
+                'cursor': ?cursor,
+                'sort': ?sortBy,
+              },
+            ),
+            headers: apiAuthHeaders(token),
+          ),
+          decode: CarpoolModel.fromJson,
+        );
+      },
     );
   }
 

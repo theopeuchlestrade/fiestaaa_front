@@ -1,3 +1,5 @@
+import 'navigation_diagnostics.dart';
+import 'event_data_store.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -16,6 +18,13 @@ class ApiHttpClient extends http.BaseClient {
   }) : _clientVersion = clientVersion ?? _platformClientVersion;
 
   final http.Client _inner;
+  int _active = 0;
+  bool _closed = false;
+  void _release() {
+    _active--;
+    if (_closed && _active == 0) _inner.close();
+  }
+
   final Duration timeout;
   final Future<String> _clientVersion;
 
@@ -33,6 +42,8 @@ class ApiHttpClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    if (_closed) throw http.ClientException('Client closed');
+    _active++;
     final elapsed = Stopwatch()..start();
     // Capture the request's identity before web transport strips Authorization.
     final authorization = request.headers.entries
@@ -41,6 +52,9 @@ class ApiHttpClient extends http.BaseClient {
         .firstOrNull;
     final bearerToken = authorization?.startsWith('Bearer ') == true
         ? authorization!.substring(7)
+        : null;
+    final requestGeneration = EventDataStore.instance.applies(bearerToken)
+        ? EventDataStore.instance.generation
         : null;
     try {
       final clientVersion = await _clientVersion.timeout(timeout);
@@ -73,11 +87,24 @@ class ApiHttpClient extends http.BaseClient {
           throw TimeoutException('Response deadline exceeded');
         },
       );
-      if (response.statusCode == 401) {
+      if ((requestGeneration == null ||
+              requestGeneration == EventDataStore.instance.generation) &&
+          request.method != 'GET' &&
+          response.statusCode >= 200 &&
+          response.statusCode < 300) {
+        EventDataStore.instance.mutation(bearerToken, request.url);
+      }
+      if (response.statusCode == 401 &&
+          (requestGeneration == null ||
+              requestGeneration == EventDataStore.instance.generation)) {
         _unauthorizedController.add(ApiUnauthorizedResponse(bearerToken));
       }
       return http.StreamedResponse(
-        _readWithinDeadline(response.stream, elapsed),
+        _readWithinDeadline(
+          response.stream,
+          elapsed,
+          _resourceLabel(request.url),
+        ),
         response.statusCode,
         contentLength: response.contentLength,
         request: response.request,
@@ -87,15 +114,21 @@ class ApiHttpClient extends http.BaseClient {
         reasonPhrase: response.reasonPhrase,
       );
     } on TimeoutException {
+      _release();
       throw const ApiTransportException(ApiTransportError.timeout);
     } on http.ClientException {
+      _release();
       throw const ApiTransportException(ApiTransportError.network);
+    } catch (_) {
+      _release();
+      rethrow;
     }
   }
 
   Stream<List<int>> _readWithinDeadline(
     Stream<List<int>> source,
     Stopwatch elapsed,
+    String resource,
   ) {
     StreamSubscription<List<int>>? subscription;
     Timer? timer;
@@ -105,6 +138,8 @@ class ApiHttpClient extends http.BaseClient {
     void finish([Object? error, StackTrace? stack]) {
       if (finished) return;
       finished = true;
+      _release();
+      NavigationDiagnostics.instance.record(resource, elapsed.elapsed);
       timer?.cancel();
       if (error != null) controller.addError(error, stack);
       unawaited(controller.close());
@@ -141,6 +176,7 @@ class ApiHttpClient extends http.BaseClient {
       onPause: () => subscription?.pause(),
       onResume: () => subscription?.resume(),
       onCancel: () {
+        if (!finished) _release();
         finished = true;
         timer?.cancel();
         unawaited(subscription?.cancel());
@@ -151,7 +187,9 @@ class ApiHttpClient extends http.BaseClient {
 
   @override
   void close() {
-    _inner.close();
+    if (_closed) return;
+    _closed = true;
+    if (_active == 0) _inner.close();
   }
 }
 
@@ -160,7 +198,29 @@ class ApiClient extends ApiHttpClient {
     : super(inner ?? createPlatformHttpClient());
 }
 
-http.Client createApiHttpClient() => ApiClient();
+const apiHttpClientFactoryKey = #fiestaaaApiHttpClientFactory;
+http.Client createApiHttpClient() {
+  final factory =
+      Zone.current[apiHttpClientFactoryKey] as http.Client Function()?;
+  return factory == null ? ApiClient() : factory();
+}
+
+String _resourceLabel(Uri uri) {
+  final parts = uri.pathSegments;
+  for (final name in [
+    'carpools',
+    'expenses',
+    'polls',
+    'items',
+    'invitations',
+    'friends',
+    'auth',
+    'events',
+  ]) {
+    if (parts.contains(name)) return 'http:$name';
+  }
+  return 'http:other';
+}
 
 enum ApiTransportError { timeout, network }
 
