@@ -1,6 +1,23 @@
 part of '../pages/event_detail_page.dart';
 
 extension _EventDetailDataMethods on _EventDetailPageState {
+  bool _retryDiscardedRead(
+    (int, String, int) requestScope,
+    Future<void> Function() reload,
+  ) {
+    if (!mounted ||
+        _eventUnavailable ||
+        requestScope !=
+            (_scopeGeneration, widget.session.token, widget.event.id) ||
+        !EventDataStore.instance.applies(widget.session.token)) {
+      return false;
+    }
+    // Queue the latest read without awaiting our own running refresh queue.
+    // A rejected old response is an invalidation, not a transport failure.
+    unawaited(reload());
+    return true;
+  }
+
   String _formatRemaining(Duration duration) {
     if (duration.isNegative) return S.of(context).expired;
     if (duration.inMinutes < 60) {
