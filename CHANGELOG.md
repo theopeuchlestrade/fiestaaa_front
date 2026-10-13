@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-13
+
+### Dependencies
+
+- Update compatible image picker, shared preferences, URL launcher and Playwright dependencies.
+
 ### Fixed
 
 - Retry superseded needs, contribution and poll reads without showing false loading errors or restoring outdated snapshots; preserve session and route cancellation guards.
