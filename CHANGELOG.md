@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Retry superseded needs, contribution and poll reads without showing false loading errors or restoring outdated snapshots; preserve session and route cancellation guards.
+
 ### Changed
 
 - Expand behavior tests and enforce 70% Dart VM application coverage, 80% for critical groups and changed executable lines; add GitHub-native coverage reports and isolated browser adapter checks.

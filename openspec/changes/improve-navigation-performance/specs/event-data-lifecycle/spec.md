@@ -42,6 +42,11 @@ Stale eligible snapshots SHALL remain visible during background refresh and tran
 - **WHEN** a contribution, vote, expense, ride or membership change succeeds or is received remotely
 - **THEN** revisiting affected views does not treat their previous snapshots as fresh and active views update
 
+#### Scenario: Invalidation during a successful read
+- **WHEN** a realtime change invalidates an in-flight needs, contribution or poll response
+- **THEN** the obsolete response is discarded, the active route queues a current read without a false transport error, and the loaded content remains visible
+- **AND** a cleared session or replaced route never retries the previous scope
+
 ### Requirement: Relevant and deduplicated loading
 Opening a module SHALL request only its data and shared context needed for access and presentation. Concurrent requests for identical data SHALL share one in-flight operation. Independent required requests SHALL overlap when access allows it.
 

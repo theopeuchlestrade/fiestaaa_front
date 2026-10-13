@@ -19,6 +19,7 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       _itemsError = null;
     });
     final contributions = _loadContributions();
+    var discarded = false;
     try {
       final data = await _eventsApi.fetchEventItems(
         widget.event.id,
@@ -48,6 +49,11 @@ extension _EventDetailItemMethods on _EventDetailPageState {
           return;
         }
         _updateState(() => _summaryItems = summary);
+      } on StaleEventData {
+        discarded = _retryDiscardedRead(
+          requestScope,
+          () => _loadItems(showLoading: showLoading),
+        );
       } catch (_) {
         if (!mounted ||
             requestScope !=
@@ -57,6 +63,11 @@ extension _EventDetailItemMethods on _EventDetailPageState {
         _updateState(() => _summaryItems = null);
       }
       await contributions;
+    } on StaleEventData {
+      discarded = _retryDiscardedRead(
+        requestScope,
+        () => _loadItems(showLoading: showLoading),
+      );
     } on ApiException catch (e) {
       if (!mounted ||
           requestScope !=
@@ -82,7 +93,8 @@ extension _EventDetailItemMethods on _EventDetailPageState {
         _summaryItems = null;
       });
     } finally {
-      if (mounted &&
+      if (!discarded &&
+          mounted &&
           requestScope ==
               (_scopeGeneration, widget.session.token, widget.event.id)) {
         _updateState(() {
@@ -109,6 +121,7 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       if (showLoading) _loadingPolls = _polls == null;
       _pollsError = null;
     });
+    var discarded = false;
     try {
       final data = await _eventsApi.fetchEventPolls(
         token: widget.session.token,
@@ -120,6 +133,11 @@ extension _EventDetailItemMethods on _EventDetailPageState {
         return;
       }
       _updateState(() => _polls = data);
+    } on StaleEventData {
+      discarded = _retryDiscardedRead(
+        requestScope,
+        () => _loadPolls(showLoading: showLoading),
+      );
     } on ApiException catch (e) {
       if (!mounted ||
           requestScope !=
@@ -143,7 +161,8 @@ extension _EventDetailItemMethods on _EventDetailPageState {
       }
       _updateState(() => _pollsError = S.of(context).unableToLoadPolls);
     } finally {
-      if (mounted &&
+      if (!discarded &&
+          mounted &&
           requestScope ==
               (_scopeGeneration, widget.session.token, widget.event.id)) {
         _updateState(() {
@@ -181,6 +200,8 @@ extension _EventDetailItemMethods on _EventDetailPageState {
         _contributions = map;
         _contributionsKnown = true;
       });
+    } on StaleEventData {
+      _retryDiscardedRead(requestScope, _loadContributions);
     } catch (_) {
       if (!mounted ||
           requestScope !=
