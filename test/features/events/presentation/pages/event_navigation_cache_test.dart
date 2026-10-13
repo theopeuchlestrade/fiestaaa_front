@@ -506,10 +506,12 @@ void main() {
         () async {
           await tester.pumpWidget(page(session, EventModule.items));
           await tester.pumpAndSettle();
-        await tester.tap(find.text('Filter and sort'));
-        await tester.pumpAndSettle();
+          await tester.tap(find.text('Filter and sort'));
+          await tester.pumpAndSettle();
           store.invalidate(1, ['items:all']);
-        await tester.ensureVisible(find.byKey(const Key('items_scope_toCover')));
+          await tester.ensureVisible(
+            find.byKey(const Key('items_scope_toCover')),
+          );
           await tester.tap(find.byKey(const Key('items_scope_toCover')));
           await tester.pump();
           expect(allReads, 2);
