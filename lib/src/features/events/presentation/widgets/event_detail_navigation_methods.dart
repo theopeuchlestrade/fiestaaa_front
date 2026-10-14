@@ -156,19 +156,19 @@ extension _EventDetailNavigationMethods on _EventDetailPageState {
   Future<void> _openEditEvent() async {
     final result = await Navigator.of(context).push<EventEditPageResult>(
       MaterialPageRoute(
-        builder: (_) =>
-            EventEditPage(session: widget.session, initialEvent: _currentEvent),
+        builder: (_) => EventEditPage(
+          session: widget.session,
+          initialEvent: _currentEvent,
+          eventsApi: _eventsApi,
+          paymentProvidersApi: _paymentProvidersApi,
+        ),
       ),
     );
 
     if (!mounted) return;
     if (result == null) return;
     if (result.deleted) {
-      widget.onEventRemoved?.call(_currentEvent.id);
-      _showSnack(S.of(context).fiestaaaDeleted);
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
+      _leaveEvent(S.of(context).fiestaaaDeleted);
       return;
     }
     final updated = result.event;

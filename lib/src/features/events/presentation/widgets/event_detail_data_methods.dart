@@ -110,16 +110,23 @@ extension _EventDetailDataMethods on _EventDetailPageState {
   }
 
   void _leaveUnavailableEvent() {
+    if (!mounted) return;
+    _leaveEvent(S.of(context).realtimeEventUnavailable);
+  }
+
+  void _leaveEvent(String message) {
     if (!mounted || _eventUnavailable) return;
     _eventUnavailable = true;
     _realtimeSub?.cancel();
     _realtime?.dispose();
+    final router = GoRouter.maybeOf(context);
+    final navigator = Navigator.of(context);
     widget.onEventRemoved?.call(_currentEvent.id);
-    _showSnack(S.of(context).realtimeEventUnavailable);
-    if (Navigator.of(context).canPop()) {
-      Navigator.of(context).pop();
-    } else {
-      context.go('/events');
+    _showSnack(message);
+    if (router != null) {
+      router.go('/events');
+    } else if (navigator.canPop()) {
+      navigator.pop();
     }
   }
 
