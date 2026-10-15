@@ -342,7 +342,6 @@
   "openPayment": "Open collection",
   "linkUnavailable": "Link unavailable",
   "unableToOpenPayment": "Unable to open collection",
-  "openInMapsApp": "Open in your maps app",
   "unableToOpenMap": "Unable to open map",
   "linkCopiedToClipboard": "Link copied to clipboard",
   "unableToGenerateLink": "Unable to generate link",

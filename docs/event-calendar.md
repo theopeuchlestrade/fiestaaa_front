@@ -100,3 +100,5 @@ are removed. A nonvisual action label is retained for screen readers.
 The schedule, address and description rows use the standard ListTile layout,
 with matching leading icon placement, title/subtitle typography and spacing.
 The calendar and address actions also share the same trailing icon placement.
+
+The map picker also presents the provider choices directly, without a heading.

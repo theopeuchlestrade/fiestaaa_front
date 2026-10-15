@@ -116,13 +116,6 @@ extension _EventDetailNavigationMethods on _EventDetailPageState {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-                child: Text(
-                  S.of(context).openInMapsApp,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
               ListTile(
                 leading: const Icon(Icons.explore_outlined),
                 title: Text(S.of(context).mapProviderGoogle),
