@@ -609,10 +609,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         onTap: _openMap,
                       ),
                       if (_currentEvent.description.trim().isNotEmpty)
-                        _DetailTile(
-                          icon: Icons.description_outlined,
-                          label: S.of(context).description,
-                          value: _currentEvent.description,
+                        ListTile(
+                          leading: Icon(
+                            Icons.description_outlined,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          title: Text(S.of(context).description),
+                          subtitle: Text(_currentEvent.description),
                         ),
                     ],
                   ),
