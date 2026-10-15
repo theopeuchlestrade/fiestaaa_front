@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-16
+
+### Added
+
+- Open native Apple and Android calendar editors from an event schedule, with Google Calendar drafts and ICS export for other calendars, without requesting calendar read/write access.
+
 ### Fixed
 
 - Keep the event list visible when deletion and realtime removal race during the editor transition.
