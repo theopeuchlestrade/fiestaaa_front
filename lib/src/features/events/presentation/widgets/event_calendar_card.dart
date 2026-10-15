@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../l10n/app_localizations.dart';
-import '../../../../theme/fiestaaa_theme.dart';
 import '../../calendar/calendar_file_export.dart';
 import '../../calendar/event_calendar_entry.dart';
 import '../../calendar/native_calendar_adapter.dart';
@@ -148,41 +147,15 @@ class _EventCalendarCardState extends State<EventCalendarCard> {
     return Semantics(
       label: l10n.addToCalendar,
       button: true,
-      child: InkWell(
-        onTap: _busy ? null : _pickCalendar,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.event, color: FiestaaaPalette.primary),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.dateAndTime,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: Theme.of(context).fiestaaaMutedText,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.schedule,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Icon(
-                Icons.open_in_new,
-                color: Theme.of(context).fiestaaaMutedText,
-              ),
-            ],
-          ),
+      child: ListTile(
+        leading: Icon(
+          Icons.event_outlined,
+          color: Theme.of(context).colorScheme.primary,
         ),
+        title: Text(l10n.dateAndTime),
+        subtitle: Text(widget.schedule),
+        trailing: const Icon(Icons.open_in_new),
+        onTap: _busy ? null : _pickCalendar,
       ),
     );
   }

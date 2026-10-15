@@ -96,3 +96,6 @@ Physical-device flows and external account imports were not exercised here.
 The schedule itself and the external-action icon remain clickable. The visible
 add-to-calendar prompt, picker heading, confirmation explanation and ICS subtitle
 are removed. A nonvisual action label is retained for screen readers.
+
+The schedule and address actions both use the standard ListTile layout, with
+matching leading/trailing icon placement, title/subtitle typography and spacing.
