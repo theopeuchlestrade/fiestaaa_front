@@ -18,6 +18,9 @@ import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:fiestaaa_front/src/features/events/presentation/pages/event_edit_page.dart';
 
 EventModel _event(int id, String name) => EventModel(
   id: id,
@@ -41,6 +44,19 @@ EventModel _event(int id, String name) => EventModel(
 );
 
 class _Api extends EventsApi {
+  int deleted = 0;
+  Completer<void>? deletePending;
+  bool deleteFails = false;
+  @override
+  Future<void> deleteEvent({
+    required String token,
+    required int eventId,
+  }) async {
+    deleted++;
+    if (deletePending != null) await deletePending!.future;
+    if (deleteFails) throw ApiException('unavailable', statusCode: 503);
+  }
+
   Completer<EventModel>? pending;
   int? failure;
   @override
@@ -136,6 +152,121 @@ class _GuestInvitations extends InvitationsApi {
 }
 
 void main() {
+  testWidgets('failed deletion keeps the editor and permits retry', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    tz.initializeTimeZones();
+    final api = _Api()..deleteFails = true;
+    final clients = <_Realtime>[];
+    final nav = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(
+      _app(const Scaffold(body: Text('Events list')), navigatorKey: nav),
+    );
+    unawaited(
+      nav.currentState!.push(
+        MaterialPageRoute<void>(builder: (_) => _page(api, 1, clients)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Event actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit fiestaaa'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Delete fiestaaa'));
+    await tester.tap(find.text('Delete fiestaaa'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Delete'));
+    await tester.pumpAndSettle();
+    expect(find.byType(EventEditPage), findsOneWidget);
+    expect(api.deleted, 1);
+    api.deleteFails = false;
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete fiestaaa'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Delete'));
+    await tester.pumpAndSettle();
+    expect(api.deleted, 2);
+    expect(find.text('Events list'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+  for (final pushed in [false, true]) {
+    for (final realtime in [false, true]) {
+      testWidgets(
+        'deletion returns to list (pushed: $pushed, realtime: $realtime)',
+        (tester) async {
+          SharedPreferences.setMockInitialValues({});
+          tz.initializeTimeZones();
+          final clients = <_Realtime>[];
+          final api = _Api();
+          final router = GoRouter(
+            initialLocation: pushed ? '/events' : '/events/1',
+            routes: [
+              GoRoute(
+                path: '/events',
+                builder: (_, _) => const Scaffold(body: Text('Events list')),
+              ),
+              GoRoute(
+                path: '/events/1',
+                builder: (context, _) => _page(
+                  api,
+                  1,
+                  clients,
+                  onRemoved: (_) => context.go('/events'),
+                ),
+              ),
+            ],
+          );
+          addTearDown(router.dispose);
+          await tester.pumpWidget(
+            MaterialApp.router(
+              routerConfig: router,
+              locale: const Locale('en'),
+              localizationsDelegates: S.localizationsDelegates,
+              supportedLocales: S.supportedLocales,
+            ),
+          );
+          if (pushed) {
+            unawaited(router.push('/events/1'));
+          }
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Event actions'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Edit fiestaaa'));
+          await tester.pumpAndSettle();
+          expect(find.byType(EventEditPage), findsOneWidget);
+          await tester.ensureVisible(find.text('Delete fiestaaa'));
+          await tester.tap(find.text('Delete fiestaaa'));
+          await tester.pumpAndSettle();
+          if (realtime) api.deletePending = Completer<void>();
+          await tester.tap(find.widgetWithText(ElevatedButton, 'Delete'));
+          if (realtime) {
+            await tester.pump();
+          } else {
+            await tester.pumpAndSettle();
+          }
+          if (realtime) {
+            clients.single.messages.add({
+              'type': 'event.deleted',
+              'event_id': 1,
+            });
+            await tester.pump(const Duration(milliseconds: 16));
+            api.deletePending!.complete();
+            await tester.pumpAndSettle();
+          }
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+          expect(find.text('Events list'), findsOneWidget);
+          expect(find.byType(EventEditPage), findsNothing);
+          expect(router.routeInformationProvider.value.uri.path, '/events');
+          expect(api.deleted, 1);
+          await tester.pumpWidget(const SizedBox.shrink());
+        },
+      );
+    }
+  }
   for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
     testWidgets('address without coordinates offers maps on $platform', (
       tester,

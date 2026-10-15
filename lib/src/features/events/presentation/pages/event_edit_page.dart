@@ -629,6 +629,9 @@ class _EventEditPageState extends State<EventEditPage>
       setState(() => _allowPop = true);
       await WidgetsBinding.instance.endOfFrame;
       if (!mounted) return;
+      // Realtime deletion can already be removing this route. A late HTTP
+      // success must not pop the route beneath the departing editor.
+      if (ModalRoute.of(context)?.isCurrent != true) return;
       Navigator.of(context).pop(const EventEditPageResult.deleted());
     } on ApiException catch (e) {
       if (!mounted) return;
