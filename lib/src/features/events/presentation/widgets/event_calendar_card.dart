@@ -5,7 +5,8 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../l10n/app_localizations.dart';
-import '../../calendar/calendar_file_export.dart';
+import '../../calendar/calendar_file_export_native.dart'
+    if (dart.library.js_interop) '../../calendar/calendar_file_export_web.dart';
 import '../../calendar/event_calendar_entry.dart';
 import '../../calendar/native_calendar_adapter.dart';
 import '../../domain/event_model.dart';
