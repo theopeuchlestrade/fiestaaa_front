@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:fiestaaa_front/src/features/events/calendar/native_calendar_adapter.dart';
+import 'package:fiestaaa_front/src/features/events/calendar/event_calendar_entry.dart';
+
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_calendar_card.dart';
 import 'package:flutter/material.dart';
@@ -9,11 +12,29 @@ import 'package:timezone/data/latest.dart' as tz;
 
 import '../../calendar/calendar_fixture.dart';
 
+class _NativeCalendar extends NativeCalendarAdapter {
+  _NativeCalendar({
+    this.supported = false,
+    this.result = NativeCalendarResult.opened,
+  });
+  final bool supported;
+  final NativeCalendarResult result;
+  EventCalendarEntry? opened;
+  @override
+  Future<bool> supportsEditor() async => supported;
+  @override
+  Future<NativeCalendarResult> openEditor(EventCalendarEntry entry) async {
+    opened = entry;
+    return result;
+  }
+}
+
 void main() {
   setUpAll(tz.initializeTimeZones);
 
   Widget app({
     String language = 'en',
+    NativeCalendarAdapter? native,
     Future<bool> Function(Uri)? open,
     Future<void> Function(Uint8List, String, Rect)? export,
   }) => MaterialApp(
@@ -26,6 +47,7 @@ void main() {
         schedule: '14 July 2026 · 20:30',
         openGoogle: open,
         exportFile: export,
+        nativeCalendar: native ?? _NativeCalendar(),
       ),
     ),
   );
@@ -38,37 +60,40 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('the schedule opens all providers and dismissal has no effects', (
-    tester,
-  ) async {
-    var calls = 0;
-    await tester.pumpWidget(
-      app(
-        open: (_) async {
-          calls++;
-          return true;
-        },
-        export: (_, _, _) async {
-          calls++;
-        },
-      ),
-    );
-    await tester.tap(find.text('14 July 2026 · 20:30'));
-    await tester.pumpAndSettle();
-    for (final label in [
-      'Google Calendar',
-      'Apple Calendar',
-      'Proton Calendar',
-      'Other calendar',
-    ]) {
-      expect(find.text(label), findsOneWidget);
-    }
-    expect(find.textContaining('Import/export'), findsOneWidget);
-    await tester.tapAt(const Offset(5, 5));
-    await tester.pumpAndSettle();
-    expect(find.text('Google Calendar'), findsNothing);
-    expect(calls, 0);
-  });
+  testWidgets(
+    'the schedule opens all providers and dismissal has no effects',
+    (tester) async {
+      var calls = 0;
+      await tester.pumpWidget(
+        app(
+          open: (_) async {
+            calls++;
+            return true;
+          },
+          export: (_, _, _) async {
+            calls++;
+          },
+        ),
+      );
+      await tester.tap(find.text('14 July 2026 · 20:30'));
+      await tester.pumpAndSettle();
+      for (final label in ['Google Calendar', 'Export an .ics file']) {
+        expect(find.text(label), findsOneWidget);
+      }
+      expect(find.text('Proton Calendar'), findsNothing);
+      expect(find.text('Apple Calendar'), findsNothing);
+      expect(find.text('Device calendar'), findsNothing);
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pumpAndSettle();
+      expect(find.text('Google Calendar'), findsNothing);
+      expect(calls, 0);
+    },
+    variant: TargetPlatformVariant({
+      TargetPlatform.iOS,
+      TargetPlatform.android,
+      TargetPlatform.macOS,
+    }),
+  );
 
   testWidgets('Google opens a draft and offers ICS on failure', (tester) async {
     Uri? opened;
@@ -92,16 +117,12 @@ void main() {
       find.text('Unable to open the calendar or export the file.'),
       findsOneWidget,
     );
-    await tester.tap(find.text('Export .ics'));
+    await tester.tap(find.text('Export an .ics file'));
     await tester.pumpAndSettle();
     expect(exported, contains('BEGIN:VEVENT'));
   });
 
-  for (final provider in [
-    'Apple Calendar',
-    'Proton Calendar',
-    'Other calendar',
-  ]) {
+  for (final provider in ['Export an .ics file']) {
     testWidgets('$provider exports ICS without opening Google', (tester) async {
       var calls = 0;
       await tester.pumpWidget(
@@ -131,7 +152,7 @@ void main() {
         },
       ),
     );
-    await pick(tester, 'Other calendar');
+    await pick(tester, 'Export an .ics file');
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
     expect(calls, 2);
@@ -155,7 +176,56 @@ void main() {
     expect(find.text('Ajouter à mon agenda'), findsOneWidget);
     await tester.tap(find.text('Ajouter à mon agenda'));
     await tester.pumpAndSettle();
-    expect(find.text('Autre agenda'), findsOneWidget);
-    expect(find.textContaining('Importer/exporter'), findsOneWidget);
+    expect(find.text('Exporter un fichier .ics'), findsOneWidget);
+    expect(find.text('Proton Calendar'), findsNothing);
   });
+  for (final platform in [TargetPlatform.iOS, TargetPlatform.android]) {
+    testWidgets(
+      'shows only the native editor supported by the platform',
+      (tester) async {
+        final native = _NativeCalendar(supported: true);
+        await tester.pumpWidget(app(native: native));
+        await pick(
+          tester,
+          platform == TargetPlatform.iOS ? 'Apple Calendar' : 'Device calendar',
+        );
+        expect(native.opened!.title, 'Fête 🎉');
+        expect(native.opened!.start, DateTime.utc(2026, 7, 14, 18, 30));
+        expect(find.byType(SnackBar), findsNothing);
+      },
+      variant: TargetPlatformVariant({platform}),
+    );
+  }
+
+  for (final result in NativeCalendarResult.values) {
+    testWidgets(
+      'native ${result.name} has the correct recovery behavior',
+      (tester) async {
+        final native = _NativeCalendar(supported: true, result: result);
+        var exports = 0;
+        await tester.pumpWidget(
+          app(
+            native: native,
+            export: (_, _, _) async {
+              exports++;
+            },
+          ),
+        );
+        await pick(tester, 'Apple Calendar');
+        if (result == NativeCalendarResult.unavailable) {
+          expect(
+            find.text('Unable to open the calendar or export the file.'),
+            findsOneWidget,
+          );
+          await tester.tap(find.text('Export an .ics file'));
+          await tester.pumpAndSettle();
+          expect(exports, 1);
+        } else {
+          expect(find.byType(SnackBar), findsNothing);
+          expect(exports, 0);
+        }
+      },
+      variant: TargetPlatformVariant({TargetPlatform.iOS}),
+    );
+  }
 }

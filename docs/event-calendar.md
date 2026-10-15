@@ -4,15 +4,24 @@ The date/time card on the event detail page opens a calendar picker, using the
 same card treatment and bottom-sheet interaction as the postal address.
 
 - Google Calendar opens a prefilled draft, which the user must save.
-- Apple Calendar and other calendars receive an iCalendar (`.ics`) file.
-- Proton Calendar receives the same file, with instructions to import it using
-  Settings → All settings → Import/export on the Proton Calendar website.
-- Web clients download the file; native clients use the system share sheet.
-  Available import targets depend on the operating system and installed apps.
+- iPhone/iPad on iOS 17+: Apple Calendar opens the system EventKitUI editor.
+- Android: Device calendar opens the installed calendar editor using ACTION_INSERT.
+- Export an .ics file is available everywhere for Proton and other calendars.
+  Web clients download the file; native clients use the system share sheet.
+- iOS 15/16, Web and desktop offer Google Calendar and the universal export only.
+
+The mobile bridges do not request calendar read/write permissions. iOS uses
+EventKitUI without accessing the existing event store; Android delegates creation
+to another app. iOS reports saved/cancelled; Android only reports that it opened
+the editor, never that an event was saved. Cancellation is silent. An unavailable
+editor offers an ICS export. No calendar account connection is required.
 
 This is a one-time snapshot, not a calendar subscription. Exporting does not
 create a public event link, send invitations, or modify the Fiestaaa event.
-There is no new dependency or backend API.
+There is no new dependency or backend API. Native bridge messages use
+`fiestaaa/calendar` with `isSupported` and `openEditor`; event fields are title,
+description, location, UTC epoch milliseconds for start/end, and the IANA zone.
+Outcomes are opened, saved, cancelled or unavailable.
 
 ## Time and file handling
 
@@ -25,7 +34,7 @@ or unknown time zones that prevent conversion produce a retryable error.
 Both export formats carry the title, description, address and UTC start/end.
 ICS files use a stable event UID, CRLF line endings, escaped text, and UTF-8-safe
 line folding at 75 octets. No credentials or invitation tokens are exported.
-Google launch failures offer an ICS export; export failures offer retry.
+Google/native launch failures offer an ICS export; export failures offer retry.
 Dismissing the picker or the native share sheet does not report success or error.
 
 ## Validation — 15 October 2026
@@ -49,11 +58,35 @@ Dismissing the picker or the native share sheet does not report success or error
   name, UTC start/end and escaped title. Verified Google draft URL parameters
   and new-tab handoff with the external request intercepted.
 
+## Native editor follow-up
+
+- 44 focused Flutter tests pass, covering native support/version capability,
+  exact bridge payloads, outcomes, absent bridges, errors, platform-specific
+  choices and ICS recovery, plus existing time and map regressions.
+- Full analysis and Web release compilation pass. The Chrome browser guard
+  passes and is included in the existing browser CI step.
+- Android debug compilation passes using a temporary ignored Firebase test config.
+- The Swift editor implementation typechecks against the iOS SDK with a minimum
+  deployment target of iOS 15.
+- iOS 27 iPhone simulator: the native editor opened successfully with the exact
+  synthetic title, Paris address, description and 31 October 2026 20:30–21:30
+  time range, with no calendar-access prompt. Save/cancel callbacks are covered
+  by bridge tests; actual UI save/cancel remains to be exercised.
+- Android API 35 emulator: ACTION_INSERT handed off to Google Calendar with event
+  extras. Its account setup prevented completing a save in this account-free
+  environment; the app does not report a save on handoff.
+
+The existing iOS Podfile.lock pins Firebase 12.13.0 while the current Dart plugin
+requires 12.19.0. The simulator smoke build used a temporary local pod resolution
+and ARM64-only Xcode build (the generic Flutter multi-architecture build also
+failed in the local toolchain). The original lock and project settings are
+preserved in the PR; no native dependency upgrade is included.
+
 Still requiring device/account validation:
 
 - Save a draft in Google Calendar, then confirm its times and text.
 - Import the file in Apple Calendar and Proton Calendar.
-- Share the file on physical iOS/Android devices, including cancellation and
-  iPad share-sheet placement.
+- Share the file on physical iOS/Android devices, including iPad placement.
+- Verify native editor save/cancel on physical iPhone/iPad and Android.
 
-These external imports and native device flows were not exercised here.
+Physical-device flows and external account imports were not exercised here.

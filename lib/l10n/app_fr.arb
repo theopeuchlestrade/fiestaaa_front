@@ -1068,13 +1068,11 @@
   "scannerSwitchCamera": "Changer de caméra",
   "addToCalendar": "Ajouter à mon agenda",
   "calendarProviderGoogle": "Google Calendar",
+  "calendarProviderDevice": "Agenda du téléphone",
   "calendarProviderApple": "Apple Calendar",
-  "calendarProviderProton": "Proton Calendar",
-  "calendarProviderOther": "Autre agenda",
   "calendarIcsHelp": "Exporter un fichier .ics à ouvrir ou importer dans votre agenda.",
-  "calendarProtonHelp": "Exporter un fichier .ics, puis l’importer dans Proton Calendar sur le Web : Paramètres → Tous les paramètres → Importer/exporter.",
   "calendarSnapshotHelp": "Confirmez l’ajout dans votre agenda. Les modifications ultérieures de la fiestaaa ne seront pas synchronisées. Sans heure de fin, une durée d’une heure est proposée.",
   "unableToAddToCalendar": "Impossible d’ouvrir l’agenda ou d’exporter le fichier.",
-  "calendarExportIcs": "Exporter .ics",
+  "calendarExportIcs": "Exporter un fichier .ics",
   "calendarRetry": "Réessayer"
 }

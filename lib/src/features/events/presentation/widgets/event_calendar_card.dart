@@ -1,15 +1,17 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../theme/fiestaaa_theme.dart';
 import '../../calendar/calendar_file_export.dart';
 import '../../calendar/event_calendar_entry.dart';
+import '../../calendar/native_calendar_adapter.dart';
 import '../../domain/event_model.dart';
 
-enum _CalendarProvider { google, apple, proton, other }
+enum _CalendarProvider { native, google, ics }
 
 class EventCalendarCard extends StatefulWidget {
   const EventCalendarCard({
@@ -18,8 +20,10 @@ class EventCalendarCard extends StatefulWidget {
     required this.schedule,
     this.openGoogle,
     this.exportFile,
+    this.nativeCalendar = const NativeCalendarAdapter(),
   });
 
+  final NativeCalendarAdapter nativeCalendar;
   final EventModel event;
   final String schedule;
   final Future<bool> Function(Uri uri)? openGoogle;
@@ -37,57 +41,65 @@ class _EventCalendarCardState extends State<EventCalendarCard> {
   Future<void> _pickCalendar() async {
     if (_busy || _choosing) return;
     _choosing = true;
-    final l10n = S.of(context);
-    final provider = await showModalBottomSheet<_CalendarProvider>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: Text(
-                  l10n.addToCalendar,
-                  style: Theme.of(context).textTheme.titleLarge,
+    try {
+      final nativeAvailable = await widget.nativeCalendar.supportsEditor();
+      if (!mounted) return;
+      final l10n = S.of(context);
+      final provider = await showModalBottomSheet<_CalendarProvider>(
+        context: context,
+        showDragHandle: true,
+        builder: (context) => SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Text(
+                    l10n.addToCalendar,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                 ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.event),
-                title: Text(l10n.calendarProviderGoogle),
-                onTap: () => Navigator.pop(context, _CalendarProvider.google),
-              ),
-              ListTile(
-                leading: const Icon(Icons.apple),
-                title: Text(l10n.calendarProviderApple),
-                subtitle: Text(l10n.calendarIcsHelp),
-                onTap: () => Navigator.pop(context, _CalendarProvider.apple),
-              ),
-              ListTile(
-                leading: const Icon(Icons.shield_outlined),
-                title: Text(l10n.calendarProviderProton),
-                subtitle: Text(l10n.calendarProtonHelp),
-                onTap: () => Navigator.pop(context, _CalendarProvider.proton),
-              ),
-              ListTile(
-                leading: const Icon(Icons.calendar_month_outlined),
-                title: Text(l10n.calendarProviderOther),
-                subtitle: Text(l10n.calendarIcsHelp),
-                onTap: () => Navigator.pop(context, _CalendarProvider.other),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(l10n.calendarSnapshotHelp),
-              ),
-            ],
+                ListTile(
+                  leading: const Icon(Icons.event),
+                  title: Text(l10n.calendarProviderGoogle),
+                  onTap: () => Navigator.pop(context, _CalendarProvider.google),
+                ),
+                if (nativeAvailable)
+                  ListTile(
+                    leading: Icon(
+                      defaultTargetPlatform == TargetPlatform.iOS
+                          ? Icons.apple
+                          : Icons.calendar_month_outlined,
+                    ),
+                    title: Text(
+                      defaultTargetPlatform == TargetPlatform.iOS
+                          ? l10n.calendarProviderApple
+                          : l10n.calendarProviderDevice,
+                    ),
+                    onTap: () =>
+                        Navigator.pop(context, _CalendarProvider.native),
+                  ),
+                ListTile(
+                  leading: const Icon(Icons.file_download_outlined),
+                  title: Text(l10n.calendarExportIcs),
+                  subtitle: Text(l10n.calendarIcsHelp),
+                  onTap: () => Navigator.pop(context, _CalendarProvider.ics),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(l10n.calendarSnapshotHelp),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
-    _choosing = false;
-    if (provider == null || !mounted) return;
-    await _perform(provider);
+      );
+      if (provider == null || !mounted) return;
+      await _perform(provider);
+    } finally {
+      _choosing = false;
+    }
   }
 
   Future<void> _perform(_CalendarProvider provider) async {
@@ -103,6 +115,13 @@ class _EventCalendarCardState extends State<EventCalendarCard> {
                   mode: LaunchMode.externalApplication,
                 ));
         if (!opened) throw StateError('Calendar could not be opened');
+      } else if (provider == _CalendarProvider.native) {
+        final result = await widget.nativeCalendar.openEditor(entry);
+        if (result == NativeCalendarResult.unavailable) {
+          throw StateError('Native calendar unavailable');
+        }
+        // A handoff is not evidence that the user saved the event.
+        // Saved and cancelled also need no additional notification.
       } else {
         final box = context.findRenderObject()! as RenderBox;
         final origin = box.localToGlobal(Offset.zero) & box.size;
@@ -119,12 +138,12 @@ class _EventCalendarCardState extends State<EventCalendarCard> {
         SnackBar(
           content: Text(l10n.unableToAddToCalendar),
           action: SnackBarAction(
-            label: provider == _CalendarProvider.google
+            label: provider != _CalendarProvider.ics
                 ? l10n.calendarExportIcs
                 : l10n.calendarRetry,
             onPressed: () => _perform(
-              provider == _CalendarProvider.google
-                  ? _CalendarProvider.other
+              provider != _CalendarProvider.ics
+                  ? _CalendarProvider.ics
                   : provider,
             ),
           ),

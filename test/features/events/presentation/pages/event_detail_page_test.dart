@@ -12,6 +12,7 @@ import 'package:fiestaaa_front/src/features/events/presentation/pages/event_deta
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
@@ -156,6 +157,11 @@ void main() {
   testWidgets(
     'calendar and existing map pickers remain independently usable',
     (tester) async {
+      const channel = MethodChannel('fiestaaa/calendar');
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      messenger.setMockMethodCallHandler(channel, (_) async => false);
+      addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
       final event = EventModel.fromJson({
         'event_id': 42,
         'name_event': 'Agenda and maps',
