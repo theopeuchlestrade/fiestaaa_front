@@ -342,7 +342,6 @@
   "openPayment": "Open collection",
   "linkUnavailable": "Link unavailable",
   "unableToOpenPayment": "Unable to open collection",
-  "openInMapsApp": "Open in your maps app",
   "unableToOpenMap": "Unable to open map",
   "linkCopiedToClipboard": "Link copied to clipboard",
   "unableToGenerateLink": "Unable to generate link",
@@ -1049,5 +1048,12 @@
   "organizerNeeds": "Organizer needs",
   "personalBrings": "Personal brings",
   "scannerFlashlight": "Flashlight",
-  "scannerSwitchCamera": "Switch camera"
+  "scannerSwitchCamera": "Switch camera",
+  "addToCalendar": "Add to my calendar",
+  "calendarProviderGoogle": "Google Calendar",
+  "calendarProviderDevice": "Device calendar",
+  "calendarProviderApple": "Apple Calendar",
+  "unableToAddToCalendar": "Unable to open the calendar or export the file.",
+  "calendarExportIcs": "Export an .ics file",
+  "calendarRetry": "Retry"
 }

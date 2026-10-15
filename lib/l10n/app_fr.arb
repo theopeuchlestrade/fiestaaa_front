@@ -357,7 +357,6 @@
   "openPayment": "Ouvrir la cagnotte",
   "linkUnavailable": "Lien indisponible",
   "unableToOpenPayment": "Impossible d'ouvrir la cagnotte",
-  "openInMapsApp": "Ouvrir dans votre app de cartes",
   "unableToOpenMap": "Impossible d'ouvrir la carte",
   "linkCopiedToClipboard": "Lien copié dans le presse-papiers",
   "unableToGenerateLink": "Impossible de générer le lien",
@@ -1065,5 +1064,12 @@
   "organizerNeeds": "Besoins de l’organisateur",
   "personalBrings": "Apports personnels",
   "scannerFlashlight": "Lampe torche",
-  "scannerSwitchCamera": "Changer de caméra"
+  "scannerSwitchCamera": "Changer de caméra",
+  "addToCalendar": "Ajouter à mon agenda",
+  "calendarProviderGoogle": "Google Calendar",
+  "calendarProviderDevice": "Agenda du téléphone",
+  "calendarProviderApple": "Apple Calendar",
+  "unableToAddToCalendar": "Impossible d’ouvrir l’agenda ou d’exporter le fichier.",
+  "calendarExportIcs": "Exporter un fichier .ics",
+  "calendarRetry": "Réessayer"
 }

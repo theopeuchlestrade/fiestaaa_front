@@ -12,6 +12,8 @@ import 'package:fiestaaa_front/src/features/events/presentation/pages/event_deta
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:flutter/material.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_calendar_card.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
@@ -118,8 +120,9 @@ EventDetailPage _page(
   int id,
   List<_Realtime> clients, {
   ValueChanged<int>? onRemoved,
+  EventModel? event,
 }) => EventDetailPage(
-  event: _event(id, 'Event $id'),
+  event: event ?? _event(id, 'Event $id'),
   session: SessionData(token: 'token', email: 'me@example.com'),
   eventsApi: api,
   invitationsApi: InvitationsApi(
@@ -152,6 +155,50 @@ class _GuestInvitations extends InvitationsApi {
 }
 
 void main() {
+  testWidgets(
+    'calendar and existing map pickers remain independently usable',
+    (tester) async {
+      const channel = MethodChannel('fiestaaa/calendar');
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      messenger.setMockMethodCallHandler(channel, (_) async => false);
+      addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+      final event = EventModel.fromJson({
+        'event_id': 42,
+        'name_event': 'Agenda and maps',
+        'description': 'Test',
+        'date_event': '2099-07-14',
+        'start_time': '20:30:00',
+        'address': 'Paris',
+        'latitude': 48.8566,
+        'longitude': 2.3522,
+      });
+      await tester.pumpWidget(_app(_page(_Api(), 42, [], event: event)));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byType(EventCalendarCard));
+      await tester.tap(find.byType(EventCalendarCard));
+      await tester.pumpAndSettle();
+      expect(find.text('Google Calendar'), findsOneWidget);
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pumpAndSettle();
+      final maps = find.byWidgetPredicate(
+        (widget) =>
+            widget is ListTile &&
+            widget.leading is Icon &&
+            (widget.leading as Icon).icon == Icons.place_outlined,
+      );
+      await tester.ensureVisible(maps);
+      await tester.tap(maps);
+      await tester.pumpAndSettle();
+      final l10n = S.of(tester.element(find.byType(EventDetailPage)));
+      expect(find.text(l10n.mapProviderGoogle), findsOneWidget);
+      expect(find.text(l10n.mapProviderApple), findsOneWidget);
+      expect(find.text(l10n.mapProviderOsm), findsOneWidget);
+      expect(find.text('Google Calendar'), findsNothing);
+    },
+    variant: TargetPlatformVariant({TargetPlatform.iOS}),
+  );
+
   testWidgets('failed deletion keeps the editor and permits retry', (
     tester,
   ) async {

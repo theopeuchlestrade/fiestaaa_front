@@ -1,3 +1,4 @@
+import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_calendar_card.dart';
 import 'package:fiestaaa_front/src/core/event_data_store.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/route_back_button.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/fiestaaa_motion.dart';
@@ -579,10 +580,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _DetailTile(
-                        icon: Icons.event,
-                        label: S.of(context).dateAndTime,
-                        value: _scheduleValue(),
+                      EventCalendarCard(
+                        event: _currentEvent,
+                        schedule: _scheduleValue(),
                       ),
                       if (_currentEvent.invitationDeadline != null &&
                           !_isOwner &&
@@ -609,10 +609,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         onTap: _openMap,
                       ),
                       if (_currentEvent.description.trim().isNotEmpty)
-                        _DetailTile(
-                          icon: Icons.description_outlined,
-                          label: S.of(context).description,
-                          value: _currentEvent.description,
+                        ListTile(
+                          leading: Icon(
+                            Icons.description_outlined,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          title: Text(S.of(context).description),
+                          subtitle: Text(_currentEvent.description),
                         ),
                     ],
                   ),
