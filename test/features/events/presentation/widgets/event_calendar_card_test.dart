@@ -173,10 +173,13 @@ void main() {
 
   testWidgets('French labels and instructions are available', (tester) async {
     await tester.pumpWidget(app(language: 'fr'));
-    expect(find.text('Ajouter à mon agenda'), findsOneWidget);
-    await tester.tap(find.text('Ajouter à mon agenda'));
+    expect(find.text('Ajouter à mon agenda'), findsNothing);
+    await tester.tap(find.text('14 July 2026 · 20:30'));
     await tester.pumpAndSettle();
     expect(find.text('Exporter un fichier .ics'), findsOneWidget);
+    expect(find.text('Ajouter à mon agenda'), findsNothing);
+    expect(find.textContaining('Confirmez'), findsNothing);
+    expect(find.textContaining('à ouvrir ou importer'), findsNothing);
     expect(find.text('Proton Calendar'), findsNothing);
   });
   for (final platform in [TargetPlatform.iOS, TargetPlatform.android]) {

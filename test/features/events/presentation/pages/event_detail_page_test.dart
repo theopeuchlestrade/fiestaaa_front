@@ -12,6 +12,7 @@ import 'package:fiestaaa_front/src/features/events/presentation/pages/event_deta
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:flutter/material.dart';
+import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_calendar_card.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
@@ -174,8 +175,8 @@ void main() {
       });
       await tester.pumpWidget(_app(_page(_Api(), 42, [], event: event)));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Add to my calendar'));
-      await tester.tap(find.text('Add to my calendar'));
+      await tester.ensureVisible(find.byType(EventCalendarCard));
+      await tester.tap(find.byType(EventCalendarCard));
       await tester.pumpAndSettle();
       expect(find.text('Google Calendar'), findsOneWidget);
       await tester.tapAt(const Offset(5, 5));

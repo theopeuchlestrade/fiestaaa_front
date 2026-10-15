@@ -90,3 +90,9 @@ Still requiring device/account validation:
 - Verify native editor save/cancel on physical iPhone/iPad and Android.
 
 Physical-device flows and external account imports were not exercised here.
+
+## Interface simplification
+
+The schedule itself and the external-action icon remain clickable. The visible
+add-to-calendar prompt, picker heading, confirmation explanation and ICS subtitle
+are removed. A nonvisual action label is retained for screen readers.

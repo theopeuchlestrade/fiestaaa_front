@@ -1054,8 +1054,6 @@
   "calendarProviderGoogle": "Google Calendar",
   "calendarProviderDevice": "Device calendar",
   "calendarProviderApple": "Apple Calendar",
-  "calendarIcsHelp": "Export an .ics file to open or import in your calendar.",
-  "calendarSnapshotHelp": "Confirm the addition in your calendar. Later changes to the fiestaaa will not sync. If no end time is set, a one-hour duration is suggested.",
   "unableToAddToCalendar": "Unable to open the calendar or export the file.",
   "calendarExportIcs": "Export an .ics file",
   "calendarRetry": "Retry"

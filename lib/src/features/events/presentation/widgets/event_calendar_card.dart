@@ -53,13 +53,6 @@ class _EventCalendarCardState extends State<EventCalendarCard> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: Text(
-                    l10n.addToCalendar,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ),
                 ListTile(
                   leading: const Icon(Icons.event),
                   title: Text(l10n.calendarProviderGoogle),
@@ -83,12 +76,7 @@ class _EventCalendarCardState extends State<EventCalendarCard> {
                 ListTile(
                   leading: const Icon(Icons.file_download_outlined),
                   title: Text(l10n.calendarExportIcs),
-                  subtitle: Text(l10n.calendarIcsHelp),
                   onTap: () => Navigator.pop(context, _CalendarProvider.ics),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(l10n.calendarSnapshotHelp),
                 ),
               ],
             ),
@@ -158,6 +146,7 @@ class _EventCalendarCardState extends State<EventCalendarCard> {
   Widget build(BuildContext context) {
     final l10n = S.of(context);
     return Semantics(
+      label: l10n.addToCalendar,
       button: true,
       child: InkWell(
         onTap: _busy ? null : _pickCalendar,
@@ -182,14 +171,6 @@ class _EventCalendarCardState extends State<EventCalendarCard> {
                     Text(
                       widget.schedule,
                       style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      l10n.addToCalendar,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: FiestaaaPalette.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
                     ),
                   ],
                 ),
