@@ -1049,5 +1049,16 @@
   "organizerNeeds": "Organizer needs",
   "personalBrings": "Personal brings",
   "scannerFlashlight": "Flashlight",
-  "scannerSwitchCamera": "Switch camera"
+  "scannerSwitchCamera": "Switch camera",
+  "addToCalendar": "Add to my calendar",
+  "calendarProviderGoogle": "Google Calendar",
+  "calendarProviderApple": "Apple Calendar",
+  "calendarProviderProton": "Proton Calendar",
+  "calendarProviderOther": "Other calendar",
+  "calendarIcsHelp": "Export an .ics file to open or import in your calendar.",
+  "calendarProtonHelp": "Export an .ics file, then import it in Proton Calendar on the web: Settings → All settings → Import/export.",
+  "calendarSnapshotHelp": "Confirm the addition in your calendar. Later changes to the fiestaaa will not sync. If no end time is set, a one-hour duration is suggested.",
+  "unableToAddToCalendar": "Unable to open the calendar or export the file.",
+  "calendarExportIcs": "Export .ics",
+  "calendarRetry": "Retry"
 }
