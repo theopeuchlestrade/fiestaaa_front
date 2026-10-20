@@ -162,9 +162,6 @@ class PushNotificationService {
       if (initialMessage != null) {
         _emitIntentFromMessage(initialMessage);
       }
-      // The backend sends with FCM tokens. onRegistered emits FIDs, which
-      // require a separate backend messaging migration. Keep the token API.
-      // ignore: deprecated_member_use
       _tokenStreamSub = _messaging.onTokenRefresh.listen((token) {
         _ignoreAsyncErrors(_handleTokenRefresh(token));
       });
@@ -335,8 +332,6 @@ class PushNotificationService {
   Future<String?> _safeGetToken() async {
     try {
       if (!await _hasApnsTokenIfNeeded()) return null;
-      // Preserve the FCM token contract until the backend supports FIDs.
-      // ignore: deprecated_member_use
       return await _messaging.getToken(
         vapidKey: kIsWeb && fcmWebVapidKey.isNotEmpty ? fcmWebVapidKey : null,
       );
