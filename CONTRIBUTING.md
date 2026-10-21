@@ -14,6 +14,7 @@ Thanks for contributing to the frontend.
 3. `flutter gen-l10n`
 4. Select JDK 25 in `JAVA_HOME` and Android Studio's Gradle JDK settings.
    Set Flutter to the same JDK with `flutter config --jdk-dir "$JAVA_HOME"`.
+   After the first Android build generates the Gradle wrapper,
    `cd android && ./gradlew --version` must report a Java 25 launcher and daemon.
    Java/Kotlin source and bytecode targets remain 17 for Android compatibility.
 
