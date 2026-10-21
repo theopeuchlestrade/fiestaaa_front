@@ -30,6 +30,7 @@ android {
     compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
+    // Run build tools on the JDK from .java-version; Android bytecode stays at 17.
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

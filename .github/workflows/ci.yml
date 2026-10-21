@@ -247,13 +247,18 @@ jobs:
         uses: actions/setup-java@v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version-file: .java-version
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2.23.0
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
+
+      - name: Verify Android build JDK
+        run: |
+          java -version
+          flutter config --jdk-dir "$JAVA_HOME"
 
       - name: Write CI defines
         run: |
@@ -319,6 +324,10 @@ jobs:
 
       - name: Build Android debug APK
         run: flutter build apk --debug --dart-define-from-file=.env.ci
+
+      - name: Report Gradle JVM after Flutter generates the wrapper
+        working-directory: android
+        run: ./gradlew --version
 
       - name: Build Android release APK and app bundle
         # CI uses the existing local/debug signing fallback, never store keys.

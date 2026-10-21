@@ -5,11 +5,18 @@ Thanks for contributing to the frontend.
 ## Prerequisites
 - Flutter SDK 3.47.7 (matching CI and Docker)
 - Dart SDK 3.13.5, provided by Flutter
+- Temurin JDK 25 LTS for Android builds (see `.java-version`)
+- Node.js 22 LTS for repository tooling (see `.nvmrc`)
 
 ## Installation
 1. Copy `.env.example` to `.env` if needed.
 2. `flutter pub get`
 3. `flutter gen-l10n`
+4. Select JDK 25 in `JAVA_HOME` and Android Studio's Gradle JDK settings.
+   Set Flutter to the same JDK with `flutter config --jdk-dir "$JAVA_HOME"`.
+   After the first Android build generates the Gradle wrapper,
+   `cd android && ./gradlew --version` must report a Java 25 launcher and daemon.
+   Java/Kotlin source and bytecode targets remain 17 for Android compatibility.
 
 For a guided first setup, use [`docs/first-contribution.md`](docs/first-contribution.md).
 
