@@ -152,7 +152,7 @@ class AuthApi {
     final headers = {
       'Content-Type': 'application/json',
       if (includeBearerResponse && !kIsWeb)
-        'X-Fiestaaa-Auth-Response': 'bearer',
+        'X-Fiestaaa-Auth-Response': 'bearer-refresh',
     };
     return _client.post(
       buildApiUri(path),
@@ -161,12 +161,16 @@ class AuthApi {
     );
   }
 
-  Future<void> logout({String? token}) async {
+  Future<void> logout({String? token, String? refreshToken}) async {
     final headers = <String, String>{};
     if (token != null && token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';
     }
-    await _client.post(buildApiUri('/auth/logout'), headers: headers);
+    await _client.post(
+      buildApiUri('/auth/logout'),
+      headers: {...headers, 'Content-Type': 'application/json'},
+      body: jsonEncode({'refresh_token': refreshToken}),
+    );
   }
 
   ApiException _apiError(http.Response response) {
@@ -200,6 +204,7 @@ class AuthApi {
     }
     return SessionData(
       token: resolvedToken ?? '',
+      refreshToken: kIsWeb ? null : decoded['refresh_token'] as String?,
       email: email,
       handle: handle,
       publicId: publicId,

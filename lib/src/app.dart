@@ -1,4 +1,5 @@
 import 'core/event_data_store.dart';
+import 'features/auth/data/mobile_session_manager.dart';
 import 'features/events/presentation/pages/event_create_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_route_page.dart';
 import 'features/beta_pages.dart';
@@ -60,6 +61,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
   int _notificationIntentSerial = 0;
   StreamSubscription<PushNotificationIntent>? _notificationIntentSub;
   StreamSubscription<ApiUnauthorizedResponse>? _unauthorizedSub;
+  StreamSubscription<SessionData>? _renewedSessionSub;
   Completer<void>? _unauthorizedCleanup;
   bool _handlingUnauthorized = false;
   late final GoRouter _router;
@@ -285,6 +287,26 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     _notificationIntentSub = PushNotificationService.instance.intents.listen(
       _handlePushNotificationIntent,
     );
+    _renewedSessionSub = MobileSessionManager.instance.changes.listen((
+      renewed,
+    ) {
+      if (!mounted ||
+          _session == null ||
+          kIsWeb ||
+          MobileSessionManager.instance.session?.token != renewed.token) {
+        return;
+      }
+      setState(() {
+        _session = renewed;
+      });
+      EventDataStore.instance.bind(
+        renewed.token,
+        renewed.email,
+        accountId: renewed.publicId,
+      );
+      _router.refresh();
+      unawaited(PushNotificationService.instance.syncSession(renewed));
+    });
     _unauthorizedSub = ApiHttpClient.unauthorized.listen((response) {
       unawaited(_handleUnauthorized(response));
     });
@@ -372,6 +394,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     }
 
     if (!mounted) return;
+    if (!kIsWeb) MobileSessionManager.instance.bind(session);
     setState(() {
       _session = session;
       EventDataStore.instance.bind(
@@ -399,9 +422,17 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     }
 
     if (!mounted || _session?.token != session.token) return;
+    if (refreshed != null) {
+      refreshed = session.copyWith(
+        email: refreshed.email,
+        handle: refreshed.handle,
+        publicId: refreshed.publicId,
+      );
+    }
     if (validationFailed) return;
 
     if (refreshed == null) {
+      if (!kIsWeb) await MobileSessionManager.instance.clear();
       await SessionStorage.clear();
     }
 
@@ -475,7 +506,9 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     // An old session's async cleanup must finish before saving a new login.
     await _unauthorizedCleanup?.future;
     if (!mounted) return;
+    if (!kIsWeb) await MobileSessionManager.instance.clear();
     await SessionStorage.save(session);
+    if (!kIsWeb) MobileSessionManager.instance.bind(session);
     unawaited(PushNotificationService.instance.syncSession(session));
     if (!mounted) return;
     setState(() {
@@ -520,9 +553,11 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     EventDataStore.instance.clear();
     _pendingDestination = null;
     final token = _session?.token;
+    final refreshToken = _session?.refreshToken;
+    if (!kIsWeb) await MobileSessionManager.instance.clear();
     await PushNotificationService.instance.clearSession();
     try {
-      await _authApi.logout(token: token);
+      await _authApi.logout(token: token, refreshToken: refreshToken);
     } catch (error, stackTrace) {
       debugPrint('Fiestaaa logout request failed: $error');
       debugPrintStack(stackTrace: stackTrace);
@@ -555,6 +590,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     final cleanup = Completer<void>();
     _unauthorizedCleanup = cleanup;
     try {
+      if (!kIsWeb) await MobileSessionManager.instance.clear();
       await PushNotificationService.instance.clearSession();
       await SessionStorage.clear();
       if (!mounted || _session == null) return;
@@ -581,6 +617,8 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
     _themeService.removeListener(_onThemeChanged);
     _notificationIntentSub?.cancel();
     _unauthorizedSub?.cancel();
+    _renewedSessionSub?.cancel();
+    if (!kIsWeb) unawaited(MobileSessionManager.instance.clear());
     _authApi.dispose();
     PushNotificationService.instance.dispose();
     _router.dispose();

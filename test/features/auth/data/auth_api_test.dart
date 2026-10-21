@@ -34,7 +34,10 @@ void main() {
     final body = jsonDecode(capturedRequest.body) as Map<String, dynamic>;
     expect(capturedRequest.method, 'POST');
     expect(capturedRequest.url.path, endsWith('/auth/oauth/apple'));
-    expect(capturedRequest.headers['X-Fiestaaa-Auth-Response'], 'bearer');
+    expect(
+      capturedRequest.headers['X-Fiestaaa-Auth-Response'],
+      'bearer-refresh',
+    );
     expect(body['idToken'], 'apple-id-token');
     expect(body['accessToken'], isNull);
     expect(body['email'], 'Apple.User@Example.com');
@@ -72,7 +75,10 @@ void main() {
       final body = jsonDecode(capturedRequest.body) as Map<String, dynamic>;
       expect(capturedRequest.method, 'POST');
       expect(capturedRequest.url.path, endsWith('/auth/oauth/google'));
-      expect(capturedRequest.headers['X-Fiestaaa-Auth-Response'], 'bearer');
+      expect(
+        capturedRequest.headers['X-Fiestaaa-Auth-Response'],
+        'bearer-refresh',
+      );
       expect(body['idToken'], isNull);
       expect(body['accessToken'], 'google-access-token');
     },
@@ -104,7 +110,10 @@ void main() {
     final body = jsonDecode(capturedRequest.body) as Map<String, dynamic>;
     expect(capturedRequest.method, 'POST');
     expect(capturedRequest.url.path, endsWith('/auth/login'));
-    expect(capturedRequest.headers['X-Fiestaaa-Auth-Response'], 'bearer');
+    expect(
+      capturedRequest.headers['X-Fiestaaa-Auth-Response'],
+      'bearer-refresh',
+    );
     expect(body['identifier'], 'native.user@example.com');
     expect(body['password'], 'MyStr0ng!Pass#2025');
     expect(session.token, 'session-token');
@@ -136,7 +145,14 @@ void main() {
       }),
     );
 
-    await api.logout(token: 'native-session-token');
+    await api.logout(
+      token: 'native-session-token',
+      refreshToken: 'native-refresh',
+    );
+    expect(
+      jsonDecode((capturedRequest as http.Request).body)['refresh_token'],
+      'native-refresh',
+    );
 
     expect(capturedRequest.method, 'POST');
     expect(capturedRequest.url.path, endsWith('/auth/logout'));

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
@@ -52,13 +53,74 @@ class _RestoredAuth extends _Auth {
   }
 
   @override
-  Future<void> logout({String? token}) async {
+  Future<void> logout({String? token, String? refreshToken}) async {
     logouts++;
     if (mode == 'offline') throw StateError('offline');
   }
 }
 
 void main() {
+  testWidgets(
+    'reopening after 48 hours renews credentials and stays on the signed-in page',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      SessionStorage.debugSetStorageBackend(_Storage());
+      addTearDown(SessionStorage.debugResetStorageBackend);
+      String token(int seconds) =>
+          'header.${base64Url.encode(utf8.encode(jsonEncode({'exp': DateTime.now().millisecondsSinceEpoch ~/ 1000 + seconds})))}.signature';
+      final old = token(-48 * 3600);
+      final renewed = token(3600);
+      await SessionStorage.save(
+        SessionData(
+          token: old,
+          refreshToken: 'saved-refresh',
+          email: 'demo@example.invalid',
+        ),
+      );
+      var renewals = 0;
+      await runZoned(
+        () async {
+          await tester.pumpWidget(
+            const FiestaaaApp(initialLocation: '/events'),
+          );
+          await tester.pumpAndSettle();
+          expect(find.byType(HomePage), findsOneWidget);
+          expect(find.byType(AuthPage), findsNothing);
+          final saved = await SessionStorage.load();
+          expect(saved!.token, renewed);
+          expect(saved.refreshToken, 'rotated-refresh');
+          expect(renewals, 1);
+          await tester.pumpWidget(const SizedBox());
+          await tester.pumpAndSettle();
+        },
+        zoneValues: {
+          apiHttpClientFactoryKey: () => ApiHttpClient(
+            MockClient((request) async {
+              if (request.url.path == '/auth/refresh') {
+                renewals++;
+                return http.Response(
+                  jsonEncode({
+                    'token': renewed,
+                    'refresh_token': 'rotated-refresh',
+                  }),
+                  200,
+                );
+              }
+              if (request.url.path == '/me') {
+                expect(request.headers['Authorization'], 'Bearer $renewed');
+                return http.Response(
+                  jsonEncode({'email': 'demo@example.invalid'}),
+                  200,
+                );
+              }
+              return http.Response('{}', 503);
+            }),
+            clientVersion: Future.value('test'),
+          ),
+        },
+      );
+    },
+  );
   for (final mode in ['valid', 'expired', 'offline']) {
     testWidgets(
       'restored session $mode validates without confusing outage with expiry',

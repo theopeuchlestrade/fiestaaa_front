@@ -1,4 +1,6 @@
 import 'navigation_diagnostics.dart';
+import 'config.dart';
+import '../features/auth/data/mobile_session_manager.dart';
 import 'event_data_store.dart';
 import 'dart:async';
 
@@ -50,10 +52,10 @@ class ApiHttpClient extends http.BaseClient {
         .where((entry) => entry.key.toLowerCase() == 'authorization')
         .map((entry) => entry.value)
         .firstOrNull;
-    final bearerToken = authorization?.startsWith('Bearer ') == true
+    var bearerToken = authorization?.startsWith('Bearer ') == true
         ? authorization!.substring(7)
         : null;
-    final requestGeneration = EventDataStore.instance.applies(bearerToken)
+    var requestGeneration = EventDataStore.instance.applies(bearerToken)
         ? EventDataStore.instance.generation
         : null;
     try {
@@ -62,6 +64,30 @@ class ApiHttpClient extends http.BaseClient {
         'X-Fiestaaa-Client-Version',
         () => clientVersion,
       );
+      final api = buildApiUri('/');
+      if (!kIsWeb &&
+          bearerToken != null &&
+          request.url.origin == api.origin &&
+          request.url.path.startsWith(api.path) &&
+          request.url.path != buildApiUri('/auth/logout').path) {
+        try {
+          bearerToken = await MobileSessionManager.instance.tokenFor(
+            bearerToken,
+            _inner,
+          );
+          request.headers['Authorization'] = 'Bearer $bearerToken';
+          if (MobileSessionManager.instance.accepts(bearerToken)) {
+            requestGeneration = EventDataStore.instance.generation;
+          }
+        } on SessionRevokedException {
+          _unauthorizedController.add(
+            ApiUnauthorizedResponse(
+              MobileSessionManager.instance.session?.token ?? bearerToken,
+            ),
+          );
+          rethrow;
+        }
+      }
       if (kIsWeb) {
         final authHeader = request.headers.keys.firstWhere(
           (key) => key.toLowerCase() == 'authorization',
