@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Dependencies
+
+- Serve the web build with the maintained Nginx 1.30 stable branch while preserving the pinned Alpine security fixes.
+
 ## [0.9.0] - 2026-10-16
 
 ### Added
