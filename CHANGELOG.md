@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Serve the web build with the maintained Nginx 1.30 stable branch while preserving the pinned Alpine security fixes.
 
+### Fixed
+
+- Give Gradle enough heap to transform Flutter Android engine artifacts and bound worker concurrency on CI runners.
+
 ## [0.9.0] - 2026-10-16
 
 ### Added
