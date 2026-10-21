@@ -13,6 +13,10 @@ supported stable otherwise. Reviewed on 2026-10-21:
 - Node 22 and Temurin Java 17 remain maintained LTS branches. Validate Android
   Gradle compatibility before changing Java.
 
+CI compiles web, Android debug/release APKs, an Android release app bundle and
+an unsigned iOS release app. Android CI uses the local debug signing fallback;
+official mobile signing remains in the private publication workflows.
+
 Policies: [Flutter channels](https://docs.flutter.dev/install/archive),
 [Nginx downloads](https://nginx.org/en/download.html),
 [Node](https://github.com/nodejs/Release),
