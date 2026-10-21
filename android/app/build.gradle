@@ -36,10 +36,6 @@ android {
         coreLibraryDesugaringEnabled = true
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
-
     defaultConfig {
         applicationId = "com.fiestaaa.fiestaaa"
         // You can update the following values to match your application needs.
@@ -67,6 +63,12 @@ android {
             // Otherwise fall back to debug signing to keep local builds working.
             signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 

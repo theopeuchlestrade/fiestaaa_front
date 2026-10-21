@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 
+- Align Android builds with Gradle 9.8.2, AGP 9.4.1, Kotlin 2.4.21 and Google Services 4.5.0; retain Java 17 LTS.
 - Serve the web build with the maintained Nginx 1.30 stable branch while preserving the pinned Alpine security fixes.
 
 ### Fixed
