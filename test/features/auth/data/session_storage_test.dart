@@ -15,6 +15,7 @@ void main() {
   test('save and load round-trip a complete session', () async {
     final session = SessionData(
       token: 'token-123',
+      refreshToken: 'secure-refresh',
       email: 'me@example.com',
       handle: 'fiestaaa',
     );
@@ -23,6 +24,7 @@ void main() {
     final restored = await SessionStorage.load();
 
     expect(restored?.token, session.token);
+    expect(restored?.refreshToken, session.refreshToken);
     expect(restored?.email, session.email);
     expect(restored?.handle, session.handle);
   });

@@ -44,6 +44,7 @@ class SessionStorage {
   static Future<void> save(SessionData session) async {
     final encoded = jsonEncode({
       'token': session.token,
+      'refreshToken': session.refreshToken,
       'publicId': session.publicId,
       'email': session.email,
       'handle': session.handle,
@@ -108,6 +109,7 @@ class SessionStorage {
       }
       return SessionData(
         token: token,
+        refreshToken: value['refreshToken'] as String?,
         email: email,
         handle: value['handle'] as String?,
         publicId: value['publicId'] as String?,

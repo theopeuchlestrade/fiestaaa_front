@@ -57,7 +57,7 @@ void main() {
         'password': 'FixturePassword1!',
         'handle': 'qauser',
       });
-      expect(captured.headers['X-Fiestaaa-Auth-Response'], 'bearer');
+      expect(captured.headers['X-Fiestaaa-Auth-Response'], 'bearer-refresh');
       expect(session.publicId, 'qa-id');
       await api.completeRegistration(
         token: 'completion',
