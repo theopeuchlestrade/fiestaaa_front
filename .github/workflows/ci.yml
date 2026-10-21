@@ -247,13 +247,20 @@ jobs:
         uses: actions/setup-java@v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version-file: .java-version
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2.23.0
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
+
+      - name: Verify Android build JDK
+        run: |
+          java -version
+          flutter config --jdk-dir "$JAVA_HOME"
+          cd android
+          ./gradlew --version
 
       - name: Write CI defines
         run: |
