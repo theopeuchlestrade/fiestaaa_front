@@ -1,15 +1,15 @@
 # Dart VM lines coverage
 
-Commit: `6931fb1a3cce8f426deccdde26de326949655971` · 2026-10-21T15:13:48.593Z
+Commit: `9cc26d4376a1fe03ba0161f324b43ae89fb74196` · 2026-10-21T15:49:02.576Z
 
 | Measure | Covered / total | Coverage | Enforced / target |
 |---|---:|---:|---:|
-| Raw collector | 9640/14260 | 67.60% | — |
-| Application | 9130/12789 | 71.39% | 70% / 70% |
+| Raw collector | 9639/14260 | 67.59% | — |
+| Application | 9129/12789 | 71.38% | 70% / 70% |
 | authentication-sessions | 958/1157 | 82.80% | 80% / 80% |
 | permissions-participation | 886/1104 | 80.25% | 80% / 80% |
 | cache-synchronization | 814/985 | 82.64% | 80% / 80% |
-| notifications-qr | 623/672 | 92.71% | 80% / 80% |
+| notifications-qr | 622/672 | 92.56% | 80% / 80% |
 
 Patch: **not-requested**.
 
@@ -29,8 +29,8 @@ Result: **passed**.
 - `lib/src/features/events/presentation/pages/event_invitations_page.dart`: 111 uncovered collector lines (70.63%)
 - `lib/src/features/events/presentation/widgets/event_detail_feature_methods.dart`: 103 uncovered collector lines (0.00%)
 - `lib/src/features/profile/presentation/pages/profile_page.dart`: 94 uncovered collector lines (72.11%)
-- `lib/src/features/events/presentation/pages/event_detail_page.dart`: 91 uncovered collector lines (73.31%)
 - `lib/src/features/events/presentation/widgets/event_detail_invitation_card.dart`: 91 uncovered collector lines (44.17%)
+- `lib/src/features/events/presentation/pages/event_detail_page.dart`: 91 uncovered collector lines (73.31%)
 - `lib/src/features/events/presentation/widgets/event_detail_navigation_methods.dart`: 89 uncovered collector lines (27.64%)
 - `lib/src/features/carpools/presentation/pages/carpool_create_page.dart`: 83 uncovered collector lines (59.11%)
 
@@ -75,4 +75,4 @@ Result: **passed**.
 
 Coverage does not certify native providers, physical devices or store delivery.
 
-[Source CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/39623089803)
+[Source CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/39628448193)
