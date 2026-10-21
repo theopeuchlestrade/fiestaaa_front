@@ -1,7 +1,9 @@
 import 'package:fiestaaa_front/src/core/event_data_store.dart';
 import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
+
 import 'dart:async';
+
 import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
@@ -528,9 +530,8 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
     final message = widget.eventReadOnly
         ? l10n.eventFinishedReadOnly
         : l10n.acceptInvitationForCarpool;
-    final warningStyle = Theme.of(
-      context,
-    ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.warning);
+    final warningStyle = Theme.of(context).colorScheme
+        .fiestaaaStatus(FiestaaaStatusTone.warning);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -612,9 +613,8 @@ class _EventCarpoolsPageState extends State<EventCarpoolsPage> {
           const SizedBox(height: 16),
           Text(
             l10n.noCarpoolsAvailable,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(

@@ -15,6 +15,7 @@ import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+
 import '../widgets/event_personal_summary_test.dart' as fixtures;
 
 class _Api extends EventsApi {

@@ -39,23 +39,20 @@ extension _EventDetailHeaderMethods on _EventDetailPageState {
 
   String _scheduleValue() {
     final l = S.of(context);
-    final startDate = DateFormat.yMMMMd(
-      l.localeName,
-    ).format(_currentEvent.date);
+    final startDate = DateFormat.yMMMMd(l.localeName)
+        .format(_currentEvent.date);
     final start = '$startDate · ${_currentEvent.formattedTime}';
     if (!_currentEvent.hasEndDateTime) return start;
-    final endDate = DateFormat.yMMMMd(
-      l.localeName,
-    ).format(_currentEvent.endDate ?? _currentEvent.date);
+    final endDate = DateFormat.yMMMMd(l.localeName)
+        .format(_currentEvent.endDate ?? _currentEvent.date);
     final endTime =
         _currentEvent.formattedEndTime ?? _currentEvent.formattedTime;
     return '$start\n${l.untilLabel} $endDate · $endTime';
   }
 
   Widget _buildReadOnlyBanner() {
-    final warningStyle = Theme.of(
-      context,
-    ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.warning);
+    final warningStyle = Theme.of(context).colorScheme
+        .fiestaaaStatus(FiestaaaStatusTone.warning);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),

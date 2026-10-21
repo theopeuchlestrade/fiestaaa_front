@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -34,9 +35,8 @@ void main() {
               localizationsDelegates: S.localizationsDelegates,
               supportedLocales: S.supportedLocales,
               builder: (context, child) => MediaQuery(
-                data: MediaQuery.of(
-                  context,
-                ).copyWith(textScaler: const TextScaler.linear(2)),
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: const TextScaler.linear(2)),
                 child: child!,
               ),
               home: EventRoutePage(

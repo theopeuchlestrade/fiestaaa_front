@@ -85,9 +85,8 @@ void main() {
       await tester.pumpAndSettle();
       Navigator.of(tester.element(find.byType(DatePickerDialog))).pop(event);
       await tester.pumpAndSettle();
-      Navigator.of(
-        tester.element(find.byType(TimePickerDialog)),
-      ).pop(TimeOfDay(hour: hour, minute: 0));
+      Navigator.of(tester.element(find.byType(TimePickerDialog)))
+          .pop(TimeOfDay(hour: hour, minute: 0));
       await tester.pumpAndSettle();
       expect(
         find.textContaining('${hour.toString().padLeft(2, '0')}:00'),

@@ -99,9 +99,9 @@ extension _AuthPageForm on _AuthPageState {
                           vertical: 14,
                           horizontal: 12,
                         ),
-                        disabledForegroundColor: Theme.of(
-                          context,
-                        ).colorScheme.primary,
+                        disabledForegroundColor: Theme.of(context)
+                            .colorScheme
+                            .primary,
                         foregroundColor: _isLoginMode
                             ? FiestaaaPalette.primary
                             : toggleInactive,
@@ -128,9 +128,9 @@ extension _AuthPageForm on _AuthPageState {
                           vertical: 14,
                           horizontal: 12,
                         ),
-                        disabledForegroundColor: Theme.of(
-                          context,
-                        ).colorScheme.primary,
+                        disabledForegroundColor: Theme.of(context)
+                            .colorScheme
+                            .primary,
                         foregroundColor: _isRegisterMode
                             ? FiestaaaPalette.primary
                             : toggleInactive,

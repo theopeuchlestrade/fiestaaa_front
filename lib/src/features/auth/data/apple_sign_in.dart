@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
 import '../../../core/config.dart';
 
 bool get appleUsesAndroidCallback =>

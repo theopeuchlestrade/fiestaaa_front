@@ -92,9 +92,8 @@ class InvitationStatusSection extends StatelessWidget {
               S
                   .of(context)
                   .sentOn(
-                    DateFormat.yMMMd(
-                      Localizations.localeOf(context).toString(),
-                    ).format(invitation.dateInvi),
+                    DateFormat.yMMMd(Localizations.localeOf(context).toString())
+                        .format(invitation.dateInvi),
                   ),
             ),
       trailing: trailing,

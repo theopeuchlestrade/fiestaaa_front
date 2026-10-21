@@ -46,9 +46,8 @@ void main() {
     () async {
       var calls = 0;
       final recorder = ui.PictureRecorder();
-      ui.Canvas(
-        recorder,
-      ).drawColor(const ui.Color(0xFF00FF00), ui.BlendMode.src);
+      ui.Canvas(recorder)
+          .drawColor(const ui.Color(0xFF00FF00), ui.BlendMode.src);
       final picture = recorder.endRecording();
       final sourceImage = await picture.toImage(1, 1);
       final png = (await sourceImage.toByteData(

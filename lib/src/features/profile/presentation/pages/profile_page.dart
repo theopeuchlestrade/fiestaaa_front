@@ -2,7 +2,9 @@ import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/features/beta_api.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../auth/data/apple_sign_in.dart';
+
 import 'package:fiestaaa_front/src/core/locale_service.dart';
 import 'package:fiestaaa_front/src/core/theme_service.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
@@ -632,9 +634,9 @@ class _ProfilePageState extends State<ProfilePage> {
                               icon: const Icon(Icons.delete_forever_outlined),
                               label: Text(l.deleteMyAccount),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.error,
+                                foregroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .error,
                               ),
                             ),
                           ],

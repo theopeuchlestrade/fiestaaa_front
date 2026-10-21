@@ -11,6 +11,7 @@ import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_pe
 import 'package:go_router/go_router.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
+
 import 'dart:async';
 
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
@@ -592,9 +593,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           label: S.of(context).responseBefore,
                           value:
                               _currentEvent.formattedInvitationDeadline ??
-                              DateFormat.yMMMMd(
-                                S.of(context).localeName,
-                              ).format(_currentEvent.invitationDeadline!),
+                              DateFormat.yMMMMd(S.of(context).localeName)
+                                  .format(_currentEvent.invitationDeadline!),
                         ),
                       ListTile(
                         leading: Icon(

@@ -29,9 +29,8 @@ class AddressSearchNotice extends StatelessWidget {
                 if (!context.mounted) return;
               }
               if (context.mounted) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(l10n.networkError)));
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text(l10n.networkError)));
               }
             },
             child: Text(l10n.addressSearchAttribution),

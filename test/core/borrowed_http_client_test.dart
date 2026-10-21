@@ -48,9 +48,8 @@ void main() {
       );
       final second = BorrowedHttpClient(transport);
       expect(
-        (await second.get(
-          Uri.parse('https://example.invalid/avatar'),
-        )).statusCode,
+        (await second.get(Uri.parse('https://example.invalid/avatar')))
+            .statusCode,
         200,
       );
       second.close();

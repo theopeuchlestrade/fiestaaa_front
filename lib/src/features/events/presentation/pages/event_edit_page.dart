@@ -252,9 +252,9 @@ class _EventEditPageState extends State<EventEditPage>
   }
 
   List<String> _orderedEnabledFeatures(S l10n) {
-    return _orderedFeatureOptions(
-      l10n,
-    ).where(_enabledFeatures.contains).toList(growable: false);
+    return _orderedFeatureOptions(l10n)
+        .where(_enabledFeatures.contains)
+        .toList(growable: false);
   }
 
   Future<void> _loadPaymentProviders() async {
@@ -891,9 +891,8 @@ class _EventEditPageState extends State<EventEditPage>
                   label: Text(
                     _selectedEndDate == null
                         ? l10n.endDate
-                        : DateFormat.yMMMMd(
-                            l10n.localeName,
-                          ).format(_selectedEndDate!),
+                        : DateFormat.yMMMMd(l10n.localeName)
+                              .format(_selectedEndDate!),
                   ),
                 ),
               ),
@@ -1216,9 +1215,8 @@ class _EventEditPageState extends State<EventEditPage>
         : S
               .of(context)
               .responseExpectedBefore(
-                DateFormat.yMMMMd(
-                  Localizations.localeOf(context).toString(),
-                ).format(_invitationDeadline!),
+                DateFormat.yMMMMd(Localizations.localeOf(context).toString())
+                    .format(_invitationDeadline!),
               );
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1295,9 +1293,9 @@ class _EventEditPageState extends State<EventEditPage>
           '$_timezone${_selectedEndDate == null ? '' : ' · ${DateFormat.yMMMd(l.localeName).format(_selectedEndDate!)}'}${_invitationDeadline == null ? '' : ' · ${DateFormat.yMMMd(l.localeName).format(_invitationDeadline!)}'}',
       modulesSummary: _enabledFeatures.isEmpty
           ? l.formModulesHint
-          : _orderedEnabledFeatures(
-              l,
-            ).map((feature) => eventFeatureLabel(feature, l)).join(', '),
+          : _orderedEnabledFeatures(l)
+                .map((feature) => eventFeatureLabel(feature, l))
+                .join(', '),
       advancedOpen:
           _hasEndDateTime ||
           _invitationDeadline != null ||

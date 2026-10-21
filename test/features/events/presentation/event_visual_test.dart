@@ -1,6 +1,8 @@
 import 'package:fiestaaa_front/src/features/qr_checkin/presentation/widgets/checkin_views.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/domain/qr_checkin_models.dart';
+
 import 'dart:convert';
+
 import 'package:fiestaaa_front/src/features/auth/presentation/widgets/google_logo.dart';
 import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/features/beta_api.dart';
@@ -19,7 +21,9 @@ import 'package:fiestaaa_front/src/features/auth/presentation/pages/auth_page.da
 import 'package:fiestaaa_front/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:fiestaaa_front/src/features/profile/data/profile_api.dart';
 import 'package:fiestaaa_front/src/features/profile/domain/profile_info.dart';
+
 import 'dart:io' show Platform;
+
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/core/api_response.dart' as response;
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
@@ -42,6 +46,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
+
 import 'widgets/event_personal_summary_test.dart' as fixtures;
 
 class _Api extends EventsApi {
@@ -212,9 +217,9 @@ void main() {
   late Map<String, dynamic> legalPages;
   setUpAll(() async {
     tz.initializeTimeZones();
-    legalPages =
-        jsonDecode(await rootBundle.loadString('assets/legal/pages.json'))
-            as Map<String, dynamic>;
+    legalPages = jsonDecode(
+      await rootBundle.loadString('assets/legal/pages.json'),
+    ) as Map<String, dynamic>;
     await (FontLoader(
       'Manrope',
     )..addFont(rootBundle.load('assets/fonts/Manrope.ttf'))).load();
@@ -576,9 +581,8 @@ void main() {
                         ? buildFiestaaaDarkTheme()
                         : buildFiestaaaTheme(),
                     builder: (context, child) => MediaQuery(
-                      data: MediaQuery.of(
-                        context,
-                      ).copyWith(textScaler: TextScaler.linear(scale)),
+                      data: MediaQuery.of(context)
+                          .copyWith(textScaler: TextScaler.linear(scale)),
                       child: child!,
                     ),
                     home: Scaffold(

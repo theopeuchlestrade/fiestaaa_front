@@ -1,4 +1,5 @@
 import '../core/presentation/widgets/fiestaaa_motion.dart';
+
 import 'package:flutter/material.dart';
 
 class FiestaaaPalette {

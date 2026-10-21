@@ -374,9 +374,8 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
                                   .of(context)
                                   .receivedOn(
                                     DateFormat.yMMMMd(
-                                      Localizations.localeOf(
-                                        context,
-                                      ).toString(),
+                                      Localizations.localeOf(context)
+                                          .toString(),
                                     ).format(inv.dateInvi),
                                   ),
                             ),
@@ -502,9 +501,8 @@ class _FriendRequestsSection extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                style: Theme.of(context).textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -527,9 +525,8 @@ class _FriendRequestsSection extends StatelessWidget {
           children: [
             Text(
               title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             ...requests.map((req) {

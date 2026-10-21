@@ -179,10 +179,8 @@ class _InvitationStatusCardState extends State<_InvitationStatusCard> {
                 const SizedBox(width: 12),
                 Text(
                   statusLabel,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: accent,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium
+                      ?.copyWith(color: accent, fontWeight: FontWeight.w600),
                 ),
                 const Spacer(),
                 if (waiting && widget.deadline != null)

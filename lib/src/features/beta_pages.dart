@@ -1,12 +1,15 @@
 import '../core/presentation/widgets/fiestaaa_motion.dart';
 import '../theme/fiestaaa_theme.dart';
 import '../core/presentation/widgets/route_back_button.dart';
+
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import 'beta_api.dart';
 import '../core/api_response.dart';
 
@@ -229,9 +232,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
         setState(
           () => _error = betaText(
             context,
-            e.statusCode == 429
-                ? 'Trop de demandes. Réessayez plus tard.'
-                : 'La demande a échoué. Vérifiez le mot de passe ou demandez un nouveau lien.',
+            e.statusCode == 429 ? 'Trop de demandes. Réessayez plus tard.' : 'La demande a échoué. Vérifiez le mot de passe ou demandez un nouveau lien.',
             e.statusCode == 429
                 ? 'Too many requests. Try later.'
                 : 'Request failed. Check the password or request a new link.',
@@ -568,12 +569,10 @@ class _SafetyPageState extends State<SafetyPage> {
     try {
       var id = publicId;
       if (action != 'unblock' && widget.eventId == null) {
-        final target =
-            await _api.call(
-                  '/safety/user?handle=${Uri.encodeQueryComponent(_handle.text.trim())}',
-                  token: widget.token,
-                )
-                as Map<String, dynamic>;
+        final target = await _api.call(
+          '/safety/user?handle=${Uri.encodeQueryComponent(_handle.text.trim())}',
+          token: widget.token,
+        ) as Map<String, dynamic>;
         id = target['public_id'] as String;
       }
       if (action == 'report') {

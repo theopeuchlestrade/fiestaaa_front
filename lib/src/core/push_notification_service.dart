@@ -8,6 +8,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/notifications/data/notifications_api.dart';
+
 import 'config.dart';
 import 'firebase_messaging_support.dart';
 import 'web_notification_stub.dart'

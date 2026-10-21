@@ -301,9 +301,9 @@ class _EventCreatePageState extends State<EventCreatePage>
   }
 
   List<String> _orderedEnabledFeatures(S l10n) {
-    return _orderedFeatureOptions(
-      l10n,
-    ).where(_enabledFeatures.contains).toList(growable: false);
+    return _orderedFeatureOptions(l10n)
+        .where(_enabledFeatures.contains)
+        .toList(growable: false);
   }
 
   Future<void> _loadPaymentProviders() async {
@@ -1016,9 +1016,8 @@ class _EventCreatePageState extends State<EventCreatePage>
         : S
               .of(context)
               .responseExpectedBefore(
-                DateFormat.yMMMMd(
-                  S.of(context).localeName,
-                ).format(_invitationDeadline!),
+                DateFormat.yMMMMd(S.of(context).localeName)
+                    .format(_invitationDeadline!),
               );
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1065,10 +1064,8 @@ class _EventCreatePageState extends State<EventCreatePage>
           leading: Icon(Icons.hourglass_bottom, color: accent),
           title: Text(
             S.of(context).responseDeadline,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(color: accent, fontWeight: FontWeight.w700),
           ),
           subtitle: subtitleWidget,
           trailing: isCompact ? null : actions,
@@ -1235,9 +1232,8 @@ class _EventCreatePageState extends State<EventCreatePage>
                   label: Text(
                     _selectedEndDate == null
                         ? l10n.endDate
-                        : DateFormat.yMMMMd(
-                            l10n.localeName,
-                          ).format(_selectedEndDate!),
+                        : DateFormat.yMMMMd(l10n.localeName)
+                              .format(_selectedEndDate!),
                   ),
                 ),
               ),
@@ -1288,9 +1284,9 @@ class _EventCreatePageState extends State<EventCreatePage>
           '$_timezone${_selectedEndDate == null ? '' : ' · ${DateFormat.yMMMd(l.localeName).format(_selectedEndDate!)}'}${_invitationDeadline == null ? '' : ' · ${DateFormat.yMMMd(l.localeName).format(_invitationDeadline!)}'}',
       modulesSummary: _enabledFeatures.isEmpty
           ? l.formModulesHint
-          : _orderedEnabledFeatures(
-              l,
-            ).map((feature) => eventFeatureLabel(feature, l)).join(', '),
+          : _orderedEnabledFeatures(l)
+                .map((feature) => eventFeatureLabel(feature, l))
+                .join(', '),
       advancedOpen: false,
       modulesOpen: false,
       onSubmit: _submit,

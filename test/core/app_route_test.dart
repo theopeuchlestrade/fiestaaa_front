@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
@@ -170,9 +171,11 @@ void main() {
       expect(page.eventId, 42);
       expect(page.module, module);
       expect(
-        GoRouter.of(
-          tester.element(find.byType(EventRoutePage)),
-        ).routeInformationProvider.value.uri.path,
+        GoRouter.of(tester.element(find.byType(EventRoutePage)))
+            .routeInformationProvider
+            .value
+            .uri
+            .path,
         path,
       );
       final router = GoRouter.of(tester.element(find.byType(EventRoutePage)));
