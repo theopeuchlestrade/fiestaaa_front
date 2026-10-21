@@ -2,8 +2,22 @@
 
 # Build a production web bundle and serve it with Nginx
 
-# Pinned Flutter image for deterministic CI builds (3.44.0)
-FROM ghcr.io/cirruslabs/flutter:3.44.0@sha256:46691e311715845de03a3ba4753a475476936805b29431b1f00f1816981033f8 AS build
+# Pinned builder base; the SDK below is upgraded from the official release.
+FROM ghcr.io/cirruslabs/flutter:3.44.0@sha256:46691e311715845de03a3ba4753a475476936805b29431b1f00f1816981033f8 AS flutter-sdk
+
+# Cirrus has no 3.47 image yet. Verify the official tag against its immutable
+# revision so Docker and GitHub Actions use the same Flutter release.
+ARG FLUTTER_VERSION=3.47.7
+ARG FLUTTER_REVISION=abaf9c523780a608bd46686fd5e53740a07077f8
+ENV FLUTTER_VERSION=${FLUTTER_VERSION}
+RUN git -C "${FLUTTER_ROOT}" fetch --depth 1 https://github.com/flutter/flutter.git "refs/tags/${FLUTTER_VERSION}:refs/tags/${FLUTTER_VERSION}" \
+    && test "$(git -C "${FLUTTER_ROOT}" rev-parse FETCH_HEAD)" = "${FLUTTER_REVISION}" \
+    && git -C "${FLUTTER_ROOT}" checkout --detach "${FLUTTER_REVISION}" \
+    && rm -f "${FLUTTER_ROOT}/bin/cache/flutter.version.json" \
+    && flutter --version --machine | grep -F "\"frameworkVersion\": \"${FLUTTER_VERSION}\"" \
+    && flutter precache --web
+
+FROM flutter-sdk AS build
 WORKDIR /app
 
 # Build-time configuration (required)

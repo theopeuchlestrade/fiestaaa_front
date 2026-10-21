@@ -4,8 +4,8 @@
 
 [![CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/workflows/ci.yml/badge.svg)](https://github.com/theopeuchlestrade/fiestaaa_front/actions/workflows/ci.yml)
 [![Frontend coverage](https://raw.githubusercontent.com/theopeuchlestrade/fiestaaa_front/coverage-reports/badge.svg)](https://github.com/theopeuchlestrade/fiestaaa_front/tree/coverage-reports)
-[![Flutter 3.44.0](https://img.shields.io/badge/Flutter-3.44.0-02569B.svg?logo=flutter)](https://flutter.dev)
-[![Dart 3.11](https://img.shields.io/badge/Dart-3.11-0175C2.svg?logo=dart)](https://dart.dev)
+[![Flutter 3.47.7](https://img.shields.io/badge/Flutter-3.47.7-02569B.svg?logo=flutter)](https://flutter.dev)
+[![Dart 3.13](https://img.shields.io/badge/Dart-3.13-0175C2.svg?logo=dart)](https://dart.dev)
 [![MPL-2.0 License](https://img.shields.io/badge/license-MPL--2.0-brightgreen.svg)](LICENSE)
 [![Firebase](https://img.shields.io/badge/firebase-ready-FFCA28.svg?logo=firebase)](https://firebase.google.com)
 
@@ -44,7 +44,7 @@
 
 ### Prerequisites
 
-- Flutter SDK compatible with `pubspec.yaml`
+- Flutter SDK 3.47.7 (matching CI and Docker)
 - Dart SDK provided by Flutter
 
 ### Quick Start
