@@ -320,6 +320,12 @@ jobs:
       - name: Build Android debug APK
         run: flutter build apk --debug --dart-define-from-file=.env.ci
 
+      - name: Build Android release APK and app bundle
+        # CI uses the existing local/debug signing fallback, never store keys.
+        run: |
+          flutter build apk --release --dart-define-from-file=.env.ci
+          flutter build appbundle --release --dart-define-from-file=.env.ci
+
   ios-build:
     name: iOS Compile
     runs-on: macos-latest
