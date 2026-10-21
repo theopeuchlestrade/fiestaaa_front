@@ -15,17 +15,19 @@ void main() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
-  testWidgets('iOS version support is determined by native capability', (
-    tester,
-  ) async {
-    for (final supported in [false, true]) {
-      messenger.setMockMethodCallHandler(channel, (call) async {
-        expect(call.method, 'isSupported');
-        return supported;
-      });
-      expect(await adapter.supportsEditor(), supported);
-    }
-  }, variant: TargetPlatformVariant({TargetPlatform.iOS}));
+  testWidgets(
+    'iOS version support is determined by native capability',
+    (tester) async {
+      for (final supported in [false, true]) {
+        messenger.setMockMethodCallHandler(channel, (call) async {
+          expect(call.method, 'isSupported');
+          return supported;
+        });
+        expect(await adapter.supportsEditor(), supported);
+      }
+    },
+    variant: TargetPlatformVariant({TargetPlatform.iOS}),
+  );
 
   testWidgets(
     'passes exact event data and preserves native outcomes',

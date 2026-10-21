@@ -50,26 +50,29 @@ void main() {
       expect(PendingTokenStorage.read(key), isNull);
     },
   );
-  test('URL cleanup removes only sensitive fields and preserves destination and filters', () {
-    final original = web.window.location.href;
-    try {
-      web.window.history.replaceState(
-        null,
-        '',
-        '/events/7/items?token=fixture&q=dinner&view=invitations#needs',
-      );
-      removeQueryParameters(['token', 'missing']);
-      final cleaned = Uri.parse(web.window.location.href);
-      expect(cleaned.path, '/events/7/items');
-      expect(cleaned.queryParameters, {'q': 'dinner', 'view': 'invitations'});
-      expect(cleaned.fragment, 'needs');
-      removeQueryParameters(['q', 'view']);
-      expect(Uri.parse(web.window.location.href).query, isEmpty);
-      final before = web.window.location.href;
-      removeQueryParameters(['absent']);
-      expect(web.window.location.href, before);
-    } finally {
-      web.window.history.replaceState(null, '', original);
-    }
-  });
+  test(
+    'URL cleanup removes only sensitive fields and preserves destination and filters',
+    () {
+      final original = web.window.location.href;
+      try {
+        web.window.history.replaceState(
+          null,
+          '',
+          '/events/7/items?token=fixture&q=dinner&view=invitations#needs',
+        );
+        removeQueryParameters(['token', 'missing']);
+        final cleaned = Uri.parse(web.window.location.href);
+        expect(cleaned.path, '/events/7/items');
+        expect(cleaned.queryParameters, {'q': 'dinner', 'view': 'invitations'});
+        expect(cleaned.fragment, 'needs');
+        removeQueryParameters(['q', 'view']);
+        expect(Uri.parse(web.window.location.href).query, isEmpty);
+        final before = web.window.location.href;
+        removeQueryParameters(['absent']);
+        expect(web.window.location.href, before);
+      } finally {
+        web.window.history.replaceState(null, '', original);
+      }
+    },
+  );
 }

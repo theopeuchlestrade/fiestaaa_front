@@ -1,5 +1,4 @@
 import 'package:fiestaaa_front/src/core/event_data_store.dart';
-
 import 'dart:convert';
 
 import 'package:fiestaaa_front/src/core/api_response.dart';
@@ -449,9 +448,9 @@ class EventsApi {
         fallbackMessage: 'Impossible de charger la corbeille',
       );
     }
-    return decodeJsonBody<List<dynamic>>(response)
-        .map((raw) => EventModel.fromJson(raw as Map<String, dynamic>))
-        .toList();
+    return decodeJsonBody<List<dynamic>>(
+      response,
+    ).map((raw) => EventModel.fromJson(raw as Map<String, dynamic>)).toList();
   }
 
   Future<EventModel> restoreEvent({

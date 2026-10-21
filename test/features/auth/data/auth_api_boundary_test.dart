@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -111,37 +110,44 @@ void main() {
       },
     );
   }
-  test('provider request omits blank identity fields and carries Apple code/Android origin', () async {
-    late http.Request captured;
-    final api = AuthApi(
-      client: MockClient((r) async {
-        captured = r;
-        return http.Response(
-          '{"token":"fixture","email":"qa@example.invalid"}',
-          200,
-        );
-      }),
-    );
-    await api.loginWithProvider(
-      provider: 'apple',
-      idToken: ' token ',
-      accessToken: ' ',
-      authorizationCode: 'one-use-code',
-      android: true,
-      email: ' ',
-      displayName: ' ',
-    );
-    expect(jsonDecode(captured.body), {
-      'idToken': 'token',
-      'authorizationCode': 'one-use-code',
-      'android': true,
-    });
-    await expectLater(
-      api.loginWithProvider(provider: 'google', idToken: ' ', accessToken: ' '),
-      throwsA(isA<ApiException>()),
-    );
-    api.dispose();
-  });
+  test(
+    'provider request omits blank identity fields and carries Apple code/Android origin',
+    () async {
+      late http.Request captured;
+      final api = AuthApi(
+        client: MockClient((r) async {
+          captured = r;
+          return http.Response(
+            '{"token":"fixture","email":"qa@example.invalid"}',
+            200,
+          );
+        }),
+      );
+      await api.loginWithProvider(
+        provider: 'apple',
+        idToken: ' token ',
+        accessToken: ' ',
+        authorizationCode: 'one-use-code',
+        android: true,
+        email: ' ',
+        displayName: ' ',
+      );
+      expect(jsonDecode(captured.body), {
+        'idToken': 'token',
+        'authorizationCode': 'one-use-code',
+        'android': true,
+      });
+      await expectLater(
+        api.loginWithProvider(
+          provider: 'google',
+          idToken: ' ',
+          accessToken: ' ',
+        ),
+        throwsA(isA<ApiException>()),
+      );
+      api.dispose();
+    },
+  );
   for (final body in [
     '{"email":"qa@example.invalid"}',
     '{"token":"","email":"qa@example.invalid"}',
@@ -179,32 +185,35 @@ void main() {
       api.dispose();
     },
   );
-  test('validation distinguishes missing identity, unauthorized and unavailable', () async {
-    var status = 200;
-    var body = '{}';
-    late http.Request captured;
-    final api = AuthApi(
-      client: MockClient((r) async {
-        captured = r;
-        return http.Response(body, status);
-      }),
-    );
-    expect(await api.validateSession(''), isNull);
-    expect(captured.headers.containsKey('Authorization'), isFalse);
-    body =
-        '{"email":"qa@example.invalid","public_id":"qa-id","handle":"qauser"}';
-    expect((await api.validateSession('fixture'))?.handle, 'qauser');
-    expect(captured.headers['Authorization'], 'Bearer fixture');
-    status = 401;
-    expect(await api.validateSession('fixture'), isNull);
-    status = 503;
-    body = 'gateway unavailable';
-    await expectLater(
-      api.validateSession('fixture'),
-      throwsA(isA<ApiException>().having((e) => e.statusCode, 'status', 503)),
-    );
-    api.dispose();
-  });
+  test(
+    'validation distinguishes missing identity, unauthorized and unavailable',
+    () async {
+      var status = 200;
+      var body = '{}';
+      late http.Request captured;
+      final api = AuthApi(
+        client: MockClient((r) async {
+          captured = r;
+          return http.Response(body, status);
+        }),
+      );
+      expect(await api.validateSession(''), isNull);
+      expect(captured.headers.containsKey('Authorization'), isFalse);
+      body =
+          '{"email":"qa@example.invalid","public_id":"qa-id","handle":"qauser"}';
+      expect((await api.validateSession('fixture'))?.handle, 'qauser');
+      expect(captured.headers['Authorization'], 'Bearer fixture');
+      status = 401;
+      expect(await api.validateSession('fixture'), isNull);
+      status = 503;
+      body = 'gateway unavailable';
+      await expectLater(
+        api.validateSession('fixture'),
+        throwsA(isA<ApiException>().having((e) => e.statusCode, 'status', 503)),
+      );
+      api.dispose();
+    },
+  );
   test(
     'logout sends the active token, and no authorization for absent token',
     () async {

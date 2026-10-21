@@ -117,8 +117,9 @@ extension _EventDetailListSections on _EventDetailPageState {
         ),
         child: Text(
           S.of(context).noPollsYet,
-          style: Theme.of(context).textTheme.bodyMedium
-              ?.copyWith(color: textColor),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: textColor),
         ),
       );
     }
@@ -319,8 +320,9 @@ extension _EventDetailListSections on _EventDetailPageState {
           tilePadding: EdgeInsets.zero,
           title: Text(
             betaText(context, 'Filtres et tri', 'Filter and sort'),
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurface),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           subtitle:
               _itemsScope != EventItemsScope.all ||

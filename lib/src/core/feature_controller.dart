@@ -1,5 +1,4 @@
 import 'refresh_queue.dart';
-
 import 'package:flutter/foundation.dart';
 
 abstract class FeatureController extends ChangeNotifier {

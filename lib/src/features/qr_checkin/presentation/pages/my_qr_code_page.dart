@@ -6,7 +6,6 @@ import 'package:fiestaaa_front/src/features/qr_checkin/data/qr_checkin_api.dart'
 import 'package:fiestaaa_front/src/features/qr_checkin/domain/qr_checkin_models.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
-
 import '../widgets/checkin_views.dart';
 
 class MyQRCodePage extends StatefulWidget {

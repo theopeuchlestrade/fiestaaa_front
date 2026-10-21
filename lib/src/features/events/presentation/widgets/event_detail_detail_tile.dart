@@ -26,8 +26,9 @@ class _DetailTile extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: Theme.of(context).textTheme.labelLarge
-                      ?.copyWith(color: Theme.of(context).fiestaaaMutedText),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context).fiestaaaMutedText,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(value, style: Theme.of(context).textTheme.titleMedium),

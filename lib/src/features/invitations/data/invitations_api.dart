@@ -1,5 +1,4 @@
 import 'package:fiestaaa_front/src/core/event_data_store.dart';
-
 import 'dart:convert';
 
 import 'package:fiestaaa_front/src/core/api_http_client.dart';

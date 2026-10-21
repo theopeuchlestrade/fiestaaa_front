@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:fiestaaa_front/src/core/api_response.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/data/qr_checkin_api.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/domain/qr_checkin_models.dart';

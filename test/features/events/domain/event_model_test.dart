@@ -166,7 +166,8 @@ void main() {
         'description': 'Centre-ville',
         'date_event': '2030-06-21',
         'start_time': '20:00:00',
-        'address': '115, Boulevard Lafayette, Le Brézet, Clermont-Ferrand, Puy-de-Dôme, Auvergne-Rhône-Alpes, France métropolitaine, 63000, France',
+        'address':
+            '115, Boulevard Lafayette, Le Brézet, Clermont-Ferrand, Puy-de-Dôme, Auvergne-Rhône-Alpes, France métropolitaine, 63000, France',
         'latitude': 45.7797,
         'longitude': 3.0863,
         'payment_provider_id': null,
@@ -193,7 +194,8 @@ void main() {
       'description': 'Centre',
       'date_event': '2030-06-21',
       'start_time': '20:00:00',
-      'address': 'Clermont-Ferrand, Puy-de-Dôme, Auvergne-Rhône-Alpes, France métropolitaine, 63000, France',
+      'address':
+          'Clermont-Ferrand, Puy-de-Dôme, Auvergne-Rhône-Alpes, France métropolitaine, 63000, France',
       'latitude': 45.7797,
       'longitude': 3.0863,
       'payment_provider_id': null,
@@ -212,31 +214,34 @@ void main() {
     expect(event.shortAddressSummary.relation, EventAddressRelation.region);
   });
 
-  test('shortAddressSummary keeps the region for a city-only address with one extra component', () {
-    final event = EventModel.fromJson({
-      'event_id': 9,
-      'name_event': 'Walk',
-      'description': 'Center',
-      'date_event': '2030-06-21',
-      'start_time': '20:00:00',
-      'address': 'Paris, Île-de-France, France',
-      'latitude': 48.8566,
-      'longitude': 2.3522,
-      'payment_provider_id': null,
-      'payment_identifier': null,
-      'payment_requested_amount': null,
-      'payment_per_person': false,
-      'owner_email': 'owner@example.com',
-      'playlist_url': null,
-      'playlist_provider': null,
-      'enabled_features': ['items'],
-      'invitation_deadline': null,
-    });
+  test(
+    'shortAddressSummary keeps the region for a city-only address with one extra component',
+    () {
+      final event = EventModel.fromJson({
+        'event_id': 9,
+        'name_event': 'Walk',
+        'description': 'Center',
+        'date_event': '2030-06-21',
+        'start_time': '20:00:00',
+        'address': 'Paris, Île-de-France, France',
+        'latitude': 48.8566,
+        'longitude': 2.3522,
+        'payment_provider_id': null,
+        'payment_identifier': null,
+        'payment_requested_amount': null,
+        'payment_per_person': false,
+        'owner_email': 'owner@example.com',
+        'playlist_url': null,
+        'playlist_provider': null,
+        'enabled_features': ['items'],
+        'invitation_deadline': null,
+      });
 
-    expect(event.shortAddressSummary.primary, 'Paris');
-    expect(event.shortAddressSummary.secondary, 'Île-de-France');
-    expect(event.shortAddressSummary.relation, EventAddressRelation.region);
-  });
+      expect(event.shortAddressSummary.primary, 'Paris');
+      expect(event.shortAddressSummary.secondary, 'Île-de-France');
+      expect(event.shortAddressSummary.relation, EventAddressRelation.region);
+    },
+  );
 
   test('shortAddressSummary keeps venue when it appears before the street', () {
     final event = EventModel.fromJson({
@@ -245,7 +250,8 @@ void main() {
       'description': 'Live',
       'date_event': '2030-06-21',
       'start_time': '20:00:00',
-      'address': 'Le Modern, Rue du Postillon, Moulin des Filoirs, Issoire, Puy-de-Dôme, Auvergne-Rhône-Alpes, France métropolitaine, 63500, France',
+      'address':
+          'Le Modern, Rue du Postillon, Moulin des Filoirs, Issoire, Puy-de-Dôme, Auvergne-Rhône-Alpes, France métropolitaine, 63500, France',
       'latitude': 45.543,
       'longitude': 3.249,
       'payment_provider_id': null,
@@ -264,31 +270,34 @@ void main() {
     expect(event.shortAddressSummary.relation, EventAddressRelation.locality);
   });
 
-  test('shortAddressSummary keeps the city when a street address has no postal code', () {
-    final event = EventModel.fromJson({
-      'event_id': 8,
-      'name_event': 'Meeting',
-      'description': 'Office',
-      'date_event': '2030-06-21',
-      'start_time': '20:00:00',
-      'address': '10 Downing Street, London, England, United Kingdom',
-      'latitude': 51.5034,
-      'longitude': -0.1276,
-      'payment_provider_id': null,
-      'payment_identifier': null,
-      'payment_requested_amount': null,
-      'payment_per_person': false,
-      'owner_email': 'owner@example.com',
-      'playlist_url': null,
-      'playlist_provider': null,
-      'enabled_features': ['items'],
-      'invitation_deadline': null,
-    });
+  test(
+    'shortAddressSummary keeps the city when a street address has no postal code',
+    () {
+      final event = EventModel.fromJson({
+        'event_id': 8,
+        'name_event': 'Meeting',
+        'description': 'Office',
+        'date_event': '2030-06-21',
+        'start_time': '20:00:00',
+        'address': '10 Downing Street, London, England, United Kingdom',
+        'latitude': 51.5034,
+        'longitude': -0.1276,
+        'payment_provider_id': null,
+        'payment_identifier': null,
+        'payment_requested_amount': null,
+        'payment_per_person': false,
+        'owner_email': 'owner@example.com',
+        'playlist_url': null,
+        'playlist_provider': null,
+        'enabled_features': ['items'],
+        'invitation_deadline': null,
+      });
 
-    expect(event.shortAddressSummary.primary, '10 Downing Street');
-    expect(event.shortAddressSummary.secondary, 'London');
-    expect(event.shortAddressSummary.relation, EventAddressRelation.locality);
-  });
+      expect(event.shortAddressSummary.primary, '10 Downing Street');
+      expect(event.shortAddressSummary.secondary, 'London');
+      expect(event.shortAddressSummary.relation, EventAddressRelation.locality);
+    },
+  );
 
   test('address connectors are localized', () {
     final fr = lookupS(const Locale('fr'));

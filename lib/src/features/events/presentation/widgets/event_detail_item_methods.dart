@@ -252,8 +252,9 @@ extension _EventDetailItemMethods on _EventDetailPageState {
                           ),
                           IconButton(
                             onPressed: () => Navigator.of(context).pop(),
-                            tooltip: MaterialLocalizations.of(context)
-                                .closeButtonTooltip,
+                            tooltip: MaterialLocalizations.of(
+                              context,
+                            ).closeButtonTooltip,
                             icon: const Icon(Icons.close),
                           ),
                         ],
@@ -535,8 +536,9 @@ extension _EventDetailItemMethods on _EventDetailPageState {
                         item.maxQuantity,
                         item.unitLabel,
                       ),
-                  style: Theme.of(context).textTheme.bodyMedium
-                      ?.copyWith(color: Theme.of(context).fiestaaaMutedText),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).fiestaaaMutedText,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(

@@ -51,8 +51,9 @@ class _EventItemsList extends StatelessWidget {
         ),
         child: Text(
           emptyLabel,
-          style: Theme.of(context).textTheme.bodyMedium
-              ?.copyWith(color: textColor),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: textColor),
         ),
       );
     }
@@ -72,8 +73,9 @@ class _EventItemsList extends StatelessWidget {
                 if (showTypeHeader) ...[
                   Text(
                     entry.key,
-                    style: Theme.of(context).textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -144,8 +146,9 @@ class _EventItemTile extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       S.of(context).participations,
-                      style: Theme.of(context).textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),

@@ -183,48 +183,52 @@ void main() {
     expect(find.text('Proton Calendar'), findsNothing);
   });
   for (final platform in [TargetPlatform.iOS, TargetPlatform.android]) {
-    testWidgets('shows only the native editor supported by the platform', (
-      tester,
-    ) async {
-      final native = _NativeCalendar(supported: true);
-      await tester.pumpWidget(app(native: native));
-      await pick(
-        tester,
-        platform == TargetPlatform.iOS ? 'Apple Calendar' : 'Device calendar',
-      );
-      expect(native.opened!.title, 'Fête 🎉');
-      expect(native.opened!.start, DateTime.utc(2026, 7, 14, 18, 30));
-      expect(find.byType(SnackBar), findsNothing);
-    }, variant: TargetPlatformVariant({platform}));
+    testWidgets(
+      'shows only the native editor supported by the platform',
+      (tester) async {
+        final native = _NativeCalendar(supported: true);
+        await tester.pumpWidget(app(native: native));
+        await pick(
+          tester,
+          platform == TargetPlatform.iOS ? 'Apple Calendar' : 'Device calendar',
+        );
+        expect(native.opened!.title, 'Fête 🎉');
+        expect(native.opened!.start, DateTime.utc(2026, 7, 14, 18, 30));
+        expect(find.byType(SnackBar), findsNothing);
+      },
+      variant: TargetPlatformVariant({platform}),
+    );
   }
 
   for (final result in NativeCalendarResult.values) {
-    testWidgets('native ${result.name} has the correct recovery behavior', (
-      tester,
-    ) async {
-      final native = _NativeCalendar(supported: true, result: result);
-      var exports = 0;
-      await tester.pumpWidget(
-        app(
-          native: native,
-          export: (_, _, _) async {
-            exports++;
-          },
-        ),
-      );
-      await pick(tester, 'Apple Calendar');
-      if (result == NativeCalendarResult.unavailable) {
-        expect(
-          find.text('Unable to open the calendar or export the file.'),
-          findsOneWidget,
+    testWidgets(
+      'native ${result.name} has the correct recovery behavior',
+      (tester) async {
+        final native = _NativeCalendar(supported: true, result: result);
+        var exports = 0;
+        await tester.pumpWidget(
+          app(
+            native: native,
+            export: (_, _, _) async {
+              exports++;
+            },
+          ),
         );
-        await tester.tap(find.text('Export an .ics file'));
-        await tester.pumpAndSettle();
-        expect(exports, 1);
-      } else {
-        expect(find.byType(SnackBar), findsNothing);
-        expect(exports, 0);
-      }
-    }, variant: TargetPlatformVariant({TargetPlatform.iOS}));
+        await pick(tester, 'Apple Calendar');
+        if (result == NativeCalendarResult.unavailable) {
+          expect(
+            find.text('Unable to open the calendar or export the file.'),
+            findsOneWidget,
+          );
+          await tester.tap(find.text('Export an .ics file'));
+          await tester.pumpAndSettle();
+          expect(exports, 1);
+        } else {
+          expect(find.byType(SnackBar), findsNothing);
+          expect(exports, 0);
+        }
+      },
+      variant: TargetPlatformVariant({TargetPlatform.iOS}),
+    );
   }
 }

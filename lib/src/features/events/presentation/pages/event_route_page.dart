@@ -1,7 +1,5 @@
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
-
 import 'dart:async';
-
 import 'package:fiestaaa_front/src/core/event_data_store.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -11,7 +9,6 @@ import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/async_content.dart';
-
 import 'event_detail_page.dart';
 export 'event_detail_page.dart' show EventModule;
 
@@ -160,9 +157,9 @@ class _EventRoutePageState extends State<EventRoutePage> {
                               header: true,
                               child: Text(
                                 title,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineSmall,
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.headlineSmall,
                               ),
                             )
                           : const Padding(

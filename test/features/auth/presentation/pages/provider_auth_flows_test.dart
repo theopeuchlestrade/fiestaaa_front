@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
@@ -251,7 +250,9 @@ void main() {
             apiHttpClientFactoryKey: () => MockClient((r) async {
               requests.add(r);
               return http.Response(
-                mode == 'server-refusal' ? '{"error":"invalid_apple_code"}' : '{"token":"fixture-session","email":"qa@example.invalid"}',
+                mode == 'server-refusal'
+                    ? '{"error":"invalid_apple_code"}'
+                    : '{"token":"fixture-session","email":"qa@example.invalid"}',
                 mode == 'server-refusal' ? 503 : 200,
               );
             }),

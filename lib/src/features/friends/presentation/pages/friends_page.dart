@@ -3,7 +3,6 @@ import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
-
 import 'dart:async';
 
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
@@ -888,8 +887,9 @@ class _FriendsPageState extends State<FriendsPage>
             children: [
               Text(
                 S.of(context).chooseFiestaaaToInvite,
-                style: Theme.of(context).textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w800),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 6),
               Text(
@@ -1885,8 +1885,9 @@ class _RequestsBucket extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               '$title (${requests.length})',
-              style: Theme.of(context).textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w800),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
             ),
           ),
           const SizedBox(height: 12),

@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -35,8 +34,9 @@ void main() {
       final result = await generate(mode: 'ios');
       expect(result.exitCode, 0, reason: '${result.stderr}');
       final aasa = jsonDecode(
-        File('${android.parent.path}/apple-app-site-association')
-            .readAsStringSync(),
+        File(
+          '${android.parent.path}/apple-app-site-association',
+        ).readAsStringSync(),
       );
       expect(aasa['applinks']['details'][0]['appIDs'], [
         '7SYCW3N9JB.com.fiestaaa.fiestaaa',
@@ -68,8 +68,9 @@ void main() {
     );
     expect(entries[0]['target']['sha256_cert_fingerprints'], [fingerprint]);
     expect(
-      File('${root.path}/web/.well-known/apple-app-site-association')
-          .existsSync(),
+      File(
+        '${root.path}/web/.well-known/apple-app-site-association',
+      ).existsSync(),
       isTrue,
     );
   });

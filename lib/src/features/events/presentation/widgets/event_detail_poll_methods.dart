@@ -212,8 +212,9 @@ extension _EventDetailPollMethods on _EventDetailPageState {
                         ),
                         IconButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          tooltip: MaterialLocalizations.of(context)
-                              .closeButtonTooltip,
+                          tooltip: MaterialLocalizations.of(
+                            context,
+                          ).closeButtonTooltip,
                           icon: const Icon(Icons.close),
                         ),
                       ],
@@ -438,8 +439,9 @@ extension _EventDetailPollMethods on _EventDetailPageState {
                 children: [
                   Text(
                     S.of(context).votesFor(poll.question),
-                    style: Theme.of(context).textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w800),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Expanded(

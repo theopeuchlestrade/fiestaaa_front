@@ -3,7 +3,6 @@ import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-
 import '../../domain/qr_checkin_models.dart';
 
 /// The same compact page context as the other event modules, with native back.

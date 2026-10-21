@@ -6,7 +6,6 @@ import 'package:fiestaaa_front/src/features/qr_checkin/domain/qr_checkin_models.
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-
 import '../widgets/checkin_views.dart';
 
 class QRScannerPage extends StatefulWidget {

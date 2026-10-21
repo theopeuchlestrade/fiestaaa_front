@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/core/api_response.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
@@ -116,8 +115,9 @@ Widget _app(
   localizationsDelegates: S.localizationsDelegates,
   supportedLocales: S.supportedLocales,
   builder: (context, child) => MediaQuery(
-    data: MediaQuery.of(context)
-        .copyWith(textScaler: TextScaler.linear(textScale)),
+    data: MediaQuery.of(
+      context,
+    ).copyWith(textScaler: TextScaler.linear(textScale)),
     child: child!,
   ),
   home: EventExpensesPage(

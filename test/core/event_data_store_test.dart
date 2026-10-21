@@ -1,8 +1,6 @@
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
-
 import 'dart:async';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fiestaaa_front/src/core/event_data_store.dart';
 import 'package:fiestaaa_front/src/core/api_response.dart';
@@ -15,27 +13,30 @@ void main() {
     now = DateTime.utc(2026);
     store = EventDataStore(now: () => now, capacity: 2)..bind('session', 'qa');
   });
-  test('fresh data reuses reads, stale snapshot survives transient failure, expires', () async {
-    var calls = 0;
-    Future<String> load() async => 'value-${++calls}';
-    await store.read('session', 1, 'context', load);
-    expect(await store.read('session', 1, 'context', load), 'value-1');
-    now = now.add(const Duration(seconds: 30));
-    expect(store.peek<String>('session', 1, 'context', fresh: true), isNull);
-    expect(store.peek<String>('session', 1, 'context'), 'value-1');
-    await expectLater(
-      store.read(
-        'session',
-        1,
-        'context',
-        () async => throw Exception('offline'),
-      ),
-      throwsException,
-    );
-    expect(store.peek<String>('session', 1, 'context'), 'value-1');
-    now = now.add(const Duration(minutes: 5));
-    expect(store.peek<String>('session', 1, 'context'), isNull);
-  });
+  test(
+    'fresh data reuses reads, stale snapshot survives transient failure, expires',
+    () async {
+      var calls = 0;
+      Future<String> load() async => 'value-${++calls}';
+      await store.read('session', 1, 'context', load);
+      expect(await store.read('session', 1, 'context', load), 'value-1');
+      now = now.add(const Duration(seconds: 30));
+      expect(store.peek<String>('session', 1, 'context', fresh: true), isNull);
+      expect(store.peek<String>('session', 1, 'context'), 'value-1');
+      await expectLater(
+        store.read(
+          'session',
+          1,
+          'context',
+          () async => throw Exception('offline'),
+        ),
+        throwsException,
+      );
+      expect(store.peek<String>('session', 1, 'context'), 'value-1');
+      now = now.add(const Duration(minutes: 5));
+      expect(store.peek<String>('session', 1, 'context'), isNull);
+    },
+  );
   test('LRU eviction respects recent access', () async {
     await store.read('session', 1, 'context', () async => 'one');
     await store.read('session', 2, 'context', () async => 'two');
@@ -164,41 +165,44 @@ void main() {
     store.observeRealtime('session', 1, message);
     expect(await fresh, 2);
   });
-  test('membership evidence expires independently and cannot authorize waiting guests', () async {
-    final event = EventModel.fromJson({
-      'event_id': 1,
-      'name_event': 'Fixture',
-      'description': 'Fictional',
-      'date_event': '2099-01-01',
-      'start_time': '18:00:00',
-      'address': 'Fictional',
-      'owner_email': 'other@example.invalid',
-    });
-    InvitationModel invitation(String status) => InvitationModel.fromJson({
-      'event_id': 1,
-      'email': 'qa',
-      'status': status,
-      'date_invi': '2026-01-01',
-    });
-    await store.read('session', 1, 'context', () async => event);
-    await store.read<InvitationModel?>(
-      'session',
-      1,
-      'access',
-      () async => invitation('Accepted'),
-    );
-    expect(store.canReuseProtected('session', 1), isTrue);
-    now = now.add(const Duration(seconds: 31));
-    await store.read('session', 1, 'context', () async => event);
-    expect(store.canReuseProtected('session', 1), isFalse);
-    await store.read<InvitationModel?>(
-      'session',
-      1,
-      'access',
-      () async => invitation('Waiting'),
-    );
-    expect(store.canReuseProtected('session', 1), isFalse);
-  });
+  test(
+    'membership evidence expires independently and cannot authorize waiting guests',
+    () async {
+      final event = EventModel.fromJson({
+        'event_id': 1,
+        'name_event': 'Fixture',
+        'description': 'Fictional',
+        'date_event': '2099-01-01',
+        'start_time': '18:00:00',
+        'address': 'Fictional',
+        'owner_email': 'other@example.invalid',
+      });
+      InvitationModel invitation(String status) => InvitationModel.fromJson({
+        'event_id': 1,
+        'email': 'qa',
+        'status': status,
+        'date_invi': '2026-01-01',
+      });
+      await store.read('session', 1, 'context', () async => event);
+      await store.read<InvitationModel?>(
+        'session',
+        1,
+        'access',
+        () async => invitation('Accepted'),
+      );
+      expect(store.canReuseProtected('session', 1), isTrue);
+      now = now.add(const Duration(seconds: 31));
+      await store.read('session', 1, 'context', () async => event);
+      expect(store.canReuseProtected('session', 1), isFalse);
+      await store.read<InvitationModel?>(
+        'session',
+        1,
+        'access',
+        () async => invitation('Waiting'),
+      );
+      expect(store.canReuseProtected('session', 1), isFalse);
+    },
+  );
   test(
     'cookie-session account replacement clears data even with the same token',
     () async {
