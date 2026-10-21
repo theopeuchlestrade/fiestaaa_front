@@ -1,15 +1,15 @@
 # Dart VM lines coverage
 
-Commit: `9bcb297d48e6470b7cdc4fc7045dc7c58e986cb8` · 2026-10-21T13:59:26.243Z
+Commit: `6931fb1a3cce8f426deccdde26de326949655971` · 2026-10-21T15:13:48.593Z
 
 | Measure | Covered / total | Coverage | Enforced / target |
 |---|---:|---:|---:|
-| Raw collector | 9523/14145 | 67.32% | — |
-| Application | 9013/12674 | 71.11% | 70% / 70% |
-| authentication-sessions | 858/1055 | 81.33% | 80% / 80% |
+| Raw collector | 9640/14260 | 67.60% | — |
+| Application | 9130/12789 | 71.39% | 70% / 70% |
+| authentication-sessions | 958/1157 | 82.80% | 80% / 80% |
 | permissions-participation | 886/1104 | 80.25% | 80% / 80% |
-| cache-synchronization | 798/972 | 82.10% | 80% / 80% |
-| notifications-qr | 622/672 | 92.56% | 80% / 80% |
+| cache-synchronization | 814/985 | 82.64% | 80% / 80% |
+| notifications-qr | 623/672 | 92.71% | 80% / 80% |
 
 Patch: **not-requested**.
 
@@ -24,13 +24,13 @@ Result: **passed**.
 - `lib/src/features/carpools/presentation/pages/event_carpools_page.dart`: 247 uncovered collector lines (43.35%)
 - `lib/src/features/events/presentation/pages/event_expenses_page.dart`: 203 uncovered collector lines (68.18%)
 - `lib/src/features/events/presentation/widgets/event_detail_poll_methods.dart`: 190 uncovered collector lines (32.86%)
-- `lib/src/app.dart`: 140 uncovered collector lines (62.86%)
+- `lib/src/app.dart`: 141 uncovered collector lines (64.93%)
 - `lib/src/features/home/presentation/pages/home_page.dart`: 113 uncovered collector lines (49.33%)
 - `lib/src/features/events/presentation/pages/event_invitations_page.dart`: 111 uncovered collector lines (70.63%)
 - `lib/src/features/events/presentation/widgets/event_detail_feature_methods.dart`: 103 uncovered collector lines (0.00%)
 - `lib/src/features/profile/presentation/pages/profile_page.dart`: 94 uncovered collector lines (72.11%)
-- `lib/src/features/events/presentation/widgets/event_detail_invitation_card.dart`: 91 uncovered collector lines (44.17%)
 - `lib/src/features/events/presentation/pages/event_detail_page.dart`: 91 uncovered collector lines (73.31%)
+- `lib/src/features/events/presentation/widgets/event_detail_invitation_card.dart`: 91 uncovered collector lines (44.17%)
 - `lib/src/features/events/presentation/widgets/event_detail_navigation_methods.dart`: 89 uncovered collector lines (27.64%)
 - `lib/src/features/carpools/presentation/pages/carpool_create_page.dart`: 83 uncovered collector lines (59.11%)
 
@@ -75,4 +75,4 @@ Result: **passed**.
 
 Coverage does not certify native providers, physical devices or store delivery.
 
-[Source CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/39612293866)
+[Source CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/39623089803)
