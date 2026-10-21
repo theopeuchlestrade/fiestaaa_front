@@ -7,13 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-10-21
+
 ### Dependencies
 
-- Align Android builds with Gradle 9.8.2, AGP 9.4.1, Kotlin 2.4.21 and Google Services 4.5.0; retain Java 17 LTS.
+- Build with Flutter 3.47.7 and its bundled Dart SDK; update compatible application dependencies and repository tooling.
+- Align Android builds with Gradle 9.8.2, AGP 9.4.1, Kotlin 2.4.21 and Google Services 4.5.0; use Temurin Java 25 LTS for build tools while retaining Java/Kotlin 17 Android compilation targets.
 - Serve the web build with the maintained Nginx 1.30 stable branch while preserving the pinned Alpine security fixes.
 
 ### Fixed
 
+- Keep native users connected after their 24-hour access expires by securely persisting and automatically rotating refresh credentials before API requests. Concurrent calls share one renewal, and uploads or mutations are sent once.
+- Preserve saved sessions during network and temporary server failures; prevent a late renewal response from restoring a logged-out or superseded account.
+- Apply persistent sessions to password, registration, Google and Apple login, and revoke the device refresh session on logout. This requires backend 0.6.0 or newer; already-expired legacy sessions need one final login.
 - Give Gradle enough heap to transform Flutter Android engine artifacts and bound worker concurrency on CI runners.
 
 ## [0.9.0] - 2026-10-16
