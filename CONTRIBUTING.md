@@ -3,8 +3,8 @@
 Thanks for contributing to the frontend.
 
 ## Prerequisites
-- Flutter SDK (the version used by the project)
-- Dart SDK
+- Flutter SDK 3.47.7 (matching CI and Docker)
+- Dart SDK 3.13.5, provided by Flutter
 
 ## Installation
 1. Copy `.env.example` to `.env` if needed.
