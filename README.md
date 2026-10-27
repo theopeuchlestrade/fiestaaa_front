@@ -1,6 +1,6 @@
 # Dart VM lines coverage
 
-Commit: `f07a41b545f810be8bab770d044d464e906f2211` · 2026-10-21T17:49:13.472Z
+Commit: `036325a7bbaeae30a4a9d7e1889cce27d1c1200f` · 2026-10-27T18:23:19.887Z
 
 | Measure | Covered / total | Coverage | Enforced / target |
 |---|---:|---:|---:|
@@ -29,8 +29,8 @@ Result: **passed**.
 - `lib/src/features/events/presentation/pages/event_invitations_page.dart`: 111 uncovered collector lines (70.63%)
 - `lib/src/features/events/presentation/widgets/event_detail_feature_methods.dart`: 103 uncovered collector lines (0.00%)
 - `lib/src/features/profile/presentation/pages/profile_page.dart`: 94 uncovered collector lines (72.11%)
-- `lib/src/features/events/presentation/pages/event_detail_page.dart`: 91 uncovered collector lines (73.31%)
 - `lib/src/features/events/presentation/widgets/event_detail_invitation_card.dart`: 91 uncovered collector lines (44.17%)
+- `lib/src/features/events/presentation/pages/event_detail_page.dart`: 91 uncovered collector lines (73.31%)
 - `lib/src/features/events/presentation/widgets/event_detail_navigation_methods.dart`: 89 uncovered collector lines (27.64%)
 - `lib/src/features/carpools/presentation/pages/carpool_create_page.dart`: 83 uncovered collector lines (59.11%)
 
@@ -75,4 +75,4 @@ Result: **passed**.
 
 Coverage does not certify native providers, physical devices or store delivery.
 
-[Source CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/39646540241)
+[Source CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/40558565099)
