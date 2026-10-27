@@ -34,6 +34,11 @@ updates:
 
   - package-ecosystem: "docker"
     directory: "/"
+    # Keep the maintained stable line. nginx 1.31.0 uses an older Alpine
+    # package set that cannot install the security fixes pinned in Dockerfile.
+    ignore:
+      - dependency-name: "nginx"
+        versions: [">=1.31.0, <1.32.0"]
     schedule:
       interval: "weekly"
       day: "monday"
