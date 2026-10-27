@@ -132,7 +132,7 @@ sed -i "s#flutter_bootstrap.js#${bootstrap_js}#g" build/web/index.html
 BASH
 
 # Pinned Nginx stable runtime image for production serving (1.30.6-alpine)
-FROM nginx:1.30.6-alpine@sha256:970364228b1e4f932abc22d321932816782cca8a20b85a77552a7cfe9acfb3b5 AS runtime
+FROM nginx:1.30.6-alpine@sha256:47928bf67eb62a1863cb08d9ecb52d3e704304ba614eaee17884204677702951 AS runtime
 # The base still includes two fixable HIGH vulnerabilities. Pin corrected
 # Alpine package versions; do not broaden the image scan's exception policy.
 RUN apk add --no-cache libexpat=2.8.5-r0 pcre2=10.49-r0
