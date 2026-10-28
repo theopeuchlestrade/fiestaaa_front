@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-10-28
+
+### Security
+
+- Refresh the pinned Nginx 1.30.6 stable runtime and patch Brotli, curl and libcurl packages.
+
+### Dependencies
+
+- Update Google Fonts, GoRouter, web and OpenSpec.
+- Update Firebase Core to 4.15.2 and Messaging to 16.7.1 while retaining compatibility with the official Google Sign-In iOS plugin.
+
 ## [0.9.1] - 2026-10-21
 
 ### Dependencies
