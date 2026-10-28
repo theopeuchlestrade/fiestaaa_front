@@ -2,6 +2,13 @@ version: 2
 updates:
   - package-ecosystem: "pub"
     directory: "/"
+    # Firebase Apple SDK 13 conflicts with google_sign_in_ios' Google SDK 9.
+    # Remove these scoped deferrals when the official Flutter plugin supports 10.1.
+    ignore:
+      - dependency-name: "firebase_core"
+        versions: [">=5.0.0, <6.0.0"]
+      - dependency-name: "firebase_messaging"
+        versions: [">=17.0.0, <18.0.0"]
     schedule:
       interval: "weekly"
       day: "monday"
