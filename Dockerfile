@@ -135,6 +135,8 @@ BASH
 FROM nginx:1.30.6-alpine@sha256:47928bf67eb62a1863cb08d9ecb52d3e704304ba614eaee17884204677702951 AS runtime
 # This immutable base already includes libexpat 2.9.0-r0 and pcre2 10.49-r0.
 # Keep those fixes in the pinned image rather than requesting obsolete APKs.
+# Patch the remaining fixable HIGH findings without relaxing the scan gate.
+RUN apk add --no-cache brotli-libs=1.2.1-r0 curl=8.23.0-r0 libcurl=8.23.0-r0
 LABEL org.opencontainers.image.source="https://github.com/theopeuchlestrade/fiestaaa_front"
 COPY --from=build /app/build/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/build/web /usr/share/nginx/html
