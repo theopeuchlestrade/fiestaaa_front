@@ -1,6 +1,6 @@
 # Dart VM lines coverage
 
-Commit: `6ddfe2b0da1cba38503e045d8e88ca730ef408b1` · 2026-10-28T16:26:09.432Z
+Commit: `1d335a3937ad89603048ad747ad69dc21584a522` · 2026-10-31T13:02:13.639Z
 
 | Measure | Covered / total | Coverage | Enforced / target |
 |---|---:|---:|---:|
@@ -75,4 +75,4 @@ Result: **passed**.
 
 Coverage does not certify native providers, physical devices or store delivery.
 
-[Source CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/40725086602)
+[Source CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/41203376637)
