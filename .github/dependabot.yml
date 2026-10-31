@@ -9,6 +9,9 @@ updates:
         versions: [">=5.0.0, <6.0.0"]
       - dependency-name: "firebase_messaging"
         versions: [">=17.0.0, <18.0.0"]
+      # 4.11.x requires firebase_core ^5.1.0; keep the Firebase 16 test interface.
+      - dependency-name: "firebase_messaging_platform_interface"
+        versions: [">=4.11.0, <4.12.0"]
     schedule:
       interval: "weekly"
       day: "monday"
