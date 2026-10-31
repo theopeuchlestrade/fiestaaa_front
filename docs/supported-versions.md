@@ -40,7 +40,7 @@ Android policies: [AGP compatibility](https://developer.android.com/build/releas
 [Gradle Java compatibility](https://docs.gradle.org/current/userguide/compatibility.html),
 [Android build JDKs](https://developer.android.com/build/jdks).
 
-## Firebase compatibility (reviewed 2026-10-28)
+## Firebase compatibility (reviewed 2026-10-31)
 
 Use `firebase_core` 4.15.2 and `firebase_messaging` 16.7.1 with the reviewed
 Firebase Apple SDK 12.19.3 maintenance release. These updates retain the
@@ -53,12 +53,14 @@ GTMSessionFetcher <4. GoogleSignIn 10.1 supports Firebase 13, but the official
 Flutter plugin does not yet select it. Do not disable Swift Package Manager
 or maintain an authentication plugin fork solely to bypass this conflict.
 
-Dependabot defers only Firebase Core 5.x and Messaging 17.x. Maintenance
-updates remain enabled. Remove these deferrals when the official Flutter
-Google Sign-In implementation supports a compatible native SDK and validate
+Dependabot defers Firebase Core 5.x, Messaging 17.x and Messaging platform
+interface 4.11.x, which requires Core ^5.1.0. The pinned 4.10.0 test interface
+remains aligned with Messaging 16. Maintenance updates remain enabled. Remove
+these deferrals when the official Flutter Google Sign-In implementation supports a compatible native SDK and validate
 the complete iOS build and notification lifecycle before adopting Firebase 17.
 
 Sources: [Firebase Core changelog](https://pub.dev/packages/firebase_core/versions/4.15.2/changelog),
 [Messaging changelog](https://pub.dev/packages/firebase_messaging/versions/16.7.1/changelog),
+[Messaging platform interface 4.11.1](https://pub.dev/packages/firebase_messaging_platform_interface/versions/4.11.1),
 [Google Sign-In Flutter implementation](https://pub.dev/packages/google_sign_in_ios),
 [GoogleSignIn iOS 10.1 release](https://github.com/google/GoogleSignIn-iOS/releases/tag/10.1.0).
