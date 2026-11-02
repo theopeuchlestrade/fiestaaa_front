@@ -132,7 +132,7 @@ sed -i "s#flutter_bootstrap.js#${bootstrap_js}#g" build/web/index.html
 BASH
 
 # Pinned Nginx stable runtime image for production serving (1.30.6-alpine)
-FROM nginx:1.30.6-alpine@sha256:47928bf67eb62a1863cb08d9ecb52d3e704304ba614eaee17884204677702951 AS runtime
+FROM nginx:1.30.6-alpine@sha256:0e52bd054126cdc040b1276c0af347aeb02a41b9cfe305d6094767ac30e97949 AS runtime
 # This immutable base already includes libexpat 2.9.0-r0 and pcre2 10.49-r0.
 # Keep those fixes in the pinned image rather than requesting obsolete APKs.
 # Patch the remaining fixable HIGH findings without relaxing the scan gate.
