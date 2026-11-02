@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-11-02
+
+### Fixed
+
+- Update local notifications to 22.3.3 to correct repeating Android notifications across daylight saving time changes.
+- Update GoRouter to 18.1.2 to preserve web text-field focus when an autocomplete overlay opens inside a shell route.
+- Update Flutter SVG to 2.3.2, including alpha-mask support and proper rejection of unsuccessful HTTP responses.
+
+### Dependencies
+
+- Refresh the pinned Nginx 1.30.6 stable image while preserving the reviewed Alpine security patches.
+- Retain Firebase Core 4.15.2 and Messaging 16.7.1 for compatibility with the official Google Sign-In iOS plugin.
+
 ## [0.9.2] - 2026-10-28
 
 ### Security
