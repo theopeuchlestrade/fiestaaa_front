@@ -18,11 +18,40 @@ Refreshes rebuild the previously loaded volume. Failed refreshes retain cards;
 failed invitation reads retain known statuses and counters. Generation checks
 reject stale pagination and search responses.
 
+## Navigation and module access
+
+The main destinations are Events, Friends and Profile. Event creation is the
+primary action on the event list. On compact screens it sits at the bottom end
+with space reserved below the list. On wide screens it sits in the search toolbar.
+Keep search, filters and the secondary trash menu available without repeating the
+application or destination title. Friend-request notifications open the requests view.
+
+Module routes support direct links, reload, Back and resuming the destination
+after sign-in without retaining sensitive token URLs. Returning to the list
+preserves its search and filter criteria.
+Each enabled module has a dedicated page with one title, event context and a
+return action. Offer shortcuts only to enabled modules the user can access.
+Switching modules replaces the current module in navigation history, so Back
+returns to the event overview. A module opened directly can also return to its
+event overview.
+
+The [backend event access rules](https://github.com/theopeuchlestrade/fiestaaa_back/blob/main/docs/event-access.md)
+define permissions. Wait for server-backed access before showing protected
+content or actions. A pending invitation does not grant access. See the
+[event data lifecycle](performance/event-navigation.md) for cache, refresh and
+invalidation behavior.
+
+After successful deletion or realtime removal, return to the event list. An
+editor closing at the same time must leave the list visible. If deletion fails,
+keep the editor available for retry.
+
 ## Forms and drafts
 
 The forms share layout, validation/focus behavior and change tracking. Essential
 fields precede expandable advanced settings and modules; the primary action stays
-below the scrollable form. Creation drafts use a versioned SharedPreferences key
+below the scrollable form. Both forms protect unsaved changes when leaving.
+Authentication, password reset and profile fields use shared controls and
+localized validation feedback. Creation drafts use a versioned SharedPreferences key
 scoped by normalized account email. Drafts contain form fields, never auth tokens.
 Writes are serialized, debounced for 500 ms and flushed during supported lifecycle
 changes and internal navigation. Browser unload requests native confirmation when
@@ -43,6 +72,32 @@ in their dedicated card. Empty personal actions disappear. Contributions and pol
 questions belong to their module pages. Needs and personal brings use separate
 views, and restricted modules are not mounted before membership is known.
 
+## Loading, accessibility and external actions
+
+Use the same theme, page margins and Back action for loading, failure and loaded
+event pages. Keep the module title when known and give placeholders a localized,
+accessible loading label. On a transient refresh failure, retain usable content
+and input, show one connection banner and offer retry. Make empty, loading and
+error states accessible in both languages and themes at 200% text size.
+
+Use shared cards, buttons, fields and semantic colors. Pair semantic backgrounds
+with foregrounds that meet 4.5:1 contrast for normal text in both themes. Let
+dialog titles wrap while keeping the close action reachable. Keep provider
+sign-in branding recognizable, with accessible tap targets and comparable
+prominence. QR tickets retain black-on-white contrast, and scanner controls
+remain legible over the camera preview. Keep public HTML aligned with the theme
+and preserve legal copy.
+
+Event addresses open a provider picker. Offer Google Maps, Waze and
+OpenStreetMap, plus Apple Maps on Apple platforms and the web. Use saved
+coordinates when available, or search for the full address. Canceling leaves the
+event page open. Launch failures show localized feedback. Playlist and fundraiser
+links retain their external destinations.
+
+Friend requests show the sender, date and available actions in that order. Keep
+tickets, camera, check-in statistics and scan results visually distinct while
+preserving ticket authorization and token handling.
+
 ## Validation and release
 
 Automated checks cover list recovery, search generations, pagination, local draft
@@ -57,16 +112,15 @@ failed comparisons upload diagnostic images without updating references or
 relaxing the comparison. Selected cases check tap-target labels and minimum
 Android tap-target sizes.
 
-Run frontend analysis/tests with the CI defines and maintain the 22% coverage
-floor. Backend library and event integration tests use the isolated `db-test`
+Run frontend analysis and tests with the CI defines and follow the
+[coverage policy](testing/coverage.md). Backend library and event integration tests use the isolated `db-test`
 service. Compare the local contracts with:
 
 ```sh
 node tool/check_backend_contract.mjs --source ../fiestaaa_back/openapi.json
 ```
 
-This harmonization changes no backend API or migration. The backend specification
-PR only adopts tooling and describes existing permissions. Production deployment is separate from these local changes. Before
-production, verify create/search/open/respond in the validation environment,
+Before deploying changes to the event experience, verify create/search/open/respond
+in the validation environment,
 browser back/reload, and VoiceOver/TalkBack on real devices. Observe existing
 error reporting and API metrics, and retain the previous frontend for rollback.

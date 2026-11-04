@@ -16,6 +16,11 @@ backend API.
 - Google and Apple OAuth are optional runtime integrations enabled through
   `.env` / `--dart-define` values.
 
+## Event experience
+
+See the [event experience guide](event-experience.md) for navigation, module
+access, forms, loading states and accessibility.
+
 ## Configuration
 
 Local and CI builds use `.env`-style dart defines. Do not commit `.env`,
