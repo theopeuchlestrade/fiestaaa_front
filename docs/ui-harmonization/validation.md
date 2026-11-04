@@ -30,7 +30,7 @@ All frontend CI jobs passed at application commit 70c256ec1c54f5027eb524d9596b7b
 
 ## Dependency limitation
 
-OpenSpec 1.14.1's development-only braces advisory has no upstream patched version as of this review. See ../openspec.md for the exact root advisory and limited execution context. The dependency audit is not clean.
+OpenSpec 1.14.1's development-only braces advisory has no upstream patched version as of this review. See [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) for the advisory recorded at the time. The dependency audit is not clean.
 
 ## First remote CI observation
 

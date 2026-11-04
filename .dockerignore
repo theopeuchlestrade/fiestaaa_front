@@ -49,5 +49,4 @@ test
 web/firebase-messaging-sw.js
 
 # Specification development files
-openspec
 .agents
