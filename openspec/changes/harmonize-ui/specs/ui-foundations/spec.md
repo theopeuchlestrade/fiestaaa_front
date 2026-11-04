@@ -16,7 +16,7 @@ The main destinations SHALL be events, friends and profile. Creation SHALL be th
 
 #### Scenario: Direct module link
 - **WHEN** a permitted user authenticates after opening a module route
-- **THEN** that route resumes and server rules from the backend openspec/specs/event-access/spec.md (fiestaaa_back repository) still apply
+- **THEN** that route resumes and the [backend event access rules](https://github.com/theopeuchlestrade/fiestaaa_back/blob/main/docs/event-access.md) still apply
 
 ### Requirement: Conditional overview actions
 Event overviews SHALL contain practical information and enabled module links without reproducing module lists. The personal action area SHALL disappear if no action is required and SHALL NOT list contributions or poll questions.
