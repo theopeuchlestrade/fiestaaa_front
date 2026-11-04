@@ -6,7 +6,7 @@ Define the accepted presentation contract for Fiestaaa.
 ## Requirements
 
 ### Requirement: Module presentation
-Enabled modules SHALL have dedicated pages with one title, useful summary, content and primary action. Needs and personal brings SHALL have separate views. Backend openspec/specs/event-access/spec.md is authoritative for roles; the UI SHALL NOT redefine those permissions. Playlist and fundraiser links SHALL retain external destinations.
+Enabled modules SHALL have dedicated pages with one title, useful summary, content and primary action. Needs and personal brings SHALL have separate views. The [backend event access rules](https://github.com/theopeuchlestrade/fiestaaa_back/blob/main/docs/event-access.md) define the roles. The UI SHALL NOT redefine those permissions. Playlist and fundraiser links SHALL retain external destinations.
 
 #### Scenario: Waiting invitation
 - **WHEN** a waiting guest opens a protected module route

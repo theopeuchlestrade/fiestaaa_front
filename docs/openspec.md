@@ -10,4 +10,4 @@ The initial 2026-10-10 audit reports GHSA-vfj7-8cjw-p6xm in braces 3.0.3 through
 
 ## Authoritative cross-repository contract
 
-The frontend adopts the [backend event access contract](https://github.com/theopeuchlestrade/fiestaaa_back/blob/45cb5d87c8e4f1f2dea2a1632008bec6e298cbe9/openspec/specs/event-access/spec.md), coordinated in [backend PR 213](https://github.com/theopeuchlestrade/fiestaaa_back/pull/213). Keep permission scenarios there; refer to them when changing UI routes or role-specific actions.
+Consult the [backend event access rules](https://github.com/theopeuchlestrade/fiestaaa_back/blob/main/docs/event-access.md) when changing UI routes or role-specific actions.
