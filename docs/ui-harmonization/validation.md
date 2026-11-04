@@ -28,9 +28,9 @@ All frontend CI jobs passed at application commit 70c256ec1c54f5027eb524d9596b7b
 - No compilation result is phone validation. Selected device flows have now been confirmed by the owner, as recorded below; remaining flows and iPhone receiver/accessibility checks still require validation.
 - Create the beta candidate as a separate delivery after these checks. No release tag, store upload, deployment or publication is authorized by this preparation.
 
-## Dependency limitation
+## Dependency audit at the time of harmonization
 
-OpenSpec 1.14.1's development-only braces advisory has no upstream patched version as of this review. See [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) for the advisory recorded at the time. The dependency audit is not clean.
+The audit reported an unpatched development dependency advisory through OpenSpec 1.14.1. See [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm). The frontend has since removed OpenSpec.
 
 ## First remote CI observation
 
