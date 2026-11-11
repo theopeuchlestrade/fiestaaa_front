@@ -1,15 +1,15 @@
 # Dart VM lines coverage
 
-Commit: `7c9600151d26d3e791172529c702201c35939a98` · 2026-11-04T10:19:10.004Z
+Commit: `c3a34fed54cf26debfed7655e740ec9f835bd49d` · 2026-11-11T09:54:52.066Z
 
 | Measure | Covered / total | Coverage | Enforced / target |
 |---|---:|---:|---:|
-| Raw collector | 9640/14260 | 67.60% | — |
-| Application | 9130/12789 | 71.39% | 70% / 70% |
+| Raw collector | 9639/14260 | 67.59% | — |
+| Application | 9129/12789 | 71.38% | 70% / 70% |
 | authentication-sessions | 958/1157 | 82.80% | 80% / 80% |
 | permissions-participation | 886/1104 | 80.25% | 80% / 80% |
 | cache-synchronization | 814/985 | 82.64% | 80% / 80% |
-| notifications-qr | 623/672 | 92.71% | 80% / 80% |
+| notifications-qr | 622/672 | 92.56% | 80% / 80% |
 
 Patch: **not-requested**.
 
@@ -29,8 +29,8 @@ Result: **passed**.
 - `lib/src/features/events/presentation/pages/event_invitations_page.dart`: 111 uncovered collector lines (70.63%)
 - `lib/src/features/events/presentation/widgets/event_detail_feature_methods.dart`: 103 uncovered collector lines (0.00%)
 - `lib/src/features/profile/presentation/pages/profile_page.dart`: 94 uncovered collector lines (72.11%)
-- `lib/src/features/events/presentation/widgets/event_detail_invitation_card.dart`: 91 uncovered collector lines (44.17%)
 - `lib/src/features/events/presentation/pages/event_detail_page.dart`: 91 uncovered collector lines (73.31%)
+- `lib/src/features/events/presentation/widgets/event_detail_invitation_card.dart`: 91 uncovered collector lines (44.17%)
 - `lib/src/features/events/presentation/widgets/event_detail_navigation_methods.dart`: 89 uncovered collector lines (27.64%)
 - `lib/src/features/carpools/presentation/pages/carpool_create_page.dart`: 83 uncovered collector lines (59.11%)
 
@@ -75,4 +75,4 @@ Result: **passed**.
 
 Coverage does not certify native providers, physical devices or store delivery.
 
-[Source CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/41812873882)
+[Source CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/42998523406)
