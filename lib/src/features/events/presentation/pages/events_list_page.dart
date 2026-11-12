@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/async_content.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
@@ -8,7 +9,7 @@ import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
 
 typedef EventSelected = Future<void> Function(EventModel event);

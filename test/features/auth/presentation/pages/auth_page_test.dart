@@ -1,22 +1,16 @@
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/auth/presentation/pages/auth_page.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget _buildApp() {
   return MaterialApp(
     locale: const Locale('fr'),
     theme: buildFiestaaaTheme(),
-    localizationsDelegates: const [
-      S.delegate,
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-    ],
+    localizationsDelegates: fiestaaaLocalizationsDelegates,
     supportedLocales: const [Locale('fr'), Locale('en')],
     home: AuthPage(onAuthenticated: _onAuthenticated),
   );
@@ -51,12 +45,11 @@ void main() {
           MaterialApp(
             locale: const Locale('fr'),
             theme: dark ? buildFiestaaaDarkTheme() : buildFiestaaaTheme(),
-            localizationsDelegates: S.localizationsDelegates,
+            localizationsDelegates: fiestaaaLocalizationsDelegates,
             supportedLocales: S.supportedLocales,
             builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: const TextScaler.linear(2)),
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: const TextScaler.linear(2)),
               child: child!,
             ),
             home: AuthPage(onAuthenticated: _onAuthenticated),

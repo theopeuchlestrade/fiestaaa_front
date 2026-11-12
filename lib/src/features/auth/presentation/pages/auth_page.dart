@@ -1,6 +1,9 @@
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
+
 import '../../data/apple_sign_in.dart';
+
 import 'package:fiestaaa_front/src/features/beta_pages.dart';
+
 import 'dart:async';
 
 import 'package:fiestaaa_front/src/core/config.dart';
@@ -12,7 +15,7 @@ import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/presentation/widgets/google_logo.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';

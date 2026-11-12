@@ -1,17 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/auth/presentation/pages/auth_page.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 Widget app(AuthPage page) => MaterialApp(
   locale: const Locale('en'),
-  localizationsDelegates: S.localizationsDelegates,
+  localizationsDelegates: fiestaaaLocalizationsDelegates,
   supportedLocales: S.supportedLocales,
   home: page,
 );

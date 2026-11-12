@@ -5,10 +5,10 @@
 # Pinned builder base; the SDK below is upgraded from the official release.
 FROM ghcr.io/cirruslabs/flutter:3.44.0@sha256:46691e311715845de03a3ba4753a475476936805b29431b1f00f1816981033f8 AS flutter-sdk
 
-# Cirrus has no 3.47 image yet. Verify the official tag against its immutable
-# revision so Docker and GitHub Actions use the same Flutter release.
-ARG FLUTTER_VERSION=3.47.7
-ARG FLUTTER_REVISION=abaf9c523780a608bd46686fd5e53740a07077f8
+# Verify the official tag against its immutable revision so Docker and
+# GitHub Actions use the same Flutter release.
+ARG FLUTTER_VERSION=3.50.0
+ARG FLUTTER_REVISION=ab2912035e160d9cad6306df307576da6128ebdb
 ENV FLUTTER_VERSION=${FLUTTER_VERSION}
 RUN git -C "${FLUTTER_ROOT}" fetch --depth 1 https://github.com/flutter/flutter.git "refs/tags/${FLUTTER_VERSION}:refs/tags/${FLUTTER_VERSION}" \
     && test "$(git -C "${FLUTTER_ROOT}" rev-parse FETCH_HEAD)" = "${FLUTTER_REVISION}" \
@@ -99,7 +99,7 @@ set -euo pipefail
 fcm_vapid_key="$(tr -d '\r\n' </run/secrets/FIESTAAA_FCM_VAPID_KEY)"
 firebase_web_api_key="$(tr -d '\r\n' </run/secrets/FIREBASE_WEB_API_KEY)"
 
-flutter build web --release \
+flutter build web --release --web-content-hash --no-deprecated-js-interop \
   "--dart-define=FIESTAAA_API_BASE_URL=${FIESTAAA_API_BASE_URL}" \
   "--dart-define=FIESTAAA_APP_BASE_URL=${FIESTAAA_APP_BASE_URL}" \
   "--dart-define=FIESTAAA_GOOGLE_WEB_CLIENT_ID=${FIESTAAA_GOOGLE_WEB_CLIENT_ID}" \
@@ -116,19 +116,10 @@ flutter build web --release \
   "--dart-define=FIESTAAA_SENTRY_ENVIRONMENT=${FIESTAAA_SENTRY_ENVIRONMENT}" \
   "--dart-define=FIESTAAA_SENTRY_RELEASE=${FIESTAAA_SENTRY_RELEASE}" \
   "--dart-define=FIESTAAA_SENTRY_TRACES_SAMPLE_RATE=${FIESTAAA_SENTRY_TRACES_SAMPLE_RATE}"
-BASH
 
-# Use content-derived filenames for Flutter entry points so browsers do not
-# keep running an old app shell after deployment.
-RUN bash <<'BASH'
-set -euo pipefail
-asset_version="$(sha256sum build/web/main.dart.js | cut -c1-12)"
-main_js="main.${asset_version}.dart.js"
-bootstrap_js="flutter_bootstrap.${asset_version}.js"
-cp build/web/main.dart.js "build/web/${main_js}"
-sed -i "s#\"main.dart.js\"#\"${main_js}\"#g" build/web/flutter_bootstrap.js
-cp build/web/flutter_bootstrap.js "build/web/${bootstrap_js}"
-sed -i "s#flutter_bootstrap.js#${bootstrap_js}#g" build/web/index.html
+# This plugin registers its worker by a fixed URL outside Flutter's asset loader.
+worker_dir=build/web/assets/packages/flutter_local_notifications_web/web
+cp "${worker_dir}"/notifications_service_worker.*.js "${worker_dir}/notifications_service_worker.js"
 BASH
 
 # Pinned Nginx stable runtime image for production serving (1.30.6-alpine)
@@ -140,6 +131,8 @@ RUN apk add --no-cache brotli-libs=1.2.1-r0 curl=8.23.0-r0 libcurl=8.23.0-r0
 LABEL org.opencontainers.image.source="https://github.com/theopeuchlestrade/fiestaaa_front"
 COPY --from=build /app/build/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/build/web /usr/share/nginx/html
+# Static public pages also use Manrope outside Flutter's asset manifest.
+COPY --from=build /app/assets/fonts/Manrope.ttf /usr/share/nginx/html/assets/assets/fonts/Manrope.ttf
 RUN sed -i \
       -e 's#pid[[:space:]]\+/run/nginx.pid;#pid /tmp/nginx.pid;#' \
       -e 's#pid[[:space:]]\+/var/run/nginx.pid;#pid /tmp/nginx.pid;#' \

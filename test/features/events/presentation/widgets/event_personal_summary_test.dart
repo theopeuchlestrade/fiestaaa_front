@@ -1,10 +1,10 @@
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_item_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_poll_model.dart';
 import 'package:fiestaaa_front/src/features/events/domain/item_contribution_model.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_personal_summary.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 EventModel event({
@@ -57,7 +57,7 @@ Widget summary({
   VoidCallback? onItems,
 }) => MaterialApp(
   locale: const Locale('en'),
-  localizationsDelegates: S.localizationsDelegates,
+  localizationsDelegates: fiestaaaLocalizationsDelegates,
   supportedLocales: S.supportedLocales,
   home: Scaffold(
     body: EventPersonalSummary(

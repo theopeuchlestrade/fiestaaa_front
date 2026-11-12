@@ -2,7 +2,7 @@ import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
 
 class InvitationStatusSection extends StatelessWidget {
@@ -92,9 +92,8 @@ class InvitationStatusSection extends StatelessWidget {
               S
                   .of(context)
                   .sentOn(
-                    DateFormat.yMMMd(
-                      Localizations.localeOf(context).toString(),
-                    ).format(invitation.dateInvi),
+                    DateFormat.yMMMd(Localizations.localeOf(context).toString())
+                        .format(invitation.dateInvi),
                   ),
             ),
       trailing: trailing,

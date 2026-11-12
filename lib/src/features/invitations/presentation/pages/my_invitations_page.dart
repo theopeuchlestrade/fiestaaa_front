@@ -7,7 +7,7 @@ import 'package:fiestaaa_front/src/features/friends/domain/friend_model.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
 
 class MyInvitationsPage extends StatefulWidget {
@@ -374,9 +374,8 @@ class _MyInvitationsPageState extends State<MyInvitationsPage> {
                                   .of(context)
                                   .receivedOn(
                                     DateFormat.yMMMMd(
-                                      Localizations.localeOf(
-                                        context,
-                                      ).toString(),
+                                      Localizations.localeOf(context)
+                                          .toString(),
                                     ).format(inv.dateInvi),
                                   ),
                             ),
@@ -502,9 +501,8 @@ class _FriendRequestsSection extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                style: Theme.of(context).textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -527,9 +525,8 @@ class _FriendRequestsSection extends StatelessWidget {
           children: [
             Text(
               title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             ...requests.map((req) {

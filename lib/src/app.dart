@@ -1,10 +1,14 @@
 import 'core/event_data_store.dart';
 import 'features/auth/data/mobile_session_manager.dart';
 import 'features/events/presentation/pages/event_create_page.dart';
+
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_route_page.dart';
+
 import 'features/beta_pages.dart';
+
 import 'package:intl/intl.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/event_form_session.dart';
+
 import 'dart:async';
 
 import 'package:fiestaaa_front/src/core/locale_service.dart';
@@ -21,9 +25,8 @@ import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 import 'package:fiestaaa_front/src/core/push_notification_service.dart';
 import 'package:fiestaaa_front/src/core/theme_service.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 @visibleForTesting
@@ -646,12 +649,7 @@ class _FiestaaaAppState extends State<FiestaaaApp> {
       theme: buildFiestaaaTheme(),
       darkTheme: buildFiestaaaDarkTheme(),
       themeMode: _themeService.mode,
-      localizationsDelegates: const [
-        S.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      localizationsDelegates: fiestaaaLocalizationsDelegates,
       supportedLocales: LocaleService.supportedLocales,
       locale: _localeService.locale,
       localeListResolutionCallback: (deviceLocales, _) {

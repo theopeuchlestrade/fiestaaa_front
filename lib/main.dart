@@ -5,7 +5,7 @@ import 'package:fiestaaa_front/firebase_options.dart';
 import 'package:fiestaaa_front/src/app.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:timezone/data/latest.dart' as tz;

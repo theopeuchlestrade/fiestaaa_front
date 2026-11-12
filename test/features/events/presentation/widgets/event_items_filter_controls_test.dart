@@ -1,6 +1,6 @@
 import 'package:fiestaaa_front/src/features/events/presentation/event_items_filters.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_items_filter_controls.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

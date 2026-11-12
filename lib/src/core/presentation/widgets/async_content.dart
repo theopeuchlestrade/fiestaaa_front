@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Shared accessible load, empty and error states. Existing content can remain
 /// mounted while a compact failure notice is displayed above it.

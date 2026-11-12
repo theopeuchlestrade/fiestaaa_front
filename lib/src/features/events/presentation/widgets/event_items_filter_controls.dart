@@ -1,6 +1,6 @@
 import 'package:fiestaaa_front/src/features/events/presentation/event_items_filters.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class EventItemsFilterControls extends StatelessWidget {
   const EventItemsFilterControls({

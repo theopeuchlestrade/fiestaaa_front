@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:fiestaaa_front/src/features/events/calendar/native_calendar_adapter.dart';
 import 'package:fiestaaa_front/src/features/events/calendar/event_calendar_entry.dart';
 
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_calendar_card.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -39,7 +39,7 @@ void main() {
     Future<void> Function(Uint8List, String, Rect)? export,
   }) => MaterialApp(
     locale: Locale(language),
-    localizationsDelegates: S.localizationsDelegates,
+    localizationsDelegates: fiestaaaLocalizationsDelegates,
     supportedLocales: S.supportedLocales,
     home: Scaffold(
       body: EventCalendarCard(

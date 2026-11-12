@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
@@ -7,7 +8,7 @@ import 'package:fiestaaa_front/src/features/home/presentation/pages/home_page.da
 import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/app.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
@@ -232,9 +233,11 @@ void main() {
       expect(page.eventId, 42);
       expect(page.module, module);
       expect(
-        GoRouter.of(
-          tester.element(find.byType(EventRoutePage)),
-        ).routeInformationProvider.value.uri.path,
+        GoRouter.of(tester.element(find.byType(EventRoutePage)))
+            .routeInformationProvider
+            .value
+            .uri
+            .path,
         path,
       );
       final router = GoRouter.of(tester.element(find.byType(EventRoutePage)));

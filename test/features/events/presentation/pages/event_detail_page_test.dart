@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/core/api_response.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
@@ -11,7 +12,7 @@ import 'package:fiestaaa_front/src/features/events/domain/item_contribution_mode
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_detail_page.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_calendar_card.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
@@ -110,7 +111,7 @@ Widget _app(Widget child, {GlobalKey<NavigatorState>? navigatorKey}) =>
     MaterialApp(
       navigatorKey: navigatorKey,
       locale: const Locale('en'),
-      localizationsDelegates: S.localizationsDelegates,
+      localizationsDelegates: fiestaaaLocalizationsDelegates,
       supportedLocales: S.supportedLocales,
       home: child,
     );
@@ -269,7 +270,7 @@ void main() {
             MaterialApp.router(
               routerConfig: router,
               locale: const Locale('en'),
-              localizationsDelegates: S.localizationsDelegates,
+              localizationsDelegates: fiestaaaLocalizationsDelegates,
               supportedLocales: S.supportedLocales,
             ),
           );
@@ -354,7 +355,7 @@ void main() {
       MaterialApp.router(
         routerConfig: router,
         locale: const Locale('en'),
-        localizationsDelegates: S.localizationsDelegates,
+        localizationsDelegates: fiestaaaLocalizationsDelegates,
         supportedLocales: S.supportedLocales,
       ),
     );

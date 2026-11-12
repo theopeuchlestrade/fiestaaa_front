@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:fiestaaa_front/src/core/api_response.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
@@ -15,6 +15,7 @@ import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+
 import '../widgets/event_personal_summary_test.dart' as fixtures;
 
 class _Api extends EventsApi {
@@ -172,7 +173,7 @@ Widget _app(
   EventModule module = EventModule.items,
 }) => MaterialApp(
   locale: const Locale('en'),
-  localizationsDelegates: S.localizationsDelegates,
+  localizationsDelegates: fiestaaaLocalizationsDelegates,
   supportedLocales: S.supportedLocales,
   home: EventDetailPage(
     module: module,

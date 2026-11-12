@@ -245,31 +245,28 @@ void main() {
     },
   );
 
-  test(
-    'logout during renewal discards the response and cannot restore the session',
-    () async {
-      final old = jwt(-3600);
-      manager.bind(session(old));
-      final response = Completer<http.Response>();
-      final client = MockClient((_) => response.future);
-      final pending = manager.tokenFor(old, client);
-      final expectation = expectLater(
-        pending,
-        throwsA(isA<SessionChangedException>()),
-      );
-      final clearing = manager.clear();
-      response.complete(
-        http.Response(
-          jsonEncode({'token': jwt(3600), 'refresh_token': 'late'}),
-          200,
-        ),
-      );
-      await clearing;
-      await expectation;
-      expect(manager.session, isNull);
-      expect(await SessionStorage.load(), isNull);
-    },
-  );
+  test('logout during renewal discards the response and cannot restore the session', () async {
+    final old = jwt(-3600);
+    manager.bind(session(old));
+    final response = Completer<http.Response>();
+    final client = MockClient((_) => response.future);
+    final pending = manager.tokenFor(old, client);
+    final expectation = expectLater(
+      pending,
+      throwsA(isA<SessionChangedException>()),
+    );
+    final clearing = manager.clear();
+    response.complete(
+      http.Response(
+        jsonEncode({'token': jwt(3600), 'refresh_token': 'late'}),
+        200,
+      ),
+    );
+    await clearing;
+    await expectation;
+    expect(manager.session, isNull);
+    expect(await SessionStorage.load(), isNull);
+  });
 
   test('credentials are never substituted for a different server', () async {
     final old = jwt(-86400);

@@ -1,10 +1,11 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_route_page.dart';
@@ -31,12 +32,11 @@ void main() {
             MaterialApp(
               theme: dark ? buildFiestaaaDarkTheme() : buildFiestaaaTheme(),
               locale: Locale(locale),
-              localizationsDelegates: S.localizationsDelegates,
+              localizationsDelegates: fiestaaaLocalizationsDelegates,
               supportedLocales: S.supportedLocales,
               builder: (context, child) => MediaQuery(
-                data: MediaQuery.of(
-                  context,
-                ).copyWith(textScaler: const TextScaler.linear(2)),
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: const TextScaler.linear(2)),
                 child: child!,
               ),
               home: EventRoutePage(
@@ -102,7 +102,7 @@ void main() {
         MaterialApp.router(
           routerConfig: router,
           locale: const Locale('fr'),
-          localizationsDelegates: S.localizationsDelegates,
+          localizationsDelegates: fiestaaaLocalizationsDelegates,
           supportedLocales: S.supportedLocales,
         ),
       );
@@ -152,7 +152,7 @@ void main() {
       MaterialApp.router(
         routerConfig: router,
         locale: const Locale('fr'),
-        localizationsDelegates: S.localizationsDelegates,
+        localizationsDelegates: fiestaaaLocalizationsDelegates,
         supportedLocales: S.supportedLocales,
       ),
     );
@@ -178,7 +178,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('fr'),
-        localizationsDelegates: S.localizationsDelegates,
+        localizationsDelegates: fiestaaaLocalizationsDelegates,
         supportedLocales: S.supportedLocales,
         home: Builder(
           builder: (context) => Scaffold(

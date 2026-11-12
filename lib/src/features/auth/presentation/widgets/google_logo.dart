@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Official Google gradient G from the approved 2026 sign-in asset bundle.
 /// Display the central 20/40 logo region without recoloring or distorting it.
