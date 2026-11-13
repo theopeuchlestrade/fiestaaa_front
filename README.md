@@ -1,14 +1,14 @@
 # Dart VM lines coverage
 
-Commit: `c3a34fed54cf26debfed7655e740ec9f835bd49d` · 2026-11-11T09:54:52.066Z
+Commit: `f1c61a397c4c6d182dabbdca30484a48060b5556` · 2026-11-13T22:42:17.271Z
 
 | Measure | Covered / total | Coverage | Enforced / target |
 |---|---:|---:|---:|
-| Raw collector | 9639/14260 | 67.59% | — |
-| Application | 9129/12789 | 71.38% | 70% / 70% |
-| authentication-sessions | 958/1157 | 82.80% | 80% / 80% |
+| Raw collector | 9687/14313 | 67.68% | — |
+| Application | 9167/12826 | 71.47% | 70% / 70% |
+| authentication-sessions | 960/1159 | 82.83% | 80% / 80% |
 | permissions-participation | 886/1104 | 80.25% | 80% / 80% |
-| cache-synchronization | 814/985 | 82.64% | 80% / 80% |
+| cache-synchronization | 813/985 | 82.54% | 80% / 80% |
 | notifications-qr | 622/672 | 92.56% | 80% / 80% |
 
 Patch: **not-requested**.
@@ -19,24 +19,23 @@ Result: **passed**.
 ## Largest uncovered areas
 
 - `lib/src/features/friends/presentation/pages/friends_page.dart`: 430 uncovered collector lines (62.67%)
-- `lib/src/features/events/presentation/pages/event_create_page.dart`: 299 uncovered collector lines (59.32%)
-- `lib/src/features/events/presentation/pages/event_edit_page.dart`: 299 uncovered collector lines (59.43%)
-- `lib/src/features/carpools/presentation/pages/event_carpools_page.dart`: 247 uncovered collector lines (43.35%)
+- `lib/src/features/events/presentation/pages/event_create_page.dart`: 298 uncovered collector lines (59.51%)
+- `lib/src/features/events/presentation/pages/event_edit_page.dart`: 297 uncovered collector lines (59.70%)
+- `lib/src/features/carpools/presentation/pages/event_carpools_page.dart`: 246 uncovered collector lines (43.32%)
 - `lib/src/features/events/presentation/pages/event_expenses_page.dart`: 203 uncovered collector lines (68.18%)
-- `lib/src/features/events/presentation/widgets/event_detail_poll_methods.dart`: 190 uncovered collector lines (32.86%)
+- `lib/src/features/events/presentation/widgets/event_detail_poll_methods.dart`: 190 uncovered collector lines (33.10%)
 - `lib/src/app.dart`: 141 uncovered collector lines (64.93%)
 - `lib/src/features/home/presentation/pages/home_page.dart`: 113 uncovered collector lines (49.33%)
 - `lib/src/features/events/presentation/pages/event_invitations_page.dart`: 111 uncovered collector lines (70.63%)
 - `lib/src/features/events/presentation/widgets/event_detail_feature_methods.dart`: 103 uncovered collector lines (0.00%)
-- `lib/src/features/profile/presentation/pages/profile_page.dart`: 94 uncovered collector lines (72.11%)
-- `lib/src/features/events/presentation/pages/event_detail_page.dart`: 91 uncovered collector lines (73.31%)
-- `lib/src/features/events/presentation/widgets/event_detail_invitation_card.dart`: 91 uncovered collector lines (44.17%)
+- `lib/src/features/profile/presentation/pages/profile_page.dart`: 95 uncovered collector lines (71.89%)
+- `lib/src/features/events/presentation/widgets/event_detail_invitation_card.dart`: 91 uncovered collector lines (44.51%)
+- `lib/src/features/events/presentation/pages/event_detail_page.dart`: 90 uncovered collector lines (73.53%)
 - `lib/src/features/events/presentation/widgets/event_detail_navigation_methods.dart`: 89 uncovered collector lines (27.64%)
 - `lib/src/features/carpools/presentation/pages/carpool_create_page.dart`: 83 uncovered collector lines (59.11%)
 
 ## Eligible sources absent from measurement
 
-- `lib/main.dart`
 - `lib/src/core/pending_token_storage.dart`
 - `lib/src/core/platform_http_client_stub.dart`
 - `lib/src/core/platform_network_image.dart`
@@ -72,7 +71,8 @@ Result: **passed**.
 - `lib/l10n/app_localizations.dart`: Generated localization/Firebase configuration, not handwritten application behavior.
 - `lib/l10n/app_localizations_en.dart`: Generated localization/Firebase configuration, not handwritten application behavior.
 - `lib/l10n/app_localizations_fr.dart`: Generated localization/Firebase configuration, not handwritten application behavior.
+- `lib/l10n/fiestaaa_localizations.dart`: Generated localization/Firebase configuration, not handwritten application behavior.
 
 Coverage does not certify native providers, physical devices or store delivery.
 
-[Source CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/42998523406)
+[Source CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/43520833117)
