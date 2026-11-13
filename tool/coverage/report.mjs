@@ -1,6 +1,7 @@
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, realpathSync } from 'node:fs';
-import { resolve, relative, isAbsolute, join } from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, realpathSync, mkdtempSync, rmSync } from 'node:fs';
+import { resolve, relative, isAbsolute, join, dirname } from 'node:path';
+import { tmpdir } from 'node:os';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 export function glob(pattern, path) {
@@ -164,6 +165,44 @@ export function inventory(root,policy) {
   for (const dir of policy.roots) visit(resolve(root,dir));
   return files.sort();
 }
+export function dartChangedLines(root, base, policy) {
+  const git = (args) => execFileSync('git', args, {cwd: root, encoding: 'utf8'});
+  const paths = git(['diff','--name-only','--no-renames','--diff-filter=AM','-z',base,'--',...policy.roots])
+    .split('\0').filter(path => path.endsWith('.dart') && classify(path,policy).status !== 'excluded');
+  const baselinePaths = new Set(git(['ls-tree','-r','--name-only','-z',base,'--',...policy.roots]).split('\0'));
+  const temp = mkdtempSync(join(tmpdir(),'fiestaaa-patch-coverage-'));
+  try {
+    mkdirSync(join(temp,'before'));
+    mkdirSync(join(temp,'after'));
+    const withoutImports = source => source.replace(/^import [^\r\n]+;\r?\n/gm, '');
+    for (const path of paths) {
+      const current = readFileSync(resolve(root,path),'utf8');
+      // Format the base with the current package settings. Keep the checkout
+      // untouched so the diff's new line numbers still match the LCOV report.
+      if (baselinePaths.has(path)) {
+        const source = git(['show',`${base}:${path}`]);
+        const formatted = execFileSync('dart',['format','--summary=none','--stdin-name',resolve(root,path)],{
+          cwd: root, input: source, encoding: 'utf8',
+        });
+        // Single-line import substitutions in existing files have no LCOV lines.
+        if (withoutImports(formatted) === withoutImports(current)) continue;
+        mkdirSync(dirname(join(temp,'before',path)),{recursive:true});
+        writeFileSync(join(temp,'before',path),formatted);
+      }
+      mkdirSync(dirname(join(temp,'after',path)),{recursive:true});
+      writeFileSync(join(temp,'after',path),current);
+    }
+    const diff = spawnSync('git',['diff','--no-index','--no-ext-diff','--no-renames','--unified=0','--','before','after'],{
+      cwd: temp, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024,
+    });
+    if (diff.error) throw diff.error;
+    if (diff.status !== 0 && diff.status !== 1) throw new Error(diff.stderr);
+    return parseDiff(diff.stdout.replace(/^\+\+\+ b\/after\//gm,'+++ b/'));
+  } finally {
+    rmSync(temp,{recursive:true,force:true});
+  }
+}
+
 export function cli(args) {
   const options=new Map();
   for (let i=0;i<args.length;i+=2) {if (!args[i].startsWith('--')||args[i+1]===undefined) throw new Error('Use --option value');options.set(args[i].slice(2),args[i+1]);}
@@ -173,7 +212,7 @@ export function cli(args) {
   const records=parseLcov(input,root);let changed;
   if (options.has('base')) {
     const base=options.get('base');if (!/^[a-f0-9]{40}$/.test(base)) throw new Error('Use a full PR base SHA');
-    const diff=execFileSync('git',['diff','--no-ext-diff','--no-renames','--unified=0',base,'--',...policy.roots],{cwd:root,encoding:'utf8'});changed=parseDiff(diff);
+    changed=dartChangedLines(root,base,policy);
   }
   const sourceSha=process.env.GITHUB_SHA??execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
   const runUrl=process.env.GITHUB_RUN_ID?`https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`:undefined;

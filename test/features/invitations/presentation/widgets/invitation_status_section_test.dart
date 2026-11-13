@@ -1,20 +1,14 @@
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/features/invitations/presentation/widgets/invitation_status_section.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 Widget _buildApp(Widget child) {
   return MaterialApp(
     locale: const Locale('fr'),
-    localizationsDelegates: const [
-      S.delegate,
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-    ],
+    localizationsDelegates: fiestaaaLocalizationsDelegates,
     supportedLocales: const [Locale('fr'), Locale('en')],
     home: Scaffold(body: child),
   );

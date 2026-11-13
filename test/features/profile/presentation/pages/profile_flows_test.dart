@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/core/api_response.dart';
 import 'package:fiestaaa_front/src/core/locale_service.dart';
 import 'package:fiestaaa_front/src/core/theme_service.dart';
@@ -7,7 +8,7 @@ import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/profile/data/profile_api.dart';
 import 'package:fiestaaa_front/src/features/profile/domain/profile_info.dart';
 import 'package:fiestaaa_front/src/features/profile/presentation/pages/profile_page.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
@@ -107,7 +108,7 @@ Future<void> _pump(
   await tester.pumpWidget(
     MaterialApp(
       locale: const Locale('en'),
-      localizationsDelegates: S.localizationsDelegates,
+      localizationsDelegates: fiestaaaLocalizationsDelegates,
       supportedLocales: S.supportedLocales,
       home: Scaffold(
         body: ProfilePage(

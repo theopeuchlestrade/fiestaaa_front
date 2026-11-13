@@ -4,6 +4,7 @@ import 'package:fiestaaa_front/src/features/beta_pages.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
+
 import 'dart:async';
 
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
@@ -16,7 +17,7 @@ import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dar
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/features/invitations/presentation/widgets/invitation_status_section.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class EventInvitationsPage extends StatefulWidget {
   const EventInvitationsPage({
@@ -485,9 +486,8 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final warningStyle = Theme.of(
-      context,
-    ).colorScheme.fiestaaaStatus(FiestaaaStatusTone.warning);
+    final warningStyle = Theme.of(context).colorScheme
+        .fiestaaaStatus(FiestaaaStatusTone.warning);
 
     final content = RefreshIndicator(
       onRefresh: () async {

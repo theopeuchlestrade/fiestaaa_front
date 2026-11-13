@@ -1,4 +1,5 @@
 import 'package:fiestaaa_front/src/core/event_data_store.dart';
+
 import 'dart:async';
 
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
@@ -94,9 +95,8 @@ void main() {
   );
   test('cookie refusals retain existing web session invalidation', () {
     expect(
-      const ApiUnauthorizedResponse(
-        null,
-      ).appliesToSession('', cookieSession: true),
+      const ApiUnauthorizedResponse(null)
+          .appliesToSession('', cookieSession: true),
       isTrue,
     );
   });

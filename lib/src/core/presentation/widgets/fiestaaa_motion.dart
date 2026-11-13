@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Short, one-time entrance. Motion never delays interaction or replaces data.
 class FiestaaaEntrance extends StatelessWidget {

@@ -1,9 +1,9 @@
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/profile/data/profile_api.dart';
 import 'package:fiestaaa_front/src/features/profile/domain/profile_info.dart';
 import 'package:fiestaaa_front/src/features/profile/presentation/pages/profile_page.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _Api extends ProfileApi {
@@ -24,7 +24,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           locale: const Locale('en'),
-          localizationsDelegates: S.localizationsDelegates,
+          localizationsDelegates: fiestaaaLocalizationsDelegates,
           supportedLocales: S.supportedLocales,
           home: Scaffold(
             body: ProfilePage(

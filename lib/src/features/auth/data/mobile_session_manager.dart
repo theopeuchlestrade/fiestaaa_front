@@ -127,9 +127,8 @@ class MobileSessionManager {
       final parts = token.split('.');
       if (parts.length != 3) return null;
       return (jsonDecode(
-                utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
-              )
-              as Map<String, dynamic>)['exp']
+            utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+          ) as Map<String, dynamic>)['exp']
           as int?;
     } catch (_) {
       return null;

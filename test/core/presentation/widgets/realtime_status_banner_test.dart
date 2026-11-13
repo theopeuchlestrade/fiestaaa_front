@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -13,7 +14,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           locale: Locale(language),
-          localizationsDelegates: S.localizationsDelegates,
+          localizationsDelegates: fiestaaaLocalizationsDelegates,
           supportedLocales: S.supportedLocales,
           home: Scaffold(
             body: RealtimeStatusBanner(

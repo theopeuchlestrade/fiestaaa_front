@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
 
 Future<T?> showQuasiFullscreenModal<T>({

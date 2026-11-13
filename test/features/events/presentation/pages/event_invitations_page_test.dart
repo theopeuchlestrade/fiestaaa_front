@@ -1,12 +1,12 @@
 import 'package:fiestaaa_front/src/core/api_response.dart';
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_invitations_page.dart';
 import 'package:fiestaaa_front/src/features/friends/data/friends_api.dart';
 import 'package:fiestaaa_front/src/features/friends/domain/friend_model.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _Friends extends FriendsApi {
@@ -89,7 +89,7 @@ class _Invitations extends InvitationsApi {
 Widget _app(_Invitations api, {bool owner = true, bool readonly = false}) =>
     MaterialApp(
       locale: const Locale('en'),
-      localizationsDelegates: S.localizationsDelegates,
+      localizationsDelegates: fiestaaaLocalizationsDelegates,
       supportedLocales: S.supportedLocales,
       home: EventInvitationsPage(
         session: SessionData(

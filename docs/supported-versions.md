@@ -3,7 +3,7 @@
 Use a maintained LTS branch where upstream provides one, and the latest
 supported stable otherwise. Reviewed on 2026-10-21:
 
-- Flutter uses its stable channel, currently 3.47.7, and its bundled Dart SDK.
+- Flutter uses its stable channel, currently 3.50.0, and its bundled Dart SDK.
   Update the pubspec Flutter minimum, CI `FLUTTER_VERSION` and Docker build
   argument together. Private mobile workflows read this minimum from the
   selected frontend source. An older Docker bootstrap SDK is replaced and its
@@ -39,6 +39,39 @@ Android policies: [AGP compatibility](https://developer.android.com/build/releas
 [Gradle releases](https://gradle.org/releases/),
 [Gradle Java compatibility](https://docs.gradle.org/current/userguide/compatibility.html),
 [Android build JDKs](https://developer.android.com/build/jdks).
+
+## Flutter 3.50 and Dart 3.14
+
+- The app and widget tests use standalone Material widgets and localization
+  delegates. The Cupertino icon font is bundled for adaptive widgets.
+  Existing dropdown callbacks retain their validation behavior. The app's
+  English and French strings do not contain soft hyphens, and app code does
+  not use inline `WidgetSpan`s or opt into `viewport-fit=cover`.
+- Android App Links use standard intent data. The calendar bridge uses
+  platform channels, which remain supported. Built-in Kotlin and the AGP 9
+  DSL are deferred while the pinned `ok_http` still applies the Kotlin Gradle
+  plugin. Hybrid Composition++ is optional on stable.
+- The iOS target uses Swift Package Manager for every native plugin.
+  `Runner.xcworkspace` records the resolved native dependencies in
+  `Package.resolved`.
+- The web image uses Flutter's content hashes and rejects deprecated
+  JavaScript interop. Nginx revalidates the bootstrap and stable URLs used by
+  the public pages and notification workers. Only hashed resources get
+  immutable caching. A rolling deployment that needs to support older open
+  tabs must retain the previous release's hashed files alongside the new ones.
+  WebAssembly compilation is supported. The production image builds the
+  JavaScript target until the browser and notification flows are validated
+  with WebAssembly.
+- The SDK's removed synchronous isolate APIs and changed SIMD operations are
+  unused by the app. Dart's migration tool, direct native interop, browser
+  text rendering preview, desktop windowing, and the AI ecosystem releases
+  are optional for this upgrade.
+
+Sources: [release video](https://youtu.be/K5Kk-C3IL94),
+[Flutter 3.50](https://flutter.dev/blog/whats-new-in-flutter-3-50),
+[Flutter migration guides](https://docs.flutter.dev/release/breaking-changes#released-in-flutter-350),
+[Dart 3.14](https://dart.dev/changelog#314),
+[web deployment](https://docs.flutter.dev/deployment/web).
 
 ## Firebase compatibility (reviewed 2026-10-31)
 

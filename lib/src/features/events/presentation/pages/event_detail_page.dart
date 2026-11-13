@@ -11,6 +11,7 @@ import 'package:fiestaaa_front/src/features/events/presentation/widgets/event_pe
 import 'package:go_router/go_router.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
+
 import 'dart:async';
 
 import 'package:fiestaaa_front/src/features/auth/data/auth_api.dart';
@@ -38,7 +39,7 @@ import 'package:fiestaaa_front/src/core/realtime_client.dart';
 import 'package:fiestaaa_front/src/core/config.dart';
 import 'package:fiestaaa_front/src/core/map_destination.dart';
 import 'package:fiestaaa_front/src/core/external_uri_guard.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
@@ -592,9 +593,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           label: S.of(context).responseBefore,
                           value:
                               _currentEvent.formattedInvitationDeadline ??
-                              DateFormat.yMMMMd(
-                                S.of(context).localeName,
-                              ).format(_currentEvent.invitationDeadline!),
+                              DateFormat.yMMMMd(S.of(context).localeName)
+                                  .format(_currentEvent.invitationDeadline!),
                         ),
                       ListTile(
                         leading: Icon(

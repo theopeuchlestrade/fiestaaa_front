@@ -11,6 +11,8 @@ include: package:flutter_lints/flutter.yaml
 
 analyzer:
   exclude:
+    # Flutter generates legacy design-system delegates in this file.
+    - lib/l10n/app_localizations.dart
     - build/**
     - android/**
     - ios/**

@@ -1,7 +1,7 @@
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/presentation/pages/qr_scanner_page.dart';
 import 'package:fiestaaa_front/src/features/qr_checkin/data/qr_checkin_api.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:http/http.dart' as http;
@@ -60,7 +60,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             locale: const Locale('en'),
-            localizationsDelegates: S.localizationsDelegates,
+            localizationsDelegates: fiestaaaLocalizationsDelegates,
             supportedLocales: S.supportedLocales,
             home: QRScannerPage(
               eventId: 7,

@@ -1,6 +1,6 @@
 import 'package:fiestaaa_front/src/core/api_error_localizer.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/widgets/address_search_notice.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 

@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/material.dart';
+
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/event_data_store.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
@@ -15,6 +16,7 @@ import 'package:fiestaaa_front/src/features/events/domain/event_item_model.dart'
 import 'package:fiestaaa_front/src/features/events/domain/item_contribution_model.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_route_page.dart';
+
 import '../../../../../tool/navigation_benchmark.dart' as fixture;
 
 class _Quiet extends RealtimeClient {
@@ -25,7 +27,7 @@ class _Quiet extends RealtimeClient {
 
 Widget page(SessionData session, EventModule module) => MaterialApp(
   locale: const Locale('en'),
-  localizationsDelegates: S.localizationsDelegates,
+  localizationsDelegates: fiestaaaLocalizationsDelegates,
   supportedLocales: S.supportedLocales,
   home: EventRoutePage(
     session: session,
@@ -294,7 +296,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             locale: const Locale('en'),
-            localizationsDelegates: S.localizationsDelegates,
+            localizationsDelegates: fiestaaaLocalizationsDelegates,
             supportedLocales: S.supportedLocales,
             home: EventRoutePage(
               session: session,

@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/auth/presentation/pages/auth_page.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart'
     as gp;
@@ -115,7 +116,7 @@ class _Apple extends ap.SignInWithApplePlatform {
 
 Widget app(Future<void> Function(SessionData) callback) => MaterialApp(
   locale: const Locale('en'),
-  localizationsDelegates: S.localizationsDelegates,
+  localizationsDelegates: fiestaaaLocalizationsDelegates,
   supportedLocales: S.supportedLocales,
   home: AuthPage(onAuthenticated: callback),
 );
@@ -250,9 +251,7 @@ void main() {
             apiHttpClientFactoryKey: () => MockClient((r) async {
               requests.add(r);
               return http.Response(
-                mode == 'server-refusal'
-                    ? '{"error":"invalid_apple_code"}'
-                    : '{"token":"fixture-session","email":"qa@example.invalid"}',
+                mode == 'server-refusal' ? '{"error":"invalid_apple_code"}' : '{"token":"fixture-session","email":"qa@example.invalid"}',
                 mode == 'server-refusal' ? 503 : 200,
               );
             }),

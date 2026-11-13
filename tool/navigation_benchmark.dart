@@ -1,11 +1,14 @@
 // ignore_for_file: avoid_print
 // Standalone deterministic UI benchmark. No production service or user data.
 import 'dart:async';
+
 import 'benchmark_output_stub.dart'
     if (dart.library.io) 'benchmark_output_native.dart';
+
 import 'dart:convert';
 import 'dart:ui' show FrameTiming;
-import 'package:flutter/material.dart';
+
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fiestaaa_front/src/features/friends/presentation/pages/friends_page.dart';
 import 'package:fiestaaa_front/src/features/profile/presentation/pages/profile_page.dart';
@@ -13,7 +16,7 @@ import 'package:fiestaaa_front/src/features/auth/presentation/pages/auth_page.da
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/core/api_http_client.dart';
 import 'package:fiestaaa_front/src/core/event_data_store.dart';
 import 'package:fiestaaa_front/src/core/realtime_client.dart';
@@ -348,7 +351,7 @@ class _BenchmarkState extends State<_Benchmark> {
     routerConfig: router,
     theme: buildFiestaaaTheme(),
     locale: const Locale('en'),
-    localizationsDelegates: S.localizationsDelegates,
+    localizationsDelegates: fiestaaaLocalizationsDelegates,
     supportedLocales: S.supportedLocales,
   );
   @override

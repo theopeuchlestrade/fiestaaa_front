@@ -1,22 +1,16 @@
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/carpools/presentation/pages/carpool_create_page.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:fiestaaa_front/src/features/carpools/domain/carpool_model.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget _buildApp(Widget child) {
   return MaterialApp(
     locale: const Locale('fr'),
     theme: buildFiestaaaTheme(),
-    localizationsDelegates: const [
-      S.delegate,
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-    ],
+    localizationsDelegates: fiestaaaLocalizationsDelegates,
     supportedLocales: const [Locale('fr'), Locale('en')],
     home: Scaffold(body: Material(child: child)),
   );
@@ -85,9 +79,8 @@ void main() {
       await tester.pumpAndSettle();
       Navigator.of(tester.element(find.byType(DatePickerDialog))).pop(event);
       await tester.pumpAndSettle();
-      Navigator.of(
-        tester.element(find.byType(TimePickerDialog)),
-      ).pop(TimeOfDay(hour: hour, minute: 0));
+      Navigator.of(tester.element(find.byType(TimePickerDialog)))
+          .pop(TimeOfDay(hour: hour, minute: 0));
       await tester.pumpAndSettle();
       expect(
         find.textContaining('${hour.toString().padLeft(2, '0')}:00'),

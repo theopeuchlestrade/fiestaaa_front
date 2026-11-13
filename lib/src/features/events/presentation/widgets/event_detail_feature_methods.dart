@@ -162,9 +162,8 @@ extension _EventDetailFeatureMethods on _EventDetailPageState {
                       ...actions,
                       IconButton(
                         onPressed: () => Navigator.of(context).maybePop(),
-                        tooltip: MaterialLocalizations.of(
-                          context,
-                        ).closeButtonTooltip,
+                        tooltip: MaterialLocalizations.of(context)
+                            .closeButtonTooltip,
                         icon: const Icon(Icons.close),
                       ),
                     ],
@@ -225,9 +224,8 @@ extension _EventDetailFeatureMethods on _EventDetailPageState {
                   ...actions,
                   IconButton(
                     onPressed: () => Navigator.of(context).maybePop(),
-                    tooltip: MaterialLocalizations.of(
-                      context,
-                    ).closeButtonTooltip,
+                    tooltip: MaterialLocalizations.of(context)
+                        .closeButtonTooltip,
                     icon: const Icon(Icons.close),
                   ),
                 ],

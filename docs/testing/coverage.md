@@ -15,7 +15,7 @@ Final application target: **70%**. The versioned policy ratchets floors only aft
 
 ## Run locally
 
-Use Node 22 for tooling. Run `npm run coverage:test`, then collect with the repository's documented Flutter or cargo-llvm-cov command. Rust collector version is 0.9.1; database and Redis variables must target isolated services, with skip flags unset. Run `npm run coverage:report` to create `coverage/report/{lcov.info,summary.json,index.html,README.md,badge.svg}`. For patch coverage, append `-- --base <full-base-commit-sha>`.
+Use Node 22 for tooling. Run `npm run coverage:test`, then collect with the repository's documented Flutter or cargo-llvm-cov command. Rust collector version is 0.9.1; database and Redis variables must target isolated services, with skip flags unset. Run `npm run coverage:report` to create `coverage/report/{lcov.info,summary.json,index.html,README.md,badge.svg}`. For patch coverage, append `-- --base <full-base-commit-sha>`. The frontend report formats the base sources with the current Dart SDK and package settings so formatter-only line shifts do not count as changed code. Existing files whose only remaining changes are single-line imports have no executable lines in the patch.
 
 The report uses collector LF/LH counters for raw/application/group totals. LLVM summaries count instantiations and can differ from unique DA lines. DA mappings power changed-line checks and source highlighting. No average of file percentages is used. No measured application lines, invalid counters, missing inputs or an eligible changed file absent from LCOV fail closed. Changes without added executable application lines are N/A, not 100%.
 

@@ -3,7 +3,7 @@ import 'package:fiestaaa_front/src/core/presentation/widgets/route_back_button.d
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/event_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
 
 class EventTrashPage extends StatefulWidget {

@@ -1,4 +1,4 @@
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
 import 'package:fiestaaa_front/src/features/events/domain/address_suggestion.dart';
@@ -7,12 +7,13 @@ import 'package:fiestaaa_front/src/features/events/presentation/event_form_sessi
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_create_page.dart';
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_edit_page.dart';
 import 'package:fiestaaa_front/src/features/payment_providers/data/payment_providers_api.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
+
 import '../event_form_session_test.dart' as data;
 import '../widgets/event_personal_summary_test.dart' as fixtures;
 
@@ -67,7 +68,7 @@ class _Api extends EventsApi {
 
 Widget app(Widget page) => MaterialApp(
   locale: const Locale('en'),
-  localizationsDelegates: S.localizationsDelegates,
+  localizationsDelegates: fiestaaaLocalizationsDelegates,
   supportedLocales: S.supportedLocales,
   home: Scaffold(body: page),
 );
@@ -151,7 +152,7 @@ void main() {
         MaterialApp(
           navigatorKey: nav,
           locale: const Locale('en'),
-          localizationsDelegates: S.localizationsDelegates,
+          localizationsDelegates: fiestaaaLocalizationsDelegates,
           supportedLocales: S.supportedLocales,
           home: const Scaffold(body: Text('Home')),
         ),
@@ -211,7 +212,7 @@ void main() {
       MaterialApp(
         navigatorKey: nav,
         locale: const Locale('en'),
-        localizationsDelegates: S.localizationsDelegates,
+        localizationsDelegates: fiestaaaLocalizationsDelegates,
         supportedLocales: S.supportedLocales,
         home: const Scaffold(body: Text('Home')),
       ),

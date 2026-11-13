@@ -5,6 +5,7 @@ import 'package:fiestaaa_front/src/core/presentation/widgets/event_module_header
 import 'package:fiestaaa_front/src/core/platform_network_image.dart';
 import 'package:fiestaaa_front/src/core/presentation/widgets/realtime_status_banner.dart';
 import 'package:fiestaaa_front/src/core/refresh_queue.dart';
+
 import 'dart:async';
 
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
@@ -15,7 +16,7 @@ import 'package:fiestaaa_front/src/features/events/domain/event_expense_model.da
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
 import 'package:fiestaaa_front/src/theme/fiestaaa_theme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
 
 class EventExpensesPage extends StatefulWidget {
@@ -1040,9 +1041,9 @@ class _EventExpensesPageState extends State<EventExpensesPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    DateFormat.yMMMd(
-                      l10n.localeName,
-                    ).add_Hm().format(expense.expenseDate.toLocal()),
+                    DateFormat.yMMMd(l10n.localeName)
+                        .add_Hm()
+                        .format(expense.expenseDate.toLocal()),
                     style: theme.textTheme.bodyMedium,
                   ),
                   ExpansionTile(

@@ -7,14 +7,16 @@ repository: https://github.com/theopeuchlestrade/fiestaaa_front
 issue_tracker: https://github.com/theopeuchlestrade/fiestaaa_front/issues
 
 environment:
-  sdk: ^3.11.0
-  flutter: ">=3.47.7"
+  sdk: ^3.14.0
+  flutter: ">=3.50.0"
 
 dependencies:
   flutter:
     sdk: flutter
   flutter_web_plugins:
     sdk: flutter
+  material_ui: ^1.8.0
+  cupertino_icons: ^2.0.0
   flutter_svg: ^2.3.2
   flutter_localizations:
     sdk: flutter

@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/core/api_response.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/events/data/events_api.dart';
@@ -7,7 +8,7 @@ import 'package:fiestaaa_front/src/features/events/domain/event_expense_model.da
 import 'package:fiestaaa_front/src/features/events/presentation/pages/event_expenses_page.dart';
 import 'package:fiestaaa_front/src/features/invitations/data/invitations_api.dart';
 import 'package:fiestaaa_front/src/features/invitations/domain/invitation_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _Api extends EventsApi {
@@ -112,12 +113,11 @@ Widget _app(
   Stream<Map<String, dynamic>>? stream,
 }) => MaterialApp(
   locale: const Locale('en'),
-  localizationsDelegates: S.localizationsDelegates,
+  localizationsDelegates: fiestaaaLocalizationsDelegates,
   supportedLocales: S.supportedLocales,
   builder: (context, child) => MediaQuery(
-    data: MediaQuery.of(
-      context,
-    ).copyWith(textScaler: TextScaler.linear(textScale)),
+    data: MediaQuery.of(context)
+        .copyWith(textScaler: TextScaler.linear(textScale)),
     child: child!,
   ),
   home: EventExpensesPage(

@@ -1,5 +1,5 @@
 import 'package:fiestaaa_front/l10n/app_localizations.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 class TimezoneSelector extends StatelessWidget {

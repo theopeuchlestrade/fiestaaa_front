@@ -3,8 +3,8 @@
 Thanks for contributing to the frontend.
 
 ## Prerequisites
-- Flutter SDK 3.47.7 (matching CI and Docker)
-- Dart SDK 3.13.5, provided by Flutter
+- Flutter SDK 3.50.0 (matching CI and Docker)
+- Dart SDK 3.14.0, provided by Flutter
 - Temurin JDK 25 LTS for Android builds (see `.java-version`)
 - Node.js 22 LTS for repository tooling (see `.nvmrc`)
 

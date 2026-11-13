@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:fiestaaa_front/l10n/app_localizations.dart';
+import 'package:fiestaaa_front/l10n/fiestaaa_localizations.dart';
 import 'package:fiestaaa_front/src/features/auth/domain/session_data.dart';
 import 'package:fiestaaa_front/src/features/carpools/data/carpools_api.dart';
 import 'package:fiestaaa_front/src/features/carpools/domain/carpool_model.dart';
 import 'package:fiestaaa_front/src/features/carpools/presentation/pages/event_carpools_page.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _Api extends CarpoolsApi {
@@ -45,7 +45,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('en'),
-        localizationsDelegates: S.localizationsDelegates,
+        localizationsDelegates: fiestaaaLocalizationsDelegates,
         supportedLocales: S.supportedLocales,
         home: EventCarpoolsPage(
           api: api,
@@ -89,7 +89,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('en'),
-        localizationsDelegates: S.localizationsDelegates,
+        localizationsDelegates: fiestaaaLocalizationsDelegates,
         supportedLocales: S.supportedLocales,
         home: EventCarpoolsPage(
           api: api,
