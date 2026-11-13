@@ -18,12 +18,12 @@ supported stable otherwise. Reviewed on 2026-10-21:
   the version from the selected frontend source, falling back to JDK 17 for
   historical tags without `.java-version`. Java/Kotlin compilation targets
   remain 17; the build JDK is independent of Android's supported Java APIs.
-- Android uses Gradle 9.8.2, AGP 9.4.1, Kotlin 2.4.21 and Google Services 4.5.0.
-  AGP 9.4 requires Gradle >=9.6 and JDK >=17; Gradle supports running on
-  Java 25 since 9.1. Kotlin documents full testing through
-  Gradle 9.7/AGP 9.3, while permitting newer releases; the project's complete
-  debug and release builds validate this current stable combination. Keep the
-  Flutter compatibility opt-outs until all plugins support built-in Kotlin.
+- Android uses Gradle 9.8.2, AGP 9.4.1 and Google Services 4.5.0. AGP
+  manages Kotlin through its built-in support and uses the new Android DSL.
+  AGP 9.4 requires Gradle >=9.6 and JDK >=17. The Android HTTP client pins the
+  upstream `ok_http` Kotlin migration until it ships on pub.dev. It shares
+  JNI 1.x with Sentry Flutter 10.4, which supports the existing Android API 24
+  minimum. The macOS target requires macOS 12 for Sentry’s native SDK.
 
 CI compiles web, Android debug/release APKs, an Android release app bundle and
 an unsigned iOS release app. Android CI uses the local debug signing fallback;
@@ -35,7 +35,7 @@ Policies: [Flutter channels](https://docs.flutter.dev/install/archive),
 [Temurin](https://adoptium.net/support/).
 
 Android policies: [AGP compatibility](https://developer.android.com/build/releases/gradle-plugin),
-[Kotlin compatibility](https://kotlinlang.org/docs/gradle-configure-project.html),
+[Flutter built-in Kotlin migration](https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-app-developers),
 [Gradle releases](https://gradle.org/releases/),
 [Gradle Java compatibility](https://docs.gradle.org/current/userguide/compatibility.html),
 [Android build JDKs](https://developer.android.com/build/jdks).
@@ -48,9 +48,8 @@ Android policies: [AGP compatibility](https://developer.android.com/build/releas
   English and French strings do not contain soft hyphens, and app code does
   not use inline `WidgetSpan`s or opt into `viewport-fit=cover`.
 - Android App Links use standard intent data. The calendar bridge uses
-  platform channels, which remain supported. Built-in Kotlin and the AGP 9
-  DSL are deferred while the pinned `ok_http` still applies the Kotlin Gradle
-  plugin. Hybrid Composition++ is optional on stable.
+  platform channels, which remain supported. Hybrid Composition++ is optional
+  on stable.
 - The iOS target uses Swift Package Manager for every native plugin.
   `Runner.xcworkspace` records the resolved native dependencies in
   `Package.resolved`.

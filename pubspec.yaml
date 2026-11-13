@@ -23,12 +23,11 @@ dependencies:
 
   http: ^1.2.2
   cupertino_http: ^3.1.1
-  # The published release requires an older JNI than Sentry. Pin the official
-  # revision supporting JNI 0.14, retaining the existing locked Sentry SDK.
+  # Pin the upstream built-in Kotlin migration until it is published on pub.dev.
   ok_http:
     git:
       url: https://github.com/dart-lang/http.git
-      ref: 03eb8defa79c0e914feea61b16b3b49148d819c3
+      ref: 0d154386359557bc6d6c7c7b3a626722c7ebc494
       path: pkgs/ok_http
   shared_preferences: ^2.5.6
   flutter_secure_storage: ^11.2.0
@@ -48,7 +47,7 @@ dependencies:
   sign_in_with_apple: ^8.2.0
   web: ^1.1.2
   image_picker: ^1.2.4
-  sentry_flutter: ^9.30.1
+  sentry_flutter: ^10.4.0
   timezone: ^0.11.2
   go_router: ^18.1.3
   package_info_plus: ^10.2.2

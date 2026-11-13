@@ -5,6 +5,7 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
+import 'package:fiestaaa_front/main.dart' as app;
 import 'package:fiestaaa_front/src/app.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +15,7 @@ import 'package:fiestaaa_front/src/core/pending_token_storage.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +27,25 @@ void main() {
           const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
           (_) async => null,
         );
+  });
+
+  test(
+    'Sentry preserves transaction-based tracing and disables default PII',
+    () {
+      final options = SentryFlutterOptions();
+
+      app.configureSentry(options);
+
+      expect(options.traceLifecycle, SentryTraceLifecycle.static);
+      expect(options.sendDefaultPii, isFalse);
+    },
+  );
+
+  testWidgets('The production entry point mounts Fiestaaa', (tester) async {
+    await tester.runAsync(app.main);
+    await tester.pump();
+    expect(find.byType(FiestaaaApp), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 
   for (final page in ['privacy', 'terms', 'support', 'delete-account']) {

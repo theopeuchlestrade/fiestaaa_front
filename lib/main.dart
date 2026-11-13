@@ -70,13 +70,17 @@ Future<void> main() async {
     return;
   }
 
-  await SentryFlutter.init((options) {
-    options.dsn = sentryDsn;
-    options.environment = sentryEnvironment;
-    if (sentryRelease.isNotEmpty) {
-      options.release = sentryRelease;
-    }
-    options.tracesSampleRate = sentryTracesSampleRate;
-    options.sendDefaultPii = false;
-  }, appRunner: _bootstrap);
+  await SentryFlutter.init(configureSentry, appRunner: _bootstrap);
+}
+
+@visibleForTesting
+void configureSentry(SentryFlutterOptions options) {
+  options.dsn = sentryDsn;
+  options.environment = sentryEnvironment;
+  if (sentryRelease.isNotEmpty) {
+    options.release = sentryRelease;
+  }
+  options.tracesSampleRate = sentryTracesSampleRate;
+  options.traceLifecycle = SentryTraceLifecycle.static;
+  options.sendDefaultPii = false;
 }
