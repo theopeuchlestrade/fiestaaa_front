@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync,mkdirSync,writeFileSync,rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
-import {parseLcov,buildReport,patchCoverage,parseDiff,badge,markdown,html,glob,sourcePath,validatePolicy} from './report.mjs';
+import {parseLcov,buildReport,patchCoverage,parseDiff,dartChangedLines,badge,markdown,html,glob,sourcePath,validatePolicy} from './report.mjs';
 import {publish,publicationAllowed} from './publish.mjs';
 const root='/fixture';
 const sha='a'.repeat(40);
@@ -46,6 +47,36 @@ test('patch parses added line ranges without counting removed lines',()=>{
  const changed=parseDiff(diff);assert.deepEqual([...changed.get('lib/a.dart')],[1]);
  assert.equal(patchCoverage(record,changed,policy).percent,100);
  const rejected=buildReport(record,[],policy,{},new Map([['lib/a.dart',new Set([1,2])]]));assert.equal(rejected.status,'failed');
+});
+test('patch ignores Dart formatter changes and retains executable edits', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'fiestaaa-coverage-test-'));
+  const run = (command, args) => execFileSync(command, args, {cwd: dir, encoding: 'utf8'});
+  const source = join(dir, 'lib/a.dart');
+  try {
+    run('git', ['init', '-q']);
+    mkdirSync(join(dir, 'lib'));
+    mkdirSync(join(dir, '.dart_tool'));
+    writeFileSync(join(dir, 'pubspec.yaml'), 'name: fixture\nenvironment:\n  sdk: ^3.14.0\n');
+    writeFileSync(join(dir, '.dart_tool/package_config.json'), JSON.stringify({
+      configVersion: 2,
+      packages: [{name: 'fixture', rootUri: '../', packageUri: 'lib/', languageVersion: '3.14'}],
+    }));
+    writeFileSync(source, "import 'dart:math';\n\nint value(){return 1;}\n");
+    run('git', ['add', 'lib/a.dart']);
+    run('git', ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test',
+      '-c', 'commit.gpgsign=false', 'commit', '-qm', 'Base']);
+    const base = run('git', ['rev-parse', 'HEAD']).trim();
+    run('dart', ['format', source]);
+    assert.equal(dartChangedLines(dir, base, policy).size, 0);
+
+    writeFileSync(source, "import 'dart:convert';\n\nint value() {\n  return 1;\n}\n");
+    assert.equal(dartChangedLines(dir, base, policy).size, 0);
+
+    writeFileSync(source, "import 'dart:math';\n\nint value() {\n  return 2;\n}\n");
+    assert.deepEqual([...dartChangedLines(dir, base, policy).get('lib/a.dart')], [4]);
+  } finally {
+    rmSync(dir, {recursive: true, force: true});
+  }
 });
 test('missing eligible file fails patch; documentation and browser-only are explicit',()=>{
  assert.equal(patchCoverage(record,new Map([['lib/new.dart',new Set([1])]]),policy).status,'failed');
