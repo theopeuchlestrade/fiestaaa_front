@@ -1,14 +1,14 @@
 # Dart VM lines coverage
 
-Commit: `f1c61a397c4c6d182dabbdca30484a48060b5556` · 2026-11-13T22:42:17.271Z
+Commit: `57b6c147f81eed7576092c748f5185d33731d4df` · 2026-11-16T10:31:30.303Z
 
 | Measure | Covered / total | Coverage | Enforced / target |
 |---|---:|---:|---:|
-| Raw collector | 9687/14313 | 67.68% | — |
-| Application | 9167/12826 | 71.47% | 70% / 70% |
+| Raw collector | 9688/14313 | 67.69% | — |
+| Application | 9168/12826 | 71.48% | 70% / 70% |
 | authentication-sessions | 960/1159 | 82.83% | 80% / 80% |
 | permissions-participation | 886/1104 | 80.25% | 80% / 80% |
-| cache-synchronization | 813/985 | 82.54% | 80% / 80% |
+| cache-synchronization | 814/985 | 82.64% | 80% / 80% |
 | notifications-qr | 622/672 | 92.56% | 80% / 80% |
 
 Patch: **not-requested**.
@@ -75,4 +75,4 @@ Result: **passed**.
 
 Coverage does not certify native providers, physical devices or store delivery.
 
-[Source CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/43520833117)
+[Source CI](https://github.com/theopeuchlestrade/fiestaaa_front/actions/runs/43848965466)
