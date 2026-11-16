@@ -17,7 +17,7 @@ dependencies:
     sdk: flutter
   material_ui: ^1.8.0
   cupertino_icons: ^2.0.0
-  flutter_svg: ^2.3.2
+  flutter_svg: ^2.4.0
   flutter_localizations:
     sdk: flutter
 
@@ -49,7 +49,7 @@ dependencies:
   image_picker: ^1.2.4
   sentry_flutter: ^10.4.0
   timezone: ^0.11.2
-  go_router: ^18.1.3
+  go_router: ^18.1.4
   package_info_plus: ^10.2.2
 
 dev_dependencies:
