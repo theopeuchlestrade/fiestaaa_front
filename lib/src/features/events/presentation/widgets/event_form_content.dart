@@ -65,6 +65,10 @@ class EventFormContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = S.of(context);
+    final floatingLabelStyle = TextStyle(
+      color: Theme.of(context).colorScheme.onSurface,
+      fontWeight: FontWeight.w700,
+    );
     return FiestaaaPageLayout(
       maxWidth: 760,
       child: Column(
@@ -83,6 +87,7 @@ class EventFormContent extends StatelessWidget {
                       controller: name,
                       decoration: InputDecoration(
                         labelText: l.fiestaaaName,
+                        floatingLabelStyle: floatingLabelStyle,
                         prefixIcon: const Icon(Icons.celebration),
                       ),
                       validator: (value) => requiredEventText(value, l),
@@ -94,6 +99,7 @@ class EventFormContent extends StatelessWidget {
                       maxLines: 5,
                       decoration: InputDecoration(
                         labelText: l.description,
+                        floatingLabelStyle: floatingLabelStyle,
                         alignLabelWithHint: true,
                       ),
                       validator: (value) => requiredEventText(value, l),
