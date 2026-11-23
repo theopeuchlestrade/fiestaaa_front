@@ -123,7 +123,7 @@ cp "${worker_dir}"/notifications_service_worker.*.js "${worker_dir}/notification
 BASH
 
 # Pinned Nginx stable runtime image for production serving (1.30.6-alpine)
-FROM nginx:1.30.6-alpine@sha256:0e52bd054126cdc040b1276c0af347aeb02a41b9cfe305d6094767ac30e97949 AS runtime
+FROM nginx:1.30.7-alpine@sha256:caf4e1e032a20f9c3c5e28fc7f25ffd768ad8677b4975c54193075997b3a97e3 AS runtime
 # This immutable base already includes libexpat 2.9.0-r0 and pcre2 10.49-r0.
 # Keep those fixes in the pinned image rather than requesting obsolete APKs.
 # Patch the remaining fixable HIGH findings without relaxing the scan gate.
