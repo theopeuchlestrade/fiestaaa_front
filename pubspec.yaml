@@ -15,9 +15,9 @@ dependencies:
     sdk: flutter
   flutter_web_plugins:
     sdk: flutter
-  material_ui: ^1.11.0
+  material_ui: ^1.11.1
   cupertino_icons: ^2.0.0
-  flutter_svg: ^2.4.0
+  flutter_svg: ^2.5.0
   flutter_localizations:
     sdk: flutter
 
@@ -38,23 +38,23 @@ dependencies:
   web_socket_channel: ^3.0.3
   qr_flutter: ^4.1.0
   mobile_scanner: ^7.5.0
-  firebase_core: ^4.15.2
-  firebase_messaging: ^16.7.1
-  flutter_local_notifications: ^23.0.2
+  firebase_core: ^5.2.0
+  firebase_messaging: ^17.1.0
+  flutter_local_notifications: ^23.0.3
   google_sign_in: ^7.2.0
   google_sign_in_web: ^1.1.2
   google_identity_services_web: ^0.3.3+1
   sign_in_with_apple: ^8.2.0
   web: ^1.1.2
   image_picker: ^1.2.4
-  sentry_flutter: ^10.4.0
+  sentry_flutter: ^10.6.0
   timezone: ^0.11.2
   go_router: ^18.1.4
   package_info_plus: ^10.2.2
 
 dev_dependencies:
-  firebase_core_platform_interface: 8.1.1
-  firebase_messaging_platform_interface: 4.10.0
+  firebase_core_platform_interface: 8.2.0
+  firebase_messaging_platform_interface: 4.12.0
   plugin_platform_interface: 2.1.8
   google_sign_in_platform_interface: 3.1.0
   sign_in_with_apple_platform_interface: 2.0.0
